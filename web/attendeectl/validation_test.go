@@ -1,0 +1,171 @@
+package attendeectl
+
+import (
+	"encoding/json"
+	"net/url"
+	"reflect"
+	"rexis/rexis-go-attendee/api/v1/attendee"
+	"testing"
+)
+
+func createValidAttendee() attendee.Attendee {
+	return attendee.Attendee{
+		Nickname:     "BlackCheetah",
+		FirstName:    "Hans",
+		LastName:     "Mustermann",
+		Street:       "Teststraße 24",
+		Zip:          "12345",
+		City:         "Berlin",
+		Country:      "DE",
+		CountryBadge: "DE",
+		State:        "Sachsen",
+		Email:        "jsquirrel_github_9a6d@packetloss.de",
+		Phone:        "+49-30-123",
+		Telegram:     "@ihopethisuserdoesnotexist",
+		Birthday:     "1998-11-23",
+		Gender:       "other",
+		Flags:        "anon,ev",
+		Packages:     "room-none,attendance,stage,sponsor2",
+		Options:      "music,suit",
+		TshirtSize:   "XXL",
+	}
+}
+
+func TestValidateSuccess(t *testing.T) {
+	a := createValidAttendee()
+	expected := url.Values{}
+	performValidationTest(t, &a, expected)
+}
+
+func TestValidateMissingInfo(t *testing.T) {
+	a := attendee.Attendee{
+		Country:      "meow",
+		CountryBadge: "bark",
+	}
+	expected := url.Values{
+		"birthday":      []string{"birthday field must be a valid ISO 8601 date (format yyyy-MM-dd)"},
+		"city":          []string{"city field must be at least 1 and at most 80 characters long"},
+		"country":       []string{"country field must contain a 2 letter upper case ISO-3166-1 country code (Alpha-2 code, see https://en.wikipedia.org/wiki/ISO_3166-1)"},
+		"country_badge": []string{"country_badge field must contain a 2 letter upper case ISO-3166-1 country code (Alpha-2 code, see https://en.wikipedia.org/wiki/ISO_3166-1)"},
+		"email":         []string{"email field must be at least 1 and at most 200 characters long"},
+		"first_name":    []string{"first_name field must be at least 1 and at most 80 characters long"},
+		"last_name":     []string{"last_name field must be at least 1 and at most 80 characters long"},
+		"nickname": []string{"nickname field must contain at least two letters, and contain no more than two non-letters",
+			"nickname field must be at least 2 and at most 80 characters long"},
+		"phone":  []string{"phone field must be at least 1 and at most 32 characters long"},
+		"street": []string{"street field must be at least 1 and at most 120 characters long"},
+		"zip":    []string{"zip field must be at least 1 and at most 20 characters long"},
+	}
+	performValidationTest(t, &a, expected)
+}
+
+func TestValidateTooLong(t *testing.T) {
+	a := createValidAttendee()
+	a.Nickname = "ThisIsASuperLongNicknameWhichIsNotAllowedBecauseItWillNotFitOnTheBadgeAndAnywayWh"
+	tooLong := "And this is a super long text that we will use to test for the length limits of the other fields. While we do this, " +
+		"we will cut off at just the right place to make it 1 character too long. I hope this text is long enough in total!"
+	a.City = tooLong[0:81]
+	a.Email = tooLong[0:201]
+	a.FirstName = tooLong[0:81]
+	a.LastName = tooLong[0:81]
+	a.Phone = tooLong[0:33]
+	a.Street = tooLong[0:121]
+	a.Zip = tooLong[0:21]
+
+	expected := url.Values{
+		"city":       []string{"city field must be at least 1 and at most 80 characters long"},
+		"email":      []string{"email field must be at least 1 and at most 200 characters long"},
+		"first_name": []string{"first_name field must be at least 1 and at most 80 characters long"},
+		"last_name":  []string{"last_name field must be at least 1 and at most 80 characters long"},
+		"nickname":   []string{"nickname field must be at least 2 and at most 80 characters long"},
+		"phone":      []string{"phone field must be at least 1 and at most 32 characters long"},
+		"street":     []string{"street field must be at least 1 and at most 120 characters long"},
+		"zip":        []string{"zip field must be at least 1 and at most 20 characters long"},
+	}
+	performValidationTest(t, &a, expected)
+}
+
+func TestValidateNicknameOnlySpecials(t *testing.T) {
+	performNicknameValidationTest(t, "}:{")
+}
+
+func TestValidateNicknameTooManySpecials1(t *testing.T) {
+	performNicknameValidationTest(t, "}super:friendly{")
+}
+
+func TestValidateNicknameTooManySpecials2(t *testing.T) {
+	performNicknameValidationTest(t, "suPer8friendly99")
+}
+
+func performNicknameValidationTest(t *testing.T, wrongNick string) {
+	a := createValidAttendee()
+	a.Nickname = wrongNick
+
+	expected := url.Values{
+		"nickname": []string{"nickname field must contain at least two letters, and contain no more than two non-letters"},
+	}
+	performValidationTest(t, &a, expected)
+}
+
+func TestValidateBirthday1(t *testing.T) {
+	performBirthdayValidationTest(t, "2022-02-29")
+}
+
+func TestValidateBirthday2(t *testing.T) {
+	performBirthdayValidationTest(t, "completely-absurd-date")
+}
+
+func TestValidateBirthday3(t *testing.T) {
+	performBirthdayValidationTest(t, "1914-13-48")
+}
+
+func performBirthdayValidationTest(t *testing.T, wrongDate string) {
+	a := createValidAttendee()
+	a.Birthday = wrongDate
+
+	expected := url.Values{
+		"birthday": []string{"birthday field must be a valid ISO 8601 date (format yyyy-MM-dd)"},
+	}
+	performValidationTest(t, &a, expected)
+}
+
+func TestValidateChoiceFields(t *testing.T) {
+	a := createValidAttendee()
+	a.Gender = "348trhkuth4uihgkj4h89"
+	a.Options = "music,awoo"
+	a.Flags = "hc,noflag"
+	a.Packages = "helicopterflight,boattour,room-none"
+	a.TshirtSize = "micro"
+	a.Telegram = "iforgotthe_at_atthebeginning"
+
+	expected := url.Values{
+		"gender":      []string{"optional gender field must be one of male, female, other, notprovided, or it can be left blank, which counts as notprovided"},
+		"options":     []string{"options field must be a comma separated combination of any of art,anim,music,suit"},
+		"flags":       []string{"flags field must be a comma separated combination of any of hc,anon,ev"},
+		"packages":    []string{"packages field must be a comma separated combination of any of room-none,attendance,stage,sponsor,sponsor2"},
+		"telegram":    []string{"optional telegram field must contain your @username from telegram, or it can be left blank"},
+		"tshirt_size": []string{"optional tshirt_size field must be empty or one of XS,S,M,L,XL,XXL,XXXL,XXXXL"},
+	}
+	performValidationTest(t, &a, expected)
+}
+
+func TestValidatePreventSettingIdField(t *testing.T) {
+	a := createValidAttendee()
+	a.Id = "4"
+
+	expected := url.Values{
+		"id": []string{"id field must be empty for incoming requests"},
+	}
+	performValidationTest(t, &a, expected)
+}
+
+func performValidationTest(t *testing.T, a *attendee.Attendee, expectedErrors url.Values) {
+	actualErrors := validate(a)
+
+	prettyprintedActualErrors, _ := json.MarshalIndent(actualErrors, "", "  ")
+	prettyprintedExpectedErrors, _ := json.MarshalIndent(expectedErrors, "", "  ")
+
+	if !reflect.DeepEqual(actualErrors, expectedErrors) {
+		t.Errorf("Errors were not as expected.\nActual:\n%v\nExpected:\n%v\n", string(prettyprintedActualErrors), string(prettyprintedExpectedErrors))
+	}
+}
