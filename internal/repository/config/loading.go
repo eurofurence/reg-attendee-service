@@ -50,6 +50,7 @@ func InitializeConfiguration(yaml string) error {
 }
 
 func StartupLoadConfiguration() {
+	log.Print("Reading configuration...")
 	if configurationFilename == "" {
 		log.Fatal("Configuration file argument missing. Please specify using -config argument. Aborting.")
 	}

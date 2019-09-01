@@ -2,6 +2,8 @@
 // You must have called LoadConfiguration() or otherwise set up the configuration before you can use these.
 package config
 
+import "strings"
+
 func ServerAddr() string {
 	c := Configuration();
 	return c.Server.Address + ":" + c.Server.Port
@@ -9,6 +11,12 @@ func ServerAddr() string {
 
 func DatabaseUse() string {
 	return Configuration().Database.Use
+}
+
+func DatabaseMysqlConnectString() string {
+	c := Configuration().Database.Mysql
+	return c.Username + ":" + c.Password + "@" +
+		c.Database + "?" + strings.Join(c.Parameters, "&")
 }
 
 func AllowedFlags() []string {

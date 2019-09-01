@@ -5,7 +5,10 @@ import (
 )
 
 type Repository interface {
-	AddAttendee(a entity.Attendee) (uint32, error)
+	Open()
+	Close()
+
+	AddAttendee(a entity.Attendee) (uint, error)
 	UpdateAttendee(a entity.Attendee) error
-	GetAttendeeById(id uint32) (entity.Attendee, error)
+	GetAttendeeById(id uint) (entity.Attendee, error)
 }

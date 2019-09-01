@@ -7,27 +7,33 @@ import (
 )
 
 type InMemoryRepository struct {
-	attendees map[uint32]entity.Attendee
+	attendees map[uint]entity.Attendee
 	idSequence uint32
 }
 
-func (r *InMemoryRepository) AddAttendee(a entity.Attendee) (uint32, error) {
-	newId := atomic.AddUint32(&r.idSequence, 1)
-	a.Id = newId
+func (r *InMemoryRepository) Open() {
+}
+
+func (r *InMemoryRepository) Close() {
+}
+
+func (r *InMemoryRepository) AddAttendee(a entity.Attendee) (uint, error) {
+	newId := uint(atomic.AddUint32(&r.idSequence, 1))
+	a.ID = newId
 	r.attendees[newId] = a
 	return newId, nil
 }
 
 func (r *InMemoryRepository) UpdateAttendee(a entity.Attendee) error {
-	if _, ok := r.attendees[a.Id]; ok {
-		r.attendees[a.Id] = a
+	if _, ok := r.attendees[a.ID]; ok {
+		r.attendees[a.ID] = a
 		return nil
 	} else {
-		return fmt.Errorf("cannot update attendee %d - not present", a.Id)
+		return fmt.Errorf("cannot update attendee %d - not present", a.ID)
 	}
 }
 
-func (r *InMemoryRepository) GetAttendeeById(id uint32) (entity.Attendee, error) {
+func (r *InMemoryRepository) GetAttendeeById(id uint) (entity.Attendee, error) {
 	if att, ok := r.attendees[id]; ok {
 		return att, nil
 	} else {

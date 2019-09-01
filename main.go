@@ -10,6 +10,7 @@ import (
 func main() {
 	flag.Parse()
 	config.StartupLoadConfiguration()
-	database.Initialize()
+	database.Open()
+	defer database.Close()
 	web.StartWebserverAndNeverReturn()
 }

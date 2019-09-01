@@ -1,7 +1,9 @@
 package entity
 
+import "github.com/jinzhu/gorm"
+
 type Attendee struct {
-	Id           uint32
+	gorm.Model
 	Nickname     string
 	FirstName    string
 	LastName     string
