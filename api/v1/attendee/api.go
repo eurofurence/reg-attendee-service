@@ -32,3 +32,9 @@ type AttendeeDto struct {
 	// comments
 	UserComments string `json:"user_comments"`
 }
+
+type ErrorDto struct {
+	Timestamp string `json:"timestamp"`
+	RequestId string `json:"requestid"`
+	Message   string `json:"message"`
+}

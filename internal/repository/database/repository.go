@@ -8,7 +8,7 @@ type Repository interface {
 	Open()
 	Close()
 
-	AddAttendee(a entity.Attendee) (uint, error)
-	UpdateAttendee(a entity.Attendee) error
-	GetAttendeeById(id uint) (entity.Attendee, error)
+	AddAttendee(a *entity.Attendee) (uint, error)
+	UpdateAttendee(a *entity.Attendee) error
+	GetAttendeeById(id uint) (*entity.Attendee, error)
 }
