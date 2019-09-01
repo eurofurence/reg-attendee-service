@@ -3,10 +3,60 @@ package attendeectl
 import (
 	"encoding/json"
 	"net/url"
+	"os"
 	"reflect"
 	"rexis/rexis-go-attendee/api/v1/attendee"
+	"rexis/rexis-go-attendee/internal/repository/config"
 	"testing"
 )
+
+func TestMain(m *testing.M) {
+	setup()
+	code := m.Run()
+	shutdown()
+	os.Exit(code)
+}
+
+func setup() {
+	yaml := "" +
+`choices:
+  flags:
+    hc:
+      description: 'blah'
+    anon:
+      description: 'blah'
+    ev:  
+      description: 'blah'
+  packages:
+    room-none:
+      description: 'blah'
+    attendance:
+      description: 'blah'
+    stage:
+      description: 'blah'
+    sponsor:
+      description: 'blah'
+    sponsor2:
+      description: 'blah'
+  options:
+    art:
+      description: 'blah'
+    anim:
+      description: 'blah'
+    music:
+      description: 'blah'
+    suit:
+      description: 'blah'
+`
+	err := config.InitializeConfiguration(yaml)
+	if err != nil {
+		os.Exit(1)
+	}
+}
+
+func shutdown() {
+
+}
 
 func createValidAttendee() attendee.Attendee {
 	return attendee.Attendee{
@@ -140,9 +190,9 @@ func TestValidateChoiceFields(t *testing.T) {
 
 	expected := url.Values{
 		"gender":      []string{"optional gender field must be one of male, female, other, notprovided, or it can be left blank, which counts as notprovided"},
-		"options":     []string{"options field must be a comma separated combination of any of art,anim,music,suit"},
-		"flags":       []string{"flags field must be a comma separated combination of any of hc,anon,ev"},
-		"packages":    []string{"packages field must be a comma separated combination of any of room-none,attendance,stage,sponsor,sponsor2"},
+		"options":     []string{"options field must be a comma separated combination of any of anim,art,music,suit"},
+		"flags":       []string{"flags field must be a comma separated combination of any of anon,ev,hc"},
+		"packages":    []string{"packages field must be a comma separated combination of any of attendance,room-none,sponsor,sponsor2,stage"},
 		"telegram":    []string{"optional telegram field must contain your @username from telegram, or it can be left blank"},
 		"tshirt_size": []string{"optional tshirt_size field must be empty or one of XS,S,M,L,XL,XXL,XXXL,XXXXL"},
 	}
