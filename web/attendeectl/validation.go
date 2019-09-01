@@ -24,7 +24,7 @@ const countryPattern = "^[A-Z]{2}$"
 
 var allowedGenders = [...]string{"male", "female", "other", "notprovided", ""}
 
-func validate(a *attendee.Attendee) url.Values {
+func validate(a *attendee.AttendeeDto) url.Values {
 	errs := url.Values{}
 
 	if a.Id != "" {

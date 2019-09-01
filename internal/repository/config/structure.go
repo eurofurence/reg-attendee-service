@@ -8,6 +8,7 @@ type mysqlConfig struct {
 }
 
 type databaseConfig struct {
+	Use   string      `yaml:"use"` // mysql or inmemory
 	Mysql mysqlConfig `yaml:"mysql"`
 }
 

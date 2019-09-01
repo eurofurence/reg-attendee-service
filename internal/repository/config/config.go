@@ -7,6 +7,10 @@ func ServerAddr() string {
 	return c.Server.Address + ":" + c.Server.Port
 }
 
+func DatabaseUse() string {
+	return Configuration().Database.Use
+}
+
 func AllowedFlags() []string {
 	return sortedKeys(&Configuration().Choices.Flags)
 }

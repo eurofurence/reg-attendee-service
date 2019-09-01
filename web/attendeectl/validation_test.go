@@ -58,8 +58,8 @@ func shutdown() {
 
 }
 
-func createValidAttendee() attendee.Attendee {
-	return attendee.Attendee{
+func createValidAttendee() attendee.AttendeeDto {
+	return attendee.AttendeeDto{
 		Nickname:     "BlackCheetah",
 		FirstName:    "Hans",
 		LastName:     "Mustermann",
@@ -88,7 +88,7 @@ func TestValidateSuccess(t *testing.T) {
 }
 
 func TestValidateMissingInfo(t *testing.T) {
-	a := attendee.Attendee{
+	a := attendee.AttendeeDto{
 		Country:      "meow",
 		CountryBadge: "bark",
 	}
@@ -209,7 +209,7 @@ func TestValidatePreventSettingIdField(t *testing.T) {
 	performValidationTest(t, &a, expected)
 }
 
-func performValidationTest(t *testing.T, a *attendee.Attendee, expectedErrors url.Values) {
+func performValidationTest(t *testing.T, a *attendee.AttendeeDto, expectedErrors url.Values) {
 	actualErrors := validate(a)
 
 	prettyprintedActualErrors, _ := json.MarshalIndent(actualErrors, "", "  ")
