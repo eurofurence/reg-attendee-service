@@ -11,10 +11,16 @@ import (
 
 func StartWebserverAndNeverReturn() {
 	log.Print("Building routers...")
-	router := mux.NewRouter().StrictSlash(true)
-	dispatcher(router)
+	router := CreateRouter();
 	log.Print("Listening...")
 	log.Fatal(http.ListenAndServe(config.ServerAddr(), router))
+}
+
+// you can use this from tests
+func CreateRouter() http.Handler {
+	router := mux.NewRouter().StrictSlash(true)
+	dispatcher(router)
+	return router
 }
 
 func dispatcher(router *mux.Router) {

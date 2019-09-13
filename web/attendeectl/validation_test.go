@@ -3,60 +3,11 @@ package attendeectl
 import (
 	"encoding/json"
 	"net/url"
-	"os"
 	"reflect"
 	"rexis/rexis-go-attendee/api/v1/attendee"
-	"rexis/rexis-go-attendee/internal/repository/config"
+	"rexis/rexis-go-attendee/docs"
 	"testing"
 )
-
-func TestMain(m *testing.M) {
-	setup()
-	code := m.Run()
-	shutdown()
-	os.Exit(code)
-}
-
-func setup() {
-	yaml := "" +
-`choices:
-  flags:
-    hc:
-      description: 'blah'
-    anon:
-      description: 'blah'
-    ev:  
-      description: 'blah'
-  packages:
-    room-none:
-      description: 'blah'
-    attendance:
-      description: 'blah'
-    stage:
-      description: 'blah'
-    sponsor:
-      description: 'blah'
-    sponsor2:
-      description: 'blah'
-  options:
-    art:
-      description: 'blah'
-    anim:
-      description: 'blah'
-    music:
-      description: 'blah'
-    suit:
-      description: 'blah'
-`
-	err := config.InitializeConfiguration(yaml)
-	if err != nil {
-		os.Exit(1)
-	}
-}
-
-func shutdown() {
-
-}
 
 func createValidAttendee() attendee.AttendeeDto {
 	return attendee.AttendeeDto{
@@ -82,12 +33,14 @@ func createValidAttendee() attendee.AttendeeDto {
 }
 
 func TestValidateSuccess(t *testing.T) {
+	docs.Description("a valid attendee reports no validation errors")
 	a := createValidAttendee()
 	expected := url.Values{}
 	performValidationTest(t, &a, expected)
 }
 
 func TestValidateMissingInfo(t *testing.T) {
+	docs.Description("an attendee with wrong and missing fields reports the expected validation errors")
 	a := attendee.AttendeeDto{
 		Country:      "meow",
 		CountryBadge: "bark",
@@ -110,6 +63,7 @@ func TestValidateMissingInfo(t *testing.T) {
 }
 
 func TestValidateTooLong(t *testing.T) {
+	docs.Description("an attendee with just barely too long field values reports the expected validation errors")
 	a := createValidAttendee()
 	a.Nickname = "ThisIsASuperLongNicknameWhichIsNotAllowedBecauseItWillNotFitOnTheBadgeAndAnywayWh"
 	tooLong := "And this is a super long text that we will use to test for the length limits of the other fields. While we do this, " +
@@ -136,14 +90,17 @@ func TestValidateTooLong(t *testing.T) {
 }
 
 func TestValidateNicknameOnlySpecials(t *testing.T) {
+	docs.Description("an attendee with an invalid nickname reports a validation error")
 	performNicknameValidationTest(t, "}:{")
 }
 
 func TestValidateNicknameTooManySpecials1(t *testing.T) {
+	docs.Description("an attendee with an invalid nickname reports a validation error")
 	performNicknameValidationTest(t, "}super:friendly{")
 }
 
 func TestValidateNicknameTooManySpecials2(t *testing.T) {
+	docs.Description("an attendee with an invalid nickname reports a validation error")
 	performNicknameValidationTest(t, "suPer8friendly99")
 }
 
@@ -158,14 +115,17 @@ func performNicknameValidationTest(t *testing.T, wrongNick string) {
 }
 
 func TestValidateBirthday1(t *testing.T) {
+	docs.Description("an attendee with an invalid date of birth reports a validation error")
 	performBirthdayValidationTest(t, "2022-02-29")
 }
 
 func TestValidateBirthday2(t *testing.T) {
+	docs.Description("an attendee with an invalid date of birth reports a validation error")
 	performBirthdayValidationTest(t, "completely-absurd-date")
 }
 
 func TestValidateBirthday3(t *testing.T) {
+	docs.Description("an attendee with an invalid date of birth reports a validation error")
 	performBirthdayValidationTest(t, "1914-13-48")
 }
 
@@ -180,6 +140,7 @@ func performBirthdayValidationTest(t *testing.T, wrongDate string) {
 }
 
 func TestValidateChoiceFields(t *testing.T) {
+	docs.Description("an attendee with invalid values for the choice fields reports the expected validation errors")
 	a := createValidAttendee()
 	a.Gender = "348trhkuth4uihgkj4h89"
 	a.Options = "music,awoo"
@@ -200,6 +161,7 @@ func TestValidateChoiceFields(t *testing.T) {
 }
 
 func TestValidatePreventSettingIdField(t *testing.T) {
+	docs.Description("an attendee must not attempt to set its id in the request body")
 	a := createValidAttendee()
 	a.Id = "4"
 
