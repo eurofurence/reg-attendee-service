@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func createValidAttendee() attendee.AttendeeDto {
+func tstCreateValidAttendee() attendee.AttendeeDto {
 	return attendee.AttendeeDto{
 		Nickname:     "BlackCheetah",
 		FirstName:    "Hans",
@@ -34,7 +34,7 @@ func createValidAttendee() attendee.AttendeeDto {
 
 func TestValidateSuccess(t *testing.T) {
 	docs.Description("a valid attendee reports no validation errors")
-	a := createValidAttendee()
+	a := tstCreateValidAttendee()
 	expected := url.Values{}
 	performValidationTest(t, &a, expected, "")
 }
@@ -64,7 +64,7 @@ func TestValidateMissingInfo(t *testing.T) {
 
 func TestValidateTooLong(t *testing.T) {
 	docs.Description("an attendee with just barely too long field values reports the expected validation errors")
-	a := createValidAttendee()
+	a := tstCreateValidAttendee()
 	a.Nickname = "ThisIsASuperLongNicknameWhichIsNotAllowedBecauseItWillNotFitOnTheBadgeAndAnywayWh"
 	tooLong := "And this is a super long text that we will use to test for the length limits of the other fields. While we do this, " +
 		"we will cut off at just the right place to make it 1 character too long. I hope this text is long enough in total!"
@@ -105,7 +105,7 @@ func TestValidateNicknameTooManySpecials2(t *testing.T) {
 }
 
 func performNicknameValidationTest(t *testing.T, wrongNick string) {
-	a := createValidAttendee()
+	a := tstCreateValidAttendee()
 	a.Nickname = wrongNick
 
 	expected := url.Values{
@@ -130,7 +130,7 @@ func TestValidateBirthday3(t *testing.T) {
 }
 
 func performBirthdayValidationTest(t *testing.T, wrongDate string) {
-	a := createValidAttendee()
+	a := tstCreateValidAttendee()
 	a.Birthday = wrongDate
 
 	expected := url.Values{
@@ -141,7 +141,7 @@ func performBirthdayValidationTest(t *testing.T, wrongDate string) {
 
 func TestValidateChoiceFieldsAndId(t *testing.T) {
 	docs.Description("an attendee with invalid values for the choice fields reports the expected validation errors")
-	a := createValidAttendee()
+	a := tstCreateValidAttendee()
 	a.Id = "16"
 	a.Gender = "348trhkuth4uihgkj4h89"
 	a.Options = "music,awoo"
@@ -163,7 +163,7 @@ func TestValidateChoiceFieldsAndId(t *testing.T) {
 
 func TestValidatePreventSettingIdField(t *testing.T) {
 	docs.Description("an attendee must not attempt to set its id in the request body")
-	a := createValidAttendee()
+	a := tstCreateValidAttendee()
 	a.Id = "4"
 
 	expected := url.Values{
@@ -174,7 +174,7 @@ func TestValidatePreventSettingIdField(t *testing.T) {
 
 func TestValidatePreventSettingIdFieldWrongValue(t *testing.T) {
 	docs.Description("an attendee must not attempt to set its id in the request body")
-	a := createValidAttendee()
+	a := tstCreateValidAttendee()
 	a.Id = "4"
 
 	expected := url.Values{

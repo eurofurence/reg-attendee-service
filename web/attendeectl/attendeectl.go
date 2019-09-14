@@ -15,6 +15,12 @@ import (
 	"time"
 )
 
+var attendeeService attendeesrv.AttendeeService
+
+func init() {
+	attendeeService = &attendeesrv.AttendeeServiceImplData{}
+}
+
 func RestDispatcher(router *mux.Router) {
 	router.HandleFunc("/v1/attendees", newAttendeeHandler).Methods(http.MethodPut)
 	router.HandleFunc("/v1/attendees/{id:[1-9][0-9]*}", getAttendeeHandler).Methods(http.MethodGet)
@@ -31,13 +37,13 @@ func newAttendeeHandler(w http.ResponseWriter, r *http.Request) {
 		attendeeValidationErrorHandler(w, r, validationErrs)
 		return
 	}
-	entity := attendeesrv.NewAttendee()
+	entity := attendeeService.NewAttendee()
 	err = mapDtoToAttendee(dto, entity)
 	if err != nil {
 		attendeeParseErrorHandler(w, r, err)
 		return
 	}
-	id, err := attendeesrv.RegisterNewAttendee(entity)
+	id, err := attendeeService.RegisterNewAttendee(entity)
 	if err != nil {
 		attendeeWriteErrorHandler(w, r, err)
 		return
@@ -51,7 +57,7 @@ func getAttendeeHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-	entity, err := attendeesrv.GetAttendee(id)
+	entity, err := attendeeService.GetAttendee(id)
 	if err != nil {
 		attendeeNotFoundErrorHandler(w, r, id)
 		return
@@ -76,7 +82,7 @@ func updateAttendeeHandler(w http.ResponseWriter, r *http.Request) {
 		attendeeValidationErrorHandler(w, r, validationErrs)
 		return
 	}
-	entity, err := attendeesrv.GetAttendee(id)
+	entity, err := attendeeService.GetAttendee(id)
 	if err != nil {
 		attendeeNotFoundErrorHandler(w, r, id)
 		return
@@ -86,7 +92,7 @@ func updateAttendeeHandler(w http.ResponseWriter, r *http.Request) {
 		attendeeParseErrorHandler(w, r, err)
 		return
 	}
-	err = attendeesrv.UpdateAttendee(entity)
+	err = attendeeService.UpdateAttendee(entity)
 	if err != nil {
 		attendeeWriteErrorHandler(w, r, err)
 		return

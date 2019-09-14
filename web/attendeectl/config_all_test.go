@@ -1,7 +1,10 @@
 package attendeectl
 
 import (
+	"errors"
+	"github.com/stretchr/testify/mock"
 	"os"
+	"rexis/rexis-go-attendee/internal/entity"
 	"rexis/rexis-go-attendee/internal/repository/config"
 	"testing"
 )
@@ -16,6 +19,15 @@ func TestMain(m *testing.M) {
 }
 
 func tstSetup() {
+	tstSetupConfig()
+	tstSetupServiceMocks()
+}
+
+func tstShutdown() {
+
+}
+
+func tstSetupConfig() {
 	yaml := "" +
 		`choices:
   flags:
@@ -52,6 +64,26 @@ func tstSetup() {
 	}
 }
 
-func tstShutdown() {
+type MockAttendeeService struct {
+	mock.Mock
+}
 
+func (s *MockAttendeeService) NewAttendee() *entity.Attendee {
+	return &entity.Attendee{}
+}
+
+func (s *MockAttendeeService) RegisterNewAttendee(attendee *entity.Attendee) (uint, error) {
+	return 0, errors.New("some error, this is a mock")
+}
+
+func (s *MockAttendeeService) GetAttendee(id uint) (*entity.Attendee, error) {
+	return &entity.Attendee{}, errors.New("some error, this is a mock")
+}
+
+func (s *MockAttendeeService) UpdateAttendee(attendee *entity.Attendee) error {
+	return errors.New("some error, this is a mock")
+}
+
+func tstSetupServiceMocks() {
+	attendeeService = &MockAttendeeService{}
 }
