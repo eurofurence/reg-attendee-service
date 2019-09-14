@@ -9,13 +9,13 @@ import (
 // placing these here because they are package global
 
 func TestMain(m *testing.M) {
-	setup()
+	tstSetup()
 	code := m.Run()
-	shutdown()
+	tstShutdown()
 	os.Exit(code)
 }
 
-func setup() {
+func tstSetup() {
 	yaml := "" +
 		`choices:
   flags:
@@ -52,6 +52,6 @@ func setup() {
 	}
 }
 
-func shutdown() {
+func tstShutdown() {
 
 }

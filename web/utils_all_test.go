@@ -1,10 +1,12 @@
 package web
 
 import (
+	"encoding/json"
 	"github.com/go-http-utils/headers"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"rexis/rexis-go-attendee/api/v1/attendee"
 	"rexis/rexis-go-attendee/web/util/media"
 	"strings"
 )
@@ -68,4 +70,43 @@ func tstPerformPost(relativeUrlWithLeadingSlash string, requestBody string) tstW
 		log.Fatal(err)
 	}
 	return tstWebResponseFromResponse(response)
+}
+
+func tstBuildValidAttendee() attendee.AttendeeDto {
+	return attendee.AttendeeDto{
+		Nickname:     "BlackCheetah",
+		FirstName:    "Hans",
+		LastName:     "Mustermann",
+		Street:       "Teststraße 24",
+		Zip:          "12345",
+		City:         "Berlin",
+		Country:      "DE",
+		CountryBadge: "DE",
+		State:        "Sachsen",
+		Email:        "jsquirrel_github_9a6d@packetloss.de",
+		Phone:        "+49-30-123",
+		Telegram:     "@ihopethisuserdoesnotexist",
+		Birthday:     "1998-11-23",
+		Gender:       "other",
+		Flags:        "anon,ev",
+		Packages:     "room-none,attendance,stage,sponsor2",
+		Options:      "music,suit",
+		TshirtSize:   "XXL",
+	}
+}
+
+func tstRenderJson(v interface{}) string {
+	representationBytes, err := json.Marshal(v)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return string(representationBytes)
+}
+
+// tip: dto := &attendee.AttendeeDto{}
+func tstParseJson(body string, dto interface{}) {
+	err := json.Unmarshal([]byte(body), dto)
+	if err != nil {
+		log.Fatal(err)
+	}
 }

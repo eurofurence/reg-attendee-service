@@ -27,6 +27,7 @@ TODO:
 - unit tests (mapping logic, ...)
 - introduce context.Context everywhere (OMG more clutter)
 - request logging
+- separate logging target for log output during test runs, so log output can be asserted (and isn't output)
 - assign request id and return in case of errors
 - log request id everywhere, log severity everywhere, log format -> wrap logging
 - security using JWT signatures with key in config
