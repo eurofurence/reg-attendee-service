@@ -16,6 +16,7 @@ var (
 
 func init() {
 	configurationLock = &sync.RWMutex{}
+	flag.StringVar(&configurationFilename, "config", "", "config file path")
 }
 
 func parseAndOverwriteContext(yamlFile []byte) error {
@@ -49,7 +50,6 @@ func InitializeConfiguration(yaml string) error {
 }
 
 func StartupLoadConfiguration() {
-	flag.StringVar(&configurationFilename, "config", "", "config file path")
 	log.Print("Reading configuration...")
 	if configurationFilename == "" {
 		log.Fatal("Configuration file argument missing. Please specify using -config argument. Aborting.")
