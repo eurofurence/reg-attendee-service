@@ -12,9 +12,11 @@ type InMemoryRepository struct {
 }
 
 func (r *InMemoryRepository) Open() {
+	r.attendees = make(map[uint]*entity.Attendee)
 }
 
 func (r *InMemoryRepository) Close() {
+	r.attendees = nil
 }
 
 func (r *InMemoryRepository) AddAttendee(a *entity.Attendee) (uint, error) {

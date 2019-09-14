@@ -4,6 +4,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"rexis/rexis-go-attendee/internal/repository/config"
+	"rexis/rexis-go-attendee/internal/repository/database"
 	"testing"
 )
 
@@ -22,6 +23,7 @@ func TestMain(m *testing.M) {
 
 func tstSetup() {
 	tstSetupConfig()
+	tstSetupDatabase()
 	tstSetupHttpTestServer()
 }
 
@@ -67,6 +69,11 @@ func tstSetupHttpTestServer() {
 	ts = httptest.NewServer(router)
 }
 
+func tstSetupDatabase() {
+	database.Open()
+}
+
 func tstShutdown() {
 	ts.Close()
+	database.Close()
 }

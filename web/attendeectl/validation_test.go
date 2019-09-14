@@ -36,7 +36,7 @@ func TestValidateSuccess(t *testing.T) {
 	docs.Description("a valid attendee reports no validation errors")
 	a := createValidAttendee()
 	expected := url.Values{}
-	performValidationTest(t, &a, expected)
+	performValidationTest(t, &a, expected, "")
 }
 
 func TestValidateMissingInfo(t *testing.T) {
@@ -59,7 +59,7 @@ func TestValidateMissingInfo(t *testing.T) {
 		"street": []string{"street field must be at least 1 and at most 120 characters long"},
 		"zip":    []string{"zip field must be at least 1 and at most 20 characters long"},
 	}
-	performValidationTest(t, &a, expected)
+	performValidationTest(t, &a, expected, "")
 }
 
 func TestValidateTooLong(t *testing.T) {
@@ -86,7 +86,7 @@ func TestValidateTooLong(t *testing.T) {
 		"street":     []string{"street field must be at least 1 and at most 120 characters long"},
 		"zip":        []string{"zip field must be at least 1 and at most 20 characters long"},
 	}
-	performValidationTest(t, &a, expected)
+	performValidationTest(t, &a, expected, "")
 }
 
 func TestValidateNicknameOnlySpecials(t *testing.T) {
@@ -111,7 +111,7 @@ func performNicknameValidationTest(t *testing.T, wrongNick string) {
 	expected := url.Values{
 		"nickname": []string{"nickname field must contain at least two letters, and contain no more than two non-letters"},
 	}
-	performValidationTest(t, &a, expected)
+	performValidationTest(t, &a, expected, "")
 }
 
 func TestValidateBirthday1(t *testing.T) {
@@ -136,12 +136,13 @@ func performBirthdayValidationTest(t *testing.T, wrongDate string) {
 	expected := url.Values{
 		"birthday": []string{"birthday field must be a valid ISO 8601 date (format yyyy-MM-dd)"},
 	}
-	performValidationTest(t, &a, expected)
+	performValidationTest(t, &a, expected, "")
 }
 
-func TestValidateChoiceFields(t *testing.T) {
+func TestValidateChoiceFieldsAndId(t *testing.T) {
 	docs.Description("an attendee with invalid values for the choice fields reports the expected validation errors")
 	a := createValidAttendee()
+	a.Id = "16"
 	a.Gender = "348trhkuth4uihgkj4h89"
 	a.Options = "music,awoo"
 	a.Flags = "hc,noflag"
@@ -157,7 +158,7 @@ func TestValidateChoiceFields(t *testing.T) {
 		"telegram":    []string{"optional telegram field must contain your @username from telegram, or it can be left blank"},
 		"tshirt_size": []string{"optional tshirt_size field must be empty or one of XS,S,M,L,XL,XXL,XXXL,XXXXL"},
 	}
-	performValidationTest(t, &a, expected)
+	performValidationTest(t, &a, expected, "16")
 }
 
 func TestValidatePreventSettingIdField(t *testing.T) {
@@ -166,13 +167,24 @@ func TestValidatePreventSettingIdField(t *testing.T) {
 	a.Id = "4"
 
 	expected := url.Values{
-		"id": []string{"id field must be empty for incoming requests"},
+		"id": []string{"id field must be empty or correctly assigned for incoming requests"},
 	}
-	performValidationTest(t, &a, expected)
+	performValidationTest(t, &a, expected, "")
 }
 
-func performValidationTest(t *testing.T, a *attendee.AttendeeDto, expectedErrors url.Values) {
-	actualErrors := validate(a)
+func TestValidatePreventSettingIdFieldWrongValue(t *testing.T) {
+	docs.Description("an attendee must not attempt to set its id in the request body")
+	a := createValidAttendee()
+	a.Id = "4"
+
+	expected := url.Values{
+		"id": []string{"id field must be empty or correctly assigned for incoming requests"},
+	}
+	performValidationTest(t, &a, expected, "16")
+}
+
+func performValidationTest(t *testing.T, a *attendee.AttendeeDto, expectedErrors url.Values, allowedId string) {
+	actualErrors := validate(a, allowedId)
 
 	prettyprintedActualErrors, _ := json.MarshalIndent(actualErrors, "", "  ")
 	prettyprintedExpectedErrors, _ := json.MarshalIndent(expectedErrors, "", "  ")

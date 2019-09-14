@@ -31,9 +31,13 @@ func Open() {
 
 func Close() {
 	log.Print("Closing database...")
-	ActiveRepository.Close()
+	GetRepository().Close()
+	SetRepository(nil)
 }
 
 func GetRepository() Repository {
+	if ActiveRepository == nil {
+		log.Fatal("You must Open() the database before using it. This is an error in your implementation.")
+	}
 	return ActiveRepository
 }

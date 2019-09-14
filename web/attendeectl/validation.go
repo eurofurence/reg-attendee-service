@@ -24,11 +24,11 @@ const countryPattern = "^[A-Z]{2}$"
 
 var allowedGenders = [...]string{"male", "female", "other", "notprovided", ""}
 
-func validate(a *attendee.AttendeeDto) url.Values {
+func validate(a *attendee.AttendeeDto, allowedId string) url.Values {
 	errs := url.Values{}
 
-	if a.Id != "" {
-		errs.Add("id", "id field must be empty for incoming requests")
+	if a.Id != "" && a.Id != allowedId {
+		errs.Add("id", "id field must be empty or correctly assigned for incoming requests")
 	}
 	if validation.ViolatesPattern(nicknamePattern, a.Nickname) {
 		errs.Add("nickname", "nickname field must contain at least two letters, and contain no more than two non-letters")

@@ -7,13 +7,13 @@ import (
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
+	"net/url"
 	"rexis/rexis-go-attendee/api/v1/attendee"
 	"rexis/rexis-go-attendee/internal/service/attendeesrv"
+	"rexis/rexis-go-attendee/web/util/media"
 	"strconv"
 	"time"
 )
-
-const contentTypeApplicationJson = "application/json"
 
 func RestDispatcher(router *mux.Router) {
 	router.HandleFunc("/v1/attendees", newAttendeeHandler).Methods(http.MethodPut)
@@ -24,6 +24,11 @@ func RestDispatcher(router *mux.Router) {
 func newAttendeeHandler(w http.ResponseWriter, r *http.Request) {
 	dto, err := parseBodyToAttendeeDto(w, r)
 	if err != nil {
+		return
+	}
+	validationErrs := validate(dto, "")
+	if len(validationErrs) != 0 {
+		attendeeValidationErrorHandler(w, r, validationErrs)
 		return
 	}
 	entity := attendeesrv.NewAttendee()
@@ -53,7 +58,7 @@ func getAttendeeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	dto := attendee.AttendeeDto{}
 	mapAttendeeToDto(entity, &dto)
-	w.Header().Add(headers.ContentType, contentTypeApplicationJson)
+	w.Header().Add(headers.ContentType, media.ContentTypeApplicationJson)
 	writeJson(w, dto)
 }
 
@@ -64,6 +69,11 @@ func updateAttendeeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	dto, err := parseBodyToAttendeeDto(w, r)
 	if err != nil {
+		return
+	}
+	validationErrs := validate(dto, fmt.Sprint(id))
+	if len(validationErrs) != 0 {
+		attendeeValidationErrorHandler(w, r, validationErrs)
 		return
 	}
 	entity, err := attendeesrv.GetAttendee(id)
@@ -103,31 +113,36 @@ func parseBodyToAttendeeDto(w http.ResponseWriter, r *http.Request) (*attendee.A
 	return dto, err
 }
 
+func attendeeValidationErrorHandler(w http.ResponseWriter, r *http.Request, errs url.Values) {
+	log.Printf("received attendee data with validation errors: %v", errs)
+	errorHandler(w, r, "attendee.data.invalid", http.StatusBadRequest, errs)
+}
+
 func invalidIdErrorHandler(w http.ResponseWriter, r *http.Request, id string) {
 	log.Printf("received invalid attendee id '%s'", id)
-	errorHandler(w, r, "attendee.id.invalid", http.StatusBadRequest)
+	errorHandler(w, r, "attendee.id.invalid", http.StatusBadRequest, url.Values{})
 }
 
 func attendeeNotFoundErrorHandler(w http.ResponseWriter, r *http.Request, id uint) {
 	log.Printf("attendee id %v not found", id)
-	errorHandler(w, r, "attendee.id.notfound", http.StatusNotFound)
+	errorHandler(w, r, "attendee.id.notfound", http.StatusNotFound, url.Values{})
 }
 
 func attendeeParseErrorHandler(w http.ResponseWriter, r *http.Request, err error) {
 	log.Printf("attendee body could not be parsed: %v", err)
-	errorHandler(w, r, "attendee.parse.error", http.StatusBadRequest)
+	errorHandler(w, r, "attendee.parse.error", http.StatusBadRequest, url.Values{})
 }
 
 func attendeeWriteErrorHandler(w http.ResponseWriter, r *http.Request, err error) {
 	log.Printf("attendee could not be written: %v", err)
-	errorHandler(w, r, "attendee.write.error", http.StatusInternalServerError)
+	errorHandler(w, r, "attendee.write.error", http.StatusInternalServerError, url.Values{})
 }
 
-func errorHandler(w http.ResponseWriter, r *http.Request, msg string, status int) {
+func errorHandler(w http.ResponseWriter, r *http.Request, msg string, status int, details url.Values) {
 	timestamp := time.Now().Format(time.RFC3339)
 	response := attendee.ErrorDto{Message: msg, Timestamp: timestamp}
 	// TODO include requestid
-	w.Header().Set(headers.ContentType, contentTypeApplicationJson)
+	w.Header().Set(headers.ContentType, media.ContentTypeApplicationJson)
 	w.WriteHeader(status)
 	writeJson(w, response)
 }
