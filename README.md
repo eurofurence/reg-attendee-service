@@ -21,10 +21,7 @@ go get github.com/stretchr/testify
 ```
 
 TODO:
-- request level acceptance tests
-- integration tests 
-- contract tests
-- unit tests (mapping logic, ...)
+- contract test (for health endpoint only atm)
 - introduce context.Context everywhere (OMG more clutter)
 - request logging
 - separate logging target for log output during test runs, so log output can be asserted (and isn't output)
