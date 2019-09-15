@@ -18,10 +18,10 @@ go get github.com/go-http-utils/headers
 go get github.com/jinzhu/gorm
 go get github.com/go-sql-driver/mysql
 go get github.com/stretchr/testify
+go get -d github.com/pact-foundation/pact-go
 ```
 
 TODO:
-- contract test (for health endpoint only atm)
 - introduce context.Context everywhere (OMG more clutter)
 - request logging
 - separate logging target for log output during test runs, so log output can be asserted (and isn't output)
