@@ -1,4 +1,4 @@
-package web
+package acceptance
 
 import (
 	"github.com/stretchr/testify/require"
@@ -13,7 +13,7 @@ import (
 // (status information about the microservice)
 // -------------------------------------------
 
-// see config and setup/teardown in setup_all_test.go
+// see config and setup/teardown in setup_acc_test.go
 
 func TestHealthEndpoint(t *testing.T) {
 	docs.Given("given an unauthenticated user")

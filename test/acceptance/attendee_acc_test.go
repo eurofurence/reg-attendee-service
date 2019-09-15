@@ -1,4 +1,4 @@
-package web
+package acceptance
 
 import (
 	"github.com/stretchr/testify/require"
@@ -12,7 +12,7 @@ import (
 // acceptance tests for the attendee resource
 // ------------------------------------------
 
-// see config in setup_all_test.go
+// see config in setup_acc_test.go
 
 func TestCreateNewAttendee(t *testing.T) {
 	docs.Given("given an unauthenticated user")

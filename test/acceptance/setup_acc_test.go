@@ -1,10 +1,11 @@
-package web
+package acceptance
 
 import (
 	"net/http/httptest"
 	"os"
 	"rexis/rexis-go-attendee/internal/repository/config"
 	"rexis/rexis-go-attendee/internal/repository/database"
+	"rexis/rexis-go-attendee/web"
 	"testing"
 )
 
@@ -65,7 +66,7 @@ func tstSetupConfig() {
 }
 
 func tstSetupHttpTestServer() {
-	router := CreateRouter()
+	router := web.CreateRouter()
 	ts = httptest.NewServer(router)
 }
 

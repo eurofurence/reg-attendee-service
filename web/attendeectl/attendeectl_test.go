@@ -13,7 +13,7 @@ import (
 	"testing"
 )
 
-// see setup and mock for attendee service in config_all_test.go
+// see setup and mock for attendee service in config_test.go
 
 func TestParseBodyToAttendeeDtoParseError(t *testing.T) {
 	docs.Description("a parse failure of the json body should lead to the correct 'bad request' error response")

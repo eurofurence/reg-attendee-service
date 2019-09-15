@@ -21,6 +21,11 @@ func init() {
 	attendeeService = &attendeesrv.AttendeeServiceImplData{}
 }
 
+// use only for testing
+func OverrideAttendeeService(overrideAttendeeServiceForTesting attendeesrv.AttendeeService) {
+	attendeeService = overrideAttendeeServiceForTesting
+}
+
 func RestDispatcher(router *mux.Router) {
 	router.HandleFunc("/v1/attendees", newAttendeeHandler).Methods(http.MethodPut)
 	router.HandleFunc("/v1/attendees/{id:[1-9][0-9]*}", getAttendeeHandler).Methods(http.MethodGet)
