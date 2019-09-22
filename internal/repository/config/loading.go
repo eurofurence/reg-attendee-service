@@ -1,11 +1,14 @@
 package config
 
 import (
+	"errors"
 	"flag"
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/system"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
+	"net/url"
+	"sort"
 	"sync"
 )
 
@@ -21,16 +24,41 @@ func init() {
 	flag.StringVar(&configurationFilename, "config", "", "config file path")
 }
 
-func parseAndOverwriteContext(yamlFile []byte) error {
+func parseAndOverwriteConfig(yamlFile []byte) error {
 	newConfigurationData := &conf{}
-	err := yaml.Unmarshal(yamlFile, newConfigurationData)
+	err := yaml.UnmarshalStrict(yamlFile, newConfigurationData)
 	if err != nil {
 		// cannot use logging package here as this would create a circular dependency (logging needs config)
 		log.Printf("[00000000] ERROR failed to parse configuration file '%s': %v", configurationFilename, err)
 		return err
 	}
 
-	// TODO config validation and defaults, e.g. logging severity
+	setConfigurationDefaults(newConfigurationData)
+
+	errs := url.Values{}
+	validateServerConfiguration(errs, newConfigurationData.Server)
+	validateLoggingConfiguration(errs, newConfigurationData.Logging)
+	validateSecurityConfiguration(errs, newConfigurationData.Security)
+	validateDatabaseConfiguration(errs, newConfigurationData.Database)
+	validateFlagsConfiguration(errs, newConfigurationData.Choices.Flags)
+	validatePackagesConfiguration(errs, newConfigurationData.Choices.Packages)
+	validateOptionsConfiguration(errs, newConfigurationData.Choices.Options)
+
+	if len(errs) != 0 {
+		var keys []string
+		for key, _ := range errs {
+			keys = append(keys, key)
+		}
+		sort.Strings(keys)
+
+		for _, k := range keys {
+			key := k
+			val := errs[k]
+			// cannot use logging package here as this would create a circular dependency (logging needs config)
+			log.Printf("[00000000] ERROR configuration error: %s: %s", key, val[0])
+		}
+		return errors.New("configuration validation error")
+	}
 
 	configurationLock.Lock()
 	defer configurationLock.Unlock()
@@ -46,7 +74,7 @@ func loadConfiguration() error {
 		log.Printf("[00000000] ERROR failed to load configuration file '%s': %v", configurationFilename, err)
 		return err
 	}
-	err = parseAndOverwriteContext(yamlFile)
+	err = parseAndOverwriteConfig(yamlFile)
 	return err
 }
 
