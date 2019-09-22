@@ -3,8 +3,8 @@ package logimpl
 import (
 	"fmt"
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/config"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/system"
 	"log"
-	"os"
 )
 
 type LoggerDefaultImpl struct{
@@ -105,10 +105,10 @@ func (l *LoggerDefaultImpl) Errorf(format string, v ...interface{}) {
 
 func (l *LoggerDefaultImpl) Fatal(v ...interface{}) {
 	l.print(severityFATAL, v...)
-	os.Exit(1)
+	system.Exit(1)
 }
 
 func (l *LoggerDefaultImpl) Fatalf(format string, v ...interface{}) {
 	l.print(severityFATAL, fmt.Sprintf(format, v...))
-	os.Exit(1)
+	system.Exit(1)
 }

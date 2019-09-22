@@ -15,21 +15,23 @@ func buildHandlerFunc(f filter.Filter) func(w http.ResponseWriter, r *http.Reque
 	return func(w http.ResponseWriter, r *http.Request) { f.Handle(context.TODO(), w, r) }
 }
 
-func BuildUnauthenticatedNologgingHandler(timeout string, handler filter.ContextAwareHandler) func(w http.ResponseWriter, r *http.Request) {
-	timeoutDuration, err := time.ParseDuration(timeout)
+func parseTimeout(timeout string) time.Duration {
+	parsedDuration, err := time.ParseDuration(timeout)
 	if err != nil {
 		logging.NoCtx().Fatalf("invalid timeout duration '%s', try something like '800ms' or '4s': %v", timeout, err)
 	}
+	return parsedDuration
+}
+
+func BuildUnauthenticatedNologgingHandler(timeout string, handler filter.ContextAwareHandler) func(w http.ResponseWriter, r *http.Request) {
+	timeoutDuration := parseTimeout(timeout)
 	return buildHandlerFunc(
 		ctxfilter.Create(timeoutDuration,
 			handlefilter.Create(handler)))
 }
 
 func BuildUnauthenticatedHandler(timeout string, handler filter.ContextAwareHandler) func(w http.ResponseWriter, r *http.Request) {
-	timeoutDuration, err := time.ParseDuration(timeout)
-	if err != nil {
-		logging.NoCtx().Fatalf("invalid timeout duration '%s', try something like '800ms' or '4s': %v", timeout, err)
-	}
+	timeoutDuration := parseTimeout(timeout)
 	return buildHandlerFunc(
 		ctxfilter.Create(timeoutDuration,
 			logfilter.Create(

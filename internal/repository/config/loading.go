@@ -2,6 +2,7 @@ package config
 
 import (
 	"flag"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/system"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
@@ -38,7 +39,7 @@ func parseAndOverwriteContext(yamlFile []byte) error {
 	return nil
 }
 
-func LoadConfiguration() error {
+func loadConfiguration() error {
 	yamlFile, err := ioutil.ReadFile(configurationFilename)
 	if err != nil {
 		// cannot use logging package here as this would create a circular dependency (logging needs config)
@@ -52,23 +53,21 @@ func LoadConfiguration() error {
 // use this for tests to set a hardcoded yaml configuration
 func LoadTestingConfigurationFromPathOrAbort(configFilenameForTests string) {
 	configurationFilename = configFilenameForTests
-	err := LoadConfiguration()
-	if err != nil {
-		// cannot use logging package here as this would create a circular dependency (logging needs config)
-		log.Fatal("[00000000] FATAL Error reading or parsing configuration file. Aborting.")
-	}
+	StartupLoadConfiguration()
 }
 
 func StartupLoadConfiguration() {
 	log.Print("[00000000] INFO  Reading configuration...")
 	if configurationFilename == "" {
 		// cannot use logging package here as this would create a circular dependency (logging needs config)
-		log.Fatal("[00000000] FATAL Configuration file argument missing. Please specify using -config argument. Aborting.")
+		log.Print("[00000000] FATAL Configuration file argument missing. Please specify using -config argument. Aborting.")
+		system.Exit(1)
 	}
-	err := LoadConfiguration()
+	err := loadConfiguration()
 	if err != nil {
 		// cannot use logging package here as this would create a circular dependency (logging needs config)
-		log.Fatal("[00000000] FATAL Error reading or parsing configuration file. Aborting.")
+		log.Print("[00000000] FATAL Error reading or parsing configuration file. Aborting.")
+		system.Exit(1)
 	}
 }
 
