@@ -1,13 +1,14 @@
 package producer
 
 import (
-	"github.com/stretchr/testify/mock"
-	"net/http/httptest"
-	"os"
+	"context"
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/entity"
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/config"
 	"github.com/jumpy-squirrel/rexis-go-attendee/web"
-	"github.com/jumpy-squirrel/rexis-go-attendee/web/attendeectl"
+	"github.com/jumpy-squirrel/rexis-go-attendee/web/controller/attendeectl"
+	"github.com/stretchr/testify/mock"
+	"net/http/httptest"
+	"os"
 	"testing"
 )
 
@@ -78,21 +79,21 @@ type MockAttendeeService struct {
 	mock.Mock
 }
 
-func (s *MockAttendeeService) NewAttendee() *entity.Attendee {
+func (s *MockAttendeeService) NewAttendee(ctx context.Context) *entity.Attendee {
 	return &entity.Attendee{}
 }
 
-func (s *MockAttendeeService) RegisterNewAttendee(attendee *entity.Attendee) (uint, error) {
+func (s *MockAttendeeService) RegisterNewAttendee(ctx context.Context, attendee *entity.Attendee) (uint, error) {
 	// TODO use mock to verify data for contract tests
 	return 1, nil
 }
 
-func (s *MockAttendeeService) GetAttendee(id uint) (*entity.Attendee, error) {
+func (s *MockAttendeeService) GetAttendee(ctx context.Context, id uint) (*entity.Attendee, error) {
 	// TODO when writing a contract test, put matching response data here
 	return &entity.Attendee{}, nil
 }
 
-func (s *MockAttendeeService) UpdateAttendee(attendee *entity.Attendee) error {
+func (s *MockAttendeeService) UpdateAttendee(ctx context.Context, attendee *entity.Attendee) error {
 	return nil
 }
 

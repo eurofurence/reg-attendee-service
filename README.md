@@ -11,18 +11,12 @@ Command line arguments
 
 ## Installation
 
-```
-go get gopkg.in/yaml.v2
-go get github.com/gorilla/mux
-go get github.com/go-http-utils/headers
-go get github.com/jinzhu/gorm
-go get github.com/go-sql-driver/mysql
-go get github.com/stretchr/testify
-go get -d github.com/pact-foundation/pact-go
-```
+This service uses go modules to provide dependency management, see `go.mod`.
 
-TODO:
-- introduce context.Context everywhere (OMG more clutter)
+If you place this repository OUTSIDE of your gopath, go build and go test will download
+all their required dependencies by default. 
+
+## TODO:
 - request logging
 - separate logging target for log output during test runs, so log output can be asserted (and isn't output)
 - assign request id and return in case of errors
@@ -35,3 +29,4 @@ TODO:
 - maintain change history in DB
 - admin fields handling (subresource, but export type&status on get)
 - remaining field validations (email pattern, flag/options/pkg logic)
+- react to context.cancel

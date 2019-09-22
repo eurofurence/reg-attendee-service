@@ -1,11 +1,12 @@
 package attendeectl
 
 import (
+	"context"
 	"errors"
-	"github.com/stretchr/testify/mock"
-	"os"
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/entity"
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/config"
+	"github.com/stretchr/testify/mock"
+	"os"
 	"testing"
 )
 
@@ -68,19 +69,19 @@ type MockAttendeeService struct {
 	mock.Mock
 }
 
-func (s *MockAttendeeService) NewAttendee() *entity.Attendee {
+func (s *MockAttendeeService) NewAttendee(ctx context.Context) *entity.Attendee {
 	return &entity.Attendee{}
 }
 
-func (s *MockAttendeeService) RegisterNewAttendee(attendee *entity.Attendee) (uint, error) {
+func (s *MockAttendeeService) RegisterNewAttendee(ctx context.Context, attendee *entity.Attendee) (uint, error) {
 	return 0, errors.New("some error, this is a mock")
 }
 
-func (s *MockAttendeeService) GetAttendee(id uint) (*entity.Attendee, error) {
+func (s *MockAttendeeService) GetAttendee(ctx context.Context, id uint) (*entity.Attendee, error) {
 	return &entity.Attendee{}, errors.New("some error, this is a mock")
 }
 
-func (s *MockAttendeeService) UpdateAttendee(attendee *entity.Attendee) error {
+func (s *MockAttendeeService) UpdateAttendee(ctx context.Context, attendee *entity.Attendee) error {
 	return errors.New("some error, this is a mock")
 }
 

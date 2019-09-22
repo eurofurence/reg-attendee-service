@@ -2,11 +2,11 @@ package web
 
 import (
 	"github.com/gorilla/mux"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/config"
+	"github.com/jumpy-squirrel/rexis-go-attendee/web/controller/attendeectl"
+	"github.com/jumpy-squirrel/rexis-go-attendee/web/controller/infoctl"
 	"log"
 	"net/http"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/config"
-	"github.com/jumpy-squirrel/rexis-go-attendee/web/attendeectl"
-	"github.com/jumpy-squirrel/rexis-go-attendee/web/infoctl"
 )
 
 func StartWebserverAndNeverReturn() {

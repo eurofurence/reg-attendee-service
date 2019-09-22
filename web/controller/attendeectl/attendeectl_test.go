@@ -1,14 +1,15 @@
 package attendeectl
 
 import (
+	"context"
 	"encoding/json"
+	"github.com/jumpy-squirrel/rexis-go-attendee/api/v1/attendee"
+	"github.com/jumpy-squirrel/rexis-go-attendee/docs"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httptest"
-	"github.com/jumpy-squirrel/rexis-go-attendee/api/v1/attendee"
-	"github.com/jumpy-squirrel/rexis-go-attendee/docs"
 	"strings"
 	"testing"
 )
@@ -20,7 +21,7 @@ func TestParseBodyToAttendeeDtoParseError(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := tstMockPostRequest("{[[garbage}")
 
-	_, err := parseBodyToAttendeeDto(w, r)
+	_, err := parseBodyToAttendeeDto(context.TODO(), w, r)
 	require.NotNil(t, err, "expected an error return code so controller will bail out")
 	tstRequireErrorResponse(t, w, http.StatusBadRequest, "attendee.parse.error")
 }
@@ -30,7 +31,7 @@ func TestGetAttendeeHandlerInvalidIdUnset(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := tstMockGetRequest("")
 
-	getAttendeeHandler(w, r)
+	getAttendeeHandler(context.TODO(), w, r)
 	tstRequireErrorResponse(t, w, http.StatusBadRequest, "attendee.id.invalid")
 }
 
@@ -39,7 +40,7 @@ func TestNewAttendeeHandlerWriteError(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := tstMockPostRequest(tstRenderJson(tstCreateValidAttendee()))
 
-	newAttendeeHandler(w, r)
+	newAttendeeHandler(context.TODO(), w, r)
 	tstRequireErrorResponse(t, w, http.StatusInternalServerError, "attendee.write.error")
 }
 

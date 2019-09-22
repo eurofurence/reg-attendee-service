@@ -2,10 +2,10 @@ package attendeectl
 
 import (
 	"encoding/json"
-	"net/url"
-	"reflect"
 	"github.com/jumpy-squirrel/rexis-go-attendee/api/v1/attendee"
 	"github.com/jumpy-squirrel/rexis-go-attendee/docs"
+	"net/url"
+	"reflect"
 	"testing"
 )
 

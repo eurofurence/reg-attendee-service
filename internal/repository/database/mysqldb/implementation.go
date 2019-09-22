@@ -1,6 +1,7 @@
 package mysqldb
 
 import (
+	"context"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"log"
@@ -27,17 +28,17 @@ func (r *MysqlRepository) Close() {
 	}
 }
 
-func (r *MysqlRepository) AddAttendee(a *entity.Attendee) (uint, error) {
+func (r *MysqlRepository) AddAttendee(ctx context.Context, a *entity.Attendee) (uint, error) {
 	err := r.db.Create(a).Error
 	return a.ID, err
 }
 
-func (r *MysqlRepository) UpdateAttendee(a *entity.Attendee) error {
+func (r *MysqlRepository) UpdateAttendee(ctx context.Context, a *entity.Attendee) error {
 	err := r.db.Save(a).Error
 	return err
 }
 
-func (r *MysqlRepository) GetAttendeeById(id uint) (*entity.Attendee, error) {
+func (r *MysqlRepository) GetAttendeeById(ctx context.Context, id uint) (*entity.Attendee, error) {
 	var a entity.Attendee
 	err := r.db.First(&a, id).Error
 	return &a, err

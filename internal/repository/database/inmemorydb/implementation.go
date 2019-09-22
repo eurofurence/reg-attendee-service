@@ -1,6 +1,7 @@
 package inmemorydb
 
 import (
+	"context"
 	"fmt"
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/entity"
 	"sync/atomic"
@@ -19,14 +20,14 @@ func (r *InMemoryRepository) Close() {
 	r.attendees = nil
 }
 
-func (r *InMemoryRepository) AddAttendee(a *entity.Attendee) (uint, error) {
+func (r *InMemoryRepository) AddAttendee(ctx context.Context, a *entity.Attendee) (uint, error) {
 	newId := uint(atomic.AddUint32(&r.idSequence, 1))
 	a.ID = newId
 	r.attendees[newId] = a
 	return newId, nil
 }
 
-func (r *InMemoryRepository) UpdateAttendee(a *entity.Attendee) error {
+func (r *InMemoryRepository) UpdateAttendee(ctx context.Context, a *entity.Attendee) error {
 	if _, ok := r.attendees[a.ID]; ok {
 		r.attendees[a.ID] = a
 		return nil
@@ -35,7 +36,7 @@ func (r *InMemoryRepository) UpdateAttendee(a *entity.Attendee) error {
 	}
 }
 
-func (r *InMemoryRepository) GetAttendeeById(id uint) (*entity.Attendee, error) {
+func (r *InMemoryRepository) GetAttendeeById(ctx context.Context, id uint) (*entity.Attendee, error) {
 	if att, ok := r.attendees[id]; ok {
 		return att, nil
 	} else {

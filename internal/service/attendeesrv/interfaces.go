@@ -1,11 +1,14 @@
 package attendeesrv
 
-import "github.com/jumpy-squirrel/rexis-go-attendee/internal/entity"
+import (
+	"context"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/entity"
+)
 
 type AttendeeService interface {
-	NewAttendee() *entity.Attendee
-	RegisterNewAttendee(attendee *entity.Attendee) (uint, error)
-	GetAttendee(id uint) (*entity.Attendee, error)
-	UpdateAttendee(attendee *entity.Attendee) error
+	NewAttendee(ctx context.Context) *entity.Attendee
+	RegisterNewAttendee(ctx context.Context, attendee *entity.Attendee) (uint, error)
+	GetAttendee(ctx context.Context, id uint) (*entity.Attendee, error)
+	UpdateAttendee(ctx context.Context, attendee *entity.Attendee) error
 }
 

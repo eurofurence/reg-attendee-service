@@ -1,10 +1,10 @@
 package attendeectl
 
 import (
-	"github.com/stretchr/testify/require"
 	"github.com/jumpy-squirrel/rexis-go-attendee/api/v1/attendee"
 	"github.com/jumpy-squirrel/rexis-go-attendee/docs"
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/entity"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
