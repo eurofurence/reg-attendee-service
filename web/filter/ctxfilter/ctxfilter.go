@@ -3,6 +3,7 @@ package ctxfilter
 import (
 	"context"
 	"github.com/google/uuid"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/logging"
 	"github.com/jumpy-squirrel/rexis-go-attendee/web/filter"
 	"github.com/jumpy-squirrel/rexis-go-attendee/web/filter/ctxvalues"
 	"net/http"
@@ -28,17 +29,19 @@ func (f *ContextFilter) Handle(_ context.Context, w http.ResponseWriter, r *http
 	ctx, cancel = context.WithTimeout(context.Background(), f.timeout)
 	defer cancel() // Cancel ctx as soon as Handle returns.
 
-	ctx = ctxvalues.CreateContextWithValueMap(ctx)
-
 	reqUuidStr := r.Header.Get(TraceIdHeader)
 	if reqUuidStr == "" {
 		reqUuid, err := uuid.NewRandom()
 		if err == nil {
-			reqUuidStr = reqUuid.String()
+			reqUuidStr = reqUuid.String()[:8]
 		} else {
-			reqUuidStr ="uuid-generate-error"
+			// this should not normally ever happen, but continue with this fixed requestId
+			reqUuidStr ="ffffffff"
 		}
 	}
+	ctx = logging.CreateContextWithLoggerForRequestId(ctx, reqUuidStr)
+
+	ctx = ctxvalues.CreateContextWithValueMap(ctx)
 	ctxvalues.SetRequestId(ctx, reqUuidStr)
 	w.Header().Add(TraceIdHeader, reqUuidStr)
 

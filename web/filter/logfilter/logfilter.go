@@ -2,9 +2,9 @@ package logfilter
 
 import (
 	"context"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/logging"
 	"github.com/jumpy-squirrel/rexis-go-attendee/web/filter"
 	"github.com/jumpy-squirrel/rexis-go-attendee/web/filter/ctxvalues"
-	"log"
 	"net/http"
 	"time"
 )
@@ -19,12 +19,13 @@ func Create(wrappedFilter filter.Filter) filter.Filter {
 
 func (f *LogFilter) Handle(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
-	log.Printf("[%s] received %s %s", ctxvalues.RequestId(ctx), r.Method, r.URL.EscapedPath())
+	logging.Ctx(ctx).Infof("received %s %s", r.Method, r.URL.EscapedPath())
 
 	f.wrappedFilter.Handle(ctx, w, r)
 
 	elapsed := time.Since(start)
-	log.Printf("[%s] finished %s %s in %d ms -> %s", ctxvalues.RequestId(ctx), r.Method, r.URL.EscapedPath(), elapsed.Nanoseconds() / 1000000, ctxvalues.HttpStatus(ctx))
+	logging.Ctx(ctx).Infof("finished %s %s in %d ms -> %s", r.Method, r.URL.EscapedPath(),
+		elapsed.Nanoseconds() / 1000000, ctxvalues.HttpStatus(ctx))
 
 	/*
 	this will get called upon cancel(), but request processing does not react to the event and actually get aborted, so it's useless as it is
