@@ -24,6 +24,7 @@ all their required dependencies by default.
         - maintain change history in DB
     - remaining field validations (email pattern, flag/options/pkg logic)
     - config validation and defaults
+    - optional partner (nick) field for MMC
     - require a fixed bearer token from config for all nonpublic endpoints
 - security with oauth2 server MVP.2
     - security using JWT signatures with key in config
