@@ -7,6 +7,7 @@ import (
 	"github.com/jumpy-squirrel/rexis-go-attendee/web/filter/ctxfilter"
 	"github.com/jumpy-squirrel/rexis-go-attendee/web/filter/handlefilter"
 	"github.com/jumpy-squirrel/rexis-go-attendee/web/filter/logfilter"
+	"github.com/jumpy-squirrel/rexis-go-attendee/web/filter/securityfilter"
 	"net/http"
 	"time"
 )
@@ -38,4 +39,11 @@ func BuildUnauthenticatedHandler(timeout string, handler filter.ContextAwareHand
 				handlefilter.Create(handler))))
 }
 
-// TODO authenticated handlers aren't available yet
+func BuildHandler(timeout string, handler filter.ContextAwareHandler) func(w http.ResponseWriter, r *http.Request) {
+	timeoutDuration := parseTimeout(timeout)
+	return buildHandlerFunc(
+		ctxfilter.Create(timeoutDuration,
+			logfilter.Create(
+				securityfilter.Create(
+					handlefilter.Create(handler)))))
+}

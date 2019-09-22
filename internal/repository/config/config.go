@@ -23,6 +23,10 @@ func LoggingSeverity() string {
 	return Configuration().Logging.Severity
 }
 
+func FixedToken() string {
+	return Configuration().Security.Fixed.Token
+}
+
 func AllowedFlags() []string {
 	return sortedKeys(&Configuration().Choices.Flags)
 }

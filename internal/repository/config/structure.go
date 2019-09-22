@@ -21,6 +21,15 @@ type loggingConfig struct {
 	Severity string `yaml:"severity"`
 }
 
+type fixedTokenConfig struct {
+	Token string `yaml:"token"`
+}
+
+type securityConfig struct {
+	Use   string           `yaml:"use"` // fixed-token, currently only supported value
+	Fixed fixedTokenConfig `yaml:"fixed"`
+}
+
 type choiceConfig struct {
 	Description string  `yaml:"description"`
 	HelpUrl     string  `yaml:"help_url"`
@@ -45,4 +54,5 @@ type conf struct {
 	Server   serverConfig      `yaml:"server"`
 	Choices  flagsPkgOptConfig `yaml:"choices"`
 	Logging  loggingConfig     `yaml:"logging"`
+	Security securityConfig    `yaml:"security"`
 }

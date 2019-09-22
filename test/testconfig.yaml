@@ -1,5 +1,9 @@
 logging:
   severity: DEBUG
+security:
+  use: 'fixed-token'
+  fixed:
+    token: 'fixed-testing-token'
 choices:
   flags:
     hc:

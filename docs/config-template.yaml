@@ -13,6 +13,10 @@ database:
       - 'collation=utf8mb4_general_ci'
       - 'parseTime=True'
       - 'timeout=30s' # connection timeout
+security:
+  use: 'fixed-token'
+  fixed:
+    token: 'put_secure_random_string_here'
 choices:
   flags:
     hc:

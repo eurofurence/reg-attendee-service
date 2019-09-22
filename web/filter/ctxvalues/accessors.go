@@ -10,6 +10,7 @@ const ContextMap = "map"
 
 const ContextHttpStatusKey = "httpstatus"
 const ContextRequestId = "requestid"
+const ContextBearerToken = "bearertoken"
 
 func CreateContextWithValueMap(ctx context.Context) context.Context {
 	// this is so we can add values to our context, like ... I don't know ... the http status from the response!
@@ -55,4 +56,12 @@ func RequestId(ctx context.Context) string {
 
 func SetRequestId(ctx context.Context, requestId string) {
 	setValue(ctx, ContextRequestId, requestId)
+}
+
+func BearerToken(ctx context.Context) string {
+	return valueOrDefault(ctx, ContextBearerToken, "")
+}
+
+func SetBearerToken(ctx context.Context, bearerToken string) {
+	setValue(ctx, ContextBearerToken, bearerToken)
 }
