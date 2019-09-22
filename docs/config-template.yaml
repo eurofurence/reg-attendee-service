@@ -7,7 +7,7 @@ database:
   mysql:
     username: 'demouser'
     password: 'demopw'
-    database: 'localhost/dbname'
+    database: 'tcp(localhost:3306)/dbname'
     parameters:
       - 'charset=utf8mb4'
       - 'collation=utf8mb4_general_ci'

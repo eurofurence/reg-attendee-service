@@ -20,6 +20,10 @@ func (r *InMemoryRepository) Close() {
 	r.attendees = nil
 }
 
+func (r *InMemoryRepository) Migrate() {
+	// nothing to do
+}
+
 func (r *InMemoryRepository) AddAttendee(ctx context.Context, a *entity.Attendee) (uint, error) {
 	newId := uint(atomic.AddUint32(&r.idSequence, 1))
 	a.ID = newId

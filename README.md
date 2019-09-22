@@ -17,16 +17,21 @@ If you place this repository OUTSIDE of your gopath, go build and go test will d
 all their required dependencies by default. 
 
 ## TODO:
-- tests for existing code where appropriate
-- remaining field validations (email pattern, flag/options/pkg logic)
-- config validation and defaults
-- security
+- functionality MVP.1
+    - database
+        - make database migration a command line switch
+        - configure attendee table structure
+        - maintain change history in DB
+    - remaining field validations (email pattern, flag/options/pkg logic)
+    - config validation and defaults
+    - require a fixed bearer token from config for all nonpublic endpoints
+- security with oauth2 server MVP.2
     - security using JWT signatures with key in config
     - permissions using JWT
         - viewAttendees, changeAttendees, viewAttendeeAdmininfo, changeAttendeeAdmininfo rights
         - identification as a specific attendee
     - acceptance tests for security
-- maintain change history in DB
-- admin fields handling (subresource, but export type&status on get)
-- react to context.cancel
-- separate logging target for log output during test runs, so log output can be asserted (and isn't output)
+- later
+    - admin fields handling (subresource, but export type&status on get)
+    - react to context.cancel
+    - separate logging target for log output during test runs, so log output can be asserted (and isn't output)

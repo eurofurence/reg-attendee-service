@@ -12,5 +12,6 @@ func main() {
 	config.StartupLoadConfiguration()
 	database.Open()
 	defer database.Close()
+	database.Migrate()
 	web.StartWebserverAndNeverReturn()
 }

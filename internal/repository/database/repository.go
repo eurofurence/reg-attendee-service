@@ -8,6 +8,7 @@ import (
 type Repository interface {
 	Open()
 	Close()
+	Migrate()
 
 	AddAttendee(ctx context.Context, a *entity.Attendee) (uint, error)
 	UpdateAttendee(ctx context.Context, a *entity.Attendee) error

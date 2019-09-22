@@ -35,6 +35,12 @@ func Close() {
 	SetRepository(nil)
 }
 
+func Migrate() {
+	// TODO make this depend on a cmd line switch. Way too dangerous otherwise.
+	logging.NoCtx().Info("Migrating database...")
+	GetRepository().Migrate()
+}
+
 func GetRepository() Repository {
 	if ActiveRepository == nil {
 		logging.NoCtx().Fatal("You must Open() the database before using it. This is an error in your implementation.")

@@ -28,6 +28,13 @@ func (r *MysqlRepository) Close() {
 	}
 }
 
+func (r *MysqlRepository) Migrate() {
+	err := r.db.AutoMigrate(&entity.Attendee{}).Error
+	if err != nil {
+		logging.NoCtx().Fatalf("failed to migrate mysql db: %v", err)
+	}
+}
+
 func (r *MysqlRepository) AddAttendee(ctx context.Context, a *entity.Attendee) (uint, error) {
 	err := r.db.Create(a).Error
 	return a.ID, err
