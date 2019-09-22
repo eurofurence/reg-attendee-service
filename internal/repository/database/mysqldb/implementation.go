@@ -4,9 +4,9 @@ import (
 	"context"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"log"
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/entity"
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/config"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/logging"
 )
 
 type MysqlRepository struct {
@@ -16,7 +16,7 @@ type MysqlRepository struct {
 func (r *MysqlRepository) Open() {
 	db, err := gorm.Open("mysql", config.DatabaseMysqlConnectString())
 	if err != nil {
-		log.Fatalf("failed to open mysql connection: %v", err)
+		logging.NoCtx().Fatalf("failed to open mysql connection: %v", err)
 	}
 	r.db = db
 }
@@ -24,7 +24,7 @@ func (r *MysqlRepository) Open() {
 func (r *MysqlRepository) Close() {
 	err := r.db.Close()
 	if err != nil {
-		log.Fatalf("failed to close mysql connection: %v", err)
+		logging.NoCtx().Fatalf("failed to close mysql connection: %v", err)
 	}
 }
 

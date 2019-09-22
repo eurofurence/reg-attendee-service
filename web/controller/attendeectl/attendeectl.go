@@ -7,11 +7,11 @@ import (
 	"github.com/go-http-utils/headers"
 	"github.com/gorilla/mux"
 	"github.com/jumpy-squirrel/rexis-go-attendee/api/v1/attendee"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/logging"
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/service/attendeesrv"
 	"github.com/jumpy-squirrel/rexis-go-attendee/web/filter/ctxvalues"
 	"github.com/jumpy-squirrel/rexis-go-attendee/web/filter/filterhelper"
 	"github.com/jumpy-squirrel/rexis-go-attendee/web/util/media"
-	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -41,7 +41,7 @@ func newAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		return
 	}
-	validationErrs := validate(dto, "")
+	validationErrs := validate(ctx, dto, "")
 	if len(validationErrs) != 0 {
 		attendeeValidationErrorHandler(ctx, w, r, validationErrs)
 		return
@@ -86,7 +86,7 @@ func updateAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.R
 	if err != nil {
 		return
 	}
-	validationErrs := validate(dto, fmt.Sprint(id))
+	validationErrs := validate(ctx, dto, fmt.Sprint(id))
 	if len(validationErrs) != 0 {
 		attendeeValidationErrorHandler(ctx, w, r, validationErrs)
 		return
@@ -129,27 +129,27 @@ func parseBodyToAttendeeDto(ctx context.Context, w http.ResponseWriter, r *http.
 }
 
 func attendeeValidationErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, errs url.Values) {
-	log.Printf("received attendee data with validation errors: %v", errs)
+	logging.Ctx(ctx).Warnf("received attendee data with validation errors: %v", errs)
 	errorHandler(ctx, w, r, "attendee.data.invalid", http.StatusBadRequest, errs)
 }
 
 func invalidIdErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, id string) {
-	log.Printf("received invalid attendee id '%s'", id)
+	logging.Ctx(ctx).Warnf("received invalid attendee id '%s'", id)
 	errorHandler(ctx, w, r, "attendee.id.invalid", http.StatusBadRequest, url.Values{})
 }
 
 func attendeeNotFoundErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, id uint) {
-	log.Printf("attendee id %v not found", id)
+	logging.Ctx(ctx).Warnf("attendee id %v not found", id)
 	errorHandler(ctx, w, r, "attendee.id.notfound", http.StatusNotFound, url.Values{})
 }
 
 func attendeeParseErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
-	log.Printf("attendee body could not be parsed: %v", err)
+	logging.Ctx(ctx).Warnf("attendee body could not be parsed: %v", err)
 	errorHandler(ctx, w, r, "attendee.parse.error", http.StatusBadRequest, url.Values{})
 }
 
 func attendeeWriteErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
-	log.Printf("attendee could not be written: %v", err)
+	logging.Ctx(ctx).Warnf("attendee could not be written: %v", err)
 	errorHandler(ctx, w, r, "attendee.write.error", http.StatusInternalServerError, url.Values{})
 }
 
@@ -167,7 +167,7 @@ func writeJson(ctx context.Context, w http.ResponseWriter, v interface{}) {
 	encoder.SetEscapeHTML(false)
 	err := encoder.Encode(v)
 	if err != nil {
-		log.Printf("error while encoding json response: %v", err)
+		logging.Ctx(ctx).Warnf("error while encoding json response: %v", err)
 	}
 }
 

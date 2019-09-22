@@ -1,6 +1,7 @@
 package attendeectl
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/jumpy-squirrel/rexis-go-attendee/api/v1/attendee"
 	"github.com/jumpy-squirrel/rexis-go-attendee/docs"
@@ -184,7 +185,7 @@ func TestValidatePreventSettingIdFieldWrongValue(t *testing.T) {
 }
 
 func performValidationTest(t *testing.T, a *attendee.AttendeeDto, expectedErrors url.Values, allowedId string) {
-	actualErrors := validate(a, allowedId)
+	actualErrors := validate(context.TODO(), a, allowedId)
 
 	prettyprintedActualErrors, _ := json.MarshalIndent(actualErrors, "", "  ")
 	prettyprintedExpectedErrors, _ := json.MarshalIndent(expectedErrors, "", "  ")

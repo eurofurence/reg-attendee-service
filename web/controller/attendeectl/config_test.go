@@ -29,40 +29,7 @@ func tstShutdown() {
 }
 
 func tstSetupConfig() {
-	yaml := "" +
-		`choices:
-  flags:
-    hc:
-      description: 'blah'
-    anon:
-      description: 'blah'
-    ev:  
-      description: 'blah'
-  packages:
-    room-none:
-      description: 'blah'
-    attendance:
-      description: 'blah'
-    stage:
-      description: 'blah'
-    sponsor:
-      description: 'blah'
-    sponsor2:
-      description: 'blah'
-  options:
-    art:
-      description: 'blah'
-    anim:
-      description: 'blah'
-    music:
-      description: 'blah'
-    suit:
-      description: 'blah'
-`
-	err := config.InitializeConfiguration(yaml)
-	if err != nil {
-		os.Exit(1)
-	}
+	config.LoadTestingConfigurationFromPathOrAbort("../../../test/testconfig.yaml")
 }
 
 type MockAttendeeService struct {

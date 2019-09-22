@@ -1,10 +1,10 @@
 package database
 
 import (
-	"log"
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/config"
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/database/inmemorydb"
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/database/mysqldb"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/logging"
 )
 
 var (
@@ -19,10 +19,10 @@ func SetRepository(repository Repository) {
 func Open() {
 	var r Repository
 	if config.DatabaseUse() == "mysql" {
-		log.Print("Opening mysql database...")
+		logging.NoCtx().Info("Opening mysql database...")
 		r = Repository(&mysqldb.MysqlRepository{})
 	} else {
-		log.Print("Opening inmemory database...")
+		logging.NoCtx().Info("Opening inmemory database...")
 		r = Repository(&inmemorydb.InMemoryRepository{})
 	}
 	r.Open()
@@ -30,14 +30,14 @@ func Open() {
 }
 
 func Close() {
-	log.Print("Closing database...")
+	logging.NoCtx().Info("Closing database...")
 	GetRepository().Close()
 	SetRepository(nil)
 }
 
 func GetRepository() Repository {
 	if ActiveRepository == nil {
-		log.Fatal("You must Open() the database before using it. This is an error in your implementation.")
+		logging.NoCtx().Fatal("You must Open() the database before using it. This is an error in your implementation.")
 	}
 	return ActiveRepository
 }

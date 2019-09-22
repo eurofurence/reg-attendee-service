@@ -19,6 +19,10 @@ func DatabaseMysqlConnectString() string {
 		c.Database + "?" + strings.Join(c.Parameters, "&")
 }
 
+func LoggingSeverity() string {
+	return Configuration().Logging.Severity
+}
+
 func AllowedFlags() []string {
 	return sortedKeys(&Configuration().Choices.Flags)
 }

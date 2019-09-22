@@ -15,6 +15,7 @@ var (
 )
 
 func init() {
+	configurationData = &conf{Logging: loggingConfig{Severity: "DEBUG"}}
 	configurationLock = &sync.RWMutex{}
 	flag.StringVar(&configurationFilename, "config", "", "config file path")
 }
@@ -23,9 +24,12 @@ func parseAndOverwriteContext(yamlFile []byte) error {
 	newConfigurationData := &conf{}
 	err := yaml.Unmarshal(yamlFile, newConfigurationData)
 	if err != nil {
-		log.Printf("failed to parse configuration file '%s': %v", configurationFilename, err)
+		// cannot use logging package here as this would create a circular dependency (logging needs config)
+		log.Printf("[00000000] ERROR failed to parse configuration file '%s': %v", configurationFilename, err)
 		return err
 	}
+
+	// TODO config validation and defaults, e.g. logging severity
 
 	configurationLock.Lock()
 	defer configurationLock.Unlock()
@@ -37,7 +41,8 @@ func parseAndOverwriteContext(yamlFile []byte) error {
 func LoadConfiguration() error {
 	yamlFile, err := ioutil.ReadFile(configurationFilename)
 	if err != nil {
-		log.Printf("failed to load configuration file '%s': %v", configurationFilename, err)
+		// cannot use logging package here as this would create a circular dependency (logging needs config)
+		log.Printf("[00000000] ERROR failed to load configuration file '%s': %v", configurationFilename, err)
 		return err
 	}
 	err = parseAndOverwriteContext(yamlFile)
@@ -45,18 +50,25 @@ func LoadConfiguration() error {
 }
 
 // use this for tests to set a hardcoded yaml configuration
-func InitializeConfiguration(yaml string) error {
-	return parseAndOverwriteContext([]byte(yaml))
+func LoadTestingConfigurationFromPathOrAbort(configFilenameForTests string) {
+	configurationFilename = configFilenameForTests
+	err := LoadConfiguration()
+	if err != nil {
+		// cannot use logging package here as this would create a circular dependency (logging needs config)
+		log.Fatal("[00000000] FATAL Error reading or parsing configuration file. Aborting.")
+	}
 }
 
 func StartupLoadConfiguration() {
-	log.Print("Reading configuration...")
+	log.Print("[00000000] INFO  Reading configuration...")
 	if configurationFilename == "" {
-		log.Fatal("Configuration file argument missing. Please specify using -config argument. Aborting.")
+		// cannot use logging package here as this would create a circular dependency (logging needs config)
+		log.Fatal("[00000000] FATAL Configuration file argument missing. Please specify using -config argument. Aborting.")
 	}
 	err := LoadConfiguration()
 	if err != nil {
-		log.Fatal("Error reading or parsing configuration file. Aborting.")
+		// cannot use logging package here as this would create a circular dependency (logging needs config)
+		log.Fatal("[00000000] FATAL Error reading or parsing configuration file. Aborting.")
 	}
 }
 

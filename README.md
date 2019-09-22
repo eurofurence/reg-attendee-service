@@ -17,14 +17,16 @@ If you place this repository OUTSIDE of your gopath, go build and go test will d
 all their required dependencies by default. 
 
 ## TODO:
-- separate logging target for log output during test runs, so log output can be asserted (and isn't output)
-- log request id everywhere, log severity everywhere, log format -> wrap logging
-- security using JWT signatures with key in config
-- permissions using JWT
-    - viewAttendees, changeAttendees, viewAttendeeAdmininfo, changeAttendeeAdmininfo rights
-    - identification as a specific attendee
-- acceptance tests for security
+- tests for existing code where appropriate
+- remaining field validations (email pattern, flag/options/pkg logic)
+- config validation and defaults
+- security
+    - security using JWT signatures with key in config
+    - permissions using JWT
+        - viewAttendees, changeAttendees, viewAttendeeAdmininfo, changeAttendeeAdmininfo rights
+        - identification as a specific attendee
+    - acceptance tests for security
 - maintain change history in DB
 - admin fields handling (subresource, but export type&status on get)
-- remaining field validations (email pattern, flag/options/pkg logic)
 - react to context.cancel
+- separate logging target for log output during test runs, so log output can be asserted (and isn't output)

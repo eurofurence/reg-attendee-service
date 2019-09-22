@@ -17,6 +17,10 @@ type serverConfig struct {
 	Port    string `yaml:"port"`
 }
 
+type loggingConfig struct {
+	Severity string `yaml:"severity"`
+}
+
 type choiceConfig struct {
 	Description string  `yaml:"description"`
 	HelpUrl     string  `yaml:"help_url"`
@@ -40,4 +44,5 @@ type conf struct {
 	Database databaseConfig    `yaml:"database"`
 	Server   serverConfig      `yaml:"server"`
 	Choices  flagsPkgOptConfig `yaml:"choices"`
+	Logging  loggingConfig     `yaml:"logging"`
 }

@@ -1,18 +1,5 @@
-server:
-  port: 9091
 logging:
   severity: INFO
-database:
-  use: 'inmemory'
-  mysql:
-    username: 'demouser'
-    password: 'demopw'
-    database: 'localhost/dbname'
-    parameters:
-      - 'charset=utf8mb4'
-      - 'collation=utf8mb4_general_ci'
-      - 'parseTime=True'
-      - 'timeout=30s' # connection timeout
 choices:
   flags:
     hc:

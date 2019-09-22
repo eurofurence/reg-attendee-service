@@ -1,17 +1,24 @@
 package logging
 
-import "context"
+import (
+	"context"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/logging/logimpl"
+)
 
 type Logger interface {
+	IsDebugEnabled() bool
 	Debug(v ...interface{})
 	Debugf(format string, v ...interface{})
 
+	IsInfoEnabled() bool
 	Info(v ...interface{})
 	Infof(format string, v ...interface{})
 
+	IsWarnEnabled() bool
 	Warn(v ...interface{})
 	Warnf(format string, v ...interface{})
 
+	IsErrorEnabled() bool
 	Error(v ...interface{})
 	Errorf(format string, v ...interface{})
 
@@ -32,7 +39,7 @@ var defaultLogger = createLogger("00000000")
 
 // returns a new instance of Logger that knows the requestId
 func createLogger(requestId string) Logger {
-	return &LoggerDefaultImpl{RequestId: requestId}
+	return &logimpl.LoggerDefaultImpl{RequestId: requestId}
 }
 
 func CreateContextWithLoggerForRequestId(ctx context.Context, requestId string) context.Context {

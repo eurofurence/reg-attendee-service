@@ -1,6 +1,8 @@
 package attendeectl
 
 import (
+	"context"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/logging"
 	"net/url"
 	"github.com/jumpy-squirrel/rexis-go-attendee/api/v1/attendee"
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/config"
@@ -24,7 +26,7 @@ const countryPattern = "^[A-Z]{2}$"
 
 var allowedGenders = [...]string{"male", "female", "other", "notprovided", ""}
 
-func validate(a *attendee.AttendeeDto, allowedId string) url.Values {
+func validate(ctx context.Context, a *attendee.AttendeeDto, allowedId string) url.Values {
 	errs := url.Values{}
 
 	if a.Id != "" && a.Id != allowedId {
@@ -63,5 +65,13 @@ func validate(a *attendee.AttendeeDto, allowedId string) url.Values {
 		errs.Add("tshirt_size", "optional tshirt_size field must be empty or one of " + strings.Join(config.AllowedTshirtSizes(), ","))
 	}
 
+	if len(errs) != 0 {
+		logger := logging.Ctx(ctx)
+		if logger.IsDebugEnabled() {
+			for key, val := range errs {
+				logger.Debugf("attendee dto validation error for key %s: %s", key, val)
+			}
+		}
+	}
 	return errs
 }
