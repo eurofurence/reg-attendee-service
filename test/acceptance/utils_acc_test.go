@@ -3,21 +3,21 @@ package acceptance
 import (
 	"encoding/json"
 	"github.com/go-http-utils/headers"
+	"github.com/jumpy-squirrel/rexis-go-attendee/api/v1/attendee"
+	"github.com/jumpy-squirrel/rexis-go-attendee/web/util/media"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"github.com/jumpy-squirrel/rexis-go-attendee/api/v1/attendee"
-	"github.com/jumpy-squirrel/rexis-go-attendee/web/util/media"
 	"strings"
 )
 
 // placing these here because they are package global
 
 type tstWebResponse struct {
-	status int
-	body string
+	status      int
+	body        string
 	contentType string
-	location string
+	location    string
 }
 
 func tstWebResponseFromResponse(response *http.Response) tstWebResponse {
@@ -39,33 +39,54 @@ func tstWebResponseFromResponse(response *http.Response) tstWebResponse {
 		log.Fatal(err)
 	}
 	return tstWebResponse{
-		status: status,
-		body:   string(body),
+		status:      status,
+		body:        string(body),
 		contentType: ct,
-		location: loc,
+		location:    loc,
 	}
 }
 
-func tstPerformGet(relativeUrlWithLeadingSlash string) tstWebResponse {
-	response, err := http.Get(ts.URL + relativeUrlWithLeadingSlash)
+func tstPerformGet(relativeUrlWithLeadingSlash string, bearerToken string) tstWebResponse {
+	request, err := http.NewRequest(http.MethodGet, ts.URL+relativeUrlWithLeadingSlash, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if bearerToken != "" {
+		request.Header.Set(headers.Authorization, "Bearer "+bearerToken)
+	}
+	response, err := http.DefaultClient.Do(request)
 	if err != nil {
 		log.Fatal(err)
 	}
 	return tstWebResponseFromResponse(response)
 }
 
-func tstPerformPut(relativeUrlWithLeadingSlash string, requestBody string) tstWebResponse {
-	request, err := http.NewRequest(http.MethodPut, ts.URL + relativeUrlWithLeadingSlash, strings.NewReader(requestBody))
+func tstPerformPut(relativeUrlWithLeadingSlash string, requestBody string, bearerToken string) tstWebResponse {
+	request, err := http.NewRequest(http.MethodPut, ts.URL+relativeUrlWithLeadingSlash, strings.NewReader(requestBody))
 	if err != nil {
 		log.Fatal(err)
+	}
+	if bearerToken != "" {
+		request.Header.Set(headers.Authorization, "Bearer "+bearerToken)
 	}
 	request.Header.Set(headers.ContentType, media.ContentTypeApplicationJson)
 	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		log.Fatal(err)
+	}
 	return tstWebResponseFromResponse(response)
 }
 
-func tstPerformPost(relativeUrlWithLeadingSlash string, requestBody string) tstWebResponse {
-	response, err := http.Post(ts.URL + relativeUrlWithLeadingSlash, media.ContentTypeApplicationJson, strings.NewReader(requestBody))
+func tstPerformPost(relativeUrlWithLeadingSlash string, requestBody string, bearerToken string) tstWebResponse {
+	request, err := http.NewRequest(http.MethodPost, ts.URL+relativeUrlWithLeadingSlash, strings.NewReader(requestBody))
+	if err != nil {
+		log.Fatal(err)
+	}
+	if bearerToken != "" {
+		request.Header.Set(headers.Authorization, "Bearer "+bearerToken)
+	}
+	request.Header.Set(headers.ContentType, media.ContentTypeApplicationJson)
+	response, err := http.DefaultClient.Do(request)
 	if err != nil {
 		log.Fatal(err)
 	}

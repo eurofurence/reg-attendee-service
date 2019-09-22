@@ -31,9 +31,8 @@ func OverrideAttendeeService(overrideAttendeeServiceForTesting attendeesrv.Atten
 
 func RestDispatcher(router *mux.Router) {
 	router.HandleFunc("/v1/attendees", filterhelper.BuildUnauthenticatedHandler("3s", newAttendeeHandler)).Methods(http.MethodPut)
-	// TODO authorization missing for these
-	router.HandleFunc("/v1/attendees/{id:[1-9][0-9]*}", filterhelper.BuildUnauthenticatedHandler("3s", getAttendeeHandler)).Methods(http.MethodGet)
-	router.HandleFunc("/v1/attendees/{id:[1-9][0-9]*}", filterhelper.BuildUnauthenticatedHandler("3s", updateAttendeeHandler)).Methods(http.MethodPost)
+	router.HandleFunc("/v1/attendees/{id:[1-9][0-9]*}", filterhelper.BuildHandler("3s", getAttendeeHandler)).Methods(http.MethodGet)
+	router.HandleFunc("/v1/attendees/{id:[1-9][0-9]*}", filterhelper.BuildHandler("3s", updateAttendeeHandler)).Methods(http.MethodPost)
 }
 
 func newAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
