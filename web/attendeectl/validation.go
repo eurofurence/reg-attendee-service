@@ -2,9 +2,9 @@ package attendeectl
 
 import (
 	"net/url"
-	"rexis/rexis-go-attendee/api/v1/attendee"
-	"rexis/rexis-go-attendee/internal/repository/config"
-	"rexis/rexis-go-attendee/web/util/validation"
+	"github.com/jumpy-squirrel/rexis-go-attendee/api/v1/attendee"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/config"
+	"github.com/jumpy-squirrel/rexis-go-attendee/web/util/validation"
 	"strings"
 )
 

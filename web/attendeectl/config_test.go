@@ -4,8 +4,8 @@ import (
 	"errors"
 	"github.com/stretchr/testify/mock"
 	"os"
-	"rexis/rexis-go-attendee/internal/entity"
-	"rexis/rexis-go-attendee/internal/repository/config"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/entity"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/config"
 	"testing"
 )
 

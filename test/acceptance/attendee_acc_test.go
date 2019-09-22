@@ -3,8 +3,8 @@ package acceptance
 import (
 	"github.com/stretchr/testify/require"
 	"net/http"
-	"rexis/rexis-go-attendee/api/v1/attendee"
-	"rexis/rexis-go-attendee/docs"
+	"github.com/jumpy-squirrel/rexis-go-attendee/api/v1/attendee"
+	"github.com/jumpy-squirrel/rexis-go-attendee/docs"
 	"testing"
 )
 

@@ -1,6 +1,6 @@
 package attendeesrv
 
-import "rexis/rexis-go-attendee/internal/entity"
+import "github.com/jumpy-squirrel/rexis-go-attendee/internal/entity"
 
 type AttendeeService interface {
 	NewAttendee() *entity.Attendee

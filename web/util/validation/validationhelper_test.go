@@ -1,7 +1,7 @@
 package validation
 
 import (
-	"rexis/rexis-go-attendee/docs"
+	"github.com/jumpy-squirrel/rexis-go-attendee/docs"
 	"testing"
 )
 

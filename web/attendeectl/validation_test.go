@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/url"
 	"reflect"
-	"rexis/rexis-go-attendee/api/v1/attendee"
-	"rexis/rexis-go-attendee/docs"
+	"github.com/jumpy-squirrel/rexis-go-attendee/api/v1/attendee"
+	"github.com/jumpy-squirrel/rexis-go-attendee/docs"
 	"testing"
 )
 

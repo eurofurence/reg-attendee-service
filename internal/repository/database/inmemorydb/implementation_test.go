@@ -3,8 +3,8 @@ package inmemorydb
 import (
 	"github.com/stretchr/testify/require"
 	"os"
-	"rexis/rexis-go-attendee/docs"
-	"rexis/rexis-go-attendee/internal/entity"
+	"github.com/jumpy-squirrel/rexis-go-attendee/docs"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/entity"
 	"testing"
 )
 

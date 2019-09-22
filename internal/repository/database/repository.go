@@ -1,7 +1,7 @@
 package database
 
 import (
-	"rexis/rexis-go-attendee/internal/entity"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/entity"
 )
 
 type Repository interface {

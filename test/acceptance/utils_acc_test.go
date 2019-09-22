@@ -6,8 +6,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"rexis/rexis-go-attendee/api/v1/attendee"
-	"rexis/rexis-go-attendee/web/util/media"
+	"github.com/jumpy-squirrel/rexis-go-attendee/api/v1/attendee"
+	"github.com/jumpy-squirrel/rexis-go-attendee/web/util/media"
 	"strings"
 )
 

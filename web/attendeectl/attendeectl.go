@@ -8,9 +8,9 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"rexis/rexis-go-attendee/api/v1/attendee"
-	"rexis/rexis-go-attendee/internal/service/attendeesrv"
-	"rexis/rexis-go-attendee/web/util/media"
+	"github.com/jumpy-squirrel/rexis-go-attendee/api/v1/attendee"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/service/attendeesrv"
+	"github.com/jumpy-squirrel/rexis-go-attendee/web/util/media"
 	"strconv"
 	"time"
 )

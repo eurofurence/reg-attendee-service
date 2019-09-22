@@ -4,10 +4,10 @@ import (
 	"github.com/stretchr/testify/mock"
 	"net/http/httptest"
 	"os"
-	"rexis/rexis-go-attendee/internal/entity"
-	"rexis/rexis-go-attendee/internal/repository/config"
-	"rexis/rexis-go-attendee/web"
-	"rexis/rexis-go-attendee/web/attendeectl"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/entity"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/config"
+	"github.com/jumpy-squirrel/rexis-go-attendee/web"
+	"github.com/jumpy-squirrel/rexis-go-attendee/web/attendeectl"
 	"testing"
 )
 

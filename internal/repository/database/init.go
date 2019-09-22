@@ -2,9 +2,9 @@ package database
 
 import (
 	"log"
-	"rexis/rexis-go-attendee/internal/repository/config"
-	"rexis/rexis-go-attendee/internal/repository/database/inmemorydb"
-	"rexis/rexis-go-attendee/internal/repository/database/mysqldb"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/config"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/database/inmemorydb"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/database/mysqldb"
 )
 
 var (

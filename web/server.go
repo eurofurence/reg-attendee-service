@@ -4,9 +4,9 @@ import (
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
-	"rexis/rexis-go-attendee/internal/repository/config"
-	"rexis/rexis-go-attendee/web/attendeectl"
-	"rexis/rexis-go-attendee/web/infoctl"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/config"
+	"github.com/jumpy-squirrel/rexis-go-attendee/web/attendeectl"
+	"github.com/jumpy-squirrel/rexis-go-attendee/web/infoctl"
 )
 
 func StartWebserverAndNeverReturn() {

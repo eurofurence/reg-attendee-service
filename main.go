@@ -2,9 +2,9 @@ package main
 
 import (
 	"flag"
-	"rexis/rexis-go-attendee/internal/repository/config"
-	"rexis/rexis-go-attendee/internal/repository/database"
-	"rexis/rexis-go-attendee/web"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/config"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/database"
+	"github.com/jumpy-squirrel/rexis-go-attendee/web"
 )
 
 func main() {

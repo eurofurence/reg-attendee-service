@@ -1,8 +1,8 @@
 package attendeesrv
 
 import (
-	"rexis/rexis-go-attendee/internal/entity"
-	"rexis/rexis-go-attendee/internal/repository/database"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/entity"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/database"
 )
 
 type AttendeeServiceImplData struct {
