@@ -17,9 +17,7 @@ If you place this repository OUTSIDE of your gopath, go build and go test will d
 all their required dependencies by default. 
 
 ## TODO:
-- request logging
 - separate logging target for log output during test runs, so log output can be asserted (and isn't output)
-- assign request id and return in case of errors
 - log request id everywhere, log severity everywhere, log format -> wrap logging
 - security using JWT signatures with key in config
 - permissions using JWT

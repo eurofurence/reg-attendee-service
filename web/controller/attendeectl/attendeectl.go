@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/jumpy-squirrel/rexis-go-attendee/api/v1/attendee"
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/service/attendeesrv"
+	"github.com/jumpy-squirrel/rexis-go-attendee/web/filter/ctxvalues"
 	"github.com/jumpy-squirrel/rexis-go-attendee/web/filter/filterhelper"
 	"github.com/jumpy-squirrel/rexis-go-attendee/web/util/media"
 	"log"
@@ -57,7 +58,7 @@ func newAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		return
 	}
 	w.Header().Set(headers.Location, fmt.Sprintf("%s/%d", r.RequestURI, id))
-	w.WriteHeader(http.StatusCreated)
+	writeHeader(ctx, w, http.StatusCreated)
 }
 
 func getAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
@@ -157,7 +158,7 @@ func errorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, m
 	response := attendee.ErrorDto{Message: msg, Timestamp: timestamp}
 	// TODO include requestid
 	w.Header().Set(headers.ContentType, media.ContentTypeApplicationJson)
-	w.WriteHeader(status)
+	writeHeader(ctx, w, status)
 	writeJson(ctx, w, response)
 }
 
@@ -168,4 +169,9 @@ func writeJson(ctx context.Context, w http.ResponseWriter, v interface{}) {
 	if err != nil {
 		log.Printf("error while encoding json response: %v", err)
 	}
+}
+
+func writeHeader(ctx context.Context, w http.ResponseWriter, status int) {
+	w.WriteHeader(status)
+	ctxvalues.SetHttpStatus(ctx, status)
 }
