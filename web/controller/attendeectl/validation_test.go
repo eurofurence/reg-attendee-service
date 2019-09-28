@@ -51,7 +51,7 @@ func TestValidateMissingInfo(t *testing.T) {
 		"city":          []string{"city field must be at least 1 and at most 80 characters long"},
 		"country":       []string{"country field must contain a 2 letter upper case ISO-3166-1 country code (Alpha-2 code, see https://en.wikipedia.org/wiki/ISO_3166-1)"},
 		"country_badge": []string{"country_badge field must contain a 2 letter upper case ISO-3166-1 country code (Alpha-2 code, see https://en.wikipedia.org/wiki/ISO_3166-1)"},
-		"email":         []string{"email field must be at least 1 and at most 200 characters long"},
+		"email":         []string{"email field must be at least 1 and at most 200 characters long", "email field is not plausible"},
 		"first_name":    []string{"first_name field must be at least 1 and at most 80 characters long"},
 		"last_name":     []string{"last_name field must be at least 1 and at most 80 characters long"},
 		"nickname": []string{"nickname field must contain at least two letters, and contain no more than two non-letters",
@@ -79,7 +79,7 @@ func TestValidateTooLong(t *testing.T) {
 
 	expected := url.Values{
 		"city":       []string{"city field must be at least 1 and at most 80 characters long"},
-		"email":      []string{"email field must be at least 1 and at most 200 characters long"},
+		"email":      []string{"email field must be at least 1 and at most 200 characters long", "email field is not plausible"},
 		"first_name": []string{"first_name field must be at least 1 and at most 80 characters long"},
 		"last_name":  []string{"last_name field must be at least 1 and at most 80 characters long"},
 		"nickname":   []string{"nickname field must be at least 2 and at most 80 characters long"},
@@ -182,6 +182,28 @@ func TestValidatePreventSettingIdFieldWrongValue(t *testing.T) {
 		"id": []string{"id field must be empty or correctly assigned for incoming requests"},
 	}
 	performValidationTest(t, &a, expected, "16")
+}
+
+func TestValidateWrongEmailWhitespaceInUsername(t *testing.T) {
+	docs.Description("an attendee with whitespace in the username part of the email address must be rejected")
+	performEmailValidationTest(t, "white\tspace@mailinator.com")
+}
+
+func TestValidateWrongEmailWhitespaceInDomain(t *testing.T) {
+	docs.Description("an attendee with whitespace in the domain part of the email address must be rejected")
+	performEmailValidationTest(t, "whitespace@mailinator com")
+}
+
+func TestValidateWrongEmailMultipleAtSigns(t *testing.T) {
+	docs.Description("an attendee with multiple @ signs in the email address must be rejected")
+	performEmailValidationTest(t, "a@bb@ccc")
+}
+
+func performEmailValidationTest(t *testing.T, wrongEmail string) {
+	a := tstCreateValidAttendee()
+	a.Email = wrongEmail
+	expected := url.Values{"email": []string{"email field is not plausible"}}
+	performValidationTest(t, &a, expected, "")
 }
 
 func performValidationTest(t *testing.T, a *attendee.AttendeeDto, expectedErrors url.Values, allowedId string) {

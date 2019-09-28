@@ -22,6 +22,8 @@ const nicknamePattern = "^(" +
 	"|[A-Za-z][A-Za-z]+[^A-Za-z]{1,2}" +
 	")$"
 
+const emailPattern = "^[^\\@\\s]+\\@[^\\@\\s]+$"
+
 const countryPattern = "^[A-Z]{2}$"
 
 var allowedGenders = [...]string{"male", "female", "other", "notprovided", ""}
@@ -49,6 +51,9 @@ func validate(ctx context.Context, a *attendee.AttendeeDto, allowedId string) ur
 		errs.Add("country_badge", "country_badge field must contain a 2 letter upper case ISO-3166-1 country code (Alpha-2 code, see https://en.wikipedia.org/wiki/ISO_3166-1)")
 	}
 	validation.CheckLength(&errs, 1, 200, "email", a.Email)
+	if validation.ViolatesPattern(emailPattern, a.Email) {
+		errs.Add("email", "email field is not plausible")
+	}
 	validation.CheckLength(&errs, 1, 32, "phone", a.Phone)
 	if validation.ViolatesPattern("^(|@.+)$", a.Telegram) {
 		errs.Add("telegram", "optional telegram field must contain your @username from telegram, or it can be left blank")
