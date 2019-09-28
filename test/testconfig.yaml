@@ -32,3 +32,12 @@ choices:
       description: 'blah'
     suit:
       description: 'blah'
+tshirtsizes:
+  - 'XS'
+  - 'S'
+  - 'M'
+  - 'L'
+  - 'XL'
+  - 'XXL'
+  - 'XXXL'
+  - 'XXXXL'

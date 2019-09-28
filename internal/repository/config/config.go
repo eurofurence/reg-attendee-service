@@ -43,8 +43,6 @@ func AllowedOptions() []string {
 	return sortedKeys(&Configuration().Choices.Options)
 }
 
-// TODO implement actually reading the data
-
 func AllowedTshirtSizes() []string {
-	return []string{"XS", "S", "M", "L", "XL", "XXL", "XXXL", "XXXXL"}
+	return Configuration().TShirtSizes
 }

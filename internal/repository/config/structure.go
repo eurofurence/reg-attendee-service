@@ -50,9 +50,10 @@ type flagsPkgOptConfig struct {
 }
 
 type conf struct {
-	Database databaseConfig    `yaml:"database"`
-	Server   serverConfig      `yaml:"server"`
-	Choices  flagsPkgOptConfig `yaml:"choices"`
-	Logging  loggingConfig     `yaml:"logging"`
-	Security securityConfig    `yaml:"security"`
+	Database    databaseConfig    `yaml:"database"`
+	Server      serverConfig      `yaml:"server"`
+	Choices     flagsPkgOptConfig `yaml:"choices"`
+	Logging     loggingConfig     `yaml:"logging"`
+	Security    securityConfig    `yaml:"security"`
+	TShirtSizes []string          `yaml:"tshirtsizes"`
 }
