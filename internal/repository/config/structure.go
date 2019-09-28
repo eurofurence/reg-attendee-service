@@ -39,7 +39,7 @@ type choiceConfig struct {
 	VatPercent    float64 `yaml:"vat_percent"`
 	Default       bool    `yaml:"default"`
 	AdminOnly     bool    `yaml:"admin_only"`
-	ReadOnly      bool    `yaml:"read_only"`
+	ReadOnly      bool    `yaml:"read_only"` // but admin can still remove this
 	Constraint    string  `yaml:"constraint"`
 	ConstraintMsg string  `yaml:"constraint_msg"`
 }

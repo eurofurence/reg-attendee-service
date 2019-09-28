@@ -28,13 +28,17 @@ choices:
     ev:
       description: 'Eurofurence e.V. Member'
       help_url: 'help/opt_member.html'
+    guest:
+      description: 'Guest of the Convention'
+      help_url: 'help/guest.html'
+      admin_only: true
   packages:
     room-none:
       description: 'No Room'
       help_url: 'help/room_none.html'
       vat_percent: 7
       default: true
-      read_only: true
+      admin_only: true
     attendance:
       description: 'Entrance Fee (Convention Ticket)'
       help_url: 'help/fee_basic.html'
@@ -43,6 +47,7 @@ choices:
       price_atcon: 125.00
       vat_percent: 19
       default: true
+      read_only: true
     stage:
       description: 'Entrance Fee (Stage Ticket)'
       help_url: 'help/fee_stage.html'
@@ -68,6 +73,36 @@ choices:
       vat_percent: 19
       constraint: '!sponsor'
       constraint_msg: 'Please choose only one of Sponsor or Supersponsor.'
+    day-thu:
+      description: 'Day Guest (Thursday)'
+      help_url: 'help/fee_day_thu.html'
+      price_early: 60.00
+      price_late: 60.00
+      price_atcon: 60.00
+      vat_percent: 19
+      admin_only: true
+      constraint: '!attendance,!stage'
+      constraint_msg: 'Must disable Convention Ticket and Stage Ticket for Day Guests.'
+    day-fri:
+      description: 'Day Guest (Friday)'
+      help_url: 'help/fee_day_fri.html'
+      price_early: 60.00
+      price_late: 60.00
+      price_atcon: 60.00
+      vat_percent: 19
+      admin_only: true
+      constraint: '!attendance,!stage'
+      constraint_msg: 'Must disable Convention Ticket and Stage Ticket for Day Guests.'
+    day-sat:
+      description: 'Day Guest (Saturday)'
+      help_url: 'help/fee_day_sat.html'
+      price_early: 60.00
+      price_late: 60.00
+      price_atcon: 60.00
+      vat_percent: 19
+      admin_only: true
+      constraint: '!attendance,!stage'
+      constraint_msg: 'Must disable Convention Ticket and Stage Ticket for Day Guests.'
   options:
     art:
       description: 'Artist'
