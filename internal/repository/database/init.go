@@ -2,28 +2,30 @@ package database
 
 import (
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/config"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/database/dbrepo"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/database/historizeddb"
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/database/inmemorydb"
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/database/mysqldb"
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/logging"
 )
 
 var (
-	ActiveRepository Repository
+	ActiveRepository dbrepo.Repository
 )
 
 // only exported so you can use it in test code - use Open()
-func SetRepository(repository Repository) {
+func SetRepository(repository dbrepo.Repository) {
 	ActiveRepository = repository
 }
 
 func Open() {
-	var r Repository
+	var r dbrepo.Repository
 	if config.DatabaseUse() == "mysql" {
 		logging.NoCtx().Info("Opening mysql database...")
-		r = Repository(&mysqldb.MysqlRepository{})
+		r = historizeddb.Create(mysqldb.Create())
 	} else {
 		logging.NoCtx().Info("Opening inmemory database...")
-		r = Repository(&inmemorydb.InMemoryRepository{})
+		r = historizeddb.Create(inmemorydb.Create())
 	}
 	r.Open()
 	SetRepository(r)
@@ -41,7 +43,7 @@ func Migrate() {
 	GetRepository().Migrate()
 }
 
-func GetRepository() Repository {
+func GetRepository() dbrepo.Repository {
 	if ActiveRepository == nil {
 		logging.NoCtx().Fatal("You must Open() the database before using it. This is an error in your implementation.")
 	}

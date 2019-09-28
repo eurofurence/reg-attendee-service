@@ -24,5 +24,5 @@ type Attendee struct {
 	Flags        string `gorm:"type:varchar(255)"`
 	Packages     string `gorm:"type:varchar(255)"`
 	Options      string `gorm:"type:varchar(255)"`
-	UserComments string `gorm:"type:text"`
+	UserComments string `gorm:"type:text" testdiff:"ignore"`
 }

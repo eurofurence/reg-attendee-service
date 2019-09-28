@@ -18,11 +18,8 @@ all their required dependencies by default.
 
 ## TODO:
 - functionality MVP.1
-    - database
-        - make database migration a command line switch
-        - maintain change history in DB
-    - remaining field validations (email pattern, flag/options/pkg logic)
-    - optional partner (nick) field for MMC
+    - make database migration a command line switch
+    - remaining field validations (email pattern, flag/options/pkg logic, tshirt sizes conf and validation)
 - security with oauth2 server MVP.2
     - security using JWT signatures with key in config
     - permissions using JWT
@@ -33,3 +30,4 @@ all their required dependencies by default.
     - admin fields handling (subresource, but export type&status on get)
     - react to context.cancel
     - separate logging target for log output during test runs, so log output can be asserted (and isn't output)
+    - optional partner (nick) field for MMC

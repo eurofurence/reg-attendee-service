@@ -6,11 +6,16 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/entity"
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/config"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/database/dbrepo"
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/logging"
 )
 
 type MysqlRepository struct {
 	db *gorm.DB
+}
+
+func Create() dbrepo.Repository {
+	return &MysqlRepository{}
 }
 
 func (r *MysqlRepository) Open() {
@@ -29,7 +34,7 @@ func (r *MysqlRepository) Close() {
 }
 
 func (r *MysqlRepository) Migrate() {
-	err := r.db.AutoMigrate(&entity.Attendee{}).Error
+	err := r.db.AutoMigrate(&entity.Attendee{}, &entity.History{}).Error
 	if err != nil {
 		logging.NoCtx().Fatalf("failed to migrate mysql db: %v", err)
 	}
@@ -49,4 +54,9 @@ func (r *MysqlRepository) GetAttendeeById(ctx context.Context, id uint) (*entity
 	var a entity.Attendee
 	err := r.db.First(&a, id).Error
 	return &a, err
+}
+
+func (r *MysqlRepository) RecordHistory(ctx context.Context, h *entity.History) error {
+	err := r.db.Create(h).Error
+	return err
 }
