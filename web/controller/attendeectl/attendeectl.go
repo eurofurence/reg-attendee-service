@@ -7,6 +7,7 @@ import (
 	"github.com/go-http-utils/headers"
 	"github.com/gorilla/mux"
 	"github.com/jumpy-squirrel/rexis-go-attendee/api/v1/attendee"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/entity"
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/logging"
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/service/attendeesrv"
 	"github.com/jumpy-squirrel/rexis-go-attendee/web/filter/ctxvalues"
@@ -40,18 +41,18 @@ func newAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		return
 	}
-	validationErrs := validate(ctx, dto, "")
+	validationErrs := validate(ctx, dto, &entity.Attendee{})
 	if len(validationErrs) != 0 {
 		attendeeValidationErrorHandler(ctx, w, r, validationErrs)
 		return
 	}
-	entity := attendeeService.NewAttendee(ctx)
-	err = mapDtoToAttendee(dto, entity)
+	newAttendee := attendeeService.NewAttendee(ctx)
+	err = mapDtoToAttendee(dto, newAttendee)
 	if err != nil {
 		attendeeParseErrorHandler(ctx, w, r, err)
 		return
 	}
-	id, err := attendeeService.RegisterNewAttendee(ctx, entity)
+	id, err := attendeeService.RegisterNewAttendee(ctx, newAttendee)
 	if err != nil {
 		attendeeWriteErrorHandler(ctx, w, r, err)
 		return
@@ -65,13 +66,13 @@ func getAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		return
 	}
-	entity, err := attendeeService.GetAttendee(ctx, id)
+	existingAttendee, err := attendeeService.GetAttendee(ctx, id)
 	if err != nil {
 		attendeeNotFoundErrorHandler(ctx, w, r, id)
 		return
 	}
 	dto := attendee.AttendeeDto{}
-	mapAttendeeToDto(entity, &dto)
+	mapAttendeeToDto(existingAttendee, &dto)
 	w.Header().Add(headers.ContentType, media.ContentTypeApplicationJson)
 	writeJson(ctx, w, dto)
 }
@@ -85,22 +86,22 @@ func updateAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.R
 	if err != nil {
 		return
 	}
-	validationErrs := validate(ctx, dto, fmt.Sprint(id))
-	if len(validationErrs) != 0 {
-		attendeeValidationErrorHandler(ctx, w, r, validationErrs)
-		return
-	}
-	entity, err := attendeeService.GetAttendee(ctx, id)
+	attendee, err := attendeeService.GetAttendee(ctx, id)
 	if err != nil {
 		attendeeNotFoundErrorHandler(ctx, w, r, id)
 		return
 	}
-	err = mapDtoToAttendee(dto, entity)
+	validationErrs := validate(ctx, dto, attendee)
+	if len(validationErrs) != 0 {
+		attendeeValidationErrorHandler(ctx, w, r, validationErrs)
+		return
+	}
+	err = mapDtoToAttendee(dto, attendee)
 	if err != nil {
 		attendeeParseErrorHandler(ctx, w, r, err)
 		return
 	}
-	err = attendeeService.UpdateAttendee(ctx, entity)
+	err = attendeeService.UpdateAttendee(ctx, attendee)
 	if err != nil {
 		attendeeWriteErrorHandler(ctx, w, r, err)
 		return

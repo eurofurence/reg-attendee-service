@@ -2,6 +2,8 @@ package attendeectl
 
 import (
 	"context"
+	"fmt"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/entity"
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/logging"
 	"net/url"
 	"github.com/jumpy-squirrel/rexis-go-attendee/api/v1/attendee"
@@ -28,10 +30,10 @@ const countryPattern = "^[A-Z]{2}$"
 
 var allowedGenders = [...]string{"male", "female", "other", "notprovided", ""}
 
-func validate(ctx context.Context, a *attendee.AttendeeDto, allowedId string) url.Values {
+func validate(ctx context.Context, a *attendee.AttendeeDto, trustedOriginalState *entity.Attendee) url.Values {
 	errs := url.Values{}
 
-	if a.Id != "" && a.Id != allowedId {
+	if a.Id != "" && a.Id != fmt.Sprint(trustedOriginalState.ID) {
 		errs.Add("id", "id field must be empty or correctly assigned for incoming requests")
 	}
 	if validation.ViolatesPattern(nicknamePattern, a.Nickname) {

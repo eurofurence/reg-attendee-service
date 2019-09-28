@@ -3,8 +3,10 @@ package attendeectl
 import (
 	"context"
 	"encoding/json"
+	"github.com/jinzhu/gorm"
 	"github.com/jumpy-squirrel/rexis-go-attendee/api/v1/attendee"
 	"github.com/jumpy-squirrel/rexis-go-attendee/docs"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/entity"
 	"net/url"
 	"reflect"
 	"testing"
@@ -37,7 +39,7 @@ func TestValidateSuccess(t *testing.T) {
 	docs.Description("a valid attendee reports no validation errors")
 	a := tstCreateValidAttendee()
 	expected := url.Values{}
-	performValidationTest(t, &a, expected, "")
+	performValidationTest(t, &a, expected, 0)
 }
 
 func TestValidateMissingInfo(t *testing.T) {
@@ -60,7 +62,7 @@ func TestValidateMissingInfo(t *testing.T) {
 		"street": []string{"street field must be at least 1 and at most 120 characters long"},
 		"zip":    []string{"zip field must be at least 1 and at most 20 characters long"},
 	}
-	performValidationTest(t, &a, expected, "")
+	performValidationTest(t, &a, expected, 0)
 }
 
 func TestValidateTooLong(t *testing.T) {
@@ -87,7 +89,7 @@ func TestValidateTooLong(t *testing.T) {
 		"street":     []string{"street field must be at least 1 and at most 120 characters long"},
 		"zip":        []string{"zip field must be at least 1 and at most 20 characters long"},
 	}
-	performValidationTest(t, &a, expected, "")
+	performValidationTest(t, &a, expected, 0)
 }
 
 func TestValidateNicknameOnlySpecials(t *testing.T) {
@@ -112,7 +114,7 @@ func performNicknameValidationTest(t *testing.T, wrongNick string) {
 	expected := url.Values{
 		"nickname": []string{"nickname field must contain at least two letters, and contain no more than two non-letters"},
 	}
-	performValidationTest(t, &a, expected, "")
+	performValidationTest(t, &a, expected, 0)
 }
 
 func TestValidateBirthday1(t *testing.T) {
@@ -137,7 +139,7 @@ func performBirthdayValidationTest(t *testing.T, wrongDate string) {
 	expected := url.Values{
 		"birthday": []string{"birthday field must be a valid ISO 8601 date (format yyyy-MM-dd)"},
 	}
-	performValidationTest(t, &a, expected, "")
+	performValidationTest(t, &a, expected, 0)
 }
 
 func TestValidateChoiceFieldsAndId(t *testing.T) {
@@ -159,7 +161,7 @@ func TestValidateChoiceFieldsAndId(t *testing.T) {
 		"telegram":    []string{"optional telegram field must contain your @username from telegram, or it can be left blank"},
 		"tshirt_size": []string{"optional tshirt_size field must be empty or one of XS,S,M,L,XL,XXL,XXXL,XXXXL"},
 	}
-	performValidationTest(t, &a, expected, "16")
+	performValidationTest(t, &a, expected, 16)
 }
 
 func TestValidatePreventSettingIdField(t *testing.T) {
@@ -170,7 +172,7 @@ func TestValidatePreventSettingIdField(t *testing.T) {
 	expected := url.Values{
 		"id": []string{"id field must be empty or correctly assigned for incoming requests"},
 	}
-	performValidationTest(t, &a, expected, "")
+	performValidationTest(t, &a, expected, 0)
 }
 
 func TestValidatePreventSettingIdFieldWrongValue(t *testing.T) {
@@ -181,7 +183,7 @@ func TestValidatePreventSettingIdFieldWrongValue(t *testing.T) {
 	expected := url.Values{
 		"id": []string{"id field must be empty or correctly assigned for incoming requests"},
 	}
-	performValidationTest(t, &a, expected, "16")
+	performValidationTest(t, &a, expected, 16)
 }
 
 func TestValidateWrongEmailWhitespaceInUsername(t *testing.T) {
@@ -203,11 +205,11 @@ func performEmailValidationTest(t *testing.T, wrongEmail string) {
 	a := tstCreateValidAttendee()
 	a.Email = wrongEmail
 	expected := url.Values{"email": []string{"email field is not plausible"}}
-	performValidationTest(t, &a, expected, "")
+	performValidationTest(t, &a, expected, 0)
 }
 
-func performValidationTest(t *testing.T, a *attendee.AttendeeDto, expectedErrors url.Values, allowedId string) {
-	actualErrors := validate(context.TODO(), a, allowedId)
+func performValidationTest(t *testing.T, a *attendee.AttendeeDto, expectedErrors url.Values, allowedId uint) {
+	actualErrors := validate(context.TODO(), a, &entity.Attendee{Model: gorm.Model{ID: allowedId}})
 
 	prettyprintedActualErrors, _ := json.MarshalIndent(actualErrors, "", "  ")
 	prettyprintedExpectedErrors, _ := json.MarshalIndent(expectedErrors, "", "  ")
