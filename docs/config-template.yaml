@@ -20,31 +20,67 @@ security:
 choices:
   flags:
     hc:
-      description: 'blah'
+      description: 'Wheelchair'
+      help_url: 'help/opt_wheelchair.html'
     anon:
-      description: 'blah'
+      description: 'Legal Name is Confidential'
+      help_url: 'help/opt_anonymous.html'
     ev:
-      description: 'blah'
+      description: 'Eurofurence e.V. Member'
+      help_url: 'help/opt_member.html'
   packages:
     room-none:
-      description: 'blah'
+      description: 'No Room'
+      help_url: 'help/room_none.html'
+      vat_percent: 7
+      default: true
+      read_only: true
     attendance:
-      description: 'blah'
+      description: 'Entrance Fee (Convention Ticket)'
+      help_url: 'help/fee_basic.html'
+      price_early: 90.00
+      price_late: 100.00
+      price_atcon: 125.00
+      vat_percent: 19
+      default: true
     stage:
-      description: 'blah'
+      description: 'Entrance Fee (Stage Ticket)'
+      help_url: 'help/fee_stage.html'
+      price_early: 5.00
+      price_late: 5.00
+      price_atcon: 5.00
+      vat_percent: 19
+      default: true
+      read_only: true
     sponsor:
-      description: 'blah'
+      description: 'Sponsor Upgrade'
+      help_url: 'help/fee_sponsor.html'
+      price_early: 65.00
+      price_late: 65.00
+      price_atcon: 65.00
+      vat_percent: 19
     sponsor2:
-      description: 'blah'
+      description: 'Supersponsor Upgrade'
+      help_url: 'help/fee_sponsor2.html'
+      price_early: 160.00
+      price_late: 160.00
+      price_atcon: 160.00
+      vat_percent: 19
+      constraint: '!sponsor'
+      constraint_msg: 'Please choose only one of Sponsor or Supersponsor.'
   options:
     art:
-      description: 'blah'
+      description: 'Artist'
+      help_url: 'help/opt_artist.html'
     anim:
-      description: 'blah'
+      description: 'Animator'
+      help_url: 'help/opt_animator.html'
     music:
-      description: 'blah'
+      description: 'Musician'
+      help_url: 'help/opt_musician.html'
     suit:
-      description: 'blah'
+      description: 'Fursuiter'
+      help_url: 'help/opt_fursuiter.html'
 tshirtsizes:
   - 'XS'
   - 'S'

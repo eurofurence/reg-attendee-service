@@ -31,16 +31,17 @@ type securityConfig struct {
 }
 
 type choiceConfig struct {
-	Description string  `yaml:"description"`
-	HelpUrl     string  `yaml:"help_url"`
-	PriceEarly  float64 `yaml:"price_early"`
-	PriceLate   float64 `yaml:"price_late"`
-	PriceAtCon  float64 `yaml:"price_atcon"`
-	VatPercent  float64 `yaml:"vat_percent"`
-	Default     bool    `yaml:"default"`
-	AdminOnly   bool    `yaml:"admin_only"`
-	ReadOnly    bool    `yaml:"read_only"`
-	Constraint  string  `yaml:"constraint"`
+	Description   string  `yaml:"description"`
+	HelpUrl       string  `yaml:"help_url"`
+	PriceEarly    float64 `yaml:"price_early"`
+	PriceLate     float64 `yaml:"price_late"`
+	PriceAtCon    float64 `yaml:"price_atcon"`
+	VatPercent    float64 `yaml:"vat_percent"`
+	Default       bool    `yaml:"default"`
+	AdminOnly     bool    `yaml:"admin_only"`
+	ReadOnly      bool    `yaml:"read_only"`
+	Constraint    string  `yaml:"constraint"`
+	ConstraintMsg string  `yaml:"constraint_msg"`
 }
 
 type flagsPkgOptConfig struct {

@@ -18,15 +18,20 @@ all required dependencies by default.
 
 ## TODO:
 - functionality MVP.1
-    - remaining field validations (email pattern, flag/options/pkg logic, tshirt sizes conf and validation)
-- security with oauth2 server MVP.2
-    - security using JWT signatures with key in config
-    - permissions using JWT
-        - viewAttendees, changeAttendees, viewAttendeeAdmininfo, changeAttendeeAdmininfo rights
-        - identification as a specific attendee
-    - acceptance tests for security
+    - remaining field validations
+        - flag/options/pkg validation logic (admin only, mutually exclusive), incl. tests
+        - age check (birthdate validation), incl. tests
+    - duplicates check on add attendee, update attendee, incl. tests
+    - config switch to require a hardcoded JWT token for new registrations (staff reg!), incl. acc test
+
 - later
     - admin fields handling (subresource, but export type&status on get)
     - react to context.cancel
     - separate logging target for log output during test runs, so log output can be asserted (and isn't output)
     - optional partner (nick) field for MMC
+    - security with oauth2 server
+        - security using JWT signatures with key in config
+        - permissions using JWT
+            - viewAttendees, changeAttendees, viewAttendeeAdmininfo, changeAttendeeAdmininfo rights
+            - identification as a specific attendee
+        - additional acceptance tests for security
