@@ -3,6 +3,7 @@ package config
 import (
 	"github.com/jumpy-squirrel/rexis-go-attendee/web/util/validation"
 	"net/url"
+	"strings"
 )
 
 func setConfigurationDefaults(c *conf) {
@@ -63,6 +64,8 @@ func validateFlagsConfiguration(errs url.Values, c map[string]choiceConfig) {
 			errs.Add("choices.flags." + k, "invalid key, must consist of a-z A-Z 0-9 - _ only")
 		}
 		validation.CheckLength(&errs, 1, 256, "choices.flags." + k + ".description", v.Description)
+		validation.CheckLength(&errs, 1, 256, "choices.flags." + k + ".help_url", v.HelpUrl)
+		checkConstraints(errs, c, "choices.flags", k, v.Constraint, v.ConstraintMsg)
 	}
 }
 
@@ -72,6 +75,8 @@ func validatePackagesConfiguration(errs url.Values, c map[string]choiceConfig) {
 			errs.Add("choices.packages." + k, "invalid key, must consist of a-z A-Z 0-9 - _ only")
 		}
 		validation.CheckLength(&errs, 1, 256, "choices.packages." + k + ".description", v.Description)
+		validation.CheckLength(&errs, 1, 256, "choices.packages." + k + ".help_url", v.HelpUrl)
+		checkConstraints(errs, c, "choices.packages", k, v.Constraint, v.ConstraintMsg)
 	}
 }
 
@@ -81,5 +86,26 @@ func validateOptionsConfiguration(errs url.Values, c map[string]choiceConfig) {
 			errs.Add("choices.options." + k, "invalid key, must consist of a-z A-Z 0-9 - _ only")
 		}
 		validation.CheckLength(&errs, 1, 256, "choices.options." + k + ".description", v.Description)
+		validation.CheckLength(&errs, 1, 256, "choices.options." + k + ".help_url", v.HelpUrl)
+		checkConstraints(errs, c, "choices.options", k, v.Constraint, v.ConstraintMsg)
+	}
+}
+
+func checkConstraints(errs url.Values, c map[string]choiceConfig, keyPrefix string, key string, constraint string, constraintMsg string) {
+	if constraint != "" {
+		constraints := strings.Split(constraint, ",")
+		for _, cn := range constraints {
+			choiceKey := cn
+			if strings.HasPrefix(cn, "!") {
+				choiceKey = strings.TrimPrefix(cn, "!")
+			}
+			if _, ok := c[choiceKey]; !ok {
+				errs.Add(keyPrefix + "." + key + ".constraint", "invalid key in constraint, references nonexistent entry")
+			}
+			if choiceKey == key {
+				errs.Add(keyPrefix + "." + key + ".constraint", "invalid self referential constraint")
+			}
+			validation.CheckLength(&errs, 1, 256, keyPrefix + "." + key + ".constraint_msg", constraintMsg)
+		}
 	}
 }

@@ -40,3 +40,12 @@ func TestDatabaseMysqlConnectString(t *testing.T) {
 		}}
 	require.Equal(t, "demouser:demopw@tcp(localhost:3306)/dbname?charset=utf8mb4&timeout=30s", DatabaseMysqlConnectString(), "unexpected mysql db connection string")
 }
+
+func TestMigrateDatabase(t *testing.T) {
+	docs.Description("ensure migrate database flag is returned correctly")
+	dbMigrate = true
+	require.Equal(t, true, MigrateDatabase(), "unexpected return value")
+
+	dbMigrate = false
+	require.Equal(t, false, MigrateDatabase(), "unexpected return value")
+}
