@@ -19,6 +19,10 @@ func DatabaseMysqlConnectString() string {
 		c.Database + "?" + strings.Join(c.Parameters, "&")
 }
 
+func MigrateDatabase() bool {
+	return dbMigrate
+}
+
 func LoggingSeverity() string {
 	return Configuration().Logging.Severity
 }

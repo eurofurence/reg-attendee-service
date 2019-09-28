@@ -37,10 +37,13 @@ func Close() {
 	SetRepository(nil)
 }
 
-func Migrate() {
-	// TODO make this depend on a cmd line switch. Way too dangerous otherwise.
-	logging.NoCtx().Info("Migrating database...")
-	GetRepository().Migrate()
+func MigrateIfSwitchedOn() {
+	if config.MigrateDatabase() {
+		logging.NoCtx().Info("Migrating database...")
+		GetRepository().Migrate()
+	} else {
+		logging.NoCtx().Info("Not migrating database. Provide -migrate-database command line switch to enable.")
+	}
 }
 
 func GetRepository() dbrepo.Repository {

@@ -14,11 +14,10 @@ Command line arguments
 This service uses go modules to provide dependency management, see `go.mod`.
 
 If you place this repository OUTSIDE of your gopath, go build and go test will download
-all their required dependencies by default. 
+all required dependencies by default. 
 
 ## TODO:
 - functionality MVP.1
-    - make database migration a command line switch
     - remaining field validations (email pattern, flag/options/pkg logic, tshirt sizes conf and validation)
 - security with oauth2 server MVP.2
     - security using JWT signatures with key in config

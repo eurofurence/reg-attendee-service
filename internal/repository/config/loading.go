@@ -16,12 +16,14 @@ var (
 	configurationData     *conf
 	configurationLock     *sync.RWMutex
 	configurationFilename string
+	dbMigrate             bool
 )
 
 func init() {
 	configurationData = &conf{Logging: loggingConfig{Severity: "DEBUG"}}
 	configurationLock = &sync.RWMutex{}
 	flag.StringVar(&configurationFilename, "config", "", "config file path")
+	flag.BoolVar(&dbMigrate, "migrate-database", false, "migrate database on startup")
 }
 
 func parseAndOverwriteConfig(yamlFile []byte) error {
