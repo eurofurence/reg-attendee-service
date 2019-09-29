@@ -52,6 +52,10 @@ func (s *MockAttendeeService) UpdateAttendee(ctx context.Context, attendee *enti
 	return errors.New("some error, this is a mock")
 }
 
+func (s *MockAttendeeService) CanChangeChoiceTo(ctx context.Context, originalChoiceStr string, newChoiceStr string, configuration map[string]config.ChoiceConfig) error {
+	return nil
+}
+
 func tstSetupServiceMocks() {
 	attendeeService = &MockAttendeeService{}
 }

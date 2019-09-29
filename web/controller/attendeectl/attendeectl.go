@@ -46,7 +46,7 @@ func newAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		return
 	}
-	validationErrs := validate(ctx, dto, &entity.Attendee{})
+	validationErrs := validate(ctx, dto, &entity.Attendee{Flags: config.DefaultFlags(), Packages: config.DefaultPackages(), Options: config.DefaultOptions()})
 	if len(validationErrs) != 0 {
 		attendeeValidationErrorHandler(ctx, w, r, validationErrs)
 		return
@@ -160,8 +160,7 @@ func attendeeWriteErrorHandler(ctx context.Context, w http.ResponseWriter, r *ht
 
 func errorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, msg string, status int, details url.Values) {
 	timestamp := time.Now().Format(time.RFC3339)
-	response := attendee.ErrorDto{Message: msg, Timestamp: timestamp}
-	// TODO include requestid
+	response := attendee.ErrorDto{Message: msg, Timestamp: timestamp, Details: details, RequestId: ctxvalues.RequestId(ctx)}
 	w.Header().Set(headers.ContentType, media.ContentTypeApplicationJson)
 	writeHeader(ctx, w, status)
 	writeJson(ctx, w, response)

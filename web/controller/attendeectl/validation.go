@@ -74,6 +74,17 @@ func validate(ctx context.Context, a *attendee.AttendeeDto, trustedOriginalState
 		errs.Add("tshirt_size", "optional tshirt_size field must be empty or one of " + strings.Join(config.AllowedTshirtSizes(), ","))
 	}
 
+	// check permission to change flags, packages, options to their new values
+	if err := attendeeService.CanChangeChoiceTo(ctx, trustedOriginalState.Flags, a.Flags, config.FlagsConfig()); err != nil {
+		errs.Add( "flags", err.Error())
+	}
+	if err := attendeeService.CanChangeChoiceTo(ctx, trustedOriginalState.Packages, a.Packages, config.PackagesConfig()); err != nil {
+		errs.Add( "packages", err.Error())
+	}
+	if err := attendeeService.CanChangeChoiceTo(ctx, trustedOriginalState.Options, a.Options, config.OptionsConfig()); err != nil {
+		errs.Add( "options", err.Error())
+	}
+
 	if len(errs) != 0 {
 		logger := logging.Ctx(ctx)
 		if logger.IsDebugEnabled() {

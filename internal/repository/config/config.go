@@ -67,17 +67,54 @@ func AllAvailableFixedTokenGroups() []FixedTokenEnum {
 }
 
 func AllowedFlags() []string {
-	return sortedKeys(&Configuration().Choices.Flags)
+	return sortedKeys(Configuration().Choices.Flags)
 }
 
 func AllowedPackages() []string {
-	return sortedKeys(&Configuration().Choices.Packages)
+	return sortedKeys(Configuration().Choices.Packages)
 }
 
 func AllowedOptions() []string {
-	return sortedKeys(&Configuration().Choices.Options)
+	return sortedKeys(Configuration().Choices.Options)
 }
 
 func AllowedTshirtSizes() []string {
 	return Configuration().TShirtSizes
+}
+
+func DefaultFlags() string {
+	return defaultChoiceStr(Configuration().Choices.Flags)
+}
+
+func DefaultPackages() string {
+	return defaultChoiceStr(Configuration().Choices.Packages)
+}
+
+func DefaultOptions() string {
+	return defaultChoiceStr(Configuration().Choices.Options)
+}
+
+func defaultChoiceStr(choiceConf map[string]ChoiceConfig) string {
+	a := sortedKeys(choiceConf)
+
+	b := a[:0]
+	for _, x := range a {
+		if choiceConf[x].Default {
+			b = append(b, x)
+		}
+	}
+
+	return strings.Join(b, ",")
+}
+
+func FlagsConfig() map[string]ChoiceConfig {
+	return Configuration().Choices.Flags
+}
+
+func PackagesConfig() map[string]ChoiceConfig {
+	return Configuration().Choices.Packages
+}
+
+func OptionsConfig() map[string]ChoiceConfig {
+	return Configuration().Choices.Options
 }

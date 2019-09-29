@@ -8,10 +8,10 @@ import (
 )
 
 func TestCheckConstraints(t *testing.T) {
-	c := make(map[string]choiceConfig)
-	c["selfref"] = choiceConfig{Constraint: "selfref", ConstraintMsg: "self referential"}
-	c["msgmissing"] = choiceConfig{Constraint: "selfref"}
-	c["wrongref"] = choiceConfig{Constraint: "unicorn", ConstraintMsg: "wrong reference"}
+	c := make(map[string]ChoiceConfig)
+	c["selfref"] = ChoiceConfig{Constraint: "selfref", ConstraintMsg: "self referential"}
+	c["msgmissing"] = ChoiceConfig{Constraint: "selfref"}
+	c["wrongref"] = ChoiceConfig{Constraint: "unicorn", ConstraintMsg: "wrong reference"}
 
 	actualErrors := url.Values{}
 	checkConstraints(actualErrors, c, "blah", "selfref", c["selfref"].Constraint, c["selfref"].ConstraintMsg)

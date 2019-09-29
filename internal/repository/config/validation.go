@@ -62,7 +62,7 @@ func validateDatabaseConfiguration(errs url.Values, c databaseConfig) {
 
 const keyPattern = "^[a-zA-Z0-9_-]+$"
 
-func validateFlagsConfiguration(errs url.Values, c map[string]choiceConfig) {
+func validateFlagsConfiguration(errs url.Values, c map[string]ChoiceConfig) {
 	for k, v := range c {
 		if validation.ViolatesPattern(keyPattern, k) {
 			errs.Add("choices.flags." + k, "invalid key, must consist of a-z A-Z 0-9 - _ only")
@@ -73,7 +73,7 @@ func validateFlagsConfiguration(errs url.Values, c map[string]choiceConfig) {
 	}
 }
 
-func validatePackagesConfiguration(errs url.Values, c map[string]choiceConfig) {
+func validatePackagesConfiguration(errs url.Values, c map[string]ChoiceConfig) {
 	for k, v := range c {
 		if validation.ViolatesPattern(keyPattern, k) {
 			errs.Add("choices.packages." + k, "invalid key, must consist of a-z A-Z 0-9 - _ only")
@@ -84,7 +84,7 @@ func validatePackagesConfiguration(errs url.Values, c map[string]choiceConfig) {
 	}
 }
 
-func validateOptionsConfiguration(errs url.Values, c map[string]choiceConfig) {
+func validateOptionsConfiguration(errs url.Values, c map[string]ChoiceConfig) {
 	for k, v := range c {
 		if validation.ViolatesPattern(keyPattern, k) {
 			errs.Add("choices.options." + k, "invalid key, must consist of a-z A-Z 0-9 - _ only")
@@ -95,7 +95,7 @@ func validateOptionsConfiguration(errs url.Values, c map[string]choiceConfig) {
 	}
 }
 
-func checkConstraints(errs url.Values, c map[string]choiceConfig, keyPrefix string, key string, constraint string, constraintMsg string) {
+func checkConstraints(errs url.Values, c map[string]ChoiceConfig, keyPrefix string, key string, constraint string, constraintMsg string) {
 	if constraint != "" {
 		constraints := strings.Split(constraint, ",")
 		for _, cn := range constraints {

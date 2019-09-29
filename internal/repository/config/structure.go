@@ -32,7 +32,7 @@ type securityConfig struct {
 	Fixed fixedTokenConfig `yaml:"fixed"`
 }
 
-type choiceConfig struct {
+type ChoiceConfig struct {
 	Description   string  `yaml:"description"`
 	HelpUrl       string  `yaml:"help_url"`
 	PriceEarly    float64 `yaml:"price_early"`
@@ -47,9 +47,9 @@ type choiceConfig struct {
 }
 
 type flagsPkgOptConfig struct {
-	Flags    map[string]choiceConfig `yaml:"flags"`
-	Packages map[string]choiceConfig `yaml:"packages"`
-	Options  map[string]choiceConfig `yaml:"options"`
+	Flags    map[string]ChoiceConfig `yaml:"flags"`
+	Packages map[string]ChoiceConfig `yaml:"packages"`
+	Options  map[string]ChoiceConfig `yaml:"options"`
 }
 
 type conf struct {

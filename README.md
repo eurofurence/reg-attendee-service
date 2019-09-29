@@ -18,15 +18,7 @@ all required dependencies by default.
 
 ## TODO:
 - functionality MVP.1
-    - three hardcoded tokens, incl. acceptance tests
-        - one optional for securing (staff) reg, if not set, regs can be added without a token
-        - one required for securing logged in changes by regular users (may not change admin fields)
-        - one required for securing admin changes
-    - remaining field validations
-        - flag/options/pkg validation logic (admin only, mutually exclusive)
-            - incl. tests when sending attendee
-            - incl. tests that admin can make all changes
-        - age check (birthdate validation), incl. tests
+    - age check (birthdate validation), incl. tests
     - duplicates check on add attendee, update attendee, incl. tests
 
 

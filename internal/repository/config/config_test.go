@@ -49,3 +49,12 @@ func TestMigrateDatabase(t *testing.T) {
 	dbMigrate = false
 	require.Equal(t, false, MigrateDatabase(), "unexpected return value")
 }
+
+func TestFixedTokenInvalidGroup(t *testing.T) {
+	docs.Description("test the normally unreachable fixed token lookup for an invalid enum value")
+	configurationData = &conf{Security: securityConfig{Fixed: fixedTokenConfig{Admin: "admin", User: "user", InitialReg: "reg"}}}
+
+	token, err := FixedToken(-1)
+	require.NotNil(t, err)
+	require.Equal(t, "", token)
+}
