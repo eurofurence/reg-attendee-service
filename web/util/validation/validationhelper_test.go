@@ -2,6 +2,7 @@ package validation
 
 import (
 	"github.com/jumpy-squirrel/rexis-go-attendee/docs"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -14,4 +15,15 @@ func TestViolatesPatternReportsViolationWithErrorInPattern(t *testing.T) {
 	if !ViolatesPattern(wrongPattern, value) {
 		t.Errorf("ViolatesPattern did not return true when the pattern contains a syntax error")
 	}
+}
+
+func TestDateNotInRangeInclusive(t *testing.T) {
+	docs.Description("verify that the dateNotInRange check works as expected")
+	min := "1999-02-28"
+	max := "2000-02-29"
+	require.True(t, DateNotInRangeInclusive("1998-04-22", min, max))
+	require.False(t, DateNotInRangeInclusive(min, min, max))
+	require.False(t, DateNotInRangeInclusive("2000-01-01", min, max))
+	require.False(t, DateNotInRangeInclusive(max, min, max))
+	require.True(t, DateNotInRangeInclusive("2004-12-31", min, max))
 }

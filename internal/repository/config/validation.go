@@ -60,6 +60,15 @@ func validateDatabaseConfiguration(errs url.Values, c databaseConfig) {
 	}
 }
 
+func validateBirthdayConfiguration(errs url.Values, c birthdayConfig) {
+	if validation.InvalidISODate(c.Earliest) {
+		errs.Add("birthday.earliest", "invalid earliest birthday, must be specified as an ISO Date, as in 1901-01-01")
+	}
+	if validation.InvalidISODate(c.Latest) {
+		errs.Add("birthday.latest", "invalid latest birthday, must be specified as an ISO Date, as in 2019-08-24. It is acceptable to specify the last day of the convention, if you wish to allow any underage participants. Otherwise use the first day, 18 years ago.")
+	}
+}
+
 const keyPattern = "^[a-zA-Z0-9_-]+$"
 
 func validateFlagsConfiguration(errs url.Values, c map[string]ChoiceConfig) {

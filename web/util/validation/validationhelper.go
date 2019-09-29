@@ -29,6 +29,13 @@ func InvalidISODate(value string) bool {
 	return err != nil
 }
 
+func DateNotInRangeInclusive(value string, earliest string, latest string) bool {
+	val, _ := time.Parse(isoDateFormat, value)
+	min, _ := time.Parse(isoDateFormat, earliest)
+	max, _ := time.Parse(isoDateFormat, latest)
+	return val.Before(min) || val.After(max)
+}
+
 func NotInAllowedValues(allowed []string, value string) bool {
 	for _, v := range allowed {
 		if v == value {

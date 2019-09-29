@@ -52,6 +52,11 @@ type flagsPkgOptConfig struct {
 	Options  map[string]ChoiceConfig `yaml:"options"`
 }
 
+type birthdayConfig struct {
+	Earliest string `yaml:"earliest"`
+	Latest   string `yaml:"latest"`
+}
+
 type conf struct {
 	Database    databaseConfig    `yaml:"database"`
 	Server      serverConfig      `yaml:"server"`
@@ -59,4 +64,5 @@ type conf struct {
 	Logging     loggingConfig     `yaml:"logging"`
 	Security    securityConfig    `yaml:"security"`
 	TShirtSizes []string          `yaml:"tshirtsizes"`
+	Birthday    birthdayConfig    `yaml:"birthday"`
 }

@@ -63,6 +63,8 @@ func validate(ctx context.Context, a *attendee.AttendeeDto, trustedOriginalState
 	validation.CheckLength(&errs, 0, 80, "telegram", a.Telegram)
 	if validation.InvalidISODate(a.Birthday) {
 		errs.Add("birthday", "birthday field must be a valid ISO 8601 date (format yyyy-MM-dd)")
+	} else if validation.DateNotInRangeInclusive(a.Birthday, config.EarliestBirthday(), config.LatestBirthday()) {
+		errs.Add("birthday", "birthday must be no earlier than " + config.EarliestBirthday() + " and no later than " + config.LatestBirthday())
 	}
 	if validation.NotInAllowedValues(allowedGenders[:], a.Gender) {
 		errs.Add("gender", "optional gender field must be one of male, female, other, notprovided, or it can be left blank, which counts as notprovided")

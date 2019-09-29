@@ -45,6 +45,7 @@ func parseAndOverwriteConfig(yamlFile []byte) error {
 	validateFlagsConfiguration(errs, newConfigurationData.Choices.Flags)
 	validatePackagesConfiguration(errs, newConfigurationData.Choices.Packages)
 	validateOptionsConfiguration(errs, newConfigurationData.Choices.Options)
+	validateBirthdayConfiguration(errs, newConfigurationData.Birthday)
 
 	if len(errs) != 0 {
 		var keys []string

@@ -93,6 +93,9 @@ security:
   fixed:
     admin: 'fixed-testing-token-abc'
     user: 'fixed-testing-user-token-def'
+birthday:
+  earliest: '1851-01-01'
+  latest: '2048-01-01'
 `
 	err := parseAndOverwriteConfig([]byte(minimalYaml))
 	require.Nil(t, err, "expected no error")

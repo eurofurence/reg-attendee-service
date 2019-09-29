@@ -118,3 +118,11 @@ func PackagesConfig() map[string]ChoiceConfig {
 func OptionsConfig() map[string]ChoiceConfig {
 	return Configuration().Choices.Options
 }
+
+func EarliestBirthday() string {
+	return Configuration().Birthday.Earliest
+}
+
+func LatestBirthday() string {
+	return Configuration().Birthday.Latest
+}

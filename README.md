@@ -18,14 +18,7 @@ all required dependencies by default.
 
 ## TODO:
 - functionality MVP.1
-    - age check (birthdate validation), incl. tests
     - duplicates check on add attendee, update attendee, incl. tests
-
-
-```
-in attendeectl.validation.go:
-// TODO too early or too late birthday - also add to config
-```
 
 ``` 
 in attendeesrv.go:

@@ -42,6 +42,7 @@ func TestCreateNewAttendeeInvalid(t *testing.T) {
 	attendeeSent := tstBuildValidAttendee()
 	attendeeSent.Nickname = "$%&^@!$"
 	attendeeSent.Packages = attendeeSent.Packages + ",sponsor" // a constraint violation
+	attendeeSent.Birthday = "2004-11-23" // too young
 	response := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(attendeeSent), tstNoToken())
 
 	docs.Then( "then the attendee is rejected with an appropriate error response")
@@ -51,6 +52,7 @@ func TestCreateNewAttendeeInvalid(t *testing.T) {
 	require.Equal(t, "attendee.data.invalid", errorDto.Message, "unexpected error code")
 	require.Equal(t, "nickname field must contain at least two letters, and contain no more than two non-letters", errorDto.Details.Get("nickname"))
 	require.Equal(t, "cannot pick both sponsor2 and sponsor - constraint violated", errorDto.Details.Get("packages"))
+	require.Equal(t, "birthday must be no earlier than 1901-01-01 and no later than 2001-08-14", errorDto.Details.Get("birthday"))
 }
 
 func TestCreateNewAttendeeCanBeReadAgainByAdmin(t *testing.T) {

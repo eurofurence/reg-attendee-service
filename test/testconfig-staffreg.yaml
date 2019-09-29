@@ -114,3 +114,6 @@ tshirtsizes:
   - 'XXL'
   - 'XXXL'
   - 'XXXXL'
+birthday:
+  earliest: '1901-01-01'
+  latest: '2001-08-14'
