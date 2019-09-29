@@ -23,7 +23,7 @@ func TestCreateNewAttendee(t *testing.T) {
 	docs.Given("given an unauthenticated user")
 
 	docs.When( "when they create a new attendee with valid data")
-	attendeeSent := tstBuildValidAttendee()
+	attendeeSent := tstBuildValidAttendee("na1-")
 	response := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(attendeeSent), tstNoToken())
 
 	docs.Then( "then the attendee is successfully created")
@@ -39,7 +39,7 @@ func TestCreateNewAttendeeInvalid(t *testing.T) {
 	docs.Given("given an unauthenticated user")
 
 	docs.When( "when they create a new attendee with invalid data")
-	attendeeSent := tstBuildValidAttendee()
+	attendeeSent := tstBuildValidAttendee("na2-")
 	attendeeSent.Nickname = "$%&^@!$"
 	attendeeSent.Packages = attendeeSent.Packages + ",sponsor" // a constraint violation
 	attendeeSent.Birthday = "2004-11-23" // too young
@@ -63,7 +63,7 @@ func TestCreateNewAttendeeCanBeReadAgainByAdmin(t *testing.T) {
 	docs.Given("given an unauthenticated user")
 
 	docs.When( "when they create a new attendee")
-	attendeeSent := tstBuildValidAttendee()
+	attendeeSent := tstBuildValidAttendee("na3-")
 	response := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(attendeeSent), tstNoToken())
 
 	docs.Then( "then the attendee is successfully created and its data can be read again by an admin")
@@ -84,7 +84,7 @@ func TestCreateNewAttendeeStaffregNotLoggedIn(t *testing.T) {
 	docs.Given("given an unauthenticated user")
 
 	docs.When( "when they attempt to create a new attendee with valid data")
-	attendeeSent := tstBuildValidAttendee()
+	attendeeSent := tstBuildValidAttendee("na4-")
 	response := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(attendeeSent), tstNoToken())
 
 	docs.Then( "then the request is denied as unauthenticated (401) and no location header is supplied")
@@ -101,7 +101,7 @@ func TestCreateNewAttendeeStaffregStaff(t *testing.T) {
 	staffToken := tstValidStaffToken(t)
 
 	docs.When( "when they attempt to create a new attendee with valid data")
-	attendeeSent := tstBuildValidAttendee()
+	attendeeSent := tstBuildValidAttendee("na5-")
 	response := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(attendeeSent), staffToken)
 
 	docs.Then( "then the attendee is successfully created")
@@ -118,7 +118,7 @@ func TestCreateNewAttendeeStaffregUser(t *testing.T) {
 	userToken := tstValidUserToken(t)
 
 	docs.When( "when they attempt to create a new attendee with valid data")
-	attendeeSent := tstBuildValidAttendee()
+	attendeeSent := tstBuildValidAttendee("na6-")
 	response := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(attendeeSent), userToken)
 
 	docs.Then( "then the request is denied as unauthorized (403) and no location header is supplied")
@@ -135,7 +135,7 @@ func TestCreateNewAttendeeStaffregAdmin(t *testing.T) {
 	adminToken := tstValidAdminToken(t)
 
 	docs.When( "when they attempt to create a new attendee with valid data")
-	attendeeSent := tstBuildValidAttendee()
+	attendeeSent := tstBuildValidAttendee("na7-")
 	response := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(attendeeSent), adminToken)
 
 	docs.Then( "then the attendee is successfully created")
@@ -151,7 +151,7 @@ func TestCreateNewAttendeeAdminOnlyFlag(t *testing.T) {
 	docs.Given("given an unauthenticated user")
 
 	docs.When( "when they send a new attendee and attempt to set an admin only flag (guest)")
-	attendeeSent := tstBuildValidAttendee()
+	attendeeSent := tstBuildValidAttendee("na8-")
 	attendeeSent.Flags = "guest,hc"
 	response := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(attendeeSent), tstNoToken())
 
@@ -171,7 +171,7 @@ func TestCreateNewAttendeeDefaultAdminOnlyPackage(t *testing.T) {
 	staffToken := tstValidStaffToken(t)
 
 	docs.When( "when they send a new attendee and attempt to leave out an admin only default package (room-none)")
-	attendeeSent := tstBuildValidAttendee()
+	attendeeSent := tstBuildValidAttendee("na9-")
 	attendeeSent.Packages = "attendance,stage,sponsor"
 	response := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(attendeeSent), staffToken)
 
@@ -190,7 +190,7 @@ func TestUpdateExistingAttendee(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
-	existingAttendee := tstBuildValidAttendee()
+	existingAttendee := tstBuildValidAttendee("ua1-")
 	creationResponse := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
 	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status for create")
 	attendeeReadAfterCreation := tstReadAttendee(t, creationResponse.location)
@@ -215,7 +215,7 @@ func TestDenyUpdateExistingAttendeeWhileNotLoggedIn(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee and a user who is not logged in")
-	existingAttendee := tstBuildValidAttendee()
+	existingAttendee := tstBuildValidAttendee("ua2-")
 	existingAttendee.FirstName = "Marianne"
 	creationResponse := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
 	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status for create")
@@ -238,7 +238,7 @@ func TestDenyUpdateExistingAttendeeWithStaffToken(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
-	existingAttendee := tstBuildValidAttendee()
+	existingAttendee := tstBuildValidAttendee("ua3-")
 	existingAttendee.FirstName = "Marianne"
 	creationResponse := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstValidAdminToken(t))
 	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status for create")
@@ -261,7 +261,7 @@ func TestUpdateExistingAttendeeAdminOnlyFlag(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
-	existingAttendee := tstBuildValidAttendee()
+	existingAttendee := tstBuildValidAttendee("ua4-")
 	creationResponse := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
 	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status for create")
 	attendeeReadAfterCreation := tstReadAttendee(t, creationResponse.location)
@@ -285,7 +285,7 @@ func TestDenyReadExistingAttendeeWhileNotLoggedIn(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee and a user who is not logged in")
-	existingAttendee := tstBuildValidAttendee()
+	existingAttendee := tstBuildValidAttendee("ga1-")
 	creationResponse := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
 	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status for create")
 
@@ -302,7 +302,7 @@ func TestDenyReadExistingAttendeeWithStaffToken(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
-	existingAttendee := tstBuildValidAttendee()
+	existingAttendee := tstBuildValidAttendee("ga2-")
 	creationResponse := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstValidAdminToken(t))
 	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status for create")
 

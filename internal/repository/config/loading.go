@@ -87,6 +87,11 @@ func LoadTestingConfigurationFromPathOrAbort(configFilenameForTests string) {
 	StartupLoadConfiguration()
 }
 
+// use this for tests
+func EnableTestingMigrateDatabase() {
+	dbMigrate = true
+}
+
 func StartupLoadConfiguration() {
 	log.Print("[00000000] INFO  Reading configuration...")
 	if configurationFilename == "" {

@@ -63,6 +63,16 @@ func (r *InMemoryRepository) GetAttendeeById(ctx context.Context, id uint) (*ent
 	}
 }
 
+func (r *InMemoryRepository) CountAttendeesByNicknameZipEmail(ctx context.Context, nickname string, zip string, email string) (int64, error) {
+	var count int64
+	for _, v := range r.attendees {
+		if nickname == v.Nickname && zip == v.Zip && email == v.Email {
+			count++
+		}
+	}
+	return count, nil
+}
+
 func (r *InMemoryRepository) RecordHistory(ctx context.Context, h *entity.History) error {
 	newId := uint(atomic.AddUint32(&r.idSequence, 1))
 	h.ID = newId

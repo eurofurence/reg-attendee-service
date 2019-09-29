@@ -2,6 +2,7 @@ package acceptance
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/go-http-utils/headers"
 	"github.com/jumpy-squirrel/rexis-go-attendee/api/v1/attendee"
 	"github.com/jumpy-squirrel/rexis-go-attendee/web/util/media"
@@ -9,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 )
 
 // placing these here because they are package global
@@ -93,7 +95,8 @@ func tstPerformPost(relativeUrlWithLeadingSlash string, requestBody string, bear
 	return tstWebResponseFromResponse(response)
 }
 
-func tstBuildValidAttendee() attendee.AttendeeDto {
+func tstBuildValidAttendee(testcase string) attendee.AttendeeDto {
+	timer := time.Now().UnixNano()
 	return attendee.AttendeeDto{
 		Nickname:     "BlackCheetah",
 		FirstName:    "Hans",
@@ -104,7 +107,7 @@ func tstBuildValidAttendee() attendee.AttendeeDto {
 		Country:      "DE",
 		CountryBadge: "DE",
 		State:        "Sachsen",
-		Email:        "jsquirrel_github_9a6d@packetloss.de",
+		Email:        testcase + fmt.Sprint(timer) + "-jsquirrel_github_9a6d@packetloss.de",
 		Phone:        "+49-30-123",
 		Telegram:     "@ihopethisuserdoesnotexist",
 		Birthday:     "1998-11-23",

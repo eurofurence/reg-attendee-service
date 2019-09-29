@@ -33,6 +33,8 @@ func tstSetupHttpTestServer() {
 
 func tstSetupDatabase() {
 	database.Open()
+	config.EnableTestingMigrateDatabase()
+	database.MigrateIfSwitchedOn()
 }
 
 func tstShutdown() {

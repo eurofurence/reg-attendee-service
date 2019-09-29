@@ -18,17 +18,7 @@ all required dependencies by default.
 
 ## TODO:
 - functionality MVP.1
-    - duplicates check on add attendee, update attendee, incl. tests
-
-``` 
-in attendeesrv.go:
-// TODO duplicate attendee check (this is a business condition) condition is AND of
-//     DbQueryHelper.compare("nick", "=", nick)
-//     DbQueryHelper.compare("zip", "=", zip)
-//     DbQueryHelper.compare("email", "=", email)
-//   and for updates
-//     DbQueryHelper.compare("id", "<>", id)
-```
+    - (no open issues)
 
 - later
     - admin fields handling (subresource, but export type&status on get)

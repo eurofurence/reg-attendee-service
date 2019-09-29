@@ -67,6 +67,10 @@ func (r *HistorizingRepository) GetAttendeeById(ctx context.Context, id uint) (*
 	return r.wrappedRepository.GetAttendeeById(ctx, id)
 }
 
+func (r *HistorizingRepository) CountAttendeesByNicknameZipEmail(ctx context.Context, nickname string, zip string, email string) (int64, error) {
+	return r.wrappedRepository.CountAttendeesByNicknameZipEmail(ctx, nickname, zip, email)
+}
+
 // it is an error to call this from the outside. From the inside use wrappedRepository.RecordHistory to bypass the error
 func (r *HistorizingRepository) RecordHistory(ctx context.Context, h *entity.History) error {
 	return errors.New("not allowed to directly manipulate history")

@@ -42,21 +42,42 @@ func (r *MysqlRepository) Migrate() {
 
 func (r *MysqlRepository) AddAttendee(ctx context.Context, a *entity.Attendee) (uint, error) {
 	err := r.db.Create(a).Error
+	if err != nil {
+		logging.Ctx(ctx).Warnf("mysql error during attendee insert: %v", err)
+	}
 	return a.ID, err
 }
 
 func (r *MysqlRepository) UpdateAttendee(ctx context.Context, a *entity.Attendee) error {
 	err := r.db.Save(a).Error
+	if err != nil {
+		logging.Ctx(ctx).Warnf("mysql error during attendee update: %v", err)
+	}
 	return err
 }
 
 func (r *MysqlRepository) GetAttendeeById(ctx context.Context, id uint) (*entity.Attendee, error) {
 	var a entity.Attendee
 	err := r.db.First(&a, id).Error
+	if err != nil {
+		logging.Ctx(ctx).Infof("mysql error during attendee select - might be ok: %v", err)
+	}
 	return &a, err
+}
+
+func (r *MysqlRepository) CountAttendeesByNicknameZipEmail(ctx context.Context, nickname string, zip string, email string) (int64, error) {
+	var count int64
+	err := r.db.Table("attendees").Where(&entity.Attendee{Nickname: nickname, Zip: zip, Email: email}).Count(&count).Error
+	if err != nil {
+		return -1, err
+	}
+	return count, nil
 }
 
 func (r *MysqlRepository) RecordHistory(ctx context.Context, h *entity.History) error {
 	err := r.db.Create(h).Error
+	if err != nil {
+		logging.Ctx(ctx).Warnf("mysql error during history entry insert: %v", err)
+	}
 	return err
 }

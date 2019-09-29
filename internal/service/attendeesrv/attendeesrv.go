@@ -6,6 +6,7 @@ import (
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/entity"
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/config"
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/database"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/logging"
 	"github.com/jumpy-squirrel/rexis-go-attendee/web/filter/ctxvalues"
 	"strings"
 )
@@ -18,6 +19,15 @@ func (s *AttendeeServiceImplData) NewAttendee(ctx context.Context) *entity.Atten
 }
 
 func (s *AttendeeServiceImplData) RegisterNewAttendee(ctx context.Context, attendee *entity.Attendee) (uint, error) {
+	alreadyExists, err := isDuplicateAttendee(ctx, attendee.Nickname, attendee.Zip, attendee.Email, 0)
+	if err != nil {
+		return 0, err
+	}
+	if alreadyExists {
+		logging.Ctx(ctx).Warnf("received new registration duplicate - nick %v zip %v email %v", attendee.Nickname, attendee.Zip, attendee.Email)
+		return 0, errors.New("duplicate attendee data - you are already registered")
+	}
+
 	id, err := database.GetRepository().AddAttendee(ctx, attendee)
 	return id, err
 }
@@ -28,7 +38,16 @@ func (s *AttendeeServiceImplData) GetAttendee(ctx context.Context, id uint) (*en
 }
 
 func (s *AttendeeServiceImplData) UpdateAttendee(ctx context.Context, attendee *entity.Attendee) error {
-	err := database.GetRepository().UpdateAttendee(ctx, attendee)
+	alreadyExists, err := isDuplicateAttendee(ctx, attendee.Nickname, attendee.Zip, attendee.Email, 1)
+	if err != nil {
+		return err
+	}
+	if alreadyExists {
+		logging.Ctx(ctx).Warnf("received update with registration duplicate - nick %v zip %v email %v", attendee.Nickname, attendee.Zip, attendee.Email)
+		return errors.New("your changes would lead to duplicate attendee data - same nickname, zip, email")
+	}
+
+	err = database.GetRepository().UpdateAttendee(ctx, attendee)
 	return err
 }
 
@@ -44,6 +63,14 @@ func (s *AttendeeServiceImplData) CanChangeChoiceTo(ctx context.Context, origina
 		}
 	}
 	return nil
+}
+
+func isDuplicateAttendee(ctx context.Context, nickname string, zip string, email string, expectedCount int64) (bool, error) {
+	count, err := database.GetRepository().CountAttendeesByNicknameZipEmail(ctx, nickname, zip, email)
+	if err != nil {
+		return false, err
+	}
+	return count != expectedCount, nil
 }
 
 func checkNoForbiddenChanges(ctx context.Context, key string, choiceConfig config.ChoiceConfig, originalChoices map[string]bool, newChoices map[string]bool) error {
