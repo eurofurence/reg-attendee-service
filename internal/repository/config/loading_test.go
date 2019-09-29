@@ -91,7 +91,8 @@ func TestParseAndOverwriteDefaults(t *testing.T) {
 security:
   use: 'fixed-token'
   fixed:
-    token: 'fixed-testing-token-abc'
+    admin: 'fixed-testing-token-abc'
+    user: 'fixed-testing-user-token-def'
 `
 	err := parseAndOverwriteConfig([]byte(minimalYaml))
 	require.Nil(t, err, "expected no error")

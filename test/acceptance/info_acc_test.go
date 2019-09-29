@@ -16,6 +16,10 @@ import (
 // see config and setup/teardown in setup_acc_test.go
 
 func TestHealthEndpoint(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
 	docs.Given("given an unauthenticated user")
 
 	docs.When( "when they perform GET on the health endpoint")
@@ -28,6 +32,10 @@ func TestHealthEndpoint(t *testing.T) {
 }
 
 func TestErrorFallback(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
 	docs.Given("given an unauthenticated user")
 
 	docs.When("when they perform GET on an unimplemented endpoint")

@@ -5,7 +5,7 @@ security:
   fixed:
     admin: 'fixed-admin-token'
     user: 'fixed-user-token'
-    # no reg token in default testing config
+    reg: 'fixed-initial-reg-token'
 choices:
   flags:
     hc:

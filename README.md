@@ -18,11 +18,32 @@ all required dependencies by default.
 
 ## TODO:
 - functionality MVP.1
+    - three hardcoded tokens, incl. acceptance tests
+        - one optional for securing (staff) reg, if not set, regs can be added without a token
+        - one required for securing logged in changes by regular users (may not change admin fields)
+        - one required for securing admin changes
     - remaining field validations
-        - flag/options/pkg validation logic (admin only, mutually exclusive), incl. tests
+        - flag/options/pkg validation logic (admin only, mutually exclusive)
+            - incl. tests when sending attendee
+            - incl. tests that admin can make all changes
         - age check (birthdate validation), incl. tests
     - duplicates check on add attendee, update attendee, incl. tests
-    - config switch to require a hardcoded JWT token for new registrations (staff reg!), incl. acc test
+
+
+```
+in attendeectl.validation.go:
+// TODO too early or too late birthday - also add to config
+```
+
+``` 
+in attendeesrv.go:
+// TODO duplicate attendee check (this is a business condition) condition is AND of
+//     DbQueryHelper.compare("nick", "=", nick)
+//     DbQueryHelper.compare("zip", "=", zip)
+//     DbQueryHelper.compare("email", "=", email)
+//   and for updates
+//     DbQueryHelper.compare("id", "<>", id)
+```
 
 - later
     - admin fields handling (subresource, but export type&status on get)

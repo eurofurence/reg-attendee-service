@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/jumpy-squirrel/rexis-go-attendee/api/v1/attendee"
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/entity"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/config"
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/logging"
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/service/attendeesrv"
 	"github.com/jumpy-squirrel/rexis-go-attendee/web/filter/ctxvalues"
@@ -31,9 +32,13 @@ func OverrideAttendeeService(overrideAttendeeServiceForTesting attendeesrv.Atten
 }
 
 func RestDispatcher(router *mux.Router) {
-	router.HandleFunc("/v1/attendees", filterhelper.BuildUnauthenticatedHandler("3s", newAttendeeHandler)).Methods(http.MethodPut)
-	router.HandleFunc("/v1/attendees/{id:[1-9][0-9]*}", filterhelper.BuildHandler("3s", getAttendeeHandler)).Methods(http.MethodGet)
-	router.HandleFunc("/v1/attendees/{id:[1-9][0-9]*}", filterhelper.BuildHandler("3s", updateAttendeeHandler)).Methods(http.MethodPost)
+	if config.OptionalInitialRegTokenConfigured() {
+		router.HandleFunc("/v1/attendees", filterhelper.BuildHandler("3s", newAttendeeHandler, config.TokenForAdmin, config.OptionalTokenForInitialReg)).Methods(http.MethodPut)
+	} else {
+		router.HandleFunc("/v1/attendees", filterhelper.BuildUnauthenticatedHandler("3s", newAttendeeHandler)).Methods(http.MethodPut)
+	}
+	router.HandleFunc("/v1/attendees/{id:[1-9][0-9]*}", filterhelper.BuildHandler("3s", getAttendeeHandler, config.TokenForAdmin, config.TokenForLoggedInUser)).Methods(http.MethodGet)
+	router.HandleFunc("/v1/attendees/{id:[1-9][0-9]*}", filterhelper.BuildHandler("3s", updateAttendeeHandler, config.TokenForAdmin, config.TokenForLoggedInUser)).Methods(http.MethodPost)
 }
 
 func newAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {

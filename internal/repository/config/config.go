@@ -2,7 +2,11 @@
 // You must have called LoadConfiguration() or otherwise set up the configuration before you can use these.
 package config
 
-import "strings"
+import (
+	"errors"
+	"log"
+	"strings"
+)
 
 func ServerAddr() string {
 	c := Configuration();
@@ -27,8 +31,39 @@ func LoggingSeverity() string {
 	return Configuration().Logging.Severity
 }
 
-func FixedToken() string {
-	return Configuration().Security.Fixed.Token
+type FixedTokenEnum int
+
+const (
+	TokenForAdmin              FixedTokenEnum = iota
+	TokenForLoggedInUser       FixedTokenEnum = iota
+	OptionalTokenForInitialReg FixedTokenEnum = iota
+)
+
+func FixedToken(forGroup FixedTokenEnum) (string, error) {
+	tokens := Configuration().Security.Fixed
+	switch forGroup {
+	case TokenForAdmin:
+		return tokens.Admin, nil
+	case TokenForLoggedInUser:
+		return tokens.User, nil
+	case OptionalTokenForInitialReg:
+		return tokens.InitialReg, nil
+	default:
+		log.Printf("[00000000] ERROR invalid argument to config.FixedToken: %v, this is an error in your code! Find it and fix it. Returning invalid token!", forGroup)
+		return "", errors.New("invalid token group argument")
+	}
+}
+
+func OptionalInitialRegTokenConfigured() bool {
+	return Configuration().Security.Fixed.InitialReg != ""
+}
+
+func AllAvailableFixedTokenGroups() []FixedTokenEnum {
+	if OptionalInitialRegTokenConfigured() {
+		return []FixedTokenEnum{TokenForAdmin, TokenForLoggedInUser, OptionalTokenForInitialReg}
+	} else {
+		return []FixedTokenEnum{TokenForAdmin, TokenForLoggedInUser}
+	}
 }
 
 func AllowedFlags() []string {

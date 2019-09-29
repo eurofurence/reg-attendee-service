@@ -40,7 +40,11 @@ func validateSecurityConfiguration(errs url.Values, c securityConfig) {
 	if validation.NotInAllowedValues(allowedSecurity[:], c.Use) {
 		errs.Add("security.use", "currently must be fixed-token")
 	}
-	validation.CheckLength(&errs, 16, 256, "security.fixed.token", c.Fixed.Token)
+	validation.CheckLength(&errs, 16, 256, "security.fixed.admin", c.Fixed.Admin)
+	validation.CheckLength(&errs, 16, 256, "security.fixed.user", c.Fixed.User)
+	if c.Fixed.InitialReg != "" {
+		validation.CheckLength(&errs, 16, 256, "security.fixed.reg", c.Fixed.InitialReg)
+	}
 }
 
 var allowedDatabases = [...]string{"mysql", "inmemory"}

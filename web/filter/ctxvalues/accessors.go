@@ -2,8 +2,11 @@ package ctxvalues
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/config"
 	"net/http"
+	"strconv"
 )
 
 const ContextMap = "map"
@@ -11,6 +14,7 @@ const ContextMap = "map"
 const ContextHttpStatusKey = "httpstatus"
 const ContextRequestId = "requestid"
 const ContextBearerToken = "bearertoken"
+const ContextAuthorizedAs = "authorizedas"
 
 func CreateContextWithValueMap(ctx context.Context) context.Context {
 	// this is so we can add values to our context, like ... I don't know ... the http status from the response!
@@ -65,3 +69,21 @@ func BearerToken(ctx context.Context) string {
 func SetBearerToken(ctx context.Context, bearerToken string) {
 	setValue(ctx, ContextBearerToken, bearerToken)
 }
+
+func AuthorizedAsGroup(ctx context.Context) (config.FixedTokenEnum, error) {
+	authStr := valueOrDefault(ctx, ContextAuthorizedAs, "")
+	if authStr == "" {
+		return -1, errors.New("no authorization entry found")
+	} else {
+		i, err := strconv.Atoi(authStr)
+		if err != nil {
+			return -1, err
+		}
+		return config.FixedTokenEnum(i), nil
+	}
+}
+
+func SetAuthorizedAsGroup(ctx context.Context, group config.FixedTokenEnum) {
+	setValue(ctx, ContextAuthorizedAs, fmt.Sprint(group))
+}
+

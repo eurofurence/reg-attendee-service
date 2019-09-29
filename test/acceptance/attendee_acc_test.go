@@ -13,9 +13,13 @@ import (
 // acceptance tests for the attendee resource
 // ------------------------------------------
 
-// see config in setup_acc_test.go
+// --- create new attendee ---
 
 func TestCreateNewAttendee(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
 	docs.Given("given an unauthenticated user")
 
 	docs.When( "when they create a new attendee with valid data")
@@ -28,6 +32,10 @@ func TestCreateNewAttendee(t *testing.T) {
 }
 
 func TestCreateNewAttendeeInvalid(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
 	docs.Given("given an unauthenticated user")
 
 	docs.When( "when they create a new attendee with invalid data")
@@ -42,7 +50,11 @@ func TestCreateNewAttendeeInvalid(t *testing.T) {
 	require.Equal(t, "attendee.data.invalid", errorDto.Message, "unexpected error code")
 }
 
-func TestCreateNewAttendeeCanBeReadAgain(t *testing.T) {
+func TestCreateNewAttendeeCanBeReadAgainByAdmin(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
 	docs.Given("given an unauthenticated user")
 
 	docs.When( "when they create a new attendee")
@@ -50,58 +62,162 @@ func TestCreateNewAttendeeCanBeReadAgain(t *testing.T) {
 	response := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(attendeeSent), tstNoToken())
 
 	docs.Then( "then the attendee is successfully created and its data can be read again by an admin")
-	// TODO would need admin authentication, not implemented yet
 	require.Equal(t, http.StatusCreated, response.status, "unexpected http response status")
 	require.Regexp(t, "^\\/api\\/rest\\/v1\\/attendees\\/[1-9][0-9]*$", response.location, "invalid location header in response")
 
-	attendeeReadAgain := tstReadAttendee(response.location)
+	attendeeReadAgain := tstReadAttendee(t, response.location)
 	// difference in id is ok, so copy it over to expected
 	attendeeSent.Id = attendeeReadAgain.Id
 	require.EqualValues(t, attendeeSent, attendeeReadAgain, "attendee data read did not match sent data")
 }
 
+func TestCreateNewAttendeeStaffregNotLoggedIn(t *testing.T) {
+	docs.Given("given the configuration for staff pre-registration")
+	tstSetup(tstStaffregConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given an unauthenticated user")
+
+	docs.When( "when they attempt to create a new attendee with valid data")
+	attendeeSent := tstBuildValidAttendee()
+	response := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(attendeeSent), tstNoToken())
+
+	docs.Then( "then the request is denied as unauthenticated (401) and no location header is supplied")
+	require.Equal(t, http.StatusUnauthorized, response.status, "unexpected http response status")
+	require.Equal(t, "", response.location, "non-empty location header in response")
+}
+
+func TestCreateNewAttendeeStaffregStaff(t *testing.T) {
+	docs.Given("given the configuration for staff pre-registration")
+	tstSetup(tstStaffregConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given a staffer")
+	staffToken := tstValidStaffToken(t)
+
+	docs.When( "when they attempt to create a new attendee with valid data")
+	attendeeSent := tstBuildValidAttendee()
+	response := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(attendeeSent), staffToken)
+
+	docs.Then( "then the attendee is successfully created")
+	require.Equal(t, http.StatusCreated, response.status, "unexpected http response status")
+	require.Regexp(t, "^\\/api\\/rest\\/v1\\/attendees\\/[1-9][0-9]*$", response.location, "invalid location header in response")
+}
+
+func TestCreateNewAttendeeStaffregUser(t *testing.T) {
+	docs.Given("given the configuration for staff pre-registration")
+	tstSetup(tstStaffregConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given an authenticated regular user")
+	userToken := tstValidUserToken(t)
+
+	docs.When( "when they attempt to create a new attendee with valid data")
+	attendeeSent := tstBuildValidAttendee()
+	response := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(attendeeSent), userToken)
+
+	docs.Then( "then the request is denied as unauthorized (403) and no location header is supplied")
+	require.Equal(t, http.StatusForbidden, response.status, "unexpected http response status")
+	require.Equal(t, "", response.location, "non-empty location header in response")
+}
+
+func TestCreateNewAttendeeStaffregAdmin(t *testing.T) {
+	docs.Given("given the configuration for staff pre-registration")
+	tstSetup(tstStaffregConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given an admin")
+	adminToken := tstValidAdminToken(t)
+
+	docs.When( "when they attempt to create a new attendee with valid data")
+	attendeeSent := tstBuildValidAttendee()
+	response := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(attendeeSent), adminToken)
+
+	docs.Then( "then the attendee is successfully created")
+	require.Equal(t, http.StatusCreated, response.status, "unexpected http response status")
+	require.Regexp(t, "^\\/api\\/rest\\/v1\\/attendees\\/[1-9][0-9]*$", response.location, "invalid location header in response")
+}
+
+// --- update attendee ---
+
 func TestUpdateExistingAttendee(t *testing.T) {
-	docs.Given("given an existing attendee, who is logged in")
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
 
+	docs.Given("given an existing attendee")
 	existingAttendee := tstBuildValidAttendee()
-	creationResponse := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstValidToken())
+	creationResponse := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
 	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status for create")
-	attendeeReadAfterCreation := tstReadAttendee(creationResponse.location)
+	attendeeReadAfterCreation := tstReadAttendee(t, creationResponse.location)
 
-	docs.When( "when they send updated attendee info")
+	docs.When( "when they send updated attendee info while logged in")
+	docs.Limitation("the current fixed-token security model cannot check which user is logged in. This is ok because only the old regsys will know the user / admin tokens.")
 	changedAttendee := attendeeReadAfterCreation
 	changedAttendee.FirstName = "Eva"
 	changedAttendee.LastName = "Musterfrau"
-	// TODO change all fields except id
-	updateResponse := tstPerformPost(creationResponse.location, tstRenderJson(changedAttendee), tstValidToken())
+	updateResponse := tstPerformPost(creationResponse.location, tstRenderJson(changedAttendee), tstValidUserToken(t))
 
 	docs.Then( "then the attendee is successfully updated and the changed data can be read again")
 	require.Equal(t, http.StatusOK, updateResponse.status, "unexpected http response status for update")
 	require.Equal(t, creationResponse.location, updateResponse.location, "location unexpectedly changed during update")
-	attendeeReadAgain := tstReadAttendee(creationResponse.location)
+	attendeeReadAgain := tstReadAttendee(t, creationResponse.location)
 	require.EqualValues(t, changedAttendee, attendeeReadAgain, "attendee data read did not match updated data")
 }
 
 func TestDenyUpdateExistingAttendeeWhileNotLoggedIn(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
 	docs.Given("given an existing attendee and a user who is not logged in")
 	existingAttendee := tstBuildValidAttendee()
 	existingAttendee.FirstName = "Marianne"
 	creationResponse := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
 	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status for create")
-	attendeeReadAfterCreation := tstReadAttendee(creationResponse.location)
+	attendeeReadAfterCreation := tstReadAttendee(t, creationResponse.location)
 
 	docs.When( "when they send updated attendee info while not logged in")
 	changedAttendee := attendeeReadAfterCreation
 	changedAttendee.FirstName = "Eva"
 	updateResponse := tstPerformPost(creationResponse.location, tstRenderJson(changedAttendee), tstNoToken())
 
-	docs.Then( "then the request is denied and the data remains unchanged")
+	docs.Then( "then the request is denied as unauthenticated (401) and the data remains unchanged")
 	require.Equal(t, http.StatusUnauthorized, updateResponse.status, "unexpected http response status for insecure update")
-	attendeeReadAgain := tstReadAttendee(creationResponse.location)
+	attendeeReadAgain := tstReadAttendee(t, creationResponse.location)
 	require.EqualValues(t, "Marianne", attendeeReadAgain.FirstName, "attendee data read did not match original data")
 }
 
+func TestDenyUpdateExistingAttendeeWithStaffToken(t *testing.T) {
+	docs.Given("given the configuration for staff pre-registration (the other config doesn't even have a staff token)")
+	tstSetup(tstStaffregConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee")
+	existingAttendee := tstBuildValidAttendee()
+	existingAttendee.FirstName = "Marianne"
+	creationResponse := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstValidAdminToken(t))
+	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status for create")
+	attendeeReadAfterCreation := tstReadAttendee(t, creationResponse.location)
+
+	docs.When( "when a logged in staffer sends updated attendee info")
+	changedAttendee := attendeeReadAfterCreation
+	changedAttendee.FirstName = "Eva"
+	updateResponse := tstPerformPost(creationResponse.location, tstRenderJson(changedAttendee), tstValidStaffToken(t))
+
+	docs.Then( "then the request is denied as unauthorized (403) and the data remains unchanged")
+	require.Equal(t, http.StatusForbidden, updateResponse.status, "unexpected http response status for insecure update")
+	attendeeReadAgain := tstReadAttendee(t, creationResponse.location)
+	require.EqualValues(t, "Marianne", attendeeReadAgain.FirstName, "attendee data read did not match original data")
+}
+
+// --- get attendee ---
+
 func TestDenyReadExistingAttendeeWhileNotLoggedIn(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
 	docs.Given("given an existing attendee and a user who is not logged in")
 	existingAttendee := tstBuildValidAttendee()
 	creationResponse := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
@@ -114,10 +230,27 @@ func TestDenyReadExistingAttendeeWhileNotLoggedIn(t *testing.T) {
 	require.Equal(t, http.StatusUnauthorized, readResponse.status, "unexpected http response status for insecure read")
 }
 
+func TestDenyReadExistingAttendeeWithStaffToken(t *testing.T) {
+	docs.Given("given the configuration for staff pre-registration (the other config doesn't even have a staff token)")
+	tstSetup(tstStaffregConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee")
+	existingAttendee := tstBuildValidAttendee()
+	creationResponse := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstValidAdminToken(t))
+	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status for create")
+
+	docs.When( "when a logged in staffer attempts to read the attendee info")
+	readResponse := tstPerformGet(creationResponse.location, tstValidStaffToken(t))
+
+	docs.Then( "then the request is denied as unauthorized (403)")
+	require.Equal(t, http.StatusForbidden, readResponse.status, "unexpected http response status for insecure read")
+}
+
 // helper functions
 
-func tstReadAttendee(location string) attendee.AttendeeDto {
-	readAgainResponse := tstPerformGet(location, tstValidToken())
+func tstReadAttendee(t *testing.T, location string) attendee.AttendeeDto {
+	readAgainResponse := tstPerformGet(location, tstValidAdminToken(t))
 	attendeeReadAgain := attendee.AttendeeDto{}
 	tstParseJson(readAgainResponse.body, &attendeeReadAgain)
 	return attendeeReadAgain
@@ -127,6 +260,21 @@ func tstNoToken() string {
 	return ""
 }
 
-func tstValidToken() string {
-	return config.FixedToken()
+func tstValidUserToken(t *testing.T) string {
+	token, err := config.FixedToken(config.TokenForLoggedInUser)
+	require.Nil(t, err)
+	return token
+}
+
+func tstValidAdminToken(t *testing.T) string {
+	token, err := config.FixedToken(config.TokenForAdmin)
+	require.Nil(t, err)
+	return token
+}
+
+func tstValidStaffToken(t *testing.T) string {
+	token, err := config.FixedToken(config.OptionalTokenForInitialReg)
+	require.Nil(t, err)
+	require.NotEqual(t, "", token)
+	return token
 }

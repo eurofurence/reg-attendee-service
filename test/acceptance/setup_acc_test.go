@@ -1,12 +1,10 @@
 package acceptance
 
 import (
-	"net/http/httptest"
-	"os"
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/config"
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/database"
 	"github.com/jumpy-squirrel/rexis-go-attendee/web"
-	"testing"
+	"net/http/httptest"
 )
 
 // placing these here because they are package global
@@ -15,21 +13,17 @@ var (
 	ts *httptest.Server
 )
 
-func TestMain(m *testing.M) {
-	tstSetup()
-	code := m.Run()
-	tstShutdown()
-	os.Exit(code)
-}
+const tstDefaultConfigFile =  "../../test/testconfig.yaml"
+const tstStaffregConfigFile = "../../test/testconfig-staffreg.yaml"
 
-func tstSetup() {
-	tstSetupConfig()
+func tstSetup(configFilePath string) {
+	tstSetupConfig(configFilePath)
 	tstSetupDatabase()
 	tstSetupHttpTestServer()
 }
 
-func tstSetupConfig() {
-	config.LoadTestingConfigurationFromPathOrAbort("../../test/testconfig.yaml")
+func tstSetupConfig(configFilePath string) {
+	config.LoadTestingConfigurationFromPathOrAbort(configFilePath)
 }
 
 func tstSetupHttpTestServer() {

@@ -22,7 +22,9 @@ type loggingConfig struct {
 }
 
 type fixedTokenConfig struct {
-	Token string `yaml:"token"`
+	Admin      string `yaml:"admin"`
+	User       string `yaml:"user"`
+	InitialReg string `yaml:"reg"`
 }
 
 type securityConfig struct {

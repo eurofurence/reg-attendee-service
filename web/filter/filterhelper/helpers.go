@@ -2,6 +2,7 @@ package filterhelper
 
 import (
 	"context"
+	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/config"
 	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/logging"
 	"github.com/jumpy-squirrel/rexis-go-attendee/web/filter"
 	"github.com/jumpy-squirrel/rexis-go-attendee/web/filter/ctxfilter"
@@ -39,11 +40,11 @@ func BuildUnauthenticatedHandler(timeout string, handler filter.ContextAwareHand
 				handlefilter.Create(handler))))
 }
 
-func BuildHandler(timeout string, handler filter.ContextAwareHandler) func(w http.ResponseWriter, r *http.Request) {
+func BuildHandler(timeout string, handler filter.ContextAwareHandler, allowedGroups ...config.FixedTokenEnum) func(w http.ResponseWriter, r *http.Request) {
 	timeoutDuration := parseTimeout(timeout)
 	return buildHandlerFunc(
 		ctxfilter.Create(timeoutDuration,
 			logfilter.Create(
 				securityfilter.Create(
-					handlefilter.Create(handler)))))
+					handlefilter.Create(handler), allowedGroups...))))
 }

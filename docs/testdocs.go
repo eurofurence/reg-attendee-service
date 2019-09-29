@@ -19,3 +19,7 @@ func Then(s string) {
 func Description(s string) {
 	log.Print(s)
 }
+
+func Limitation(s string) {
+	log.Print("LIMITATION: " + s)
+}
