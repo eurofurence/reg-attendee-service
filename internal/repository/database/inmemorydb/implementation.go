@@ -73,6 +73,16 @@ func (r *InMemoryRepository) CountAttendeesByNicknameZipEmail(ctx context.Contex
 	return count, nil
 }
 
+func (r *InMemoryRepository) MaxAttendeeId(ctx context.Context) (uint, error) {
+	var max uint
+	for _, v := range r.attendees {
+		if v.ID > max {
+			max = v.ID
+		}
+	}
+	return max, nil
+}
+
 func (r *InMemoryRepository) RecordHistory(ctx context.Context, h *entity.History) error {
 	newId := uint(atomic.AddUint32(&r.idSequence, 1))
 	h.ID = newId

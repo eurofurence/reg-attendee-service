@@ -11,6 +11,7 @@ type AttendeeService interface {
 	RegisterNewAttendee(ctx context.Context, attendee *entity.Attendee) (uint, error)
 	GetAttendee(ctx context.Context, id uint) (*entity.Attendee, error)
 	UpdateAttendee(ctx context.Context, attendee *entity.Attendee) error
+	GetAttendeeMaxId(ctx context.Context) (uint, error)
 
 	CanChangeChoiceTo(ctx context.Context, originalChoiceStr string, newChoiceStr string, configuration map[string]config.ChoiceConfig) error
 }

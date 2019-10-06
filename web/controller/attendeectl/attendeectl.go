@@ -37,6 +37,7 @@ func RestDispatcher(router *mux.Router) {
 	} else {
 		router.HandleFunc("/v1/attendees", filterhelper.BuildUnauthenticatedHandler("3s", newAttendeeHandler)).Methods(http.MethodPut)
 	}
+	router.HandleFunc("/v1/attendees/max-id", filterhelper.BuildUnauthenticatedHandler("3s", getAttendeeMaxIdHandler)).Methods(http.MethodGet)
 	router.HandleFunc("/v1/attendees/{id:[1-9][0-9]*}", filterhelper.BuildHandler("3s", getAttendeeHandler, config.TokenForAdmin, config.TokenForLoggedInUser)).Methods(http.MethodGet)
 	router.HandleFunc("/v1/attendees/{id:[1-9][0-9]*}", filterhelper.BuildHandler("3s", updateAttendeeHandler, config.TokenForAdmin, config.TokenForLoggedInUser)).Methods(http.MethodPost)
 }
@@ -114,6 +115,18 @@ func updateAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.R
 	w.Header().Add(headers.Location, r.RequestURI)
 }
 
+func getAttendeeMaxIdHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	max, err := attendeeService.GetAttendeeMaxId(ctx)
+	if err != nil {
+		attendeeMaxIdErrorHandler(ctx, w, r, err)
+		return
+	}
+	dto := attendee.AttendeeMaxIdDto{}
+	dto.MaxId = max
+	w.Header().Add(headers.ContentType, media.ContentTypeApplicationJson)
+	writeJson(ctx, w, dto)
+}
+
 func idFromVars(ctx context.Context, w http.ResponseWriter, r *http.Request) (uint, error) {
 	vars := mux.Vars(r)
 	id, err := strconv.ParseUint(vars["id"], 10, 32)
@@ -156,6 +169,11 @@ func attendeeParseErrorHandler(ctx context.Context, w http.ResponseWriter, r *ht
 func attendeeWriteErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
 	logging.Ctx(ctx).Warnf("attendee could not be written: %v", err)
 	errorHandler(ctx, w, r, "attendee.write.error", http.StatusInternalServerError, url.Values{})
+}
+
+func attendeeMaxIdErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
+	logging.Ctx(ctx).Warnf("could not determine max id: %v", err)
+	errorHandler(ctx, w, r, "attendee.max_id.error", http.StatusInternalServerError, url.Values{})
 }
 
 func errorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, msg string, status int, details url.Values) {

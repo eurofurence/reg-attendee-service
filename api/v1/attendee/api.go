@@ -35,6 +35,10 @@ type AttendeeDto struct {
 	UserComments string `json:"user_comments"`
 }
 
+type AttendeeMaxIdDto struct {
+	MaxId uint `json:"max_id"`
+}
+
 type ErrorDto struct {
 	Timestamp string `json:"timestamp"`
 	RequestId string `json:"requestid"`

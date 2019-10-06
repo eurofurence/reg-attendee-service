@@ -313,6 +313,27 @@ func TestDenyReadExistingAttendeeWithStaffToken(t *testing.T) {
 	require.Equal(t, http.StatusForbidden, readResponse.status, "unexpected http response status for insecure read")
 }
 
+// --- attendee max id ---
+
+func TestAttendeeMaxIdAvailable(t *testing.T) {
+	docs.Given("given an existing attendee")
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
+	someAttendee := tstBuildValidAttendee("max1-")
+	creationResponse := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(someAttendee), tstNoToken())
+	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status for create")
+
+	docs.When( "when an unauthenticated user queries the maximum id")
+	maxIdResponse := tstPerformGet("/api/rest/v1/attendees/max-id", tstNoToken())
+	require.Equal(t, http.StatusOK, maxIdResponse.status, "unexpected http response status for max-id")
+
+	docs.Then( "then a positive number is returned")
+	responseDto := attendee.AttendeeMaxIdDto{}
+	tstParseJson(maxIdResponse.body, &responseDto)
+	require.True(t, responseDto.MaxId > 0, "expected a positive number as maximum attendee id")
+}
+
 // helper functions
 
 func tstReadAttendee(t *testing.T, location string) attendee.AttendeeDto {

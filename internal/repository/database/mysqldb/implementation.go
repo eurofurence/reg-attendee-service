@@ -74,6 +74,27 @@ func (r *MysqlRepository) CountAttendeesByNicknameZipEmail(ctx context.Context, 
 	return count, nil
 }
 
+func (r *MysqlRepository) MaxAttendeeId(ctx context.Context) (uint, error) {
+	var max uint
+	rows, err := r.db.Table("attendees").Select("ifnull(max(id),0) AS max_id").Rows()
+	if err != nil {
+		logging.Ctx(ctx).Error("error querying for max attendee id: " + err.Error())
+		return 0, err
+	}
+	for rows.Next() {
+		err = rows.Scan(&max)
+		if err != nil {
+			logging.Ctx(ctx).Error("error reading max attendee id: " + err.Error())
+			break
+		}
+	}
+	err2 := rows.Close()
+	if err2 != nil {
+		logging.Ctx(ctx).Warn("secondary error closing recordset: " + err2.Error())
+	}
+	return max, err
+}
+
 func (r *MysqlRepository) RecordHistory(ctx context.Context, h *entity.History) error {
 	err := r.db.Create(h).Error
 	if err != nil {

@@ -51,6 +51,11 @@ func (s *AttendeeServiceImplData) UpdateAttendee(ctx context.Context, attendee *
 	return err
 }
 
+func (s *AttendeeServiceImplData) GetAttendeeMaxId(ctx context.Context) (uint, error) {
+	max, err := database.GetRepository().MaxAttendeeId(ctx)
+	return max, err
+}
+
 func (s *AttendeeServiceImplData) CanChangeChoiceTo(ctx context.Context, originalChoiceStr string, newChoiceStr string, configuration map[string]config.ChoiceConfig) error {
 	originalChoices := choiceStrToMap(originalChoiceStr)
 	newChoices := choiceStrToMap(newChoiceStr)
