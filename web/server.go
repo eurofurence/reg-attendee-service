@@ -2,11 +2,11 @@ package web
 
 import (
 	"github.com/gorilla/mux"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/config"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/logging"
-	"github.com/jumpy-squirrel/rexis-go-attendee/web/controller/attendeectl"
-	"github.com/jumpy-squirrel/rexis-go-attendee/web/controller/fallbackctl"
-	"github.com/jumpy-squirrel/rexis-go-attendee/web/controller/infoctl"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
+	"github.com/eurofurence/reg-attendee-service/web/controller/attendeectl"
+	"github.com/eurofurence/reg-attendee-service/web/controller/fallbackctl"
+	"github.com/eurofurence/reg-attendee-service/web/controller/infoctl"
 	"net/http"
 )
 

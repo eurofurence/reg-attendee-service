@@ -4,8 +4,8 @@ import (
 	"context"
 	"github.com/stretchr/testify/require"
 	"os"
-	"github.com/jumpy-squirrel/rexis-go-attendee/docs"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/entity"
+	"github.com/eurofurence/reg-attendee-service/docs"
+	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"testing"
 )
 

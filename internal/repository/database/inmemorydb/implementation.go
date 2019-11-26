@@ -3,8 +3,8 @@ package inmemorydb
 import (
 	"context"
 	"fmt"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/entity"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/database/dbrepo"
+	"github.com/eurofurence/reg-attendee-service/internal/entity"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/database/dbrepo"
 	"sync/atomic"
 )
 

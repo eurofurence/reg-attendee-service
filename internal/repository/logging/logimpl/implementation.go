@@ -2,8 +2,8 @@ package logimpl
 
 import (
 	"fmt"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/config"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/system"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/system"
 	"log"
 )
 

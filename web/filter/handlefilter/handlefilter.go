@@ -2,7 +2,7 @@ package handlefilter
 
 import (
 	"context"
-	"github.com/jumpy-squirrel/rexis-go-attendee/web/filter"
+	"github.com/eurofurence/reg-attendee-service/web/filter"
 	"net/http"
 )
 

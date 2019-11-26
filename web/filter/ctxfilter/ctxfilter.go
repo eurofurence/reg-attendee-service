@@ -3,9 +3,9 @@ package ctxfilter
 import (
 	"context"
 	"github.com/google/uuid"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/logging"
-	"github.com/jumpy-squirrel/rexis-go-attendee/web/filter"
-	"github.com/jumpy-squirrel/rexis-go-attendee/web/filter/ctxvalues"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
+	"github.com/eurofurence/reg-attendee-service/web/filter"
+	"github.com/eurofurence/reg-attendee-service/web/filter/ctxvalues"
 	"net/http"
 	"time"
 )

@@ -2,7 +2,7 @@ package logging
 
 import (
 	"context"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/logging/logimpl"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/logging/logimpl"
 )
 
 type Logger interface {

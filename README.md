@@ -1,4 +1,4 @@
-# rexis-go-attendee
+# reg-attendee-service
 
 ## Overview
 
@@ -30,6 +30,12 @@ Limitations:
    regsys will know the user / admin tokens. The only token handed out to users must be the staff token.
 
 ## TODO
+
+- v0.1.1 (needed for MVP)
+    - configurable start time (different for staff and non-staff), refuse with error msg if too early
+    - time server endpoint as expected by frontend (different for staff and non-staff, so we can configure it)
+
+## for later
 
 - MVP.2
     - admin fields handling (subresource w/separate dto only handled by regsys using admin/user auth, invisible fields if user)

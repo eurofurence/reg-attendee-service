@@ -13,7 +13,7 @@ import (
 
 // tests are run in the directory they are located in
 // normally we would use a web server to which we publish the contracts, but this is fine for this example
-const demoClientPactDir = "../../../../rexis-go-democlient/test/contract/consumer/pacts/"
+const demoClientPactDir = "../../../../reg-attendee-transferclient/test/contract/consumer/pacts/"
 
 // contract test provider side (a very contrived example)
 

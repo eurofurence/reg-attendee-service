@@ -1,8 +1,8 @@
 package config
 
 import (
-	"github.com/jumpy-squirrel/rexis-go-attendee/docs"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/system"
+	"github.com/eurofurence/reg-attendee-service/docs"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/system"
 	"github.com/stretchr/testify/require"
 	"testing"
 )

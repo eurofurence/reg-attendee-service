@@ -2,8 +2,8 @@ package attendeesrv
 
 import (
 	"context"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/entity"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/config"
+	"github.com/eurofurence/reg-attendee-service/internal/entity"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 )
 
 type AttendeeService interface {

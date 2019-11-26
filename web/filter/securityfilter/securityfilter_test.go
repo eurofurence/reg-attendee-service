@@ -3,8 +3,8 @@ package securityfilter
 import (
 	"context"
 	"github.com/go-http-utils/headers"
-	"github.com/jumpy-squirrel/rexis-go-attendee/docs"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/config"
+	"github.com/eurofurence/reg-attendee-service/docs"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/stretchr/testify/require"
 	"log"
 	"net/http"

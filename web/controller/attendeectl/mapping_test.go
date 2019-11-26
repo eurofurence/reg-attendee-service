@@ -1,9 +1,9 @@
 package attendeectl
 
 import (
-	"github.com/jumpy-squirrel/rexis-go-attendee/api/v1/attendee"
-	"github.com/jumpy-squirrel/rexis-go-attendee/docs"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/entity"
+	"github.com/eurofurence/reg-attendee-service/api/v1/attendee"
+	"github.com/eurofurence/reg-attendee-service/docs"
+	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/stretchr/testify/require"
 	"testing"
 )

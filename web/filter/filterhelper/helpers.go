@@ -2,13 +2,13 @@ package filterhelper
 
 import (
 	"context"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/config"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/logging"
-	"github.com/jumpy-squirrel/rexis-go-attendee/web/filter"
-	"github.com/jumpy-squirrel/rexis-go-attendee/web/filter/ctxfilter"
-	"github.com/jumpy-squirrel/rexis-go-attendee/web/filter/handlefilter"
-	"github.com/jumpy-squirrel/rexis-go-attendee/web/filter/logfilter"
-	"github.com/jumpy-squirrel/rexis-go-attendee/web/filter/securityfilter"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
+	"github.com/eurofurence/reg-attendee-service/web/filter"
+	"github.com/eurofurence/reg-attendee-service/web/filter/ctxfilter"
+	"github.com/eurofurence/reg-attendee-service/web/filter/handlefilter"
+	"github.com/eurofurence/reg-attendee-service/web/filter/logfilter"
+	"github.com/eurofurence/reg-attendee-service/web/filter/securityfilter"
 	"net/http"
 	"time"
 )

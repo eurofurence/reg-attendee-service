@@ -1,7 +1,7 @@
 package validation
 
 import (
-	"github.com/jumpy-squirrel/rexis-go-attendee/docs"
+	"github.com/eurofurence/reg-attendee-service/docs"
 	"github.com/stretchr/testify/require"
 	"testing"
 )

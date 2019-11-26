@@ -3,8 +3,8 @@ package attendeectl
 import (
 	"context"
 	"encoding/json"
-	"github.com/jumpy-squirrel/rexis-go-attendee/api/v1/attendee"
-	"github.com/jumpy-squirrel/rexis-go-attendee/docs"
+	"github.com/eurofurence/reg-attendee-service/api/v1/attendee"
+	"github.com/eurofurence/reg-attendee-service/docs"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"log"

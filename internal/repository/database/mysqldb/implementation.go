@@ -4,10 +4,10 @@ import (
 	"context"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/entity"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/config"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/database/dbrepo"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/logging"
+	"github.com/eurofurence/reg-attendee-service/internal/entity"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/database/dbrepo"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
 )
 
 type MysqlRepository struct {

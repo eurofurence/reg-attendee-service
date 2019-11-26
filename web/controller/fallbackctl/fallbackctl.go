@@ -3,8 +3,8 @@ package fallbackctl
 import (
 	"context"
 	"github.com/gorilla/mux"
-	"github.com/jumpy-squirrel/rexis-go-attendee/web/filter/ctxvalues"
-	"github.com/jumpy-squirrel/rexis-go-attendee/web/filter/filterhelper"
+	"github.com/eurofurence/reg-attendee-service/web/filter/ctxvalues"
+	"github.com/eurofurence/reg-attendee-service/web/filter/filterhelper"
 	"net/http"
 )
 

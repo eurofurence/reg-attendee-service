@@ -1,9 +1,9 @@
 package acceptance
 
 import (
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/config"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/database"
-	"github.com/jumpy-squirrel/rexis-go-attendee/web"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
+	"github.com/eurofurence/reg-attendee-service/web"
 	"net/http/httptest"
 )
 

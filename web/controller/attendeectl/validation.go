@@ -3,12 +3,12 @@ package attendeectl
 import (
 	"context"
 	"fmt"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/entity"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/logging"
+	"github.com/eurofurence/reg-attendee-service/internal/entity"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
 	"net/url"
-	"github.com/jumpy-squirrel/rexis-go-attendee/api/v1/attendee"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/config"
-	"github.com/jumpy-squirrel/rexis-go-attendee/web/util/validation"
+	"github.com/eurofurence/reg-attendee-service/api/v1/attendee"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
+	"github.com/eurofurence/reg-attendee-service/web/util/validation"
 	"strings"
 )
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/jumpy-squirrel/rexis-go-attendee/web/filter/filterhelper"
+	"github.com/eurofurence/reg-attendee-service/web/filter/filterhelper"
 	"net/http"
 	"time"
 )

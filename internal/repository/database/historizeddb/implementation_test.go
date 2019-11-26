@@ -2,9 +2,9 @@ package historizeddb
 
 import (
 	"context"
-	"github.com/jumpy-squirrel/rexis-go-attendee/docs"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/entity"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/database/inmemorydb"
+	"github.com/eurofurence/reg-attendee-service/docs"
+	"github.com/eurofurence/reg-attendee-service/internal/entity"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/database/inmemorydb"
 	"github.com/stretchr/testify/require"
 	"testing"
 )

@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/jumpy-squirrel/rexis-go-attendee/web/util/validation"
+	"github.com/eurofurence/reg-attendee-service/web/util/validation"
 	"net/url"
 	"strings"
 )

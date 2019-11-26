@@ -3,8 +3,8 @@ package attendeectl
 import (
 	"context"
 	"errors"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/entity"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/config"
+	"github.com/eurofurence/reg-attendee-service/internal/entity"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/stretchr/testify/mock"
 	"os"
 	"testing"

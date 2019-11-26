@@ -2,8 +2,8 @@ package attendeectl
 
 import (
 	"fmt"
-	"github.com/jumpy-squirrel/rexis-go-attendee/api/v1/attendee"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/entity"
+	"github.com/eurofurence/reg-attendee-service/api/v1/attendee"
+	"github.com/eurofurence/reg-attendee-service/internal/entity"
 )
 
 func mapDtoToAttendee(dto *attendee.AttendeeDto, a *entity.Attendee) error {

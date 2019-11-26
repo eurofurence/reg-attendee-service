@@ -3,7 +3,7 @@ package config
 import (
 	"errors"
 	"flag"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/system"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/system"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"

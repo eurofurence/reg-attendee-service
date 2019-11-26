@@ -2,7 +2,7 @@ package dbrepo
 
 import (
 	"context"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/entity"
+	"github.com/eurofurence/reg-attendee-service/internal/entity"
 )
 
 type Repository interface {

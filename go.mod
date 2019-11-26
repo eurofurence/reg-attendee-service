@@ -1,4 +1,4 @@
-module github.com/jumpy-squirrel/rexis-go-attendee
+module github.com/eurofurence/reg-attendee-service
 
 go 1.12
 

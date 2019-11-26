@@ -5,9 +5,9 @@ import (
 	"errors"
 	"github.com/d4l3k/messagediff"
 	_ "github.com/d4l3k/messagediff"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/entity"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/database/dbrepo"
-	"github.com/jumpy-squirrel/rexis-go-attendee/web/filter/ctxvalues"
+	"github.com/eurofurence/reg-attendee-service/internal/entity"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/database/dbrepo"
+	"github.com/eurofurence/reg-attendee-service/web/filter/ctxvalues"
 )
 
 type HistorizingRepository struct {

@@ -2,10 +2,10 @@ package producer
 
 import (
 	"context"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/entity"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/config"
-	"github.com/jumpy-squirrel/rexis-go-attendee/web"
-	"github.com/jumpy-squirrel/rexis-go-attendee/web/controller/attendeectl"
+	"github.com/eurofurence/reg-attendee-service/internal/entity"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
+	"github.com/eurofurence/reg-attendee-service/web"
+	"github.com/eurofurence/reg-attendee-service/web/controller/attendeectl"
 	"github.com/stretchr/testify/mock"
 	"net/http/httptest"
 	"os"

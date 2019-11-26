@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/config"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"net/http"
 	"strconv"
 )

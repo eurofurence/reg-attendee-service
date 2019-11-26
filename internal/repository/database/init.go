@@ -1,12 +1,12 @@
 package database
 
 import (
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/config"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/database/dbrepo"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/database/historizeddb"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/database/inmemorydb"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/database/mysqldb"
-	"github.com/jumpy-squirrel/rexis-go-attendee/internal/repository/logging"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/database/dbrepo"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/database/historizeddb"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/database/inmemorydb"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/database/mysqldb"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
 )
 
 var (
