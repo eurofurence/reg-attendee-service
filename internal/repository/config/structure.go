@@ -57,6 +57,12 @@ type birthdayConfig struct {
 	Latest   string `yaml:"latest"`
 }
 
+const startTimeFormat = "2006-01-02T15:04:05-07:00"
+
+type goLiveConfig struct {
+	StartIsoDatetime string `yaml:"start_iso_datetime"`
+}
+
 type conf struct {
 	Database    databaseConfig    `yaml:"database"`
 	Server      serverConfig      `yaml:"server"`
@@ -65,4 +71,5 @@ type conf struct {
 	Security    securityConfig    `yaml:"security"`
 	TShirtSizes []string          `yaml:"tshirtsizes"`
 	Birthday    birthdayConfig    `yaml:"birthday"`
+	GoLive      goLiveConfig      `yaml:"go_live"`
 }

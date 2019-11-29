@@ -60,6 +60,10 @@ func (s *MockAttendeeService) CanChangeChoiceTo(ctx context.Context, originalCho
 	return nil
 }
 
+func (s *MockAttendeeService) CanRegisterAtThisTime(ctx context.Context) error {
+	return nil
+}
+
 func tstSetupServiceMocks() {
 	attendeeService = &MockAttendeeService{}
 }

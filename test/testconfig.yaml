@@ -6,6 +6,8 @@ security:
     admin: 'fixed-admin-token'
     user: 'fixed-user-token'
     # no reg token in default testing config
+go_live:
+  start_iso_datetime: '2019-10-31T20:00:00+01:00'
 choices:
   flags:
     hc:

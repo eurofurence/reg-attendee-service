@@ -1,6 +1,7 @@
 package web
 
 import (
+	"github.com/eurofurence/reg-attendee-service/web/controller/countdownctl"
 	"github.com/gorilla/mux"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
@@ -27,7 +28,9 @@ func CreateRouter() http.Handler {
 func dispatcher(router *mux.Router) {
 	infoctl.Dispatcher(router.PathPrefix("/info").Subrouter())
 
-	attendeectl.RestDispatcher(router.PathPrefix("/api/rest").Subrouter())
+	apiSubrouter := router.PathPrefix("/api/rest").Subrouter()
+	attendeectl.RestDispatcher(apiSubrouter)
+	countdownctl.RestDispatcher(apiSubrouter)
 
 	fallbackctl.ErrorDispatcher(router)
 }

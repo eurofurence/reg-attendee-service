@@ -4,6 +4,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/web/util/validation"
 	"net/url"
 	"strings"
+	"time"
 )
 
 func setConfigurationDefaults(c *conf) {
@@ -120,5 +121,12 @@ func checkConstraints(errs url.Values, c map[string]ChoiceConfig, keyPrefix stri
 			}
 			validation.CheckLength(&errs, 1, 256, keyPrefix + "." + key + ".constraint_msg", constraintMsg)
 		}
+	}
+}
+
+func validateRegistrationStartTime(errs url.Values, c goLiveConfig) {
+	_, err := time.Parse(startTimeFormat, c.StartIsoDatetime)
+	if err != nil {
+		errs.Add("go_live.start_iso_datetime", "invalid date format, use ISO with numeric timezone as in " + startTimeFormat)
 	}
 }

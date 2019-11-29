@@ -20,6 +20,8 @@ security:
     user: 'put_secure_random_string_here_for_logged_in_user_token'
     # omit the next line to leave initial reg unsecured (public reg vs. staff reg)
     reg: 'optionally_put_secure_random_string_here_for_securing_initial_reg'
+go_live:
+  start_iso_datetime: '2019-11-28T20:00:00+01:00'
 choices:
   flags:
     hc:
