@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log"
 	"strings"
+	"time"
 )
 
 func ServerAddr() string {
@@ -125,4 +126,9 @@ func EarliestBirthday() string {
 
 func LatestBirthday() string {
 	return Configuration().Birthday.Latest
+}
+
+func RegistrationStartTime() time.Time {
+	t, _ := time.Parse(startTimeFormat, Configuration().GoLive.StartIsoDatetime)
+	return t
 }

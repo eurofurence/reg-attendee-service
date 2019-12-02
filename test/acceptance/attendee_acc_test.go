@@ -22,13 +22,32 @@ func TestCreateNewAttendee(t *testing.T) {
 
 	docs.Given("given an unauthenticated user")
 
-	docs.When( "when they create a new attendee with valid data")
+	docs.When( "when they create a new attendee with valid data after public registration has begun")
 	attendeeSent := tstBuildValidAttendee("na1-")
 	response := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(attendeeSent), tstNoToken())
 
 	docs.Then( "then the attendee is successfully created")
 	require.Equal(t, http.StatusCreated, response.status, "unexpected http response status")
 	require.Regexp(t, "^\\/api\\/rest\\/v1\\/attendees\\/[1-9][0-9]*$", response.location, "invalid location header in response")
+}
+
+func TestCreateNewAttendeeTooEarly(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstDefaultConfigFileBeforeTarget)
+	defer tstShutdown()
+
+	docs.Given("given an unauthenticated user")
+
+	docs.When( "when they attempt to create a new attendee with valid data before public registration has begun")
+	attendeeSent := tstBuildValidAttendee("na1-")
+	response := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(attendeeSent), tstNoToken())
+
+	docs.Then( "then the attempt is rejected with an appropriate error response")
+	require.Equal(t, http.StatusBadRequest, response.status, "unexpected http response status")
+	errorDto := attendee.ErrorDto{}
+	tstParseJson(response.body, &errorDto)
+	require.Equal(t, "attendee.data.invalid", errorDto.Message, "unexpected error code")
+	require.Equal(t, "public registration has not opened at this time, please come back later", errorDto.Details.Get("timing"))
 }
 
 func TestCreateNewAttendeeInvalid(t *testing.T) {

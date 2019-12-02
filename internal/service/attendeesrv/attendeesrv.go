@@ -9,6 +9,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
 	"github.com/eurofurence/reg-attendee-service/web/filter/ctxvalues"
 	"strings"
+	"time"
 )
 
 type AttendeeServiceImplData struct {
@@ -67,6 +68,21 @@ func (s *AttendeeServiceImplData) CanChangeChoiceTo(ctx context.Context, origina
 			return err
 		}
 	}
+	return nil
+}
+
+func (s *AttendeeServiceImplData) CanRegisterAtThisTime(ctx context.Context) error {
+	group, err := ctxvalues.AuthorizedAsGroup(ctx)
+	if err != nil || (group != config.TokenForAdmin && group != config.OptionalTokenForInitialReg ){
+		// staff and admin may always register, but regular people have to wait until the registration start time
+		current := time.Now()
+		target := config.RegistrationStartTime()
+		secondsToGo := target.Sub(current).Seconds()
+		if secondsToGo > 0 {
+			return errors.New("public registration has not opened at this time, please come back later")
+		}
+	}
+
 	return nil
 }
 

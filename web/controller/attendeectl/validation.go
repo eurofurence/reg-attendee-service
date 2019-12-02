@@ -87,6 +87,10 @@ func validate(ctx context.Context, a *attendee.AttendeeDto, trustedOriginalState
 		errs.Add( "options", err.Error())
 	}
 
+	if err := attendeeService.CanRegisterAtThisTime(ctx); err != nil {
+		errs.Add("timing", err.Error())
+	}
+
 	if len(errs) != 0 {
 		logger := logging.Ctx(ctx)
 		if logger.IsDebugEnabled() {

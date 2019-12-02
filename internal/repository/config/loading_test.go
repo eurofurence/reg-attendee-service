@@ -96,6 +96,8 @@ security:
 birthday:
   earliest: '1851-01-01'
   latest: '2048-01-01'
+go_live:
+  start_iso_datetime: '2019-11-28T20:00:00+01:00'
 `
 	err := parseAndOverwriteConfig([]byte(minimalYaml))
 	require.Nil(t, err, "expected no error")

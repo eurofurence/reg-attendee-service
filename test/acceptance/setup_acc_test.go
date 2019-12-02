@@ -14,6 +14,7 @@ var (
 )
 
 const tstDefaultConfigFile =  "../../test/testconfig.yaml"
+const tstDefaultConfigFileBeforeTarget =  "../../test/testconfig-before-target.yaml"
 const tstStaffregConfigFile = "../../test/testconfig-staffreg.yaml"
 
 func tstSetup(configFilePath string) {
