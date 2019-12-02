@@ -7,6 +7,8 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
 	"github.com/eurofurence/reg-attendee-service/web/filter/filterhelper"
+	"github.com/eurofurence/reg-attendee-service/web/util/media"
+	"github.com/go-http-utils/headers"
 	"github.com/gorilla/mux"
 	"math"
 	"net/http"
@@ -32,6 +34,7 @@ func countdownHandler(ctx context.Context, w http.ResponseWriter, r *http.Reques
 	responseDto.CurrentTimeIsoDateTime = current.Format(isoDateTimeFormat)
 	responseDto.CountdownSeconds = int64(math.Round(secondsToGo))
 
+	w.Header().Add(headers.ContentType, media.ContentTypeApplicationJson)
 	writeJson(ctx, w, responseDto)
 }
 
