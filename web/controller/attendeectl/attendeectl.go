@@ -168,7 +168,11 @@ func attendeeParseErrorHandler(ctx context.Context, w http.ResponseWriter, r *ht
 
 func attendeeWriteErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
 	logging.Ctx(ctx).Warnf("attendee could not be written: %v", err)
-	errorHandler(ctx, w, r, "attendee.write.error", http.StatusInternalServerError, url.Values{})
+	if err.Error() == "duplicate attendee data - you are already registered" {
+		errorHandler(ctx, w, r, "attendee.data.duplicate", http.StatusBadRequest, url.Values{"attendee": {"there is already an attendee with this information (looking at nickname, email, and zip code)"}})
+	} else {
+		errorHandler(ctx, w, r, "attendee.write.error", http.StatusInternalServerError, url.Values{})
+	}
 }
 
 func attendeeMaxIdErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
