@@ -129,6 +129,6 @@ func LatestBirthday() string {
 }
 
 func RegistrationStartTime() time.Time {
-	t, _ := time.Parse(startTimeFormat, Configuration().GoLive.StartIsoDatetime)
+	t, _ := time.Parse(StartTimeFormat, Configuration().GoLive.StartIsoDatetime)
 	return t
 }

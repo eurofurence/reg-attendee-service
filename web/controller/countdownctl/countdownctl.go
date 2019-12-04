@@ -16,14 +16,32 @@ import (
 )
 
 func RestDispatcher(router *mux.Router) {
+	// added for ease of testing
+	router.HandleFunc("/v1/countdown", filterhelper.BuildUnauthenticatedHandler("1s", mockedCountdownHandler)).
+		Queries("currentTime", "{currentTimeIso:[0-9T:.+-]+}").Methods(http.MethodGet)
+	// regular operation
 	router.HandleFunc("/v1/countdown", filterhelper.BuildUnauthenticatedHandler("1s", countdownHandler)).Methods(http.MethodGet)
 }
 
 const isoDateTimeFormat = "2006-01-02T15:04:05-07:00"
 
 func countdownHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	current := time.Now()
 	target := config.RegistrationStartTime()
+	commonCountdownHandler(ctx, w, r, target)
+}
+
+func mockedCountdownHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	targetStr := mux.Vars(r)["currentTimeIso"]
+	target, err := time.Parse(config.StartTimeFormat, targetStr)
+	if err != nil {
+		// ignore unparseable date and use original configuration instead (this is only for testing calls anyway)
+		target = config.RegistrationStartTime()
+	}
+	commonCountdownHandler(ctx, w, r, target)
+}
+
+func commonCountdownHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, target time.Time) {
+	current := time.Now()
 	secondsToGo := target.Sub(current).Seconds()
 	if secondsToGo < 0 {
 		secondsToGo = 0

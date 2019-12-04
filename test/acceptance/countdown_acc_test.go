@@ -45,3 +45,20 @@ func TestCountdownAfterTarget(t *testing.T) {
 	tstParseJson(response.body, &responseDto)
 	require.True(t, responseDto.CountdownSeconds == 0, "unexpected countdown value is not zero")
 }
+
+func TestMockedCountdownBeforeTarget(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstDefaultConfigFileBeforeTarget)
+	defer tstShutdown()
+
+	docs.Given("given an unauthenticated user")
+
+	docs.When( "when they request the mocked countdown resource before the target time has been reached, but pass a mock time in the past")
+	response := tstPerformGet("/api/rest/v1/countdown?currentTime=2010-12-22T14:33:20-01:00", tstNoToken())
+
+	docs.Then( "then a valid response is sent with countdown = 0")
+	require.Equal(t, http.StatusOK, response.status, "unexpected http response status")
+	responseDto := countdown.CountdownResultDto{}
+	tstParseJson(response.body, &responseDto)
+	require.True(t, responseDto.CountdownSeconds == 0, "unexpected countdown value is not zero")
+}

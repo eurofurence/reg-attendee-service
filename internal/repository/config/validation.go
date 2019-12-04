@@ -125,8 +125,8 @@ func checkConstraints(errs url.Values, c map[string]ChoiceConfig, keyPrefix stri
 }
 
 func validateRegistrationStartTime(errs url.Values, c goLiveConfig) {
-	_, err := time.Parse(startTimeFormat, c.StartIsoDatetime)
+	_, err := time.Parse(StartTimeFormat, c.StartIsoDatetime)
 	if err != nil {
-		errs.Add("go_live.start_iso_datetime", "invalid date format, use ISO with numeric timezone as in " + startTimeFormat)
+		errs.Add("go_live.start_iso_datetime", "invalid date format, use ISO with numeric timezone as in " + StartTimeFormat)
 	}
 }
