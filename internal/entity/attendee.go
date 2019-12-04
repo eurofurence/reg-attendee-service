@@ -15,7 +15,7 @@ type Attendee struct {
 	Country      string `gorm:"type:varchar(2);NOT NULL"`
 	CountryBadge string `gorm:"type:varchar(2);NOT NULL"`
 	State        string `gorm:"type:varchar(80)"`
-	Email        string `gorm:"type:varchar(200);NOT NULL"`
+	Email        string `gorm:"type:varchar(200);NOT NULL;index:email_idx"`
 	Phone        string `gorm:"type:varchar(32);NOT NULL"`
 	Telegram     string `gorm:"type:varchar(80)"`
 	Birthday     string `gorm:"type:varchar(10);NOT NULL"`
