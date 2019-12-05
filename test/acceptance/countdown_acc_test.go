@@ -13,14 +13,15 @@ import (
 // ------------------------------------------
 
 func TestCountdownBeforeTarget(t *testing.T) {
-	docs.Given("given the configuration for standard registration")
+	docs.Given("given the configuration for standard registration with a target date in the future")
 	tstSetup(tstDefaultConfigFileBeforeTarget)
 	defer tstShutdown()
 
 	docs.Given("given an unauthenticated user")
+	token := tstNoToken()
 
 	docs.When( "when they request the countdown resource before the target time has been reached")
-	response := tstPerformGet("/api/rest/v1/countdown", tstNoToken())
+	response := tstPerformGet("/api/rest/v1/countdown", token)
 
 	docs.Then( "then a valid response is sent with countdown > 0")
 	require.Equal(t, http.StatusOK, response.status, "unexpected http response status")
@@ -30,14 +31,15 @@ func TestCountdownBeforeTarget(t *testing.T) {
 }
 
 func TestCountdownAfterTarget(t *testing.T) {
-	docs.Given("given the configuration for standard registration")
+	docs.Given("given the configuration for standard registration with a target date in the past")
 	tstSetup(tstDefaultConfigFile)
 	defer tstShutdown()
 
 	docs.Given("given an unauthenticated user")
+	token := tstNoToken()
 
 	docs.When( "when they request the countdown resource after the target time has been reached")
-	response := tstPerformGet("/api/rest/v1/countdown", tstNoToken())
+	response := tstPerformGet("/api/rest/v1/countdown", token)
 
 	docs.Then( "then a valid response is sent with countdown = 0")
 	require.Equal(t, http.StatusOK, response.status, "unexpected http response status")
@@ -46,15 +48,16 @@ func TestCountdownAfterTarget(t *testing.T) {
 	require.True(t, responseDto.CountdownSeconds == 0, "unexpected countdown value is not zero")
 }
 
-func TestMockedCountdownBeforeTarget(t *testing.T) {
-	docs.Given("given the configuration for standard registration")
+func TestMockedCountdownAfterTarget(t *testing.T) {
+	docs.Given("given the configuration for standard registration with a target date in the future")
 	tstSetup(tstDefaultConfigFileBeforeTarget)
 	defer tstShutdown()
 
 	docs.Given("given an unauthenticated user")
+	token := tstNoToken()
 
-	docs.When( "when they request the mocked countdown resource before the target time has been reached, but pass a mock time in the past")
-	response := tstPerformGet("/api/rest/v1/countdown?currentTime=2010-12-22T14:33:20-01:00", tstNoToken())
+	docs.When( "when they request the mocked countdown resource before the target time has been reached, but pass a mock time after the target")
+	response := tstPerformGet("/api/rest/v1/countdown?currentTime=2030-12-22T14:33:20-01:00", token)
 
 	docs.Then( "then a valid response is sent with countdown = 0")
 	require.Equal(t, http.StatusOK, response.status, "unexpected http response status")
