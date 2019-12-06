@@ -28,8 +28,9 @@ type fixedTokenConfig struct {
 }
 
 type securityConfig struct {
-	Use   string           `yaml:"use"` // fixed-token, currently only supported value
-	Fixed fixedTokenConfig `yaml:"fixed"`
+	Use         string           `yaml:"use"` // fixed-token, currently only supported value
+	Fixed       fixedTokenConfig `yaml:"fixed"`
+	DisableCors bool             `yaml:"disable_cors"`
 }
 
 type ChoiceConfig struct {

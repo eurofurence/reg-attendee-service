@@ -33,13 +33,13 @@ func OverrideAttendeeService(overrideAttendeeServiceForTesting attendeesrv.Atten
 
 func RestDispatcher(router *mux.Router) {
 	if config.OptionalInitialRegTokenConfigured() {
-		router.HandleFunc("/v1/attendees", filterhelper.BuildHandler("3s", newAttendeeHandler, config.TokenForAdmin, config.OptionalTokenForInitialReg)).Methods(http.MethodPut)
+		router.HandleFunc("/v1/attendees", filterhelper.BuildHandler("3s", newAttendeeHandler, config.TokenForAdmin, config.OptionalTokenForInitialReg)).Methods(http.MethodPut, http.MethodOptions)
 	} else {
-		router.HandleFunc("/v1/attendees", filterhelper.BuildUnauthenticatedHandler("3s", newAttendeeHandler)).Methods(http.MethodPut)
+		router.HandleFunc("/v1/attendees", filterhelper.BuildUnauthenticatedHandler("3s", newAttendeeHandler)).Methods(http.MethodPut, http.MethodOptions)
 	}
 	router.HandleFunc("/v1/attendees/max-id", filterhelper.BuildUnauthenticatedHandler("3s", getAttendeeMaxIdHandler)).Methods(http.MethodGet)
 	router.HandleFunc("/v1/attendees/{id:[1-9][0-9]*}", filterhelper.BuildHandler("3s", getAttendeeHandler, config.TokenForAdmin, config.TokenForLoggedInUser)).Methods(http.MethodGet)
-	router.HandleFunc("/v1/attendees/{id:[1-9][0-9]*}", filterhelper.BuildHandler("3s", updateAttendeeHandler, config.TokenForAdmin, config.TokenForLoggedInUser)).Methods(http.MethodPost)
+	router.HandleFunc("/v1/attendees/{id:[1-9][0-9]*}", filterhelper.BuildHandler("3s", updateAttendeeHandler, config.TokenForAdmin, config.TokenForLoggedInUser)).Methods(http.MethodPost, http.MethodOptions)
 }
 
 func newAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
@@ -63,7 +63,9 @@ func newAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		attendeeWriteErrorHandler(ctx, w, r, err)
 		return
 	}
-	w.Header().Set(headers.Location, fmt.Sprintf("%s/%d", r.RequestURI, id))
+	location := fmt.Sprintf("%s/%d", r.RequestURI, id)
+	logging.Ctx(ctx).Info("sending Location " + location)
+	w.Header().Set(headers.Location, location)
 	writeHeader(ctx, w, http.StatusCreated)
 }
 

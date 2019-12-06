@@ -6,6 +6,7 @@ security:
     admin: 'fixed-admin-token'
     user: 'fixed-user-token'
     # no reg token in default testing config
+  disable_cors: true
 go_live:
   start_iso_datetime: '2030-11-28T20:00:00+01:00'
 choices:

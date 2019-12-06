@@ -32,6 +32,7 @@ func countdownHandler(ctx context.Context, w http.ResponseWriter, r *http.Reques
 
 func mockedCountdownHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	currentStr := mux.Vars(r)["currentTimeIso"]
+	logging.Ctx(ctx).Info("used mock with currentTime=" + currentStr)
 	current, err := time.Parse(config.StartTimeFormat, currentStr)
 	if err != nil {
 		// ignore unparseable date and use actual time instead (this is only for testing calls anyway)

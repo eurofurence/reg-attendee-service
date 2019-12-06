@@ -5,6 +5,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
 	"github.com/eurofurence/reg-attendee-service/web/filter"
+	"github.com/eurofurence/reg-attendee-service/web/filter/corsfilter"
 	"github.com/eurofurence/reg-attendee-service/web/filter/ctxfilter"
 	"github.com/eurofurence/reg-attendee-service/web/filter/handlefilter"
 	"github.com/eurofurence/reg-attendee-service/web/filter/logfilter"
@@ -29,7 +30,8 @@ func BuildUnauthenticatedNologgingHandler(timeout string, handler filter.Context
 	timeoutDuration := parseTimeout(timeout)
 	return buildHandlerFunc(
 		ctxfilter.Create(timeoutDuration,
-			handlefilter.Create(handler)))
+			corsfilter.Create(
+				handlefilter.Create(handler))))
 }
 
 func BuildUnauthenticatedHandler(timeout string, handler filter.ContextAwareHandler) func(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +39,8 @@ func BuildUnauthenticatedHandler(timeout string, handler filter.ContextAwareHand
 	return buildHandlerFunc(
 		ctxfilter.Create(timeoutDuration,
 			logfilter.Create(
-				handlefilter.Create(handler))))
+				corsfilter.Create(
+					handlefilter.Create(handler)))))
 }
 
 func BuildHandler(timeout string, handler filter.ContextAwareHandler, allowedGroups ...config.FixedTokenEnum) func(w http.ResponseWriter, r *http.Request) {
@@ -45,6 +48,7 @@ func BuildHandler(timeout string, handler filter.ContextAwareHandler, allowedGro
 	return buildHandlerFunc(
 		ctxfilter.Create(timeoutDuration,
 			logfilter.Create(
-				securityfilter.Create(
-					handlefilter.Create(handler), allowedGroups...))))
+				corsfilter.Create(
+					securityfilter.Create(
+						handlefilter.Create(handler), allowedGroups...)))))
 }

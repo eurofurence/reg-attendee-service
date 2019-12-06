@@ -132,3 +132,7 @@ func RegistrationStartTime() time.Time {
 	t, _ := time.Parse(StartTimeFormat, Configuration().GoLive.StartIsoDatetime)
 	return t
 }
+
+func IsCorsDisabled() bool {
+	return Configuration().Security.DisableCors
+}
