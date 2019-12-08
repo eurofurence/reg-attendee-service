@@ -159,7 +159,7 @@ func TestValidateChoiceFieldsAndId(t *testing.T) {
 		"flags":       []string{"flags field must be a comma separated combination of any of anon,ev,guest,hc"},
 		"packages":    []string{"packages field must be a comma separated combination of any of attendance,day-fri,day-sat,day-thu,room-none,sponsor,sponsor2,stage"},
 		"telegram":    []string{"optional telegram field must contain your @username from telegram, or it can be left blank"},
-		"tshirt_size": []string{"optional tshirt_size field must be empty or one of XS,S,M,L,XL,XXL,XXXL,XXXXL"},
+		"tshirt_size": []string{"optional tshirt_size field must be empty or one of XS,wXS,S,wS,M,wM,L,wL,XL,wXL,XXL,wXXL,3XL,w3XL,4XL,w4XL"},
 	}
 	performValidationTest(t, &a, expected, 16)
 }
