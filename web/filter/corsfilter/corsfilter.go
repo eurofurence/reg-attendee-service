@@ -24,7 +24,7 @@ func (f *CorsFilter) Handle(ctx context.Context, w http.ResponseWriter, r *http.
 		logging.Ctx(ctx).Warn("sending headers to disable CORS. This configuration is not intended for production use, only for local development!")
 		w.Header().Set(headers.AccessControlAllowOrigin, "*")
 		w.Header().Set(headers.AccessControlAllowMethods, "POST, GET, OPTIONS, PUT, DELETE")
-		w.Header().Set(headers.AccessControlAllowHeaders, "*")
+		w.Header().Set(headers.AccessControlAllowHeaders, "content-type")
 		w.Header().Set(headers.AccessControlExposeHeaders, "Location, " + ctxfilter.TraceIdHeader)
 	}
 
