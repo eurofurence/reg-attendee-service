@@ -56,6 +56,7 @@ Limitations:
 ## for later
 
 - MVP.2
+    - support for day guests
     - admin fields handling (subresource w/separate dto only handled by regsys using admin/user auth, invisible fields if user)
     - attendee search by criteria used by regsys
     - optional partner (nick) field for MMC, check for any other missing fields
