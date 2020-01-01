@@ -8,6 +8,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database/dbrepo"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
+	"time"
 )
 
 type MysqlRepository struct {
@@ -23,6 +24,12 @@ func (r *MysqlRepository) Open() {
 	if err != nil {
 		logging.NoCtx().Fatalf("failed to open mysql connection: %v", err)
 	}
+
+	// see https://making.pusher.com/production-ready-connection-pooling-in-go/
+	db.DB().SetMaxOpenConns(100)
+	db.DB().SetMaxIdleConns(50)
+	db.DB().SetConnMaxLifetime(time.Minute * 10)
+
 	r.db = db
 }
 
