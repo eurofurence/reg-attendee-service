@@ -56,6 +56,7 @@ Limitations:
 ## for later
 
 - MVP.2
+    - metrics for prometheus https://prometheus.io/docs/guides/go-application/
     - support for day guests
     - admin fields handling (subresource w/separate dto only handled by regsys using admin/user auth, invisible fields if user)
     - attendee search by criteria used by regsys
