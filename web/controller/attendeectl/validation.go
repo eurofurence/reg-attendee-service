@@ -13,15 +13,12 @@ import (
 )
 
 const nicknamePattern = "^(" +
-// cases where the non-letters are separated by at least one letter
-// (non letters are optional, so these also cover all cases of 0 or 1 non-letter)
-	"[A-Za-z]+[^A-Za-z]?[A-Za-z]+[^A-Za-z]?[A-Za-z]*" +
-	"|[^A-Za-z]?[A-Za-z]+[^A-Za-z]?[A-Za-z]+" +
-	"|[^A-Za-z]?[A-Za-z][A-Za-z]+[^A-Za-z]?" +
-// cases where the non-letters stand together
-	"|[^A-Za-z]{1,2}[A-Za-z][A-Za-z]+" +
-	"|[A-Za-z]+[^A-Za-z]{1,2}[A-Za-z]+" +
-	"|[A-Za-z][A-Za-z]+[^A-Za-z]{1,2}" +
+// 1 letter in front of up to 2 non-letters (and possibly more letters and/or spacing inbetween)
+	"[A-Za-z0-9 ]*[A-Za-z0-9][A-Za-z0-9 ]*[^A-Za-z0-9 ]?[A-Za-z0-9 ]*[^A-Za-z0-9 ]?[A-Za-z0-9 ]*" +
+// up to 1 non-letter in front, 1 letter before second non-letter (and possibly more letters and/or spacing inbetween)
+	"|[A-Za-z0-9 ]*[^A-Za-z0-9 ]?[A-Za-z0-9 ]*[A-Za-z0-9][A-Za-z0-9 ]*[^A-Za-z0-9 ]?[A-Za-z0-9 ]*" +
+// up to 2 non-letters in front, then 1 letter (and possibly more letters and/or spacing inbetween)
+	"|[A-Za-z0-9 ]*[^A-Za-z0-9 ]?[A-Za-z0-9 ]*[^A-Za-z0-9 ]?[A-Za-z0-9 ]*[A-Za-z0-9][A-Za-z0-9 ]*" +
 	")$"
 
 const emailPattern = "^[^\\@\\s]+\\@[^\\@\\s]+$"
@@ -37,9 +34,9 @@ func validate(ctx context.Context, a *attendee.AttendeeDto, trustedOriginalState
 		errs.Add("id", "id field must be empty or correctly assigned for incoming requests")
 	}
 	if validation.ViolatesPattern(nicknamePattern, a.Nickname) {
-		errs.Add("nickname", "nickname field must contain at least two letters, and contain no more than two non-letters")
+		errs.Add("nickname", "nickname field must contain at least one letter, and contain no more than two non-letters")
 	}
-	validation.CheckLength(&errs, 2, 80, "nickname", a.Nickname)
+	validation.CheckLength(&errs, 1, 80, "nickname", a.Nickname)
 	validation.CheckLength(&errs, 1, 80, "first_name", a.FirstName)
 	validation.CheckLength(&errs, 1, 80, "last_name", a.LastName)
 	validation.CheckLength(&errs, 1, 120, "street", a.Street)

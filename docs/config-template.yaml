@@ -22,6 +22,8 @@ security:
     user: 'put_secure_random_string_here_for_logged_in_user_token'
     # omit the next line to leave initial reg unsecured (public reg vs. staff reg)
     reg: 'optionally_put_secure_random_string_here_for_securing_initial_reg'
+  # set this to true to send disable cors headers - not for production - local test instances only
+  disable_cors: false
 choices:
   flags:
     hc:

@@ -56,8 +56,8 @@ func TestValidateMissingInfo(t *testing.T) {
 		"email":         []string{"email field must be at least 1 and at most 200 characters long", "email field is not plausible"},
 		"first_name":    []string{"first_name field must be at least 1 and at most 80 characters long"},
 		"last_name":     []string{"last_name field must be at least 1 and at most 80 characters long"},
-		"nickname": []string{"nickname field must contain at least two letters, and contain no more than two non-letters",
-			"nickname field must be at least 2 and at most 80 characters long"},
+		"nickname": []string{"nickname field must contain at least one letter, and contain no more than two non-letters",
+			"nickname field must be at least 1 and at most 80 characters long"},
 		"phone":  []string{"phone field must be at least 1 and at most 32 characters long"},
 		"street": []string{"street field must be at least 1 and at most 120 characters long"},
 		"zip":    []string{"zip field must be at least 1 and at most 20 characters long"},
@@ -84,7 +84,7 @@ func TestValidateTooLong(t *testing.T) {
 		"email":      []string{"email field must be at least 1 and at most 200 characters long", "email field is not plausible"},
 		"first_name": []string{"first_name field must be at least 1 and at most 80 characters long"},
 		"last_name":  []string{"last_name field must be at least 1 and at most 80 characters long"},
-		"nickname":   []string{"nickname field must be at least 2 and at most 80 characters long"},
+		"nickname":   []string{"nickname field must be at least 1 and at most 80 characters long"},
 		"phone":      []string{"phone field must be at least 1 and at most 32 characters long"},
 		"street":     []string{"street field must be at least 1 and at most 120 characters long"},
 		"zip":        []string{"zip field must be at least 1 and at most 20 characters long"},
@@ -92,28 +92,59 @@ func TestValidateTooLong(t *testing.T) {
 	performValidationTest(t, &a, expected, 0)
 }
 
+// nickname validation success cases
+
+func TestValidateNicknameRegularCharacters(t *testing.T) {
+	performNicknameValidationTestNoError(t, "The quick red Squirrel w1th 33 many Spaces and Numbers 87 so l33t")
+}
+
+func TestValidateNicknameJustLongEnough(t *testing.T) {
+	performNicknameValidationTestNoError(t, "o")
+}
+
+func TestValidateNicknameUTF8(t *testing.T) {
+	performNicknameValidationTestNoError(t, "栗鼠io")
+	performNicknameValidationTestNoError(t, "栗i鼠o")
+	performNicknameValidationTestNoError(t, "i栗鼠o")
+	performNicknameValidationTestNoError(t, "i栗o鼠")
+	performNicknameValidationTestNoError(t, "io栗鼠")
+	performNicknameValidationTestNoError(t, "栗io")
+	performNicknameValidationTestNoError(t, "i栗o")
+	performNicknameValidationTestNoError(t, "io栗")
+	performNicknameValidationTestNoError(t, "栗鼠i")
+	performNicknameValidationTestNoError(t, "栗i鼠")
+	performNicknameValidationTestNoError(t, "i栗鼠")
+}
+
 func TestValidateNicknameOnlySpecials(t *testing.T) {
-	docs.Description("an attendee with an invalid nickname reports a validation error")
 	performNicknameValidationTest(t, "}:{")
 }
 
 func TestValidateNicknameTooManySpecials1(t *testing.T) {
-	docs.Description("an attendee with an invalid nickname reports a validation error")
 	performNicknameValidationTest(t, "}super:friendly{")
 }
 
 func TestValidateNicknameTooManySpecials2(t *testing.T) {
-	docs.Description("an attendee with an invalid nickname reports a validation error")
-	performNicknameValidationTest(t, "suPer8friendly99")
+	performNicknameValidationTest(t, "suPer_friendly%$99")
 }
 
 func performNicknameValidationTest(t *testing.T, wrongNick string) {
+	docs.Description("an attendee with an invalid nickname of " + wrongNick + " reports a validation error")
 	a := tstCreateValidAttendee()
 	a.Nickname = wrongNick
 
 	expected := url.Values{
-		"nickname": []string{"nickname field must contain at least two letters, and contain no more than two non-letters"},
+		"nickname": []string{"nickname field must contain at least one letter, and contain no more than two non-letters"},
 	}
+	performValidationTest(t, &a, expected, 0)
+}
+
+func performNicknameValidationTestNoError(t *testing.T, correctNick string) {
+	docs.Description("an attendee with a valid nickname of " + correctNick + " reports no validation errors")
+	a := tstCreateValidAttendee()
+	a.Nickname = correctNick
+
+	expected := url.Values{}
 	performValidationTest(t, &a, expected, 0)
 }
 

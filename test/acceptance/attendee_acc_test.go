@@ -50,7 +50,7 @@ func TestCreateNewAttendeeInvalid(t *testing.T) {
 	errorDto := attendee.ErrorDto{}
 	tstParseJson(response.body, &errorDto)
 	require.Equal(t, "attendee.data.invalid", errorDto.Message, "unexpected error code")
-	require.Equal(t, "nickname field must contain at least two letters, and contain no more than two non-letters", errorDto.Details.Get("nickname"))
+	require.Equal(t, "nickname field must contain at least one letter, and contain no more than two non-letters", errorDto.Details.Get("nickname"))
 	require.Equal(t, "cannot pick both sponsor2 and sponsor - constraint violated", errorDto.Details.Get("packages"))
 	require.Equal(t, "birthday must be no earlier than 1901-01-01 and no later than 2001-08-14", errorDto.Details.Get("birthday"))
 }
