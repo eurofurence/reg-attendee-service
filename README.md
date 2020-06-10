@@ -13,8 +13,9 @@ Command line arguments
 
 This service uses go modules to provide dependency management, see `go.mod`.
 
-If you place this repository OUTSIDE of your gopath, go build and go test will download
-all required dependencies by default. 
+If you place this repository OUTSIDE of your gopath, `go build main.go` and `go test ./...` will download all required dependencies by default. 
+
+Go 1.12 or later is required.
 
 ## Contract Testing
 
