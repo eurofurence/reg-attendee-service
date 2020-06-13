@@ -27,6 +27,15 @@ const countryPattern = "^[A-Z]{2}$"
 
 var allowedGenders = [...]string{"male", "female", "other", "notprovided", ""}
 
+func validateCountry(ctx context.Context, country string) bool {
+	for _, c := range config.AllowedCountries() {
+		if c == country {
+			return true
+		}
+	}
+	return false
+}
+
 func validate(ctx context.Context, a *attendee.AttendeeDto, trustedOriginalState *entity.Attendee) url.Values {
 	errs := url.Values{}
 
@@ -43,10 +52,10 @@ func validate(ctx context.Context, a *attendee.AttendeeDto, trustedOriginalState
 	validation.CheckLength(&errs, 1, 20, "zip", a.Zip)
 	validation.CheckLength(&errs, 1, 80, "city", a.City)
 	validation.CheckLength(&errs, 0, 80, "state", a.State)
-	if validation.ViolatesPattern(countryPattern, a.Country) {
+	if validation.ViolatesPattern(countryPattern, a.Country) || !validateCountry(ctx, a.Country) {
 		errs.Add("country", "country field must contain a 2 letter upper case ISO-3166-1 country code (Alpha-2 code, see https://en.wikipedia.org/wiki/ISO_3166-1)")
 	}
-	if validation.ViolatesPattern(countryPattern, a.CountryBadge) {
+	if validation.ViolatesPattern(countryPattern, a.CountryBadge) || !validateCountry(ctx, a.CountryBadge) {
 		errs.Add("country_badge", "country_badge field must contain a 2 letter upper case ISO-3166-1 country code (Alpha-2 code, see https://en.wikipedia.org/wiki/ISO_3166-1)")
 	}
 	validation.CheckLength(&errs, 1, 200, "email", a.Email)

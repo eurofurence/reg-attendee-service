@@ -183,6 +183,8 @@ func TestValidateChoiceFieldsAndId(t *testing.T) {
 	a.Packages = "helicopterflight,boattour,room-none"
 	a.TshirtSize = "micro"
 	a.Telegram = "iforgotthe_at_atthebeginning"
+	a.Country = "XX"      // not in ISO-3166-1
+	a.CountryBadge = "XX" // not in ISO-3166-1
 
 	expected := url.Values{
 		"gender":      []string{"optional gender field must be one of male, female, other, notprovided, or it can be left blank, which counts as notprovided"},
@@ -191,6 +193,8 @@ func TestValidateChoiceFieldsAndId(t *testing.T) {
 		"packages":    []string{"packages field must be a comma separated combination of any of attendance,day-fri,day-sat,day-thu,room-none,sponsor,sponsor2,stage"},
 		"telegram":    []string{"optional telegram field must contain your @username from telegram, or it can be left blank"},
 		"tshirt_size": []string{"optional tshirt_size field must be empty or one of XS,wXS,S,wS,M,wM,L,wL,XL,wXL,XXL,wXXL,3XL,w3XL,4XL,w4XL"},
+		"country":     []string{"country field must contain a 2 letter upper case ISO-3166-1 country code (Alpha-2 code, see https://en.wikipedia.org/wiki/ISO_3166-1)"},
+		"country_badge":     []string{"country_badge field must contain a 2 letter upper case ISO-3166-1 country code (Alpha-2 code, see https://en.wikipedia.org/wiki/ISO_3166-1)"},
 	}
 	performValidationTest(t, &a, expected, 16)
 }
