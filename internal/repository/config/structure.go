@@ -73,4 +73,5 @@ type conf struct {
 	TShirtSizes []string          `yaml:"tshirtsizes"`
 	Birthday    birthdayConfig    `yaml:"birthday"`
 	GoLive      goLiveConfig      `yaml:"go_live"`
+	Countries   []string          `yaml:"countries"`
 }

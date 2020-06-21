@@ -83,6 +83,10 @@ func AllowedTshirtSizes() []string {
 	return Configuration().TShirtSizes
 }
 
+func AllowedCountries() []string {
+	return Configuration().Countries
+}
+
 func DefaultFlags() string {
 	return defaultChoiceStr(Configuration().Choices.Flags)
 }
