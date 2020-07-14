@@ -3,13 +3,14 @@ package attendeectl
 import (
 	"context"
 	"encoding/json"
-	"github.com/jinzhu/gorm"
-	"github.com/eurofurence/reg-attendee-service/api/v1/attendee"
-	"github.com/eurofurence/reg-attendee-service/docs"
-	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"net/url"
 	"reflect"
 	"testing"
+
+	"github.com/eurofurence/reg-attendee-service/api/v1/attendee"
+	"github.com/eurofurence/reg-attendee-service/docs"
+	"github.com/eurofurence/reg-attendee-service/internal/entity"
+	"github.com/jinzhu/gorm"
 )
 
 func tstCreateValidAttendee() attendee.AttendeeDto {
@@ -56,7 +57,7 @@ func TestValidateMissingInfo(t *testing.T) {
 		"email":         []string{"email field must be at least 1 and at most 200 characters long", "email field is not plausible"},
 		"first_name":    []string{"first_name field must be at least 1 and at most 80 characters long"},
 		"last_name":     []string{"last_name field must be at least 1 and at most 80 characters long"},
-		"nickname": []string{"nickname field must contain at least one letter, and contain no more than two non-letters",
+		"nickname": []string{"nickname field must contain at least one alphanumeric character",
 			"nickname field must be at least 1 and at most 80 characters long"},
 		"phone":  []string{"phone field must be at least 1 and at most 32 characters long"},
 		"street": []string{"street field must be at least 1 and at most 120 characters long"},
@@ -95,56 +96,61 @@ func TestValidateTooLong(t *testing.T) {
 // nickname validation success cases
 
 func TestValidateNicknameRegularCharacters(t *testing.T) {
-	performNicknameValidationTestNoError(t, "The quick red Squirrel w1th 33 many Spaces and Numbers 87 so l33t")
+	performNicknameValidationTest(t, "The quick red Squirrel w1th 33 many Spaces and Numbers 87 so l33t", false, false)
 }
 
 func TestValidateNicknameJustLongEnough(t *testing.T) {
-	performNicknameValidationTestNoError(t, "o")
+	performNicknameValidationTest(t, "o", false, false)
 }
 
 func TestValidateNicknameUTF8(t *testing.T) {
-	performNicknameValidationTestNoError(t, "栗鼠io")
-	performNicknameValidationTestNoError(t, "栗i鼠o")
-	performNicknameValidationTestNoError(t, "i栗鼠o")
-	performNicknameValidationTestNoError(t, "i栗o鼠")
-	performNicknameValidationTestNoError(t, "io栗鼠")
-	performNicknameValidationTestNoError(t, "栗io")
-	performNicknameValidationTestNoError(t, "i栗o")
-	performNicknameValidationTestNoError(t, "io栗")
-	performNicknameValidationTestNoError(t, "栗鼠i")
-	performNicknameValidationTestNoError(t, "栗i鼠")
-	performNicknameValidationTestNoError(t, "i栗鼠")
+	performNicknameValidationTest(t, "栗鼠io", false, false)
+	performNicknameValidationTest(t, "栗i鼠o", false, false)
+	performNicknameValidationTest(t, "i栗鼠o", false, false)
+	performNicknameValidationTest(t, "i栗o鼠", false, false)
+	performNicknameValidationTest(t, "io栗鼠", false, false)
+	performNicknameValidationTest(t, "栗io", false, false)
+	performNicknameValidationTest(t, "i栗o", false, false)
+	performNicknameValidationTest(t, "io栗", false, false)
+	performNicknameValidationTest(t, "栗鼠i", false, false)
+	performNicknameValidationTest(t, "栗i鼠", false, false)
+	performNicknameValidationTest(t, "i栗鼠", false, false)
+}
+
+func TestValidateNicknameTooFewAlphanumerics(t *testing.T) {
+	performNicknameValidationTest(t, ":     ", true, false)
 }
 
 func TestValidateNicknameOnlySpecials(t *testing.T) {
-	performNicknameValidationTest(t, "}:{")
+	performNicknameValidationTest(t, "}:{", true, true)
 }
 
 func TestValidateNicknameTooManySpecials1(t *testing.T) {
-	performNicknameValidationTest(t, "}super:friendly{")
+	performNicknameValidationTest(t, "}super:friendly{", false, true)
 }
 
 func TestValidateNicknameTooManySpecials2(t *testing.T) {
-	performNicknameValidationTest(t, "suPer_friendly%$99")
+	performNicknameValidationTest(t, "suPer_friendly%$99", false, true)
 }
 
-func performNicknameValidationTest(t *testing.T, wrongNick string) {
-	docs.Description("an attendee with an invalid nickname of " + wrongNick + " reports a validation error")
-	a := tstCreateValidAttendee()
-	a.Nickname = wrongNick
-
-	expected := url.Values{
-		"nickname": []string{"nickname field must contain at least one letter, and contain no more than two non-letters"},
-	}
-	performValidationTest(t, &a, expected, 0)
-}
-
-func performNicknameValidationTestNoError(t *testing.T, correctNick string) {
-	docs.Description("an attendee with a valid nickname of " + correctNick + " reports no validation errors")
-	a := tstCreateValidAttendee()
-	a.Nickname = correctNick
-
+func performNicknameValidationTest(t *testing.T, nickname string, hasTooFewAlphanumerics bool, hasTooManyNonAlphanumerics bool) {
 	expected := url.Values{}
+
+	if hasTooFewAlphanumerics || hasTooManyNonAlphanumerics {
+		docs.Description("an attendee with an invalid nickname of " + nickname + " reports a validation error")
+		if hasTooFewAlphanumerics {
+			expected.Add("nickname", "nickname field must contain at least one alphanumeric character")
+		}
+		if hasTooManyNonAlphanumerics {
+			expected.Add("nickname", "nickname field must not contain more than two non-alphanumeric characters (not counting spaces)")
+		}
+	} else {
+		docs.Description("an attendee with a valid nickname of " + nickname + " reports no validation errors")
+	}
+
+	a := tstCreateValidAttendee()
+	a.Nickname = nickname
+
 	performValidationTest(t, &a, expected, 0)
 }
 
@@ -187,14 +193,14 @@ func TestValidateChoiceFieldsAndId(t *testing.T) {
 	a.CountryBadge = "XX" // not in ISO-3166-1
 
 	expected := url.Values{
-		"gender":      []string{"optional gender field must be one of male, female, other, notprovided, or it can be left blank, which counts as notprovided"},
-		"options":     []string{"options field must be a comma separated combination of any of anim,art,music,suit"},
-		"flags":       []string{"flags field must be a comma separated combination of any of anon,ev,guest,hc"},
-		"packages":    []string{"packages field must be a comma separated combination of any of attendance,day-fri,day-sat,day-thu,room-none,sponsor,sponsor2,stage"},
-		"telegram":    []string{"optional telegram field must contain your @username from telegram, or it can be left blank"},
-		"tshirt_size": []string{"optional tshirt_size field must be empty or one of XS,wXS,S,wS,M,wM,L,wL,XL,wXL,XXL,wXXL,3XL,w3XL,4XL,w4XL"},
-		"country":     []string{"country field must contain a 2 letter upper case ISO-3166-1 country code (Alpha-2 code, see https://en.wikipedia.org/wiki/ISO_3166-1)"},
-		"country_badge":     []string{"country_badge field must contain a 2 letter upper case ISO-3166-1 country code (Alpha-2 code, see https://en.wikipedia.org/wiki/ISO_3166-1)"},
+		"gender":        []string{"optional gender field must be one of male, female, other, notprovided, or it can be left blank, which counts as notprovided"},
+		"options":       []string{"options field must be a comma separated combination of any of anim,art,music,suit"},
+		"flags":         []string{"flags field must be a comma separated combination of any of anon,ev,guest,hc"},
+		"packages":      []string{"packages field must be a comma separated combination of any of attendance,day-fri,day-sat,day-thu,room-none,sponsor,sponsor2,stage"},
+		"telegram":      []string{"optional telegram field must contain your @username from telegram, or it can be left blank"},
+		"tshirt_size":   []string{"optional tshirt_size field must be empty or one of XS,wXS,S,wS,M,wM,L,wL,XL,wXL,XXL,wXXL,3XL,w3XL,4XL,w4XL"},
+		"country":       []string{"country field must contain a 2 letter upper case ISO-3166-1 country code (Alpha-2 code, see https://en.wikipedia.org/wiki/ISO_3166-1)"},
+		"country_badge": []string{"country_badge field must contain a 2 letter upper case ISO-3166-1 country code (Alpha-2 code, see https://en.wikipedia.org/wiki/ISO_3166-1)"},
 	}
 	performValidationTest(t, &a, expected, 16)
 }

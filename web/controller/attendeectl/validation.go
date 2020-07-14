@@ -3,23 +3,16 @@ package attendeectl
 import (
 	"context"
 	"fmt"
-	"github.com/eurofurence/reg-attendee-service/internal/entity"
-	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
 	"net/url"
-	"github.com/eurofurence/reg-attendee-service/api/v1/attendee"
-	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
-	"github.com/eurofurence/reg-attendee-service/web/util/validation"
 	"strings"
-)
+	"unicode"
 
-const nicknamePattern = "^(" +
-// 1 letter in front of up to 2 non-letters (and possibly more letters and/or spacing inbetween)
-	"[A-Za-z0-9 ]*[A-Za-z0-9][A-Za-z0-9 ]*[^A-Za-z0-9 ]?[A-Za-z0-9 ]*[^A-Za-z0-9 ]?[A-Za-z0-9 ]*" +
-// up to 1 non-letter in front, 1 letter before second non-letter (and possibly more letters and/or spacing inbetween)
-	"|[A-Za-z0-9 ]*[^A-Za-z0-9 ]?[A-Za-z0-9 ]*[A-Za-z0-9][A-Za-z0-9 ]*[^A-Za-z0-9 ]?[A-Za-z0-9 ]*" +
-// up to 2 non-letters in front, then 1 letter (and possibly more letters and/or spacing inbetween)
-	"|[A-Za-z0-9 ]*[^A-Za-z0-9 ]?[A-Za-z0-9 ]*[^A-Za-z0-9 ]?[A-Za-z0-9 ]*[A-Za-z0-9][A-Za-z0-9 ]*" +
-	")$"
+	"github.com/eurofurence/reg-attendee-service/api/v1/attendee"
+	"github.com/eurofurence/reg-attendee-service/internal/entity"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
+	"github.com/eurofurence/reg-attendee-service/web/util/validation"
+)
 
 const emailPattern = "^[^\\@\\s]+\\@[^\\@\\s]+$"
 
@@ -36,16 +29,38 @@ func validateCountry(ctx context.Context, country string) bool {
 	return false
 }
 
+func validateNickname(errs *url.Values, nickname string) {
+	countAlphanumeric := 0
+	countNonAlphanumeric := 0
+
+	for _, nickRune := range nickname {
+		if unicode.IsDigit(nickRune) || unicode.IsLetter(nickRune) {
+			countAlphanumeric++
+		} else if unicode.IsSpace(nickRune) {
+			// spaces neither count towards alphanumerics nor the non-alphanumeric count
+		} else {
+			countNonAlphanumeric++
+		}
+	}
+
+	if countAlphanumeric < 1 {
+		errs.Add("nickname", "nickname field must contain at least one alphanumeric character")
+	}
+
+	if countNonAlphanumeric > 2 {
+		errs.Add("nickname", "nickname field must not contain more than two non-alphanumeric characters (not counting spaces)")
+	}
+
+	validation.CheckLength(errs, 1, 80, "nickname", nickname)
+}
+
 func validate(ctx context.Context, a *attendee.AttendeeDto, trustedOriginalState *entity.Attendee) url.Values {
 	errs := url.Values{}
 
 	if a.Id != "" && a.Id != fmt.Sprint(trustedOriginalState.ID) {
 		errs.Add("id", "id field must be empty or correctly assigned for incoming requests")
 	}
-	if validation.ViolatesPattern(nicknamePattern, a.Nickname) {
-		errs.Add("nickname", "nickname field must contain at least one letter, and contain no more than two non-letters")
-	}
-	validation.CheckLength(&errs, 1, 80, "nickname", a.Nickname)
+	validateNickname(&errs, a.Nickname)
 	validation.CheckLength(&errs, 1, 80, "first_name", a.FirstName)
 	validation.CheckLength(&errs, 1, 80, "last_name", a.LastName)
 	validation.CheckLength(&errs, 1, 120, "street", a.Street)
@@ -70,7 +85,7 @@ func validate(ctx context.Context, a *attendee.AttendeeDto, trustedOriginalState
 	if validation.InvalidISODate(a.Birthday) {
 		errs.Add("birthday", "birthday field must be a valid ISO 8601 date (format yyyy-MM-dd)")
 	} else if validation.DateNotInRangeInclusive(a.Birthday, config.EarliestBirthday(), config.LatestBirthday()) {
-		errs.Add("birthday", "birthday must be no earlier than " + config.EarliestBirthday() + " and no later than " + config.LatestBirthday())
+		errs.Add("birthday", "birthday must be no earlier than "+config.EarliestBirthday()+" and no later than "+config.LatestBirthday())
 	}
 	if validation.NotInAllowedValues(allowedGenders[:], a.Gender) {
 		errs.Add("gender", "optional gender field must be one of male, female, other, notprovided, or it can be left blank, which counts as notprovided")
@@ -79,18 +94,18 @@ func validate(ctx context.Context, a *attendee.AttendeeDto, trustedOriginalState
 	validation.CheckCombinationOfAllowedValues(&errs, config.AllowedPackages(), "packages", a.Packages)
 	validation.CheckCombinationOfAllowedValues(&errs, config.AllowedOptions(), "options", a.Options)
 	if a.TshirtSize != "" && validation.NotInAllowedValues(config.AllowedTshirtSizes(), a.TshirtSize) {
-		errs.Add("tshirt_size", "optional tshirt_size field must be empty or one of " + strings.Join(config.AllowedTshirtSizes(), ","))
+		errs.Add("tshirt_size", "optional tshirt_size field must be empty or one of "+strings.Join(config.AllowedTshirtSizes(), ","))
 	}
 
 	// check permission to change flags, packages, options to their new values
 	if err := attendeeService.CanChangeChoiceTo(ctx, trustedOriginalState.Flags, a.Flags, config.FlagsConfig()); err != nil {
-		errs.Add( "flags", err.Error())
+		errs.Add("flags", err.Error())
 	}
 	if err := attendeeService.CanChangeChoiceTo(ctx, trustedOriginalState.Packages, a.Packages, config.PackagesConfig()); err != nil {
-		errs.Add( "packages", err.Error())
+		errs.Add("packages", err.Error())
 	}
 	if err := attendeeService.CanChangeChoiceTo(ctx, trustedOriginalState.Options, a.Options, config.OptionsConfig()); err != nil {
-		errs.Add( "options", err.Error())
+		errs.Add("options", err.Error())
 	}
 
 	if err := attendeeService.CanRegisterAtThisTime(ctx); err != nil {
