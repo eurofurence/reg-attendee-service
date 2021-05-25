@@ -32,18 +32,18 @@ jobs:
         cat ./install-pact.sh &&
         chmod u+x ./install-pact.sh &&
         ./install-pact.sh &&
-        find . &&
+        ls -al &&
         echo "$(pwd)/bin" >> $GITHUB_PATH
       shell: bash
 
     - name: Print pact CLI versions
-      run: >
-        echo $PATH;
-        pact-broker version;
-        pact-message version;
-        pact-mock-service version;
-        pact-provider-verifier version;
-        pact-stub-service version
+      run: |-
+        echo "PATH=$PATH
+        pact-broker: $(pact-broker version)
+        pact-message: $(pact-message version)
+        pact-mock-service: $(pact-mock-service version)
+        pact-provider-verifier: $(pact-provider-verifier version)
+        pact-stub-service: $(pact-stub-service version)"
       shell: bash
 
     - name: Build
