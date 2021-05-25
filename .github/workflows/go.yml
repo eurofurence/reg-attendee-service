@@ -26,14 +26,13 @@ jobs:
 
     - name: Set up pact-foundation/pact-ruby-standalone
       run: >
-        mkdir ./pact &&
-        cd ./pact &&
         curl -L https://raw.githubusercontent.com/pact-foundation/pact-ruby-standalone/master/install.sh -o ./install-pact.sh &&
         cat ./install-pact.sh &&
         chmod u+x ./install-pact.sh &&
         ./install-pact.sh &&
-        ls -al &&
-        echo "$(pwd)/bin" >> $GITHUB_PATH
+        rm ./install-pact.sh &&
+        ls -al ./pact/bin &&
+        echo "$(pwd)/pact/bin" >> $GITHUB_PATH
       shell: bash
 
     - name: Print pact CLI versions
