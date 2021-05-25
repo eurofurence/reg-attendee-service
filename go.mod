@@ -1,6 +1,6 @@
 module github.com/eurofurence/reg-attendee-service
 
-go 1.12
+go 1.16
 
 require (
 	github.com/d4l3k/messagediff v1.2.1
