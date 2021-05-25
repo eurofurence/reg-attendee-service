@@ -16,6 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+      with:
+        path: ./reg-attendee-service
 
     - name: Set up Go
       uses: actions/setup-go@v2
@@ -24,6 +26,22 @@ jobs:
 
     - name: Build
       run: go build -v ./...
+      working-directory: ./reg-attendee-service
+
+    - name: Checkout eurofurence/reg-attendee-transferclient for contract tests
+      uses: actions/checkout@v2
+      with:
+        repository: eurofurence/reg-attendee-transferclient
+        path: reg-attendee-transferclient
+
+    - name: Build eurofurence/reg-attendee-transferclient
+      run: go build -v ./...
+      working-directory: ./reg-attendee-transferclient
+
+    - name: Test eurofurence/reg-attendee-transferclient
+      run: go test -v ./...
+      working-directory: ./reg-attendee-transferclient
 
     - name: Test
       run: go test -v ./...
+      working-directory: ./reg-attendee-service
