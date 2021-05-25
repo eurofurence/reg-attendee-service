@@ -24,7 +24,7 @@ jobs:
       with:
         go-version: 1.16
 
-    - name: Set up pact-go
+    - name: Set up pact-foundation/pact-ruby-standalone
       run: >
         mkdir ./pact &&
         cd ./pact &&
@@ -32,8 +32,18 @@ jobs:
         cat ./install-pact.sh &&
         chmod u+x ./install-pact.sh &&
         ./install-pact.sh &&
-        go get github.com/pact-foundation/pact-go@v1 &&
-        echo "$GITHUB_WORKSPACE/pact/bin" >> $GITHUB_PATH
+        find . &&
+        echo "$(pwd)/bin" >> $GITHUB_PATH
+      shell: bash
+
+    - name: Print pact CLI versions
+      run: >
+        echo $PATH;
+        pact-broker version;
+        pact-message version;
+        pact-mock-service version;
+        pact-provider-verifier version;
+        pact-stub-service version
       shell: bash
 
     - name: Build
