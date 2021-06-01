@@ -1,5 +1,8 @@
 # reg-attendee-service
 
+<img src="https://github.com/eurofurence/reg-attendee-service/actions/workflows/go.yml/badge.svg" alt="test status"/>
+<img src="https://github.com/eurofurence/reg-attendee-service/actions/workflows/codeql-analysis.yml/badge.svg" alt="code quality status"/>
+
 ## Overview
 
 A backend service that provides attendee management.
