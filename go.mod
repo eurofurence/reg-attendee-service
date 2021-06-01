@@ -10,7 +10,7 @@ require (
 	github.com/hashicorp/go-version v1.2.0 // indirect
 	github.com/hashicorp/logutils v1.0.0 // indirect
 	github.com/jinzhu/gorm v1.9.16
-	github.com/pact-foundation/pact-go v1.5.1
+	github.com/pact-foundation/pact-go v1.5.2
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.7.0
 	gopkg.in/yaml.v2 v2.4.0
