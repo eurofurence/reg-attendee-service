@@ -56,6 +56,25 @@ func TestCreateNewAttendeeInvalid(t *testing.T) {
 	require.Equal(t, "birthday must be no earlier than 1901-01-01 and no later than 2001-08-14", errorDto.Details.Get("birthday"))
 }
 
+func TestCreateNewAttendeeSyntaxInvalid(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given an unauthenticated user")
+
+	docs.When("when they try to create a new attendee with syntactically invalid data")
+	attendeeSent := tstBuildValidAttendee("na2a-")
+	syntaxErrorJson := "{" + tstRenderJson(attendeeSent)
+	response := tstPerformPut("/api/rest/v1/attendees", syntaxErrorJson, tstNoToken())
+
+	docs.Then("then the attendee is rejected with an appropriate error response")
+	require.Equal(t, http.StatusBadRequest, response.status, "unexpected http response status")
+	errorDto := attendee.ErrorDto{}
+	tstParseJson(response.body, &errorDto)
+	require.Equal(t, "attendee.parse.error", errorDto.Message, "unexpected error code")
+}
+
 func TestCreateNewAttendeeCanBeReadAgainByAdmin(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
 	tstSetup(tstDefaultConfigFile)
