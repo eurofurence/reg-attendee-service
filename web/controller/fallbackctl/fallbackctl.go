@@ -2,14 +2,14 @@ package fallbackctl
 
 import (
 	"context"
-	"github.com/gorilla/mux"
 	"github.com/eurofurence/reg-attendee-service/web/filter/ctxvalues"
 	"github.com/eurofurence/reg-attendee-service/web/filter/filterhelper"
+	"github.com/go-chi/chi"
 	"net/http"
 )
 
-func ErrorDispatcher(router *mux.Router) {
-	router.PathPrefix("/").HandlerFunc(filterhelper.BuildUnauthenticatedHandler("1s", fallbackErrorHandler))
+func Create(server chi.Router) {
+	server.HandleFunc("/*", filterhelper.BuildUnauthenticatedHandler("1s", fallbackErrorHandler))
 }
 
 func fallbackErrorHandler(ctx context.Context, w http.ResponseWriter, _ *http.Request) {

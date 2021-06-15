@@ -4,9 +4,9 @@ go 1.16
 
 require (
 	github.com/d4l3k/messagediff v1.2.1
+	github.com/go-chi/chi v1.5.4
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
 	github.com/google/uuid v1.2.0
-	github.com/gorilla/mux v1.8.0
 	github.com/hashicorp/go-version v1.2.0 // indirect
 	github.com/hashicorp/logutils v1.0.0 // indirect
 	github.com/jinzhu/gorm v1.9.16

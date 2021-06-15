@@ -13,5 +13,6 @@ func main() {
 	database.Open()
 	defer database.Close()
 	database.MigrateIfSwitchedOn()
-	web.StartWebserverAndNeverReturn()
+	server := web.Create()
+	web.StartWebserverAndNeverReturn(server)
 }

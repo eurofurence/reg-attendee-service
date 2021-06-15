@@ -1,36 +1,31 @@
 package web
 
 import (
-	"github.com/eurofurence/reg-attendee-service/web/controller/countdownctl"
-	"github.com/gorilla/mux"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
 	"github.com/eurofurence/reg-attendee-service/web/controller/attendeectl"
+	"github.com/eurofurence/reg-attendee-service/web/controller/countdownctl"
 	"github.com/eurofurence/reg-attendee-service/web/controller/fallbackctl"
 	"github.com/eurofurence/reg-attendee-service/web/controller/infoctl"
+	"github.com/go-chi/chi"
 	"net/http"
 )
 
-func StartWebserverAndNeverReturn() {
+func Create() chi.Router {
 	logging.NoCtx().Info("Building routers...")
-	router := CreateRouter();
-	logging.NoCtx().Info("Listening...")
-	logging.NoCtx().Fatal(http.ListenAndServe(config.ServerAddr(), router))
+	server := chi.NewRouter()
+	countdownctl.Create(server)
+	attendeectl.Create(server)
+	infoctl.Create(server)
+	fallbackctl.Create(server)
+	return server
 }
 
-// you can use this from tests
-func CreateRouter() http.Handler {
-	router := mux.NewRouter().StrictSlash(true)
-	dispatcher(router)
-	return router
-}
-
-func dispatcher(router *mux.Router) {
-	infoctl.Dispatcher(router.PathPrefix("/info").Subrouter())
-
-	apiSubrouter := router.PathPrefix("/api/rest").Subrouter()
-	attendeectl.RestDispatcher(apiSubrouter)
-	countdownctl.RestDispatcher(apiSubrouter)
-
-	fallbackctl.ErrorDispatcher(router)
+func StartWebserverAndNeverReturn(server chi.Router) {
+	address := config.ServerAddr()
+	logging.NoCtx().Info("Listening on " + address)
+	err := http.ListenAndServe(address, server)
+	if err != nil {
+		logging.NoCtx().Error(err)
+	}
 }

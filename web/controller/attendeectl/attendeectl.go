@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-http-utils/headers"
-	"github.com/gorilla/mux"
 	"github.com/eurofurence/reg-attendee-service/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
@@ -14,6 +13,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/web/filter/ctxvalues"
 	"github.com/eurofurence/reg-attendee-service/web/filter/filterhelper"
 	"github.com/eurofurence/reg-attendee-service/web/util/media"
+	"github.com/go-chi/chi"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -31,15 +31,22 @@ func OverrideAttendeeService(overrideAttendeeServiceForTesting attendeesrv.Atten
 	attendeeService = overrideAttendeeServiceForTesting
 }
 
-func RestDispatcher(router *mux.Router) {
+func Create(server chi.Router) {
 	if config.OptionalInitialRegTokenConfigured() {
-		router.HandleFunc("/v1/attendees", filterhelper.BuildHandler("3s", newAttendeeHandler, config.TokenForAdmin, config.OptionalTokenForInitialReg)).Methods(http.MethodPut, http.MethodOptions)
+		handler := filterhelper.BuildHandler("3s", newAttendeeHandler, config.TokenForAdmin, config.OptionalTokenForInitialReg)
+		server.Put("/api/rest/v1/attendees", handler)
+		server.Options("/api/rest/v1/attendees", handler)
 	} else {
-		router.HandleFunc("/v1/attendees", filterhelper.BuildUnauthenticatedHandler("3s", newAttendeeHandler)).Methods(http.MethodPut, http.MethodOptions)
+		handler := filterhelper.BuildUnauthenticatedHandler("3s", newAttendeeHandler)
+		server.Put("/api/rest/v1/attendees", handler)
+		server.Options("/api/rest/v1/attendees", handler)
 	}
-	router.HandleFunc("/v1/attendees/max-id", filterhelper.BuildUnauthenticatedHandler("3s", getAttendeeMaxIdHandler)).Methods(http.MethodGet)
-	router.HandleFunc("/v1/attendees/{id:[1-9][0-9]*}", filterhelper.BuildHandler("3s", getAttendeeHandler, config.TokenForAdmin, config.TokenForLoggedInUser)).Methods(http.MethodGet)
-	router.HandleFunc("/v1/attendees/{id:[1-9][0-9]*}", filterhelper.BuildHandler("3s", updateAttendeeHandler, config.TokenForAdmin, config.TokenForLoggedInUser)).Methods(http.MethodPost, http.MethodOptions)
+
+	server.Get("/api/rest/v1/attendees/max-id", filterhelper.BuildUnauthenticatedHandler("3s", getAttendeeMaxIdHandler))
+	server.Get("/api/rest/v1/attendees/{id:[1-9][0-9]*}", filterhelper.BuildHandler("3s", getAttendeeHandler, config.TokenForAdmin, config.TokenForLoggedInUser))
+	handler := filterhelper.BuildHandler("3s", updateAttendeeHandler, config.TokenForAdmin, config.TokenForLoggedInUser)
+	server.Post("/api/rest/v1/attendees/{id:[1-9][0-9]*}", handler)
+	server.Options("/api/rest/v1/attendees/{id:[1-9][0-9]*}", handler)
 }
 
 func newAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
@@ -130,10 +137,10 @@ func getAttendeeMaxIdHandler(ctx context.Context, w http.ResponseWriter, r *http
 }
 
 func idFromVars(ctx context.Context, w http.ResponseWriter, r *http.Request) (uint, error) {
-	vars := mux.Vars(r)
-	id, err := strconv.ParseUint(vars["id"], 10, 32)
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
-		invalidIdErrorHandler(ctx, w, r, vars["id"])
+		invalidIdErrorHandler(ctx, w, r, idStr)
 	}
 	return uint(id), err
 }

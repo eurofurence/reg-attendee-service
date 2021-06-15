@@ -3,15 +3,15 @@ package infoctl
 import (
 	"context"
 	"fmt"
-	"github.com/gorilla/mux"
 	"github.com/eurofurence/reg-attendee-service/web/filter/filterhelper"
+	"github.com/go-chi/chi"
 	"net/http"
 	"time"
 )
 
-func Dispatcher(router *mux.Router) {
-	router.HandleFunc("/health", filterhelper.BuildUnauthenticatedNologgingHandler("800ms", healthHandler)).Methods(http.MethodGet)
-	router.HandleFunc("/timeout", filterhelper.BuildUnauthenticatedHandler("800ms", timeoutHandler)).Methods(http.MethodGet)
+func Create(server chi.Router) {
+	server.Get("/info/health", filterhelper.BuildUnauthenticatedNologgingHandler("800ms", healthHandler))
+	server.Get("/info/timeout", filterhelper.BuildUnauthenticatedHandler("800ms", timeoutHandler))
 }
 
 func healthHandler(_ context.Context, w http.ResponseWriter, r *http.Request) {
