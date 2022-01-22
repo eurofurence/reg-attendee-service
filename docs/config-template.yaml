@@ -145,6 +145,7 @@ birthday:
   latest: '2004-08-24'
 countries:
   - 'AF'
+  - 'AN'
   - 'AX'
   - 'AL'
   - 'DZ'
@@ -393,3 +394,4 @@ countries:
   - 'YE'
   - 'ZM'
   - 'ZW'
+  - 'XK'
