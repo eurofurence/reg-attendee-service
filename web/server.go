@@ -7,7 +7,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/web/controller/countdownctl"
 	"github.com/eurofurence/reg-attendee-service/web/controller/fallbackctl"
 	"github.com/eurofurence/reg-attendee-service/web/controller/infoctl"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 )
 

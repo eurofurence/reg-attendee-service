@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/eurofurence/reg-attendee-service/web/filter/ctxvalues"
 	"github.com/eurofurence/reg-attendee-service/web/filter/filterhelper"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 )
 

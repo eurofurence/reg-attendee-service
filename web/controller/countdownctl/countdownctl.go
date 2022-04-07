@@ -8,7 +8,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
 	"github.com/eurofurence/reg-attendee-service/web/filter/filterhelper"
 	"github.com/eurofurence/reg-attendee-service/web/util/media"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-http-utils/headers"
 	"math"
 	"net/http"
@@ -71,4 +71,3 @@ func writeJson(ctx context.Context, w http.ResponseWriter, v interface{}) {
 		logging.Ctx(ctx).Warnf("error while encoding json response: %v", err)
 	}
 }
-
