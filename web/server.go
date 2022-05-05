@@ -3,6 +3,7 @@ package web
 import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
+	"github.com/eurofurence/reg-attendee-service/web/controller/adminctl"
 	"github.com/eurofurence/reg-attendee-service/web/controller/attendeectl"
 	"github.com/eurofurence/reg-attendee-service/web/controller/countdownctl"
 	"github.com/eurofurence/reg-attendee-service/web/controller/fallbackctl"
@@ -16,6 +17,7 @@ func Create() chi.Router {
 	server := chi.NewRouter()
 	countdownctl.Create(server)
 	attendeectl.Create(server)
+	adminctl.Create(server)
 	infoctl.Create(server)
 	fallbackctl.Create(server)
 	return server
