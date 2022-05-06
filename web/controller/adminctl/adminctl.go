@@ -3,6 +3,7 @@ package adminctl
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/eurofurence/reg-attendee-service/api/v1/admin"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
@@ -46,9 +47,16 @@ func getAdminInfoHandler(ctx context.Context, w http.ResponseWriter, r *http.Req
 		attendeeNotFoundErrorHandler(ctx, w, r, id)
 		return
 	}
-	dto := admin.AdminInfoDto{}
-	// TODO get data
+	// TODO get data from service instead of defaults
 	// TODO mapAttendeeToDto(existingAttendee, &dto)
+	timestamp := time.Now().Format(time.RFC3339)
+	dto := admin.AdminInfoDto{
+		Id: fmt.Sprintf("%d", id),
+		StatusHistory: []admin.StatusChange{{
+			Timestamp: timestamp,
+			Status:    "new",
+		}},
+	}
 	w.Header().Add(headers.ContentType, media.ContentTypeApplicationJson)
 	writeJson(ctx, w, dto)
 }
