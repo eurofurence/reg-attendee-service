@@ -22,15 +22,21 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
-        go-version: 1.16
+        go-version: 1.18
+
+    # START pact-1.88.84 has a syntax error
+    # curl -L https://raw.githubusercontent.com/pact-foundation/pact-ruby-standalone/master/install.sh -o ./install-pact.sh &&
+    # cat ./install-pact.sh &&
+    # chmod u+x ./install-pact.sh &&
+    # ./install-pact.sh &&
+    # rm ./install-pact.sh &&
+    # END pact-1.88.84 has a syntax error
 
     - name: Set up pact-foundation/pact-ruby-standalone
       run: >
-        curl -L https://raw.githubusercontent.com/pact-foundation/pact-ruby-standalone/master/install.sh -o ./install-pact.sh &&
-        cat ./install-pact.sh &&
-        chmod u+x ./install-pact.sh &&
-        ./install-pact.sh &&
-        rm ./install-pact.sh &&
+        curl -L https://github.com/pact-foundation/pact-ruby-standalone/releases/download/v1.88.83/pact-1.88.83-linux-x86_64.tar.gz -o pact-1.88.83-linux-x86_64.tar.gz &&
+        tar xzf pact-1.88.83-linux-x86_64.tar.gz &&
+        rm pact-1.88.83-linux-x86_64.tar.gz &&
         ls -al ./pact/bin &&
         echo "$(pwd)/pact/bin" >> $GITHUB_PATH
       shell: bash
