@@ -1,6 +1,7 @@
 package acceptance
 
 import (
+	"github.com/eurofurence/reg-attendee-service/api/v1/errorapi"
 	"net/http"
 	"testing"
 
@@ -48,7 +49,7 @@ func TestCreateNewAttendeeInvalid(t *testing.T) {
 
 	docs.Then("then the attendee is rejected with an appropriate error response")
 	require.Equal(t, http.StatusBadRequest, response.status, "unexpected http response status")
-	errorDto := attendee.ErrorDto{}
+	errorDto := errorapi.ErrorDto{}
 	tstParseJson(response.body, &errorDto)
 	require.Equal(t, "attendee.data.invalid", errorDto.Message, "unexpected error code")
 	require.Equal(t, "nickname field must contain at least one alphanumeric character", errorDto.Details.Get("nickname"))
@@ -70,7 +71,7 @@ func TestCreateNewAttendeeSyntaxInvalid(t *testing.T) {
 
 	docs.Then("then the attendee is rejected with an appropriate error response")
 	require.Equal(t, http.StatusBadRequest, response.status, "unexpected http response status")
-	errorDto := attendee.ErrorDto{}
+	errorDto := errorapi.ErrorDto{}
 	tstParseJson(response.body, &errorDto)
 	require.Equal(t, "attendee.parse.error", errorDto.Message, "unexpected error code")
 }
@@ -177,7 +178,7 @@ func TestCreateNewAttendeeAdminOnlyFlag(t *testing.T) {
 
 	docs.Then("then the attendee is rejected with an error response")
 	require.Equal(t, http.StatusBadRequest, response.status, "unexpected http response status")
-	errorDto := attendee.ErrorDto{}
+	errorDto := errorapi.ErrorDto{}
 	tstParseJson(response.body, &errorDto)
 	require.Equal(t, "attendee.data.invalid", errorDto.Message, "unexpected error code")
 }
@@ -197,7 +198,7 @@ func TestCreateNewAttendeeDefaultAdminOnlyPackage(t *testing.T) {
 
 	docs.Then("then the attendee is rejected with an error response")
 	require.Equal(t, http.StatusBadRequest, response.status, "unexpected http response status")
-	errorDto := attendee.ErrorDto{}
+	errorDto := errorapi.ErrorDto{}
 	tstParseJson(response.body, &errorDto)
 	require.Equal(t, "attendee.data.invalid", errorDto.Message, "unexpected error code")
 }
@@ -222,7 +223,7 @@ func TestCreateNewAttendeeDuplicateHandling(t *testing.T) {
 
 	docs.Then("then the attendee is rejected with an error response indicating a duplicate")
 	require.Equal(t, http.StatusBadRequest, duplicateResponse.status, "unexpected http response status")
-	errorDto := attendee.ErrorDto{}
+	errorDto := errorapi.ErrorDto{}
 	tstParseJson(duplicateResponse.body, &errorDto)
 	require.Equal(t, "attendee.data.duplicate", errorDto.Message, "unexpected error code")
 	require.Equal(t, "there is already an attendee with this information (looking at nickname, email, and zip code)",
@@ -242,7 +243,7 @@ func TestCreateNewAttendeeTooEarly(t *testing.T) {
 
 	docs.Then("then the attempt is rejected with an appropriate error response")
 	require.Equal(t, http.StatusBadRequest, response.status, "unexpected http response status")
-	errorDto := attendee.ErrorDto{}
+	errorDto := errorapi.ErrorDto{}
 	tstParseJson(response.body, &errorDto)
 	require.Equal(t, "attendee.data.invalid", errorDto.Message, "unexpected error code")
 	require.Equal(t, "public registration has not opened at this time, please come back later", errorDto.Details.Get("timing"))

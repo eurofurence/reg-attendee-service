@@ -3,7 +3,7 @@ package attendeectl
 import (
 	"context"
 	"encoding/json"
-	"github.com/eurofurence/reg-attendee-service/api/v1/attendee"
+	"github.com/eurofurence/reg-attendee-service/api/v1/errorapi"
 	"github.com/eurofurence/reg-attendee-service/docs"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
@@ -55,7 +55,7 @@ func tstMockPostRequest(body string) *http.Request {
 }
 
 func tstMockGetRequest(urlParamExtension string) *http.Request {
-	r, err := http.NewRequest(http.MethodGet, "/unused/url?" + urlParamExtension, nil)
+	r, err := http.NewRequest(http.MethodGet, "/unused/url?"+urlParamExtension, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -92,7 +92,7 @@ func tstRenderJson(dto interface{}) string {
 func tstRequireErrorResponse(t *testing.T, w *httptest.ResponseRecorder, expectedStatus int, expectedMsg string) {
 	response := w.Result()
 	require.Equal(t, expectedStatus, response.StatusCode, "unexpected response status")
-	actualResponseDto := &attendee.ErrorDto{}
+	actualResponseDto := &errorapi.ErrorDto{}
 	tstParseJson(tstReadBodyFromResponse(response), actualResponseDto)
 	require.Equal(t, expectedMsg, actualResponseDto.Message, "unexpected response contents")
 }

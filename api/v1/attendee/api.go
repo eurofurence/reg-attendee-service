@@ -1,7 +1,5 @@
 package attendee
 
-import "net/url"
-
 type AttendeeDto struct {
 	Id       string `json:"id"`       // badge number
 	Nickname string `json:"nickname"` // fan name
@@ -37,11 +35,4 @@ type AttendeeDto struct {
 
 type AttendeeMaxIdDto struct {
 	MaxId uint `json:"max_id"`
-}
-
-type ErrorDto struct {
-	Timestamp string `json:"timestamp"`
-	RequestId string `json:"requestid"`
-	Message   string `json:"message"`
-	Details   url.Values `json:"details"`
 }

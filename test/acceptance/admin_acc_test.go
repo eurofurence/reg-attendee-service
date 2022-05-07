@@ -98,13 +98,8 @@ func TestAdminDefaults_AdminOk(t *testing.T) {
 	adminInfo := admin.AdminInfoDto{}
 	tstParseJson(response.body, &adminInfo)
 
-	require.Equal(t, 1, len(adminInfo.StatusHistory))
 	expectedAdminInfo := admin.AdminInfoDto{
 		Id: adminInfo.Id,
-		StatusHistory: []admin.StatusChange{{
-			Timestamp: adminInfo.StatusHistory[0].Timestamp,
-			Status:    "new",
-		}},
 	}
 	require.EqualValues(t, expectedAdminInfo, adminInfo, "admin data read did not match expected values")
 }

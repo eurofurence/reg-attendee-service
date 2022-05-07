@@ -2,11 +2,11 @@ package countdownctl
 
 import (
 	"context"
-	"encoding/json"
 	"github.com/eurofurence/reg-attendee-service/api/v1/countdown"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
 	"github.com/eurofurence/reg-attendee-service/web/filter/filterhelper"
+	"github.com/eurofurence/reg-attendee-service/web/util/ctlutil"
 	"github.com/eurofurence/reg-attendee-service/web/util/media"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-http-utils/headers"
@@ -60,14 +60,5 @@ func commonCountdownHandler(ctx context.Context, w http.ResponseWriter, r *http.
 	responseDto.CountdownSeconds = int64(math.Round(secondsToGo))
 
 	w.Header().Add(headers.ContentType, media.ContentTypeApplicationJson)
-	writeJson(ctx, w, responseDto)
-}
-
-func writeJson(ctx context.Context, w http.ResponseWriter, v interface{}) {
-	encoder := json.NewEncoder(w)
-	encoder.SetEscapeHTML(false)
-	err := encoder.Encode(v)
-	if err != nil {
-		logging.Ctx(ctx).Warnf("error while encoding json response: %v", err)
-	}
+	ctlutil.WriteJson(ctx, w, responseDto)
 }
