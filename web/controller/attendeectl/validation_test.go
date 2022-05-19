@@ -10,7 +10,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/docs"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 )
 
 func tstCreateValidAttendee() attendee.AttendeeDto {

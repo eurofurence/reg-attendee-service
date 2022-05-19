@@ -1,6 +1,6 @@
 package entity
 
-import "github.com/jinzhu/gorm"
+import "gorm.io/gorm"
 
 // configured sizes are for mysql, since version 5 mysql counts characters, not bytes
 

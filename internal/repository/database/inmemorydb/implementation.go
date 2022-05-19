@@ -9,9 +9,11 @@ import (
 )
 
 type InMemoryRepository struct {
-	attendees map[uint]*entity.Attendee
-	history map[uint]*entity.History
-	idSequence uint32
+	attendees     map[uint]*entity.Attendee
+	adminInfo     map[uint]*entity.AdminInfo
+	statusChanges map[uint][]entity.StatusChange
+	history       map[uint]*entity.History
+	idSequence    uint32
 }
 
 func Create() dbrepo.Repository {
@@ -20,17 +22,23 @@ func Create() dbrepo.Repository {
 
 func (r *InMemoryRepository) Open() {
 	r.attendees = make(map[uint]*entity.Attendee)
+	r.adminInfo = make(map[uint]*entity.AdminInfo)
+	r.statusChanges = make(map[uint][]entity.StatusChange)
 	r.history = make(map[uint]*entity.History)
 }
 
 func (r *InMemoryRepository) Close() {
 	r.attendees = nil
+	r.adminInfo = nil
+	r.statusChanges = nil
 	r.history = nil
 }
 
 func (r *InMemoryRepository) Migrate() {
 	// nothing to do
 }
+
+// --- attendee ---
 
 func (r *InMemoryRepository) AddAttendee(ctx context.Context, a *entity.Attendee) (uint, error) {
 	newId := uint(atomic.AddUint32(&r.idSequence, 1))
@@ -82,6 +90,75 @@ func (r *InMemoryRepository) MaxAttendeeId(ctx context.Context) (uint, error) {
 	}
 	return max, nil
 }
+
+// --- admin info ---
+
+func (r *InMemoryRepository) GetAdminInfoByAttendeeId(ctx context.Context, attendeeId uint) (*entity.AdminInfo, error) {
+	if ai, ok := r.adminInfo[attendeeId]; ok {
+		// copy the info, so later modifications won't also modify it in the simulated db
+		copiedAdminInfo := *ai
+		return &copiedAdminInfo, nil
+	} else {
+		aiEmpty := entity.AdminInfo{}
+		aiEmpty.ID = attendeeId
+		return &aiEmpty, nil
+	}
+}
+
+func (r *InMemoryRepository) WriteAdminInfo(ctx context.Context, ai *entity.AdminInfo) error {
+	if ai.ID == 0 {
+		return fmt.Errorf("cannot save admin info for attendee ID 0")
+	}
+
+	copiedAdminInfo := *ai
+	r.adminInfo[ai.ID] = &copiedAdminInfo
+	return nil
+}
+
+// --- status changes ---
+
+func (r *InMemoryRepository) GetLatestStatusChangeByAttendeeId(ctx context.Context, attendeeId uint) (*entity.StatusChange, error) {
+	scEmpty := entity.StatusChange{
+		AttendeeId: attendeeId,
+		Status:     "new",
+		Comments:   "",
+	}
+	if scList, ok := r.statusChanges[attendeeId]; ok {
+		if len(scList) > 0 {
+			sc := scList[len(scList)-1]
+			return &sc, nil
+		} else {
+			return &scEmpty, nil
+		}
+	} else {
+		return &scEmpty, nil
+	}
+}
+
+func (r *InMemoryRepository) GetStatusChangesByAttendeeId(ctx context.Context, attendeeId uint) ([]entity.StatusChange, error) {
+	if scList, ok := r.statusChanges[attendeeId]; ok {
+		scListCopy := make([]entity.StatusChange, len(scList))
+		for i := range scList {
+			scListCopy[i] = scList[i]
+		}
+		return scListCopy, nil
+	} else {
+		return make([]entity.StatusChange, 0), nil
+	}
+}
+
+func (r *InMemoryRepository) AddStatusChange(ctx context.Context, sc *entity.StatusChange) error {
+	if scList, ok := r.statusChanges[sc.AttendeeId]; ok {
+		scCopy := *sc
+		r.statusChanges[sc.AttendeeId] = append(scList, scCopy)
+	} else {
+		scCopy := *sc
+		r.statusChanges[sc.AttendeeId] = []entity.StatusChange{scCopy}
+	}
+	return nil
+}
+
+// --- history ---
 
 func (r *InMemoryRepository) RecordHistory(ctx context.Context, h *entity.History) error {
 	newId := uint(atomic.AddUint32(&r.idSequence, 1))

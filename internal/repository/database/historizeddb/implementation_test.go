@@ -6,6 +6,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database/inmemorydb"
 	"github.com/stretchr/testify/require"
+	"gorm.io/gorm"
 	"testing"
 )
 
@@ -37,8 +38,26 @@ func tstBuildValidAttendee() *entity.Attendee {
 	}
 }
 
+func tstBuildValidAdminInfo1() *entity.AdminInfo {
+	return &entity.AdminInfo{
+		Model:         gorm.Model{ID: 1},
+		Flags:         "",
+		Permissions:   "admin",
+		AdminComments: "first",
+	}
+}
+
+func tstBuildValidAdminInfo2() *entity.AdminInfo {
+	return &entity.AdminInfo{
+		Model:         gorm.Model{ID: 1},
+		Flags:         "something",
+		Permissions:   "",
+		AdminComments: "second",
+	}
+}
+
 func TestHistorizesUpdateCorrectly(t *testing.T) {
-	docs.Description("check that historizing changes works as expected")
+	docs.Description("check that historizing attendee changes works as expected")
 	cut := tstConstructCut()
 	cut.Open()
 	cut.Migrate()
@@ -54,9 +73,36 @@ func TestHistorizesUpdateCorrectly(t *testing.T) {
 	require.Nil(t, err, "unexpected error during update")
 
 	expectedDiff := "modified: .Nickname = \"BlackCheetah\"\nmodified: .State = \"Sachsen\"\n"
-	actualDiff, err := cut.wrappedRepository.(*inmemorydb.InMemoryRepository).GetHistoryById(context.TODO(), id + 1)
+	actualDiff, err := cut.wrappedRepository.(*inmemorydb.InMemoryRepository).GetHistoryById(context.TODO(), id+1)
 	require.Nil(t, err, "unexpected error during history access")
 	require.Equal(t, expectedDiff, actualDiff.Diff)
+
+	cut.Close()
+}
+
+func TestHistorizesAdminInfoChangesCorrectly(t *testing.T) {
+	docs.Description("check that historizing admin info changes works as expected")
+	cut := tstConstructCut()
+	cut.Open()
+	cut.Migrate()
+
+	orig := tstBuildValidAdminInfo1()
+	err := cut.WriteAdminInfo(context.TODO(), orig)
+	require.Nil(t, err, "unexpected error during initial add")
+
+	change := tstBuildValidAdminInfo2()
+	err = cut.WriteAdminInfo(context.TODO(), change)
+	require.Nil(t, err, "unexpected error during update")
+
+	expectedDiff1 := "modified: .Permissions = \"\"\n"
+	actualDiff1, err := cut.wrappedRepository.(*inmemorydb.InMemoryRepository).GetHistoryById(context.TODO(), 1)
+	require.Nil(t, err, "unexpected error during history access 1")
+	require.Equal(t, expectedDiff1, actualDiff1.Diff)
+
+	expectedDiff2 := "modified: .Flags = \"\"\nmodified: .Permissions = \"admin\"\n"
+	actualDiff2, err := cut.wrappedRepository.(*inmemorydb.InMemoryRepository).GetHistoryById(context.TODO(), 2)
+	require.Nil(t, err, "unexpected error during history access 2")
+	require.Equal(t, expectedDiff2, actualDiff2.Diff)
 
 	cut.Close()
 }
