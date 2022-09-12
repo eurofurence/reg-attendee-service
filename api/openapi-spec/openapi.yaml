@@ -1,0 +1,364 @@
+openapi: 3.0.3
+info:
+  title: Attendee Service
+  description: |-
+    This backend microservice manages attendee registrations. This includes    
+    - creating and editing registrations
+    - adding and removing packages incl. calculating total due amount (but not current dues)
+    - searching and listing registrations (admin only)
+    - registration status progression (new - approved - partially paid - paid - checked in / waiting / cancelled / deleted)
+    - ban detection and management
+    - transferring registrations when re-sold
+  license:
+    name: MIT
+    url: https://github.com/eurofurence/reg-attendee-service/blob/main/LICENSE
+  version: 0.1.0
+servers:
+  - url: /api/rest/v1
+    description: localhost
+  - url: /attsrv/api/rest/v1
+    description: server
+tags:
+  - name: registration
+    description: Register and change attendees
+  - name: status
+    description: Status progression
+  - name: privileged
+    description: Privileged (admin only) functionality
+  - name: info
+    description: Health and other public status information
+paths:
+  /attendees:
+    post:
+      summary: Add a new attendee
+      tags:
+        - registration
+      description: |-
+        Register a new attendee and assign them a badge number. 
+        
+        The attendee will initially be in status new and the privileged information is set to all defaults.
+      operationId: addAttendee
+      requestBody:
+        description: Create a new attendee
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Attendee'
+        required: true
+      responses:
+        '201':
+          description: Successfully created
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URL of the created resource, ending in the assigned Badge number.
+        '400':
+          description: Invalid input or registration not yet open (if you authenticate as staff, you may be allowed to register earlier)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required (can only occur if service is configured to require Authorization for all new registrations)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: duplicate (same nickname + email + zip code)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: An unexpected error occurred. This includes database errors. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /attendees/{id}:
+    get:
+      tags:
+        - registration
+      summary: Find attendee by id
+      description: Returns a single attendee
+      operationId: getAttendeeById
+      parameters:
+        - name: id
+          in: path
+          description: Badge number of attendee to return
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Attendee'
+        '400':
+          description: Invalid ID supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: You do not have permission to see this attendee
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Attendee not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+    put:
+      description: Update an existing attendee by Id
+      tags:
+        - registration
+      summary: Update an existing attendee
+      operationId: updateAttendee
+      parameters:
+        - name: id
+          in: path
+          description: Badge number of attendee to update
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Attendee'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URL of the resource, ending in the assigned Badge number.
+        '400':
+          description: Invalid ID supplied or invalid data in request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: You do not have permission to change this attendee
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Attendee not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: your changes would turn this attendee into a duplicate (same nickname + email + zip code)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: An unexpected error occurred. This includes database errors. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+components:
+  schemas:
+    Attendee:
+      type: object
+      required:
+        - nickname
+        - first_name
+        - last_name
+        - street
+        - zip
+        - city
+        - country
+        - country_badge
+        - email
+        - phone
+        - birthday
+        - packages
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+          description: This badge number is automatically assigned during initial registration. Optional for request bodies, but if specified it must match. It is not possible to change your badge number.
+          example: 10
+        nickname:
+          type: string
+          minLength: 1
+          maxLength: 80
+          description: The nickname you would like to be known under. Must contain at least on alphanumeric character, and may not contain more than two non-alphanumeric characters (not counting spaces)
+          example: FluffyCheetah
+        first_name:
+          type: string
+          minLength: 1
+          maxLength: 80
+          description: Your first name. Cannot be empty.
+          example: John
+        last_name:
+          type: string
+          minLength: 1
+          maxLength: 80
+          description: Your last name. Cannot be empty.
+          example: Doe
+        street:
+          type: string
+          minLength: 1
+          maxLength: 120
+          description: Your street address, including number
+          example: Teststraße 24
+        zip:
+          type: string
+          minLength: 1
+          maxLength: 20
+          description: Your postal / zip code
+          example: 13591
+        city:
+          type: string
+          minLength: 1
+          maxLength: 80
+          description: Your city
+          example: Berlin
+        country:
+          type: string
+          minLength: 2
+          maxLength: 2
+          description: 2 letter ISO-3166-1 country code for the address (Alpha-2 code), for example DE for Germany. Internally validated against a list from configuration.
+          example: DE
+        country_badge:
+          type: string
+          minLength: 2
+          maxLength: 2
+          description: 2 letter ISO-3166-1 country code for printing on Badge (Alpha-2 code). This allows non-German speaking attendees to select UK here and get a UK flag on their badge, even though they currently live in Germany. Essentially, prevents getting spoken to in a language you do not speak.
+          example: DE
+        state:
+          type: string
+          maxLength: 80
+          description: Your state (optional)
+          example: Bavaria
+        email:
+          type: string
+          description: Your email address. If a non-admin changes the email address and an identity provider is in use, must match the email address of your account, because then we can skip email verification. This means you must first change your email in the idp, then change it here, or the change will be rejected.
+          example: email@mailinator.com
+        phone:
+          type: string
+          description: Your phone number
+          example: +1 500 0000 000
+        telegram:
+          type: string
+          description: Your telegram handle (optional), but has turned out tremendously useful during the convention. Supply complete handle including the @ character, or leave blank of you do not have one or don't wish to provide it.
+        birthday:
+          type: string
+          format: date
+          description: Your date of birth, in ISO date format (yyyy-mm-dd)
+          example: 1980-08-20
+        gender:
+          type: string
+          enum:
+            - notprovided
+            - male
+            - female
+            - other
+          default: notprovided
+          description: Your gender (optional). Collected for statistical purposes only.
+        tshirt_size:
+          type: string
+          description: Your t-shirt size (optional). Validated against a list from configuration if specified.
+          example: XXL
+        flags:
+          type: string
+          description: A comma separated list of flags as declared in configuration. Flags are used to store yes/no-style information about an attendee, and displayed as checkboxes. Flags can be configured with respect to their visibility and who may change them (admin only, normal user). Flags are used to represent properties of the attendee, such as "is staff", "does not wish their name to appear in the convention booklet", etc.
+          example: anon,ev
+        options:
+          type: string
+          description: A comma separated list of options as declared in configuration. Options are used to store yes/no-style choices an attendee makes that do not cost money, and displayed as checkboxes. With Options, you cannot control the visibility in the configuration, as they are basically options given to the attendee that do not cost money. Use these for "I wish to receive emails about x subject" or "I am a fursuiter" etc.
+          example: art,anim,music,suit
+        packages:
+          type: string
+          description: A comma separated list of packages as declared in configuration. Packages are the things that cost money, like being a supersponsor or a day guest for a certain day. They can be configured with respect to who may add / remove them, if they are on by default, and whether they are visible if not selected (admin only, normal user, completely disabled). There is also configuration as to which packages are mutually exclusive, such as sponsor and supersponsor.
+          example: room-none,attendance,sponsor
+        user_comments:
+          type: string
+          description: Optional comments the attendee wishes to make regarding their registration. Not processed in any way.
+          example: I love eurofurence
+    Error:
+      type: object
+      required:
+        - message
+        - timestamp
+        - requestid
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: The time at which the error occurred.
+          example: 2006-01-02T15:04:05Z07:00
+        requestid:
+          type: string
+          description: An internal trace id assigned to the error. Used to find logs associated with errors across our services. Display to the user as something to communicate to us with inquiries about the error.
+          example: a8b7c6d5
+        messsage:
+          type: string
+          description: |-
+            A keyed description of the error. We do not write human readable text here because the user interface will be multi language.
+            
+            At this time, there are these values, though new values may be added with new functionality:
+            - attendee.max_id.error (database error or overload)
+            - attendee.parse.error (json body parse error)
+            - attendee.data.invalid (field data failed to validate, see details for more information)
+            - attendee.data.duplicate (duplicate registration - nickname + email + zip)
+            - attendee.write.error (database error)
+            - attendee.id.notfound (no such badge number in the database)
+            - attendee.id.invalid (syntactically invalid badge number, must be positive integer)
+          example: attendee.data.invalid
+        details:
+          type: array
+          items:
+            type: string
+          description: Optional list of additional details about the error. If available, will usually contain English language technobabble.
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: A bearer or session token obtained from the auth service (which may integrate an OIDC identity provider)
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: A shared secret used for local communication (also useful for local development)
