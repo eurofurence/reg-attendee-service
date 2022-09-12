@@ -195,6 +195,178 @@ paths:
       security:
         - BearerAuth: []
         - ApiKeyAuth: []
+  /attendees/{id}/admin:
+    get:
+      tags:
+        - privileged
+      summary: obtain privileged information about an attendee
+      description: Returns admin info about a single attendee
+      operationId: getAdminInfoById
+      parameters:
+        - name: id
+          in: path
+          description: Badge number of attendee to return
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminInfo'
+        '400':
+          description: Invalid ID supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: You do not have permission to see this attendee
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Attendee not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+  /attendees/{id}/status:
+    get:
+      tags:
+        - status
+      summary: obtain the latest status change of an attendee
+      description: Returns the current status of a single attendee
+      operationId: getStatusById
+      parameters:
+        - name: id
+          in: path
+          description: Badge number of attendee to return
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusChange'
+        '400':
+          description: Invalid ID supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: You do not have permission to see this attendee
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Attendee not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+  /attendees/{id}/status-history:
+    get:
+      tags:
+        - status
+      summary: obtain the history of status changes of an attendee
+      description: Returns the status history of a single attendee
+      operationId: getStatusHistoryById
+      parameters:
+        - name: id
+          in: path
+          description: Badge number of attendee to return
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusHistory'
+        '400':
+          description: Invalid ID supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: You do not have permission to see this attendee
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Attendee not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+  /countdown:
+    get:
+      tags:
+        - info
+      summary: registration countdown
+      description: Returns the countdown status
+      operationId: countdown
+      parameters:
+        - name: currentTime
+          in: query
+          description: Testing override for the current time. Used in end to end tests for the frontend. Not useful in production because the attendee endpoints also check the countdown.
+          schema:
+            type: string
+            format: date-time
+            example: 2006-01-02T15:04:05-07:00
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Countdown'
 components:
   schemas:
     Attendee:
@@ -317,6 +489,101 @@ components:
           type: string
           description: Optional comments the attendee wishes to make regarding their registration. Not processed in any way.
           example: I love eurofurence
+    AdminInfo:
+      type: object
+      required:
+        - flags
+        - admin_comments
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+          description: This badge number is automatically assigned during initial registration (when creating an attendee). Optional for request bodies, but if specified it must match. It is not possible to change your badge number.
+          example: 10
+        flags:
+          type: string
+          description: |-
+            A comma separated list of admin-only flags as declared in configuration, but only those that are not even _visible_ to a normal user. This is a separate field in order to avoid having resources change depending on your permissions, as that may lead to strange behaviour.  
+            
+            Flags are used to store yes/no-style information about an attendee, and displayed as checkboxes. Flags can be configured with respect to their visibility and who may change them (admin only, normal user). Flags are used to represent properties of the attendee, such as "is staff", "does not wish their name to appear in the convention booklet", etc.
+          example: banflagged,security
+        permissions:
+          type: string
+          description: |-
+            A comma separated list of permissions that control extended permission in the registration system, where not governed by roles in the token.
+            
+            In the long term, we will probably migrate away from this, but at the moment, they are needed so regsys classic can continue to function.
+          example: read_all,bans,announcements
+        admin_comments:
+          type: string
+          description: Optional comments only visible to admins. Not processed in any way.
+    Countdown:
+      type: object
+      required:
+        - currentTime
+        - targetTime
+        - countdown
+      properties:
+        currentTime:
+          type: string
+          format: date-time
+          description: The current time on the server
+          example: 2006-01-02T15:04:05Z07:00
+        targetTime:
+          type: string
+          format: date-time
+          description: The time at which the countdown ends (may depend on authorization, e.g. staff may register earlier than normal users)
+          example: 2006-01-02T15:04:05Z07:00
+        countdown:
+          type: integer
+          format: int64
+          description: The number of seconds until the countdown ends (may depend on authorization, e.g. staff may register earlier than normal users). Stays at 0 if the countdown is over.
+          example: 12648
+    StatusChange:
+      type: object
+      required:
+        - status
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: The time at which the status change occurred.
+          example: 2006-01-02T15:04:05Z07:00
+        status:
+          type: string
+          enum:
+            - new
+            - approved
+            - partially paid
+            - paid
+            - checked in
+            - cancelled
+            - deleted
+            - waiting
+          description: the status
+        comment:
+          type: string
+          description: The reason for the status change, e.g. cancel reason, or any other comment
+          example: cancelled by own request
+    StatusHistory:
+      type: object
+      required:
+        - status_history
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+          description: This badge number is automatically assigned during initial registration (when creating an attendee). Informational only.
+          example: 10
+        status_history:
+          type: array
+          items:
+            type: object
+            properties:
+              schema:
+                $ref: '#/components/schemas/StatusChange'
     Error:
       type: object
       required:

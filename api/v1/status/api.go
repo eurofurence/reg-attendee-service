@@ -2,6 +2,8 @@ package status
 
 type StatusDto struct {
 	Status string `json:"status"` // new / approved / partially paid / paid / checked in / cancelled
+
+	// TODO - just use StatusChange and ignore the timestamp
 }
 
 type StatusHistoryDto struct {
