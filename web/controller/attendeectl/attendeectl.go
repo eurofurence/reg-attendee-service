@@ -32,20 +32,14 @@ func OverrideAttendeeService(overrideAttendeeServiceForTesting attendeesrv.Atten
 
 func Create(server chi.Router) {
 	if config.OptionalInitialRegTokenConfigured() {
-		handler := filterhelper.BuildHandler("3s", newAttendeeHandler, config.TokenForAdmin, config.OptionalTokenForInitialReg)
-		server.Put("/api/rest/v1/attendees", handler)
-		server.Options("/api/rest/v1/attendees", handler)
+		server.Post("/api/rest/v1/attendees", filterhelper.BuildHandler("3s", newAttendeeHandler, config.TokenForAdmin, config.OptionalTokenForInitialReg))
 	} else {
-		handler := filterhelper.BuildUnauthenticatedHandler("3s", newAttendeeHandler)
-		server.Put("/api/rest/v1/attendees", handler)
-		server.Options("/api/rest/v1/attendees", handler)
+		server.Post("/api/rest/v1/attendees", filterhelper.BuildUnauthenticatedHandler("3s", newAttendeeHandler))
 	}
 
 	server.Get("/api/rest/v1/attendees/max-id", filterhelper.BuildUnauthenticatedHandler("3s", getAttendeeMaxIdHandler))
 	server.Get("/api/rest/v1/attendees/{id:[1-9][0-9]*}", filterhelper.BuildHandler("3s", getAttendeeHandler, config.TokenForAdmin, config.TokenForLoggedInUser))
-	handler := filterhelper.BuildHandler("3s", updateAttendeeHandler, config.TokenForAdmin, config.TokenForLoggedInUser)
-	server.Post("/api/rest/v1/attendees/{id:[1-9][0-9]*}", handler)
-	server.Options("/api/rest/v1/attendees/{id:[1-9][0-9]*}", handler)
+	server.Put("/api/rest/v1/attendees/{id:[1-9][0-9]*}", filterhelper.BuildHandler("3s", updateAttendeeHandler, config.TokenForAdmin, config.TokenForLoggedInUser))
 }
 
 func newAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
@@ -65,6 +59,7 @@ func newAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		return
 	}
 	id, err := attendeeService.RegisterNewAttendee(ctx, newAttendee)
+	// TODO react to duplicate by sending 409 instead
 	if err != nil {
 		attendeeWriteErrorHandler(ctx, w, r, err)
 		return

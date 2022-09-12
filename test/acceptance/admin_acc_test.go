@@ -24,7 +24,7 @@ func TestAdminDefaults_AnonDeny(t *testing.T) {
 
 	docs.Given("given an existing attendee right after registration")
 	existingAttendee := tstBuildValidAttendee("adm1-")
-	creationResponse := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(existingAttendee), token)
+	creationResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(existingAttendee), token)
 	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status")
 
 	docs.When("when they attempt to access the admin information")
@@ -42,7 +42,7 @@ func TestAdminDefaults_UserDeny(t *testing.T) {
 
 	docs.Given("given an existing attendee right after registration")
 	existingAttendee := tstBuildValidAttendee("adm1-")
-	creationResponse := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
+	creationResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
 	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status")
 
 	docs.Given("given a regular authenticated attendee")
@@ -66,7 +66,7 @@ func TestAdminDefaults_StaffDeny(t *testing.T) {
 
 	docs.Given("who has made a valid registration")
 	existingAttendee := tstBuildValidAttendee("adm1-")
-	creationResponse := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(existingAttendee), token)
+	creationResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(existingAttendee), token)
 	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status")
 
 	docs.When("when they attempt to access their own admin information")
@@ -84,7 +84,7 @@ func TestAdminDefaults_AdminOk(t *testing.T) {
 
 	docs.Given("given an existing attendee right after registration")
 	existingAttendee := tstBuildValidAttendee("adm1-")
-	creationResponse := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
+	creationResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
 	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status")
 
 	docs.Given("given a logged in admin")

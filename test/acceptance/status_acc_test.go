@@ -23,7 +23,7 @@ func TestStatus_AnonDeny(t *testing.T) {
 
 	docs.Given("given an existing attendee")
 	existingAttendee := tstBuildValidAttendee("adm1-")
-	creationResponse := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
+	creationResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
 	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status")
 
 	docs.Given("given an unauthenticated user")
@@ -46,7 +46,7 @@ func TestStatus_UserDeny(t *testing.T) {
 
 	docs.Given("given an existing attendee right after registration")
 	existingAttendee := tstBuildValidAttendee("adm1-")
-	creationResponse := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
+	creationResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
 	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status")
 
 	docs.Given("given a regular authenticated attendee")
@@ -72,7 +72,7 @@ func TestStatus_StaffDeny(t *testing.T) {
 
 	docs.Given("who has made a valid registration")
 	existingAttendee := tstBuildValidAttendee("adm1-")
-	creationResponse := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(existingAttendee), token)
+	creationResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(existingAttendee), token)
 	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status")
 
 	docs.When("when they attempt to access their own or somebody else's status")
@@ -90,7 +90,7 @@ func TestStatus_AdminOk(t *testing.T) {
 
 	docs.Given("given an existing attendee right after registration")
 	existingAttendee := tstBuildValidAttendee("adm1-")
-	creationResponse := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
+	creationResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
 	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status")
 
 	docs.Given("given a logged in admin")
@@ -119,7 +119,7 @@ func TestStatusHistory_AnonDeny(t *testing.T) {
 
 	docs.Given("given an existing attendee")
 	existingAttendee := tstBuildValidAttendee("adm1-")
-	creationResponse := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
+	creationResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
 	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status")
 
 	docs.Given("given an unauthenticated user")
@@ -142,7 +142,7 @@ func TestStatusHistory_UserDeny(t *testing.T) {
 
 	docs.Given("given an existing attendee right after registration")
 	existingAttendee := tstBuildValidAttendee("adm1-")
-	creationResponse := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
+	creationResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
 	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status")
 
 	docs.Given("given a regular authenticated attendee")
@@ -168,7 +168,7 @@ func TestStatusHistory_StaffDeny(t *testing.T) {
 
 	docs.Given("who has made a valid registration")
 	existingAttendee := tstBuildValidAttendee("adm1-")
-	creationResponse := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(existingAttendee), token)
+	creationResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(existingAttendee), token)
 	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status")
 
 	docs.When("when they attempt to access their own or somebody else's status history")
@@ -186,7 +186,7 @@ func TestStatusHistory_AdminOk(t *testing.T) {
 
 	docs.Given("given an existing attendee right after registration")
 	existingAttendee := tstBuildValidAttendee("adm1-")
-	creationResponse := tstPerformPut("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
+	creationResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
 	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status")
 
 	docs.Given("given a logged in admin")
