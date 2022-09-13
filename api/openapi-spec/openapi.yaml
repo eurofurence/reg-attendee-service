@@ -30,9 +30,9 @@ tags:
 paths:
   /attendees:
     post:
-      summary: Add a new attendee
       tags:
         - registration
+      summary: Add a new attendee
       description: |-
         Register a new attendee and assign them a badge number. 
         
@@ -128,10 +128,10 @@ paths:
         - BearerAuth: []
         - ApiKeyAuth: []
     put:
-      description: Update an existing attendee by Id
       tags:
         - registration
       summary: Update an existing attendee
+      description: Update an existing attendee by Id
       operationId: updateAttendee
       parameters:
         - name: id
@@ -245,12 +245,74 @@ paths:
       security:
         - BearerAuth: []
         - ApiKeyAuth: []
+    put:
+      tags:
+        - privileged
+      summary: Update privileged information for an existing attendee
+      description: Update privileged information for an attendee by Id. Note that there is no creation endpoint for this subresource, because a default set of values is always created when the attendee is created.
+      operationId: updateAdminInfo
+      parameters:
+        - name: id
+          in: path
+          description: Badge number of attendee to update
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminInfo'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URL of the primary attendee resource, ending in the assigned Badge number.
+        '400':
+          description: Invalid ID supplied or invalid data in request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: You do not have permission to change privileged information for this attendee
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Attendee not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: An unexpected error occurred. This includes database errors. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
   /attendees/{id}/status:
     get:
       tags:
         - status
-      summary: obtain the latest status change of an attendee
-      description: Returns the current status of a single attendee
+      summary: obtain the current status of an attendee
+      description: Returns the current status of a single attendee. Note that this endpoint is also available to regular logged in users, this is why you only get the status field, not the full status change information. Request status history to get full information (privileged).
       operationId: getStatusById
       parameters:
         - name: id
@@ -267,7 +329,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/StatusChange'
+                $ref: '#/components/schemas/StatusOnly'
         '400':
           description: Invalid ID supplied
           content:
@@ -288,6 +350,89 @@ paths:
                 $ref: '#/components/schemas/Error'
         '404':
           description: Attendee not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+    post:
+      tags:
+        - status
+      summary: request a status change
+      description: |-
+        Attempt a status change for a single attendee.        
+        
+        Depending on the transition, this may be available to a normal logged in user or admin only.
+        
+        - new 
+          - from: approved, partially paid, paid, checked in, cancelled: admin only
+        - approved
+          - from: new, cancelled, partially paid, paid: admin only
+        - partially paid
+          - from: approved, paid, cancelled: admin only - the payment service access counts as admin
+        - paid
+          - from: approved, partially paid, cancelled: admin only - the payment service access counts as admin
+        - checked in
+          - from: paid: regdesk permission or admin
+        - cancelled
+          - from: new, approved: self or admin
+          - from: partially paid, paid, checked in: admin
+        - deleted
+          - from: new, approved: admin (not possible if any payments were made for tax reasons)
+        
+        Note that there may also be situational limitations, such as you cannot check in an attendee unless paid in full.
+        These conditions result in a 409 status to distinguish them from situations where the transition is 
+        unavailable to the requesting user for permission reasons, which gives a 403.
+
+        For detailed documentation of what the status values mean, see under Schemas/Status below.
+      operationId: changeStatus
+      parameters:
+        - name: id
+          in: path
+          description: Badge number of attendee to return
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            format: int64
+      requestBody:
+        description: The status change with an optional comment for the reason. Note, the timestamp will be ignored.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusChange'
+        required: true
+      responses:
+        '204':
+          description: successful operation
+        '400':
+          description: Invalid ID supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: You do not have permission to see this attendee, or you do not have permission to perform this status change at all. Note that situational limitations (e.g. cannot check in an unpaid attendee) result in 409 instead. If you get 403, you do not have permissions for this status transition, ever.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Attendee not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: The current situation does not allow this status change, even though you generally have permission to do it. Maybe you are trying to check in an attendee who hasn't fully paid, etc. See message and details fields of the error.
           content:
             application/json:
               schema:
@@ -331,7 +476,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '403':
-          description: You do not have permission to see this attendee
+          description: You do not have permission to see this attendee, or you do not have privileges to see status history.
           content:
             application/json:
               schema:
@@ -454,7 +599,7 @@ components:
           example: +1 500 0000 000
         telegram:
           type: string
-          description: Your telegram handle (optional), but has turned out tremendously useful during the convention. Supply complete handle including the @ character, or leave blank of you do not have one or don't wish to provide it.
+          description: Your telegram handle (optional), but has turned out tremendously useful during the convention. Supply complete handle including the @ character, or leave blank if you do not have one or don't wish to provide it.
         birthday:
           type: string
           format: date
@@ -468,7 +613,12 @@ components:
             - female
             - other
           default: notprovided
-          description: Your gender (optional). Collected for statistical purposes only.
+          description: Your gender (optional). Collected for statistical purposes only. Conventions are at liberty to hide this field in the UI altogether, in which case all attendees will have it set to "notprovided".
+        pronouns:
+          type: string
+          maxLength: 40
+          description: Your preferred pronouns (optional).
+          example: they/them
         tshirt_size:
           type: string
           description: Your t-shirt size (optional). Validated against a list from configuration if specified.
@@ -529,27 +679,22 @@ components:
           type: string
           format: date-time
           description: The current time on the server
-          example: 2006-01-02T15:04:05Z07:00
+          example: 2006-01-02T15:04:05+07:00
         targetTime:
           type: string
           format: date-time
           description: The time at which the countdown ends (may depend on authorization, e.g. staff may register earlier than normal users)
-          example: 2006-01-02T15:04:05Z07:00
+          example: 2006-01-02T15:04:05+07:00
         countdown:
           type: integer
           format: int64
           description: The number of seconds until the countdown ends (may depend on authorization, e.g. staff may register earlier than normal users). Stays at 0 if the countdown is over.
           example: 12648
-    StatusChange:
+    StatusOnly:
       type: object
       required:
         - status
       properties:
-        timestamp:
-          type: string
-          format: date-time
-          description: The time at which the status change occurred.
-          example: 2006-01-02T15:04:05Z07:00
         status:
           type: string
           enum:
@@ -561,7 +706,29 @@ components:
             - cancelled
             - deleted
             - waiting
-          description: the status
+          description: the status, detailed descriptions of the values see below under Schemas/Status (how do I reference this in OpenApi?)
+    StatusChange:
+      type: object
+      required:
+        - status
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: The time at which the status change occurred. Ignored when you send us a status change and replaced with the current server time. Always present when we return a status change entry to you.
+          example: 2006-01-02T15:04:05+07:00
+        status:
+          type: string
+          enum:
+            - new
+            - approved
+            - partially paid
+            - paid
+            - checked in
+            - cancelled
+            - deleted
+            - waiting
+          description: the status, detailed descriptions of the values see below under Schemas/Status (how do I reference this in OpenApi?)
         comment:
           type: string
           description: The reason for the status change, e.g. cancel reason, or any other comment
@@ -584,6 +751,31 @@ components:
             properties:
               schema:
                 $ref: '#/components/schemas/StatusChange'
+    Status:
+      type: string
+      enum:
+        - new
+        - approved
+        - partially paid
+        - paid
+        - checked in
+        - cancelled
+        - deleted
+        - waiting
+      description: |-
+        Status of an attendee. The values mean:
+        
+        - new: the attendee is pending approval, e.g. because of a ban check positive, no dues are assigned         
+        - approved: the attendee has been automatically or manually approved, and dues are assigned
+        - partially paid: the attendee has made payments, but they do not cover enough of the dues
+        - paid: the attendee has paid enough of the dues
+        - checked in: the attendee has arrived at the convention and received their badge
+        - cancelled: the registration is no longer current, depending on when the cancellation occurs, a refund may be available
+        - deleted: the registration was made in error, has invalid data, or the attendee requested to have their data deleted - only possible if no payments exist
+        - waiting: the attendee has been placed on the waiting list. This may occur if the convention has a limited number of places.
+        
+        For a detailed description of available status transitions and who may do them see the documentation of the 
+        "request a status change" POST endpoint.
     Error:
       type: object
       required:
@@ -595,7 +787,7 @@ components:
           type: string
           format: date-time
           description: The time at which the error occurred.
-          example: 2006-01-02T15:04:05Z07:00
+          example: 2006-01-02T15:04:05+07:00
         requestid:
           type: string
           description: An internal trace id assigned to the error. Used to find logs associated with errors across our services. Display to the user as something to communicate to us with inquiries about the error.
