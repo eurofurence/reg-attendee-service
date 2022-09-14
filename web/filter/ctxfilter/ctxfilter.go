@@ -2,16 +2,16 @@ package ctxfilter
 
 import (
 	"context"
-	"github.com/google/uuid"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
 	"github.com/eurofurence/reg-attendee-service/web/filter"
 	"github.com/eurofurence/reg-attendee-service/web/filter/ctxvalues"
+	"github.com/google/uuid"
 	"net/http"
 	"time"
 )
 
 type ContextFilter struct {
-	timeout time.Duration
+	timeout       time.Duration
 	wrappedFilter filter.Filter
 }
 
@@ -21,12 +21,12 @@ func Create(timeout time.Duration, wrappedFilter filter.Filter) filter.Filter {
 
 const TraceIdHeader = "X-B3-TraceId"
 
-func (f *ContextFilter) Handle(_ context.Context, w http.ResponseWriter, r *http.Request) {
+func (f *ContextFilter) Handle(ctxOrig context.Context, w http.ResponseWriter, r *http.Request) {
 	var (
 		ctx    context.Context
 		cancel context.CancelFunc
 	)
-	ctx, cancel = context.WithTimeout(context.Background(), f.timeout)
+	ctx, cancel = context.WithTimeout(ctxOrig, f.timeout)
 	defer cancel() // Cancel ctx as soon as Handle returns.
 
 	reqUuidStr := r.Header.Get(TraceIdHeader)
@@ -36,7 +36,7 @@ func (f *ContextFilter) Handle(_ context.Context, w http.ResponseWriter, r *http
 			reqUuidStr = reqUuid.String()[:8]
 		} else {
 			// this should not normally ever happen, but continue with this fixed requestId
-			reqUuidStr ="ffffffff"
+			reqUuidStr = "ffffffff"
 		}
 	}
 	ctx = logging.CreateContextWithLoggerForRequestId(ctx, reqUuidStr)

@@ -16,4 +16,7 @@ type AttendeeService interface {
 	CanRegisterAtThisTime(ctx context.Context) error
 
 	CanChangeChoiceTo(ctx context.Context, originalChoiceStr string, newChoiceStr string, configuration map[string]config.ChoiceConfig) error
+
+	GetAdminInfo(ctx context.Context, attendeeId uint) (*entity.AdminInfo, error)
+	UpdateAdminInfo(ctx context.Context, adminInfo *entity.AdminInfo) error
 }

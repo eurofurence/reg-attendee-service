@@ -1,7 +1,6 @@
 package filterhelper
 
 import (
-	"context"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
 	"github.com/eurofurence/reg-attendee-service/web/filter"
@@ -15,7 +14,7 @@ import (
 )
 
 func buildHandlerFunc(f filter.Filter) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) { f.Handle(context.TODO(), w, r) }
+	return func(w http.ResponseWriter, r *http.Request) { f.Handle(r.Context(), w, r) }
 }
 
 func parseTimeout(timeout string) time.Duration {

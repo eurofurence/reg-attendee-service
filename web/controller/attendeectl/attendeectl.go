@@ -38,8 +38,8 @@ func Create(server chi.Router) {
 	}
 
 	server.Get("/api/rest/v1/attendees/max-id", filterhelper.BuildUnauthenticatedHandler("3s", getAttendeeMaxIdHandler))
-	server.Get("/api/rest/v1/attendees/{id:[1-9][0-9]*}", filterhelper.BuildHandler("3s", getAttendeeHandler, config.TokenForAdmin, config.TokenForLoggedInUser))
-	server.Put("/api/rest/v1/attendees/{id:[1-9][0-9]*}", filterhelper.BuildHandler("3s", updateAttendeeHandler, config.TokenForAdmin, config.TokenForLoggedInUser))
+	server.Get("/api/rest/v1/attendees/{id}", filterhelper.BuildHandler("3s", getAttendeeHandler, config.TokenForAdmin, config.TokenForLoggedInUser))
+	server.Put("/api/rest/v1/attendees/{id}", filterhelper.BuildHandler("3s", updateAttendeeHandler, config.TokenForAdmin, config.TokenForLoggedInUser))
 }
 
 func newAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {

@@ -40,9 +40,9 @@ type ChoiceConfig struct {
 	PriceLate     float64 `yaml:"price_late"`
 	PriceAtCon    float64 `yaml:"price_atcon"`
 	VatPercent    float64 `yaml:"vat_percent"`
-	Default       bool    `yaml:"default"`
-	AdminOnly     bool    `yaml:"admin_only"`
-	ReadOnly      bool    `yaml:"read_only"` // but admin can still remove this
+	Default       bool    `yaml:"default"`    // if set to true, is added to flags by default. Not available for admin only flags!
+	AdminOnly     bool    `yaml:"admin_only"` // this flag is kept under the adminInfo structure, so it is not visible to users
+	ReadOnly      bool    `yaml:"read_only"`  // this flag is kept under the normal flags, thus visible to end user, but only admin can change it
 	Constraint    string  `yaml:"constraint"`
 	ConstraintMsg string  `yaml:"constraint_msg"`
 }

@@ -31,7 +31,7 @@ choices:
       help_url: 'help/room_none.html'
       vat_percent: 7
       default: true
-      admin_only: true
+      read_only: true
     attendance:
       description: 'Entrance Fee (Convention Ticket)'
       help_url: 'help/fee_basic.html'
@@ -73,7 +73,7 @@ choices:
       price_late: 60.00
       price_atcon: 60.00
       vat_percent: 19
-      admin_only: true
+      read_only: true
       constraint: '!attendance,!stage'
       constraint_msg: 'Must disable Convention Ticket and Stage Ticket for Day Guests.'
     day-fri:
@@ -83,7 +83,7 @@ choices:
       price_late: 60.00
       price_atcon: 60.00
       vat_percent: 19
-      admin_only: true
+      read_only: true
       constraint: '!attendance,!stage'
       constraint_msg: 'Must disable Convention Ticket and Stage Ticket for Day Guests.'
     day-sat:
@@ -93,7 +93,7 @@ choices:
       price_late: 60.00
       price_atcon: 60.00
       vat_percent: 19
-      admin_only: true
+      read_only: true
       constraint: '!attendance,!stage'
       constraint_msg: 'Must disable Convention Ticket and Stage Ticket for Day Guests.'
   options:

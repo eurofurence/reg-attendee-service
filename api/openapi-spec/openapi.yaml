@@ -267,13 +267,8 @@ paths:
               $ref: '#/components/schemas/AdminInfo'
         required: true
       responses:
-        '200':
+        '204':
           description: Successful operation
-          headers:
-            Location:
-              schema:
-                type: string
-              description: URL of the primary attendee resource, ending in the assigned Badge number.
         '400':
           description: Invalid ID supplied or invalid data in request body
           content:
@@ -797,7 +792,7 @@ components:
           description: |-
             A keyed description of the error. We do not write human readable text here because the user interface will be multi language.
             
-            At this time, there are these values, though new values may be added with new functionality:
+            At this time, there are these values:
             - attendee.max_id.error (database error or overload)
             - attendee.parse.error (json body parse error)
             - attendee.data.invalid (field data failed to validate, see details for more information)
@@ -805,6 +800,12 @@ components:
             - attendee.write.error (database error)
             - attendee.id.notfound (no such badge number in the database)
             - attendee.id.invalid (syntactically invalid badge number, must be positive integer)
+            - admin.read.error (database error)
+            - admin.write.error (database error)
+            - admin.parse.error (json body parse error)
+            - admin.data.invalid (field data failed to validate, see details for more information)
+            - auth.unauthorized (token missing completely or invalid)
+            - auth.forbidden (permissions missing)
           example: attendee.data.invalid
         details:
           type: array

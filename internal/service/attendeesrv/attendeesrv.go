@@ -15,6 +15,8 @@ import (
 type AttendeeServiceImplData struct {
 }
 
+var _ AttendeeService = (*AttendeeServiceImplData)(nil)
+
 func (s *AttendeeServiceImplData) NewAttendee(ctx context.Context) *entity.Attendee {
 	return &entity.Attendee{}
 }
@@ -73,7 +75,7 @@ func (s *AttendeeServiceImplData) CanChangeChoiceTo(ctx context.Context, origina
 
 func (s *AttendeeServiceImplData) CanRegisterAtThisTime(ctx context.Context) error {
 	group, err := ctxvalues.AuthorizedAsGroup(ctx)
-	if err != nil || (group != config.TokenForAdmin && group != config.OptionalTokenForInitialReg ){
+	if err != nil || (group != config.TokenForAdmin && group != config.OptionalTokenForInitialReg) {
 		// staff and admin may always register, but regular people have to wait until the registration start time
 		current := time.Now()
 		target := config.RegistrationStartTime()
@@ -95,7 +97,11 @@ func isDuplicateAttendee(ctx context.Context, nickname string, zip string, email
 }
 
 func checkNoForbiddenChanges(ctx context.Context, key string, choiceConfig config.ChoiceConfig, originalChoices map[string]bool, newChoices map[string]bool) error {
-	if choiceConfig.AdminOnly || choiceConfig.ReadOnly {
+	if choiceConfig.AdminOnly {
+		if originalChoices[key] != newChoices[key] {
+			return errors.New("forbidden change in state of choice key " + key + " - this is an admin only flag")
+		}
+	} else if choiceConfig.ReadOnly {
 		if originalChoices[key] != newChoices[key] {
 			group, err := ctxvalues.AuthorizedAsGroup(ctx)
 			if err != nil || group != config.TokenForAdmin {
@@ -128,7 +134,7 @@ func checkNoConstraintViolation(key string, choiceConfig config.ChoiceConfig, ne
 
 func choiceStrToMap(choiceStr string) map[string]bool {
 	result := make(map[string]bool)
-	if (choiceStr != "") {
+	if choiceStr != "" {
 		choices := strings.Split(choiceStr, ",")
 		for _, pickedKey := range choices {
 			result[pickedKey] = true

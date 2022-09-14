@@ -3,12 +3,14 @@ package securityfilter
 import (
 	"context"
 	"errors"
-	"github.com/go-http-utils/headers"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
 	"github.com/eurofurence/reg-attendee-service/web/filter"
 	"github.com/eurofurence/reg-attendee-service/web/filter/ctxvalues"
+	"github.com/eurofurence/reg-attendee-service/web/util/ctlutil"
+	"github.com/go-http-utils/headers"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
@@ -25,13 +27,13 @@ func Create(wrappedFilter filter.Filter, allowedGroups ...config.FixedTokenEnum)
 func (f *SecurityFilter) Handle(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	err := f.checkAuthenticated(ctx, w, r)
 	if err != nil {
-		f.unauthenticatedError(ctx, w, r)
+		f.unauthenticatedError(ctx, w, r, err)
 		return
 	}
 
 	err = f.checkAuthorized(ctx, w, r)
 	if err != nil {
-		f.unauthorizedError(ctx, w, r)
+		f.unauthorizedError(ctx, w, r, err)
 		return
 	}
 
@@ -90,12 +92,10 @@ func isTokenValidForOneOfTheGroups(token string, groups []config.FixedTokenEnum)
 // 401 unauthorized means: invalid authentication (no token, or invalid token)
 // 403 forbidden means: you don't have the necessary permissions
 
-func (f *SecurityFilter) unauthenticatedError(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusUnauthorized)
-	ctxvalues.SetHttpStatus(ctx, http.StatusUnauthorized)
+func (f *SecurityFilter) unauthenticatedError(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
+	ctlutil.ErrorHandler(ctx, w, r, "auth.unauthorized", http.StatusUnauthorized, url.Values{"details": []string{err.Error()}})
 }
 
-func (f *SecurityFilter) unauthorizedError(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusForbidden)
-	ctxvalues.SetHttpStatus(ctx, http.StatusForbidden)
+func (f *SecurityFilter) unauthorizedError(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
+	ctlutil.ErrorHandler(ctx, w, r, "auth.forbidden", http.StatusForbidden, url.Values{"details": []string{err.Error()}})
 }

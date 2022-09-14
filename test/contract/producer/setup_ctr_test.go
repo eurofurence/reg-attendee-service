@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
+	"github.com/eurofurence/reg-attendee-service/internal/service/attendeesrv"
 	"github.com/eurofurence/reg-attendee-service/web"
 	"github.com/eurofurence/reg-attendee-service/web/controller/attendeectl"
 	"github.com/stretchr/testify/mock"
@@ -46,6 +47,8 @@ type MockAttendeeService struct {
 	mock.Mock
 }
 
+var _ attendeesrv.AttendeeService = (*MockAttendeeService)(nil)
+
 func (s *MockAttendeeService) NewAttendee(ctx context.Context) *entity.Attendee {
 	return &entity.Attendee{}
 }
@@ -73,6 +76,14 @@ func (s *MockAttendeeService) CanChangeChoiceTo(ctx context.Context, originalCho
 }
 
 func (s *MockAttendeeService) CanRegisterAtThisTime(ctx context.Context) error {
+	return nil
+}
+
+func (s *MockAttendeeService) GetAdminInfo(ctx context.Context, attendeeId uint) (*entity.AdminInfo, error) {
+	return &entity.AdminInfo{}, nil
+}
+
+func (s *MockAttendeeService) UpdateAdminInfo(ctx context.Context, adminInfo *entity.AdminInfo) error {
 	return nil
 }
 

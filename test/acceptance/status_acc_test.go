@@ -32,14 +32,13 @@ func TestStatus_AnonDeny(t *testing.T) {
 	docs.When("when they attempt to access the status")
 	response := tstPerformGet(creationResponse.location+"/status", token)
 
-	docs.Then("then the request is denied as unauthenticated (401) and no body is returned")
-	require.Equal(t, http.StatusUnauthorized, response.status, "unexpected http response status")
-	require.Equal(t, "", response.body)
+	docs.Then("then the request is denied as unauthenticated (401) and the appropriate error is returned")
+	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "missing Authorization header with bearer token")
 }
 
-// note: users get their own current status as a read-only field in the attendee resource
-
 func TestStatus_UserDeny(t *testing.T) {
+	// TODO this test is nonsense, and the implementation needs fixing
+
 	docs.Given("given the configuration for standard registration")
 	tstSetup(tstDefaultConfigFile)
 	defer tstShutdown()
@@ -57,11 +56,12 @@ func TestStatus_UserDeny(t *testing.T) {
 	response := tstPerformGet(creationResponse.location+"/status", token)
 
 	docs.Then("then the request is denied as unauthorized (403) and no body is returned")
-	require.Equal(t, http.StatusForbidden, response.status, "unexpected http response status")
-	require.Equal(t, "", response.body)
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not unauthorized for this operation - the attempt has been logged")
 }
 
 func TestStatus_StaffDeny(t *testing.T) {
+	// TODO this test is nonsense, and the implementation needs fixing
+
 	docs.Given("given the configuration for staff registration")
 	tstSetup(tstStaffregConfigFile)
 	defer tstShutdown()
@@ -79,8 +79,7 @@ func TestStatus_StaffDeny(t *testing.T) {
 	response := tstPerformGet(creationResponse.location+"/status", token)
 
 	docs.Then("then the request is denied as unauthorized (403) and no body is returned")
-	require.Equal(t, http.StatusForbidden, response.status, "unexpected http response status")
-	require.Equal(t, "", response.body)
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not unauthorized for this operation - the attempt has been logged")
 }
 
 func TestStatus_AdminOk(t *testing.T) {
@@ -128,9 +127,8 @@ func TestStatusHistory_AnonDeny(t *testing.T) {
 	docs.When("when they attempt to access the status history")
 	response := tstPerformGet(creationResponse.location+"/status-history", token)
 
-	docs.Then("then the request is denied as unauthenticated (401) and no body is returned")
-	require.Equal(t, http.StatusUnauthorized, response.status, "unexpected http response status")
-	require.Equal(t, "", response.body)
+	docs.Then("then the request is denied as unauthenticated (401) and the appropriate error is returned")
+	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "missing Authorization header with bearer token")
 }
 
 // note: users get their own current status as a read-only field in the attendee resource
@@ -153,8 +151,7 @@ func TestStatusHistory_UserDeny(t *testing.T) {
 	response := tstPerformGet(creationResponse.location+"/status-history", token)
 
 	docs.Then("then the request is denied as unauthorized (403) and no body is returned")
-	require.Equal(t, http.StatusForbidden, response.status, "unexpected http response status")
-	require.Equal(t, "", response.body)
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not unauthorized for this operation - the attempt has been logged")
 }
 
 func TestStatusHistory_StaffDeny(t *testing.T) {
@@ -175,8 +172,7 @@ func TestStatusHistory_StaffDeny(t *testing.T) {
 	response := tstPerformGet(creationResponse.location+"/status-history", token)
 
 	docs.Then("then the request is denied as unauthorized (403) and no body is returned")
-	require.Equal(t, http.StatusForbidden, response.status, "unexpected http response status")
-	require.Equal(t, "", response.body)
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not unauthorized for this operation - the attempt has been logged")
 }
 
 func TestStatusHistory_AdminOk(t *testing.T) {

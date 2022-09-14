@@ -75,33 +75,45 @@ const keyPattern = "^[a-zA-Z0-9_-]+$"
 func validateFlagsConfiguration(errs url.Values, c map[string]ChoiceConfig) {
 	for k, v := range c {
 		if validation.ViolatesPattern(keyPattern, k) {
-			errs.Add("choices.flags." + k, "invalid key, must consist of a-z A-Z 0-9 - _ only")
+			errs.Add("choices.flags."+k, "invalid key, must consist of a-z A-Z 0-9 - _ only")
 		}
-		validation.CheckLength(&errs, 1, 256, "choices.flags." + k + ".description", v.Description)
-		validation.CheckLength(&errs, 1, 256, "choices.flags." + k + ".help_url", v.HelpUrl)
+		validation.CheckLength(&errs, 1, 256, "choices.flags."+k+".description", v.Description)
+		validation.CheckLength(&errs, 1, 256, "choices.flags."+k+".help_url", v.HelpUrl)
 		checkConstraints(errs, c, "choices.flags", k, v.Constraint, v.ConstraintMsg)
+		if v.AdminOnly && v.ReadOnly {
+			errs.Add("choices.flags."+k+".admin", "a flag cannot both be admin_only and read_only")
+		}
+		if v.AdminOnly && v.Default {
+			errs.Add("choices.flags."+k+".default", "a flag cannot both be admin_only and default to on")
+		}
 	}
 }
 
 func validatePackagesConfiguration(errs url.Values, c map[string]ChoiceConfig) {
 	for k, v := range c {
 		if validation.ViolatesPattern(keyPattern, k) {
-			errs.Add("choices.packages." + k, "invalid key, must consist of a-z A-Z 0-9 - _ only")
+			errs.Add("choices.packages."+k, "invalid key, must consist of a-z A-Z 0-9 - _ only")
 		}
-		validation.CheckLength(&errs, 1, 256, "choices.packages." + k + ".description", v.Description)
-		validation.CheckLength(&errs, 1, 256, "choices.packages." + k + ".help_url", v.HelpUrl)
+		validation.CheckLength(&errs, 1, 256, "choices.packages."+k+".description", v.Description)
+		validation.CheckLength(&errs, 1, 256, "choices.packages."+k+".help_url", v.HelpUrl)
 		checkConstraints(errs, c, "choices.packages", k, v.Constraint, v.ConstraintMsg)
+		if v.AdminOnly {
+			errs.Add("choices.packages."+k+".admin", "packages cannot be admin_only (they cost money). Try read_only instead.")
+		}
 	}
 }
 
 func validateOptionsConfiguration(errs url.Values, c map[string]ChoiceConfig) {
 	for k, v := range c {
 		if validation.ViolatesPattern(keyPattern, k) {
-			errs.Add("choices.options." + k, "invalid key, must consist of a-z A-Z 0-9 - _ only")
+			errs.Add("choices.options."+k, "invalid key, must consist of a-z A-Z 0-9 - _ only")
 		}
-		validation.CheckLength(&errs, 1, 256, "choices.options." + k + ".description", v.Description)
-		validation.CheckLength(&errs, 1, 256, "choices.options." + k + ".help_url", v.HelpUrl)
+		validation.CheckLength(&errs, 1, 256, "choices.options."+k+".description", v.Description)
+		validation.CheckLength(&errs, 1, 256, "choices.options."+k+".help_url", v.HelpUrl)
 		checkConstraints(errs, c, "choices.options", k, v.Constraint, v.ConstraintMsg)
+		if v.AdminOnly {
+			errs.Add("choices.options."+k+".admin", "options cannot be admin_only (they represent user choices). Try read_only instead.")
+		}
 	}
 }
 
@@ -114,12 +126,16 @@ func checkConstraints(errs url.Values, c map[string]ChoiceConfig, keyPrefix stri
 				choiceKey = strings.TrimPrefix(cn, "!")
 			}
 			if _, ok := c[choiceKey]; !ok {
-				errs.Add(keyPrefix + "." + key + ".constraint", "invalid key in constraint, references nonexistent entry")
+				errs.Add(keyPrefix+"."+key+".constraint", "invalid key in constraint, references nonexistent entry")
+			} else {
+				if c[choiceKey].AdminOnly != c[key].AdminOnly {
+					errs.Add(keyPrefix+"."+key+".constraint", "invalid key in constraint, references across admin only and non-admin only")
+				}
 			}
 			if choiceKey == key {
-				errs.Add(keyPrefix + "." + key + ".constraint", "invalid self referential constraint")
+				errs.Add(keyPrefix+"."+key+".constraint", "invalid self referential constraint")
 			}
-			validation.CheckLength(&errs, 1, 256, keyPrefix + "." + key + ".constraint_msg", constraintMsg)
+			validation.CheckLength(&errs, 1, 256, keyPrefix+"."+key+".constraint_msg", constraintMsg)
 		}
 	}
 }
@@ -127,6 +143,6 @@ func checkConstraints(errs url.Values, c map[string]ChoiceConfig, keyPrefix stri
 func validateRegistrationStartTime(errs url.Values, c goLiveConfig) {
 	_, err := time.Parse(StartTimeFormat, c.StartIsoDatetime)
 	if err != nil {
-		errs.Add("go_live.start_iso_datetime", "invalid date format, use ISO with numeric timezone as in " + StartTimeFormat)
+		errs.Add("go_live.start_iso_datetime", "invalid date format, use ISO with numeric timezone as in "+StartTimeFormat)
 	}
 }

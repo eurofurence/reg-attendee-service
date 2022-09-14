@@ -18,6 +18,18 @@ This service uses go modules to provide dependency management, see `go.mod`.
 
 If you place this repository OUTSIDE of your gopath, `go build main.go` and `go test ./...` will download all required dependencies by default. 
 
+## Running on localhost
+
+Copy the configuration template from `docs/config-template.yaml` to `./config.yaml`. This will set you up
+for operation with an in-memory database and sensible defaults.
+
+Then run `./main -config config.yaml -migrate-database`.
+
+## Test Coverage
+
+In order to collect full test coverage, set go tool arguments to `-covermode=atomic -coverpkg=./internal/...,./web/...`,
+or manually run `go test -covermode=atomic -coverpkg=./internal/...,./web/... ./...`.
+
 ## Contract Testing
 
 This microservice uses [pact-go](https://github.com/pact-foundation/pact-go#installation) for contract tests.

@@ -14,7 +14,7 @@ import (
 func AttendeeIdFromVars(ctx context.Context, w http.ResponseWriter, r *http.Request) (uint, error) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
-	if err != nil {
+	if err != nil || id == 0 {
 		InvalidAttendeeIdErrorHandler(ctx, w, r, idStr)
 	}
 	return uint(id), err
