@@ -15,11 +15,8 @@ import (
 // acceptance tests for the attendee resource
 // ------------------------------------------
 
-// TODO test that even admin cannot add admin-only flags to regular flags field
-// TODO test forbidden flags,packages,options (read-only) cannot be changed by non-admins
 // TODO test invalid id in path (400)
 // TODO test non-existent id in path (404)
-// TODO test json parse error in body (400)
 
 // --- create new attendee ---
 
@@ -189,7 +186,46 @@ func TestCreateNewAttendeeAdminOnlyFlag(t *testing.T) {
 	require.Equal(t, "attendee.data.invalid", errorDto.Message, "unexpected error code")
 }
 
-func TestCreateNewAttendeeDefaultAdminOnlyPackage(t *testing.T) {
+func TestCreateNewAttendeeReadOnlyFlag(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given an unauthenticated user")
+
+	docs.When("when they send a new attendee and attempt to set a read only flag (ev)")
+	attendeeSent := tstBuildValidAttendee("na8-")
+	attendeeSent.Flags = "ev,anon"
+	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), tstNoToken())
+
+	docs.Then("then the attendee is rejected with an error response")
+	require.Equal(t, http.StatusBadRequest, response.status, "unexpected http response status")
+	errorDto := errorapi.ErrorDto{}
+	tstParseJson(response.body, &errorDto)
+	require.Equal(t, "attendee.data.invalid", errorDto.Message, "unexpected error code")
+}
+
+func TestCreateNewAttendeeAdminOnlyFlag_Admin(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given an admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they send a new attendee and attempt to set an admin only flag (guest)")
+	attendeeSent := tstBuildValidAttendee("na8-")
+	attendeeSent.Flags = "guest"
+	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), token)
+
+	docs.Then("then the attendee is rejected with an error response, because admin only flags belong in adminInfo")
+	require.Equal(t, http.StatusBadRequest, response.status, "unexpected http response status")
+	errorDto := errorapi.ErrorDto{}
+	tstParseJson(response.body, &errorDto)
+	require.Equal(t, "attendee.data.invalid", errorDto.Message, "unexpected error code")
+}
+
+func TestCreateNewAttendeeDefaultReadOnlyPackage(t *testing.T) {
 	docs.Given("given the configuration for staff pre-registration")
 	tstSetup(tstStaffregConfigFile)
 	defer tstShutdown()
@@ -197,7 +233,7 @@ func TestCreateNewAttendeeDefaultAdminOnlyPackage(t *testing.T) {
 	docs.Given("given a staffer")
 	staffToken := tstValidStaffToken(t)
 
-	docs.When("when they send a new attendee and attempt to leave out an admin only default package (room-none)")
+	docs.When("when they send a new attendee and attempt to leave out a read only default package (room-none)")
 	attendeeSent := tstBuildValidAttendee("na9-")
 	attendeeSent.Packages = "attendance,stage,sponsor"
 	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), staffToken)
@@ -282,6 +318,93 @@ func TestUpdateExistingAttendee(t *testing.T) {
 	require.EqualValues(t, changedAttendee, attendeeReadAgain, "attendee data read did not match updated data")
 }
 
+func TestUpdateExistingAttendeeSyntaxInvalid(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee")
+	existingAttendee := tstBuildValidAttendee("ua1a-")
+	creationResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
+	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status for create")
+	attendeeReadAfterCreation := tstReadAttendee(t, creationResponse.location)
+
+	docs.When("when they try to update the attendee with syntactically invalid data")
+	syntaxErrorJson := "{" + tstRenderJson(attendeeReadAfterCreation)
+	response := tstPerformPut(creationResponse.location, syntaxErrorJson, tstValidUserToken(t))
+
+	docs.Then("then the update is rejected with an appropriate error response")
+	require.Equal(t, http.StatusBadRequest, response.status, "unexpected http response status")
+	errorDto := errorapi.ErrorDto{}
+	tstParseJson(response.body, &errorDto)
+	require.Equal(t, "attendee.parse.error", errorDto.Message, "unexpected error code")
+}
+
+func TestUpdateExistingAttendeeDataInvalid(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee")
+	existingAttendee := tstBuildValidAttendee("ua1b-")
+	creationResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
+	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status for create")
+	attendeeReadAfterCreation := tstReadAttendee(t, creationResponse.location)
+
+	docs.When("when they try to update their information with invalid data")
+	attendeeReadAfterCreation.Nickname = "$%&^@!$"
+	attendeeReadAfterCreation.Packages = attendeeReadAfterCreation.Packages + ",sponsor" // a constraint violation
+	attendeeReadAfterCreation.Birthday = "2004-11-23"                                    // too young
+	response := tstPerformPut(creationResponse.location, tstRenderJson(attendeeReadAfterCreation), tstValidUserToken(t))
+
+	docs.Then("then the update is rejected with an appropriate error response")
+	require.Equal(t, http.StatusBadRequest, response.status, "unexpected http response status")
+	errorDto := errorapi.ErrorDto{}
+	tstParseJson(response.body, &errorDto)
+	require.Equal(t, "attendee.data.invalid", errorDto.Message, "unexpected error code")
+	require.Equal(t, "nickname field must contain at least one alphanumeric character", errorDto.Details.Get("nickname"))
+	require.Equal(t, "cannot pick both sponsor2 and sponsor - constraint violated", errorDto.Details.Get("packages"))
+	require.Equal(t, "birthday must be no earlier than 1901-01-01 and no later than 2001-08-14", errorDto.Details.Get("birthday"))
+}
+
+func TestUpdateNonExistingAttendee(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given an admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they try to update a non-existent attendee")
+	nonExistingAttendee := tstBuildValidAttendee("ua1c-")
+	response := tstPerformPut("/api/rest/v1/attendees/42", tstRenderJson(nonExistingAttendee), token)
+
+	docs.Then("then the update is rejected with an appropriate error response")
+	require.Equal(t, http.StatusNotFound, response.status, "unexpected http response status")
+	errorDto := errorapi.ErrorDto{}
+	tstParseJson(response.body, &errorDto)
+	require.Equal(t, "attendee.id.notfound", errorDto.Message, "unexpected error code")
+}
+
+func TestUpdateAttendeeInvalidId(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given an admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they try to update an attendee with an invalid id")
+	nonExistingAttendee := tstBuildValidAttendee("ua1d-")
+	response := tstPerformPut("/api/rest/v1/attendees/helloworld", tstRenderJson(nonExistingAttendee), token)
+
+	docs.Then("then the update is rejected with an appropriate error response")
+	require.Equal(t, http.StatusBadRequest, response.status, "unexpected http response status")
+	errorDto := errorapi.ErrorDto{}
+	tstParseJson(response.body, &errorDto)
+	require.Equal(t, "attendee.id.invalid", errorDto.Message, "unexpected error code")
+}
+
 func TestDenyUpdateExistingAttendeeWhileNotLoggedIn(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
 	tstSetup(tstDefaultConfigFile)
@@ -344,10 +467,84 @@ func TestUpdateExistingAttendeeAdminOnlyFlag(t *testing.T) {
 	changedAttendee.Flags = changedAttendee.Flags + ",guest"
 	updateResponse := tstPerformPut(creationResponse.location, tstRenderJson(changedAttendee), tstValidUserToken(t))
 
+	docs.Then("then the request is denied and the data remains unchanged, because admin only flags belong in adminInfo")
+	require.Equal(t, http.StatusBadRequest, updateResponse.status, "unexpected http response status for malicious update")
+	attendeeReadAgain := tstReadAttendee(t, creationResponse.location)
+	require.EqualValues(t, "anon,hc", attendeeReadAgain.Flags, "attendee data read did not match original data")
+}
+
+func TestUpdateExistingAttendeeAdminOnlyFlag_Admin(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee")
+	existingAttendee := tstBuildValidAttendee("ua4-")
+	creationResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
+	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status for create")
+	attendeeReadAfterCreation := tstReadAttendee(t, creationResponse.location)
+
+	docs.Given("given an admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they send updated attendee info and attempt to add an admin-only flag (guest)")
+	changedAttendee := attendeeReadAfterCreation
+	changedAttendee.Flags = changedAttendee.Flags + ",guest"
+	updateResponse := tstPerformPut(creationResponse.location, tstRenderJson(changedAttendee), token)
+
+	docs.Then("then the request is denied and the data remains unchanged, because admin only flags belong in adminInfo")
+	require.Equal(t, http.StatusBadRequest, updateResponse.status, "unexpected http response status for malicious update")
+	attendeeReadAgain := tstReadAttendee(t, creationResponse.location)
+	require.EqualValues(t, "anon,hc", attendeeReadAgain.Flags, "attendee data read did not match original data")
+}
+
+func TestUpdateExistingAttendeeReadOnlyFlag(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee")
+	existingAttendee := tstBuildValidAttendee("ua4-")
+	creationResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
+	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status for create")
+	attendeeReadAfterCreation := tstReadAttendee(t, creationResponse.location)
+
+	docs.When("when they send updated attendee info and attempt to add a read-only flag (ev)")
+	changedAttendee := attendeeReadAfterCreation
+	changedAttendee.Flags = changedAttendee.Flags + ",guest"
+	updateResponse := tstPerformPut(creationResponse.location, tstRenderJson(changedAttendee), tstValidUserToken(t))
+
 	docs.Then("then the request is denied and the data remains unchanged")
 	require.Equal(t, http.StatusBadRequest, updateResponse.status, "unexpected http response status for malicious update")
 	attendeeReadAgain := tstReadAttendee(t, creationResponse.location)
-	require.EqualValues(t, "anon,ev", attendeeReadAgain.Flags, "attendee data read did not match original data")
+	require.EqualValues(t, "anon,hc", attendeeReadAgain.Flags, "attendee data read did not match original data")
+}
+
+func TestUpdateExistingAttendeeReadOnlyFlag_Admin(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee")
+	existingAttendee := tstBuildValidAttendee("ua4-")
+	creationResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
+	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status for create")
+	attendeeReadAfterCreation := tstReadAttendee(t, creationResponse.location)
+
+	docs.Given("given an admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they send updated attendee info and add a read-only flag (ev)")
+	changedAttendee := attendeeReadAfterCreation
+	changedAttendee.Flags = changedAttendee.Flags + ",ev"
+	updateResponse := tstPerformPut(creationResponse.location, tstRenderJson(changedAttendee), token)
+
+	docs.Then("then the attendee is successfully updated and the changed data can be read again")
+	require.Equal(t, http.StatusOK, updateResponse.status, "unexpected http response status for update")
+	require.Equal(t, creationResponse.location, updateResponse.location, "location unexpectedly changed during update")
+	attendeeReadAgain := tstReadAttendee(t, creationResponse.location)
+	require.EqualValues(t, changedAttendee, attendeeReadAgain, "attendee data read did not match updated data")
+	require.EqualValues(t, "anon,hc,ev", attendeeReadAgain.Flags, "attendee data read did not match expected flags value")
 }
 
 // --- get attendee ---
@@ -384,6 +581,42 @@ func TestDenyReadExistingAttendeeWithStaffToken(t *testing.T) {
 
 	docs.Then("then the request is denied as unauthorized (403)")
 	require.Equal(t, http.StatusForbidden, readResponse.status, "unexpected http response status for insecure read")
+}
+
+func TestReadAttendeeNotFound(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given an admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they try to read an attendee that does not exist")
+	response := tstPerformGet("/api/rest/v1/attendees/42", token)
+
+	docs.Then("then the appropriate error response is returned")
+	require.Equal(t, http.StatusNotFound, response.status, "unexpected http response status")
+	errorDto := errorapi.ErrorDto{}
+	tstParseJson(response.body, &errorDto)
+	require.Equal(t, "attendee.id.notfound", errorDto.Message, "unexpected error code")
+}
+
+func TestReadAttendeeInvalidId(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given an admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they try to read an attendee with an invalid id")
+	response := tstPerformGet("/api/rest/v1/attendees/smiling", token)
+
+	docs.Then("then the appropriate error response is returned")
+	require.Equal(t, http.StatusBadRequest, response.status, "unexpected http response status")
+	errorDto := errorapi.ErrorDto{}
+	tstParseJson(response.body, &errorDto)
+	require.Equal(t, "attendee.id.invalid", errorDto.Message, "unexpected error code")
 }
 
 // --- attendee max id ---

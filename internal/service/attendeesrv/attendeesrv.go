@@ -97,11 +97,7 @@ func isDuplicateAttendee(ctx context.Context, nickname string, zip string, email
 }
 
 func checkNoForbiddenChanges(ctx context.Context, key string, choiceConfig config.ChoiceConfig, originalChoices map[string]bool, newChoices map[string]bool) error {
-	if choiceConfig.AdminOnly {
-		if originalChoices[key] != newChoices[key] {
-			return errors.New("forbidden change in state of choice key " + key + " - this is an admin only flag")
-		}
-	} else if choiceConfig.ReadOnly {
+	if choiceConfig.AdminOnly || choiceConfig.ReadOnly {
 		if originalChoices[key] != newChoices[key] {
 			group, err := ctxvalues.AuthorizedAsGroup(ctx)
 			if err != nil || group != config.TokenForAdmin {

@@ -70,11 +70,13 @@ func TestCheckPackages(t *testing.T) {
 func TestCheckOptions(t *testing.T) {
 	c := make(map[string]ChoiceConfig)
 	c["myadmin"] = ChoiceConfig{Default: true, AdminOnly: true, Description: "admin only option - invalid", HelpUrl: "some url"}
+	c["myro"] = ChoiceConfig{ReadOnly: true, Description: "read only option - invalid", HelpUrl: "some url"}
 
 	actualErrors := url.Values{}
 	validateOptionsConfiguration(actualErrors, c)
 	expectedErrors := url.Values{
-		"choices.options.myadmin.admin": []string{"options cannot be admin_only (they represent user choices). Try read_only instead."},
+		"choices.options.myadmin.admin": []string{"options cannot be admin_only (they represent user choices)."},
+		"choices.options.myro.readonly": []string{"options cannot be read_only (they represent user choices)."},
 	}
 	prettyprintedActualErrors, _ := json.MarshalIndent(actualErrors, "", "  ")
 	prettyprintedExpectedErrors, _ := json.MarshalIndent(expectedErrors, "", "  ")

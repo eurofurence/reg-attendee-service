@@ -7,12 +7,17 @@ import (
 	"testing"
 )
 
-func tstRequireErrorResponse(t *testing.T, response tstWebResponse, expectedStatus int, expectedMessage string, expectedDetails string) {
+func tstRequireErrorResponse(t *testing.T, response tstWebResponse, expectedStatus int, expectedMessage string, expectedDetails interface{}) {
 	require.Equal(t, expectedStatus, response.status, "unexpected http response status")
 	errorDto := errorapi.ErrorDto{}
 	tstParseJson(response.body, &errorDto)
 	require.Equal(t, expectedMessage, errorDto.Message, "unexpected error code")
-	if expectedDetails != "" {
-		require.EqualValues(t, url.Values{"details": []string{expectedDetails}}, errorDto.Details, "unexpected error details")
+	expectedDetailsStr, ok := expectedDetails.(string)
+	if ok && expectedDetailsStr != "" {
+		require.EqualValues(t, url.Values{"details": []string{expectedDetailsStr}}, errorDto.Details, "unexpected error details")
+	}
+	expectedDetailsUrlValues, ok := expectedDetails.(url.Values)
+	if ok {
+		require.EqualValues(t, expectedDetailsUrlValues, errorDto.Details, "unexpected error details")
 	}
 }

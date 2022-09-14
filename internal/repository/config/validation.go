@@ -112,7 +112,10 @@ func validateOptionsConfiguration(errs url.Values, c map[string]ChoiceConfig) {
 		validation.CheckLength(&errs, 1, 256, "choices.options."+k+".help_url", v.HelpUrl)
 		checkConstraints(errs, c, "choices.options", k, v.Constraint, v.ConstraintMsg)
 		if v.AdminOnly {
-			errs.Add("choices.options."+k+".admin", "options cannot be admin_only (they represent user choices). Try read_only instead.")
+			errs.Add("choices.options."+k+".admin", "options cannot be admin_only (they represent user choices).")
+		}
+		if v.ReadOnly {
+			errs.Add("choices.options."+k+".readonly", "options cannot be read_only (they represent user choices).")
 		}
 	}
 }

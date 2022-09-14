@@ -90,7 +90,7 @@ func validate(ctx context.Context, a *attendee.AttendeeDto, trustedOriginalState
 	if validation.NotInAllowedValues(allowedGenders[:], a.Gender) {
 		errs.Add("gender", "optional gender field must be one of male, female, other, notprovided, or it can be left blank, which counts as notprovided")
 	}
-	validation.CheckCombinationOfAllowedValues(&errs, config.AllowedFlags(), "flags", a.Flags)
+	validation.CheckCombinationOfAllowedValues(&errs, config.AllowedFlagsNoAdmin(), "flags", a.Flags)
 	validation.CheckCombinationOfAllowedValues(&errs, config.AllowedPackages(), "packages", a.Packages)
 	validation.CheckCombinationOfAllowedValues(&errs, config.AllowedOptions(), "options", a.Options)
 	if a.TshirtSize != "" && validation.NotInAllowedValues(config.AllowedTshirtSizes(), a.TshirtSize) {
@@ -98,7 +98,7 @@ func validate(ctx context.Context, a *attendee.AttendeeDto, trustedOriginalState
 	}
 
 	// check permission to change flags, packages, options to their new values
-	if err := attendeeService.CanChangeChoiceTo(ctx, trustedOriginalState.Flags, a.Flags, config.FlagsConfig()); err != nil {
+	if err := attendeeService.CanChangeChoiceTo(ctx, trustedOriginalState.Flags, a.Flags, config.FlagsConfigNoAdmin()); err != nil {
 		errs.Add("flags", err.Error())
 	}
 	if err := attendeeService.CanChangeChoiceTo(ctx, trustedOriginalState.Packages, a.Packages, config.PackagesConfig()); err != nil {

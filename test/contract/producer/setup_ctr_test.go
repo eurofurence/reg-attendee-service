@@ -6,7 +6,9 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/service/attendeesrv"
 	"github.com/eurofurence/reg-attendee-service/web"
+	"github.com/eurofurence/reg-attendee-service/web/controller/adminctl"
 	"github.com/eurofurence/reg-attendee-service/web/controller/attendeectl"
+	"github.com/eurofurence/reg-attendee-service/web/controller/statusctl"
 	"github.com/stretchr/testify/mock"
 	"net/http/httptest"
 	"os"
@@ -88,5 +90,8 @@ func (s *MockAttendeeService) UpdateAdminInfo(ctx context.Context, adminInfo *en
 }
 
 func tstSetupServiceMocks() {
-	attendeectl.OverrideAttendeeService(&MockAttendeeService{})
+	attendeeServiceMock := MockAttendeeService{}
+	attendeectl.OverrideAttendeeService(&attendeeServiceMock)
+	adminctl.OverrideAttendeeService(&attendeeServiceMock)
+	statusctl.OverrideAttendeeService(&attendeeServiceMock)
 }

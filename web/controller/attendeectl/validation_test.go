@@ -195,7 +195,7 @@ func TestValidateChoiceFieldsAndId(t *testing.T) {
 	expected := url.Values{
 		"gender":        []string{"optional gender field must be one of male, female, other, notprovided, or it can be left blank, which counts as notprovided"},
 		"options":       []string{"options field must be a comma separated combination of any of anim,art,music,suit"},
-		"flags":         []string{"flags field must be a comma separated combination of any of anon,ev,guest,hc"},
+		"flags":         []string{"flags field must be a comma separated combination of any of anon,ev,hc"},
 		"packages":      []string{"packages field must be a comma separated combination of any of attendance,day-fri,day-sat,day-thu,room-none,sponsor,sponsor2,stage"},
 		"telegram":      []string{"optional telegram field must contain your @username from telegram, or it can be left blank"},
 		"tshirt_size":   []string{"optional tshirt_size field must be empty or one of XS,wXS,S,wS,M,wM,L,wL,XL,wXL,XXL,wXXL,3XL,w3XL,4XL,w4XL"},

@@ -10,7 +10,7 @@ import (
 )
 
 func ServerAddr() string {
-	c := Configuration();
+	c := Configuration()
 	return c.Server.Address + ":" + c.Server.Port
 }
 
@@ -71,6 +71,28 @@ func AllowedFlags() []string {
 	return sortedKeys(Configuration().Choices.Flags)
 }
 
+func AllowedFlagsNoAdmin() []string {
+	flags := Configuration().Choices.Flags
+	result := make([]string, 0)
+	for _, k := range sortedKeys(flags) {
+		if !flags[k].AdminOnly {
+			result = append(result, k)
+		}
+	}
+	return result
+}
+
+func AllowedFlagsAdminOnly() []string {
+	flags := Configuration().Choices.Flags
+	result := make([]string, 0)
+	for _, k := range sortedKeys(flags) {
+		if flags[k].AdminOnly {
+			result = append(result, k)
+		}
+	}
+	return result
+}
+
 func AllowedPackages() []string {
 	return sortedKeys(Configuration().Choices.Packages)
 }
@@ -114,6 +136,26 @@ func defaultChoiceStr(choiceConf map[string]ChoiceConfig) string {
 
 func FlagsConfig() map[string]ChoiceConfig {
 	return Configuration().Choices.Flags
+}
+
+func FlagsConfigNoAdmin() map[string]ChoiceConfig {
+	result := make(map[string]ChoiceConfig)
+	for k, v := range Configuration().Choices.Flags {
+		if !v.AdminOnly {
+			result[k] = v
+		}
+	}
+	return result
+}
+
+func FlagsConfigAdminOnly() map[string]ChoiceConfig {
+	result := make(map[string]ChoiceConfig)
+	for k, v := range Configuration().Choices.Flags {
+		if v.AdminOnly {
+			result[k] = v
+		}
+	}
+	return result
 }
 
 func PackagesConfig() map[string]ChoiceConfig {

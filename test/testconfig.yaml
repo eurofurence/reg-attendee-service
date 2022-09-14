@@ -20,6 +20,7 @@ choices:
     ev:
       description: 'Eurofurence e.V. Member'
       help_url: 'help/opt_member.html'
+      read_only: true
     guest:
       description: 'Guest of the Convention'
       help_url: 'help/guest.html'
