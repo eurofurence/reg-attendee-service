@@ -10,25 +10,37 @@ A backend service that provides attendee management.
 Implemented in go.
 
 Command line arguments
-```-config <path-to-config-file> [-migrate-database]```
+```
+-config <path-to-config-file> [-migrate-database]
+```
 
 ## Installation
 
 This service uses go modules to provide dependency management, see `go.mod`.
 
-If you place this repository OUTSIDE of your gopath, `go build main.go` and `go test ./...` will download all required dependencies by default. 
+If you place this repository outside of your gopath, build and test runs will download all required 
+dependencies by default. 
 
 ## Running on localhost
 
 Copy the configuration template from `docs/config-template.yaml` to `./config.yaml`. This will set you up
 for operation with an in-memory database and sensible defaults.
 
+Build using `go build cmd/main.go`.
+
 Then run `./main -config config.yaml -migrate-database`.
+
+## Installation on the server
+
+See `install.sh`. This assumes a current build, and a valid configuration template in specific filenames.
 
 ## Test Coverage
 
-In order to collect full test coverage, set go tool arguments to `-covermode=atomic -coverpkg=./internal/...,./web/...`,
-or manually run `go test -covermode=atomic -coverpkg=./internal/...,./web/... ./...`.
+In order to collect full test coverage, set go tool arguments to `-covermode=atomic -coverpkg=./internal/...`,
+or manually run
+```
+go test -covermode=atomic -coverpkg=./internal/... ./...
+```
 
 ## Contract Testing
 
@@ -67,21 +79,30 @@ Limitations:
    register because the endpoint does not honor a supplied Authorization header at all. This is ok because
    currently we use a separate installation for staff reg with a secret link.
 
-## for later
+### v0.2.0
 
-- MVP.2
-    - metrics for prometheus https://prometheus.io/docs/guides/go-application/
-    - support for day guests
-    - admin fields handling (subresource w/separate dto only handled by regsys using admin/user auth, invisible fields if user)
-    - attendee search by criteria used by regsys
-    - optional partner (nick) field for MMC, check for any other missing fields
-    - parse Authorization header even when endpoint does not require authorization, so ctx has the user permissions
-- later
-    - react to context.cancel
-    - separate logging target for log output during test runs, so log output can be asserted (and isn't output)
-    - security with oauth2 server
-        - security using JWT signatures with key in config
-        - permissions using JWT
-            - viewAttendees, changeAttendees, viewAttendeeAdmininfo, changeAttendeeAdmininfo rights
-            - identification as a specific attendee
-        - additional acceptance tests for security
+**MVP 2.** The absolute minimum needed for EF and MMC reg to work.
+
+ - implements admin fields handling 
+ - implements status transitions
+ - includes an openapi spec
+ - talks to payment service as appropriate
+ - talks to mail service as appropriate
+ - obtains IDP tokens from the cookies set by the auth service, as well as fixed token security for backend requests
+ - auth header and tokens are honored for all requests, even the ones that do not require authorization
+ - fields for MMC have been added as well (partner, ...) 
+ - day guests are supported simply via the package subsystem 
+ - guests are supported as an admin only flag which will cause the system to assign 0 dues
+ - implements a general request timeout and panic handling
+
+Limitations:
+ - no search functionality yet - note this will make search and interfaces in regsys classic very slow
+
+### for later
+
+- separate logging target for log output during test runs, so log output can be asserted (and isn't output)
+- security with oauth2 server
+    - JWT keyset integration with IDP
+    - more fine-grained permissions using JWT
+        - viewAttendees, changeAttendees, viewAttendeeAdmininfo, changeAttendeeAdmininfo rights
+    - additional acceptance tests for security
