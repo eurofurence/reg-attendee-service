@@ -67,10 +67,6 @@ func AllAvailableFixedTokenGroups() []FixedTokenEnum {
 	}
 }
 
-func AllowedFlags() []string {
-	return sortedKeys(Configuration().Choices.Flags)
-}
-
 func AllowedFlagsNoAdmin() []string {
 	flags := Configuration().Choices.Flags
 	result := make([]string, 0)
@@ -132,10 +128,6 @@ func defaultChoiceStr(choiceConf map[string]ChoiceConfig) string {
 	}
 
 	return strings.Join(b, ",")
-}
-
-func FlagsConfig() map[string]ChoiceConfig {
-	return Configuration().Choices.Flags
 }
 
 func FlagsConfigNoAdmin() map[string]ChoiceConfig {
