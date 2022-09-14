@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/eurofurence/reg-attendee-service/web/util/validation"
+	"github.com/eurofurence/reg-attendee-service/internal/web/util/validation"
 	"net/url"
 	"strings"
 	"time"

@@ -1,8 +1,8 @@
 package acceptance
 
 import (
-	"github.com/eurofurence/reg-attendee-service/api/v1/admin"
 	"github.com/eurofurence/reg-attendee-service/docs"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/admin"
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/url"

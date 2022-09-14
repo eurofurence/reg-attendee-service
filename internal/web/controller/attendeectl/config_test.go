@@ -1,23 +1,17 @@
-package producer
+package attendeectl
 
 import (
 	"context"
+	"errors"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/service/attendeesrv"
-	"github.com/eurofurence/reg-attendee-service/internal/web"
-	"github.com/eurofurence/reg-attendee-service/internal/web/controller/adminctl"
-	"github.com/eurofurence/reg-attendee-service/internal/web/controller/attendeectl"
-	"github.com/eurofurence/reg-attendee-service/internal/web/controller/statusctl"
 	"github.com/stretchr/testify/mock"
-	"net/http/httptest"
 	"os"
 	"testing"
 )
 
-var (
-	ts *httptest.Server
-)
+// placing these here because they are package global
 
 func TestMain(m *testing.M) {
 	tstSetup()
@@ -29,20 +23,14 @@ func TestMain(m *testing.M) {
 func tstSetup() {
 	tstSetupConfig()
 	tstSetupServiceMocks()
-	tstSetupHttpTestServer()
-}
-
-func tstSetupConfig() {
-	config.LoadTestingConfigurationFromPathOrAbort("../../../test/testconfig.yaml")
-}
-
-func tstSetupHttpTestServer() {
-	router := web.Create()
-	ts = httptest.NewServer(router)
 }
 
 func tstShutdown() {
-	ts.Close()
+
+}
+
+func tstSetupConfig() {
+	config.LoadTestingConfigurationFromPathOrAbort("../../../../test/testconfig.yaml")
 }
 
 type MockAttendeeService struct {
@@ -56,17 +44,15 @@ func (s *MockAttendeeService) NewAttendee(ctx context.Context) *entity.Attendee 
 }
 
 func (s *MockAttendeeService) RegisterNewAttendee(ctx context.Context, attendee *entity.Attendee) (uint, error) {
-	// TODO use mock to verify data for contract tests
-	return 1, nil
+	return 0, errors.New("some error, this is a mock")
 }
 
 func (s *MockAttendeeService) GetAttendee(ctx context.Context, id uint) (*entity.Attendee, error) {
-	// TODO when writing a contract test, put matching response data here
-	return &entity.Attendee{}, nil
+	return &entity.Attendee{}, errors.New("some error, this is a mock")
 }
 
 func (s *MockAttendeeService) UpdateAttendee(ctx context.Context, attendee *entity.Attendee) error {
-	return nil
+	return errors.New("some error, this is a mock")
 }
 
 func (s *MockAttendeeService) GetAttendeeMaxId(ctx context.Context) (uint, error) {
@@ -90,8 +76,5 @@ func (s *MockAttendeeService) UpdateAdminInfo(ctx context.Context, adminInfo *en
 }
 
 func tstSetupServiceMocks() {
-	attendeeServiceMock := MockAttendeeService{}
-	attendeectl.OverrideAttendeeService(&attendeeServiceMock)
-	adminctl.OverrideAttendeeService(&attendeeServiceMock)
-	statusctl.OverrideAttendeeService(&attendeeServiceMock)
+	attendeeService = &MockAttendeeService{}
 }

@@ -4,7 +4,7 @@ import (
 	"flag"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
-	"github.com/eurofurence/reg-attendee-service/web"
+	"github.com/eurofurence/reg-attendee-service/internal/web"
 )
 
 func main() {

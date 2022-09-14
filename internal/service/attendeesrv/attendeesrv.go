@@ -7,7 +7,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
-	"github.com/eurofurence/reg-attendee-service/web/filter/ctxvalues"
+	"github.com/eurofurence/reg-attendee-service/internal/web/filter/ctxvalues"
 	"strings"
 	"time"
 )

@@ -3,8 +3,8 @@ package acceptance
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/eurofurence/reg-attendee-service/api/v1/attendee"
-	"github.com/eurofurence/reg-attendee-service/web/util/media"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
+	"github.com/eurofurence/reg-attendee-service/internal/web/util/media"
 	"github.com/go-http-utils/headers"
 	"io/ioutil"
 	"log"

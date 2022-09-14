@@ -7,7 +7,7 @@ import (
 	_ "github.com/d4l3k/messagediff"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database/dbrepo"
-	"github.com/eurofurence/reg-attendee-service/web/filter/ctxvalues"
+	"github.com/eurofurence/reg-attendee-service/internal/web/filter/ctxvalues"
 )
 
 type HistorizingRepository struct {
