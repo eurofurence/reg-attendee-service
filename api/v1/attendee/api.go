@@ -22,6 +22,7 @@ type AttendeeDto struct {
 	// personal data
 	Birthday   string `json:"birthday"` // ISO date (format yyyy-MM-dd)
 	Gender     string `json:"gender"`   // optional, one of male,female,other,notprovided
+	Pronouns   string `json:"pronouns"` // optional
 	TshirtSize string `json:"tshirt_size"`
 
 	// comma separated lists, allowed choices are convention dependent

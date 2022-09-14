@@ -15,6 +15,12 @@ import (
 // acceptance tests for the attendee resource
 // ------------------------------------------
 
+// TODO test that even admin cannot add admin-only flags to regular flags field
+// TODO test forbidden flags,packages,options (read-only) cannot be changed by non-admins
+// TODO test invalid id in path (400)
+// TODO test non-existent id in path (404)
+// TODO test json parse error in body (400)
+
 // --- create new attendee ---
 
 func TestCreateNewAttendee(t *testing.T) {

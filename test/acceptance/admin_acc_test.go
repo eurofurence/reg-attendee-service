@@ -12,6 +12,11 @@ import (
 // acceptance tests for the admin subresource
 // ------------------------------------------
 
+// TODO test that even admin cannot add regular flags to adminInfo flags field
+// TODO test invalid id in path (400)
+// TODO test non-existent id in path (404)
+// TODO test json parse error in body (400)
+
 // --- read access
 
 func TestAdminDefaults_AnonDeny(t *testing.T) {

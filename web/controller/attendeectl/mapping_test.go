@@ -12,7 +12,7 @@ func TestMapping(t *testing.T) {
 	docs.Description("mapping an attendee dto back and forth should result in the same data")
 	attendeeDtoSource := tstCreateValidAttendee()
 	attendeeEntity := entity.Attendee{}
-	_ = mapDtoToAttendee(&attendeeDtoSource, &attendeeEntity)
+	mapDtoToAttendee(&attendeeDtoSource, &attendeeEntity)
 
 	attendeeDtoResult := attendee.AttendeeDto{}
 	mapAttendeeToDto(&attendeeEntity, &attendeeDtoResult)

@@ -53,11 +53,7 @@ func newAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		return
 	}
 	newAttendee := attendeeService.NewAttendee(ctx)
-	err = mapDtoToAttendee(dto, newAttendee)
-	if err != nil {
-		attendeeParseErrorHandler(ctx, w, r, err)
-		return
-	}
+	mapDtoToAttendee(dto, newAttendee)
 	id, err := attendeeService.RegisterNewAttendee(ctx, newAttendee)
 	// TODO react to duplicate by sending 409 instead
 	if err != nil {
@@ -95,22 +91,18 @@ func updateAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.R
 	if err != nil {
 		return
 	}
-	attendee, err := attendeeService.GetAttendee(ctx, id)
+	attd, err := attendeeService.GetAttendee(ctx, id)
 	if err != nil {
 		ctlutil.AttendeeNotFoundErrorHandler(ctx, w, r, id)
 		return
 	}
-	validationErrs := validate(ctx, dto, attendee)
+	validationErrs := validate(ctx, dto, attd)
 	if len(validationErrs) != 0 {
 		attendeeValidationErrorHandler(ctx, w, r, validationErrs)
 		return
 	}
-	err = mapDtoToAttendee(dto, attendee)
-	if err != nil {
-		attendeeParseErrorHandler(ctx, w, r, err)
-		return
-	}
-	err = attendeeService.UpdateAttendee(ctx, attendee)
+	mapDtoToAttendee(dto, attd)
+	err = attendeeService.UpdateAttendee(ctx, attd)
 	if err != nil {
 		attendeeWriteErrorHandler(ctx, w, r, err)
 		return

@@ -3,9 +3,9 @@ package acceptance
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/go-http-utils/headers"
 	"github.com/eurofurence/reg-attendee-service/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/web/util/media"
+	"github.com/go-http-utils/headers"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -112,6 +112,7 @@ func tstBuildValidAttendee(testcase string) attendee.AttendeeDto {
 		Telegram:     "@ihopethisuserdoesnotexist",
 		Birthday:     "1998-11-23",
 		Gender:       "other",
+		Pronouns:     "he/him",
 		Flags:        "anon,ev",
 		Packages:     "room-none,attendance,stage,sponsor2",
 		Options:      "music,suit",
