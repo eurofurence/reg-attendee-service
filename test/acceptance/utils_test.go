@@ -6,10 +6,12 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/media"
 	"github.com/go-http-utils/headers"
+	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
+	"testing"
 	"time"
 )
 
@@ -118,6 +120,18 @@ func tstBuildValidAttendee(testcase string) attendee.AttendeeDto {
 		Options:      "music,suit",
 		TshirtSize:   "XXL",
 	}
+}
+
+func tstRegisterAttendee(t *testing.T, testcase string) (location string, dtoWithId attendee.AttendeeDto) {
+	dto := tstBuildValidAttendee(testcase)
+	creationResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(dto), tstValidStaffOrEmptyToken(t))
+	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status")
+
+	rereadResponse := tstPerformGet(creationResponse.location, tstValidAdminToken(t))
+	require.Equal(t, http.StatusOK, rereadResponse.status, "unexpected http response status")
+	tstParseJson(rereadResponse.body, &dtoWithId)
+
+	return creationResponse.location, dtoWithId
 }
 
 func tstRenderJson(v interface{}) string {

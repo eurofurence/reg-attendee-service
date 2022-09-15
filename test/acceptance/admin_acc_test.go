@@ -20,16 +20,14 @@ func TestAdminDefaults_AnonDeny(t *testing.T) {
 	tstSetup(tstDefaultConfigFile)
 	defer tstShutdown()
 
+	docs.Given("given an existing attendee")
+	location1, _ := tstRegisterAttendee(t, "admr1-")
+
 	docs.Given("given an unauthenticated user")
 	token := tstNoToken()
 
-	docs.Given("given an existing attendee right after registration")
-	existingAttendee := tstBuildValidAttendee("admr1-")
-	creationResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(existingAttendee), token)
-	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status")
-
-	docs.When("when they attempt to access the admin information")
-	response := tstPerformGet(creationResponse.location+"/admin", token)
+	docs.When("when they attempt to access the admin information for the attendee")
+	response := tstPerformGet(location1+"/admin", token)
 
 	docs.Then("then the request is denied as unauthenticated (401) and the correct error is returned")
 	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "missing Authorization header with bearer token")
@@ -40,18 +38,16 @@ func TestAdminDefaults_UserDeny(t *testing.T) {
 	tstSetup(tstDefaultConfigFile)
 	defer tstShutdown()
 
-	docs.Given("given an existing attendee right after registration")
-	existingAttendee := tstBuildValidAttendee("admr2-")
-	creationResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
-	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status")
+	docs.Given("given an existing attendee")
+	location1, attendee1 := tstRegisterAttendee(t, "admr2-")
 
-	docs.Given("given a regular authenticated attendee")
-	token := tstValidUserToken(t)
+	docs.Given("given the same regular authenticated attendee")
+	token := tstValidUserToken(t, attendee1.Id)
 
 	docs.When("when they attempt to access the admin information")
-	response := tstPerformGet(creationResponse.location+"/admin", token)
+	response := tstPerformGet(location1+"/admin", token)
 
-	docs.Then("then the request is denied as unauthorized (403) and no body is returned")
+	docs.Then("then the request is denied as unauthorized (403) and the correct error is returned")
 	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not unauthorized for this operation - the attempt has been logged")
 }
 
@@ -60,18 +56,14 @@ func TestAdminDefaults_StaffDeny(t *testing.T) {
 	tstSetup(tstStaffregConfigFile)
 	defer tstShutdown()
 
-	docs.Given("given an authenticated staffer")
-	token := tstValidStaffToken(t)
+	docs.Given("given an authenticated staffer who has registered")
+	location1, attendee1 := tstRegisterAttendee(t, "admr3-")
+	token := tstValidStaffToken(t, attendee1.Id)
 
-	docs.Given("who has made a valid registration")
-	existingAttendee := tstBuildValidAttendee("admr3-")
-	creationResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(existingAttendee), token)
-	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status")
+	docs.When("when they attempt to access their own or anybody else's admin information")
+	response := tstPerformGet(location1+"/admin", token)
 
-	docs.When("when they attempt to access their own admin information")
-	response := tstPerformGet(creationResponse.location+"/admin", token)
-
-	docs.Then("then the request is denied as unauthorized (403) and no body is returned")
+	docs.Then("then the request is denied as unauthorized (403) and the correct error is returned")
 	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not unauthorized for this operation - the attempt has been logged")
 }
 
@@ -81,25 +73,17 @@ func TestAdminDefaults_AdminOk(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee right after registration")
-	existingAttendee := tstBuildValidAttendee("admr4-")
-	creationResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
-	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status")
+	location1, attendee1 := tstRegisterAttendee(t, "admr4-")
 
 	docs.Given("given a logged in admin")
 	token := tstValidAdminToken(t)
 
 	docs.When("when they access the admin information")
-	response := tstPerformGet(creationResponse.location+"/admin", token)
+	response := tstPerformGet(location1+"/admin", token)
 
 	docs.Then("then the request is successful and the default admin information is returned")
 	require.Equal(t, http.StatusOK, response.status, "unexpected http response status")
-	adminInfo := admin.AdminInfoDto{}
-	tstParseJson(response.body, &adminInfo)
-
-	expectedAdminInfo := admin.AdminInfoDto{
-		Id: adminInfo.Id,
-	}
-	require.EqualValues(t, expectedAdminInfo, adminInfo, "admin data read did not match expected values")
+	tstRequireAdminInfoMatches(t, admin.AdminInfoDto{Id: attendee1.Id}, response.body)
 }
 
 func TestReadAdminInfo_NonexistentAttendee(t *testing.T) {
@@ -143,27 +127,20 @@ func TestAdminWrite_AnonDeny(t *testing.T) {
 	token := tstNoToken()
 
 	docs.Given("given an existing attendee right after registration")
-	existingAttendee := tstBuildValidAttendee("admw1-")
-	creationResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(existingAttendee), token)
-	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status")
+	location1, attendee1 := tstRegisterAttendee(t, "admw1-")
 
 	docs.When("when they attempt to update the admin information")
 	body := admin.AdminInfoDto{
-		Flags:         "",
-		Permissions:   "admin",
-		AdminComments: "",
+		Permissions: "admin",
 	}
-	response := tstPerformPut(creationResponse.location+"/admin", tstRenderJson(body), token)
+	response := tstPerformPut(location1+"/admin", tstRenderJson(body), token)
 
 	docs.Then("then the request is denied as unauthenticated (401) and the appropriate error is returned")
 	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "missing Authorization header with bearer token")
 
 	docs.Then("and no changes have been made")
-	response2 := tstPerformGet(creationResponse.location+"/admin", tstValidAdminToken(t))
-	adminInfo := admin.AdminInfoDto{}
-	tstParseJson(response2.body, &adminInfo)
-	expectedAdminInfo := admin.AdminInfoDto{Id: adminInfo.Id}
-	require.EqualValues(t, expectedAdminInfo, adminInfo, "admin data read did not match expected values")
+	response2 := tstPerformGet(location1+"/admin", tstValidAdminToken(t))
+	tstRequireAdminInfoMatches(t, admin.AdminInfoDto{Id: attendee1.Id}, response2.body)
 }
 
 func TestAdminWrite_UserDeny(t *testing.T) {
@@ -171,31 +148,24 @@ func TestAdminWrite_UserDeny(t *testing.T) {
 	tstSetup(tstDefaultConfigFile)
 	defer tstShutdown()
 
-	docs.Given("given a regular authenticated attendee")
-	token := tstValidUserToken(t)
+	docs.Given("given an existing attendee")
+	location1, attendee1 := tstRegisterAttendee(t, "admw2-")
 
-	docs.Given("given an existing attendee right after registration")
-	existingAttendee := tstBuildValidAttendee("admw2-")
-	creationResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(existingAttendee), token)
-	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status")
+	docs.Given("given a regular authenticated attendee")
+	token := tstValidUserToken(t, attendee1.Id)
 
 	docs.When("when they attempt to update the admin information")
 	body := admin.AdminInfoDto{
-		Flags:         "",
-		Permissions:   "admin",
-		AdminComments: "",
+		Permissions: "admin",
 	}
-	response := tstPerformPut(creationResponse.location+"/admin", tstRenderJson(body), token)
+	response := tstPerformPut(location1+"/admin", tstRenderJson(body), token)
 
 	docs.Then("then the request is denied as unauthenticated (401) and the appropriate error is returned")
 	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not unauthorized for this operation - the attempt has been logged")
 
 	docs.Then("and no changes have been made")
-	response2 := tstPerformGet(creationResponse.location+"/admin", tstValidAdminToken(t))
-	adminInfo := admin.AdminInfoDto{}
-	tstParseJson(response2.body, &adminInfo)
-	expectedAdminInfo := admin.AdminInfoDto{Id: adminInfo.Id}
-	require.EqualValues(t, expectedAdminInfo, adminInfo, "admin data read did not match expected values")
+	response2 := tstPerformGet(location1+"/admin", tstValidAdminToken(t))
+	tstRequireAdminInfoMatches(t, admin.AdminInfoDto{Id: attendee1.Id}, response2.body)
 }
 
 func TestAdminWrite_StaffDeny(t *testing.T) {
@@ -203,31 +173,22 @@ func TestAdminWrite_StaffDeny(t *testing.T) {
 	tstSetup(tstStaffregConfigFile)
 	defer tstShutdown()
 
-	docs.Given("given an authenticated staffer")
-	token := tstValidStaffToken(t)
+	docs.Given("given an existing attendee who is staff")
+	location1, attendee1 := tstRegisterAttendee(t, "admw3-")
+	token := tstValidStaffToken(t, attendee1.Id)
 
-	docs.Given("given an existing attendee right after registration")
-	existingAttendee := tstBuildValidAttendee("admw3-")
-	creationResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(existingAttendee), token)
-	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status")
-
-	docs.When("when they attempt to update the admin information")
+	docs.When("when they attempt to update their own admin information")
 	body := admin.AdminInfoDto{
-		Flags:         "",
-		Permissions:   "admin",
-		AdminComments: "",
+		Flags: "guest",
 	}
-	response := tstPerformPut(creationResponse.location+"/admin", tstRenderJson(body), token)
+	response := tstPerformPut(location1+"/admin", tstRenderJson(body), token)
 
 	docs.Then("then the request is denied as unauthenticated (401) and the appropriate error is returned")
 	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not unauthorized for this operation - the attempt has been logged")
 
 	docs.Then("and no changes have been made")
-	response2 := tstPerformGet(creationResponse.location+"/admin", tstValidAdminToken(t))
-	adminInfo := admin.AdminInfoDto{}
-	tstParseJson(response2.body, &adminInfo)
-	expectedAdminInfo := admin.AdminInfoDto{Id: adminInfo.Id}
-	require.EqualValues(t, expectedAdminInfo, adminInfo, "admin data read did not match expected values")
+	response2 := tstPerformGet(location1+"/admin", tstValidAdminToken(t))
+	tstRequireAdminInfoMatches(t, admin.AdminInfoDto{Id: attendee1.Id}, response2.body)
 }
 
 func TestAdminWrite_AdminOk(t *testing.T) {
@@ -236,9 +197,7 @@ func TestAdminWrite_AdminOk(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee right after registration")
-	existingAttendee := tstBuildValidAttendee("admw4-")
-	creationResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
-	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status")
+	location1, attendee1 := tstRegisterAttendee(t, "admw4-")
 
 	docs.Given("given a logged in admin")
 	token := tstValidAdminToken(t)
@@ -246,26 +205,22 @@ func TestAdminWrite_AdminOk(t *testing.T) {
 	docs.When("when they change the admin information")
 	body := admin.AdminInfoDto{
 		Flags:         "guest",
-		Permissions:   "",
 		AdminComments: "set to guest",
 	}
-	response := tstPerformPut(creationResponse.location+"/admin", tstRenderJson(body), token)
+	response := tstPerformPut(location1+"/admin", tstRenderJson(body), token)
 
 	docs.Then("then the request is successful")
 	require.Equal(t, http.StatusNoContent, response.status, "unexpected http response status")
 	require.Equal(t, "", response.body, "unexpected response body")
 
 	docs.Then("and the changed admin info can be read again")
-	response2 := tstPerformGet(creationResponse.location+"/admin", token)
-	adminInfo := admin.AdminInfoDto{}
-	tstParseJson(response2.body, &adminInfo)
-
+	response2 := tstPerformGet(location1+"/admin", token)
 	expectedAdminInfo := admin.AdminInfoDto{
-		Id:            adminInfo.Id,
+		Id:            attendee1.Id,
 		Flags:         "guest",
 		AdminComments: "set to guest",
 	}
-	require.EqualValues(t, expectedAdminInfo, adminInfo, "admin data read did not match expected values")
+	tstRequireAdminInfoMatches(t, expectedAdminInfo, response2.body)
 }
 
 func TestAdminWrite_NonexistentAttendee(t *testing.T) {
@@ -278,9 +233,7 @@ func TestAdminWrite_NonexistentAttendee(t *testing.T) {
 
 	docs.When("when they attempt to change the admin information for an attendee that does not exist")
 	body := admin.AdminInfoDto{
-		Flags:         "guest",
-		Permissions:   "",
-		AdminComments: "set to guest",
+		AdminComments: "existence is fleeting",
 	}
 	response := tstPerformPut("/api/rest/v1/attendees/789789/admin", tstRenderJson(body), token)
 
@@ -298,9 +251,7 @@ func TestAdminWrite_InvalidAttendeeId(t *testing.T) {
 
 	docs.When("when they attempt to change the admin information for an attendee with an invalid id")
 	body := admin.AdminInfoDto{
-		Flags:         "guest",
-		Permissions:   "",
-		AdminComments: "set to guest",
+		AdminComments: "kittens are cuter",
 	}
 	response := tstPerformPut("/api/rest/v1/attendees/puppy/admin", tstRenderJson(body), token)
 
@@ -314,16 +265,14 @@ func TestAdminWrite_InvalidBody(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee right after registration")
-	existingAttendee := tstBuildValidAttendee("admw5-")
-	creationResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
-	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status")
+	location1, _ := tstRegisterAttendee(t, "admw5-")
 
 	docs.Given("given a logged in admin")
 	token := tstValidAdminToken(t)
 
 	docs.When("when they change the admin information but send an invalid json body")
 	body := "{{{{:::"
-	response := tstPerformPut(creationResponse.location+"/admin", body, token)
+	response := tstPerformPut(location1+"/admin", body, token)
 
 	docs.Then("then the appropriate error is returned")
 	tstRequireErrorResponse(t, response, http.StatusBadRequest, "admin.parse.error", "")
@@ -335,9 +284,7 @@ func TestAdminWrite_CannotChangeId(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
-	existingAttendee := tstBuildValidAttendee("admw6-")
-	creationResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
-	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status")
+	location1, _ := tstRegisterAttendee(t, "admw6-")
 
 	docs.Given("given a logged in admin")
 	token := tstValidAdminToken(t)
@@ -346,7 +293,7 @@ func TestAdminWrite_CannotChangeId(t *testing.T) {
 	body := admin.AdminInfoDto{
 		Id: "9999",
 	}
-	response := tstPerformPut(creationResponse.location+"/admin", tstRenderJson(body), token)
+	response := tstPerformPut(location1+"/admin", tstRenderJson(body), token)
 
 	docs.Then("then the appropriate error is returned")
 	tstRequireErrorResponse(t, response, http.StatusBadRequest, "admin.data.invalid", url.Values{"id": []string{"id field must be empty or correctly assigned for incoming requests"}})
@@ -358,9 +305,7 @@ func TestAdminWrite_WrongFlagType(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
-	existingAttendee := tstBuildValidAttendee("admw7-")
-	creationResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(existingAttendee), tstNoToken())
-	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status")
+	location1, attendee1 := tstRegisterAttendee(t, "admw7-")
 
 	docs.Given("given a logged in admin")
 	token := tstValidAdminToken(t)
@@ -369,29 +314,23 @@ func TestAdminWrite_WrongFlagType(t *testing.T) {
 	body := admin.AdminInfoDto{
 		Flags: "ev",
 	}
-	response := tstPerformPut(creationResponse.location+"/admin", tstRenderJson(body), token)
+	response := tstPerformPut(location1+"/admin", tstRenderJson(body), token)
 
 	docs.Then("then the appropriate error is returned")
 	tstRequireErrorResponse(t, response, http.StatusBadRequest, "admin.data.invalid", url.Values{"flags": []string{"flags field must be a comma separated combination of any of guest"}})
 
 	docs.Then("and the admin info is unchanged")
-	response2 := tstPerformGet(creationResponse.location+"/admin", token)
-	adminInfo := admin.AdminInfoDto{}
-	tstParseJson(response2.body, &adminInfo)
-
+	response2 := tstPerformGet(location1+"/admin", token)
 	expectedAdminInfo := admin.AdminInfoDto{
-		Id: adminInfo.Id,
+		Id: attendee1.Id,
 	}
-	require.EqualValues(t, expectedAdminInfo, adminInfo, "admin data read did not match expected values")
+	tstRequireAdminInfoMatches(t, expectedAdminInfo, response2.body)
 }
 
 // helper functions
 
-func tstReadAdminInfo(t *testing.T, location string, bearerToken string) admin.AdminInfoDto {
-	response := tstPerformGet(location, bearerToken)
-	require.Equal(t, http.StatusOK, response.status)
-
+func tstRequireAdminInfoMatches(t *testing.T, expected admin.AdminInfoDto, body string) {
 	adminInfo := admin.AdminInfoDto{}
-	tstParseJson(response.body, &adminInfo)
-	return adminInfo
+	tstParseJson(body, &adminInfo)
+	require.EqualValues(t, expected, adminInfo, "admin data did not match expected values")
 }

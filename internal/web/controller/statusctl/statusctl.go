@@ -29,8 +29,9 @@ func OverrideAttendeeService(overrideAttendeeServiceForTesting attendeesrv.Atten
 }
 
 func Create(server chi.Router) {
-	server.Get("/api/rest/v1/attendees/{id:[1-9][0-9]*}/status", filterhelper.BuildHandler("3s", getStatusHandler, config.TokenForAdmin))
-	server.Get("/api/rest/v1/attendees/{id:[1-9][0-9]*}/status-history", filterhelper.BuildHandler("3s", getStatusHistoryHandler, config.TokenForAdmin))
+	server.Get("/api/rest/v1/attendees/{id}/status", filterhelper.BuildHandler("3s", getStatusHandler, config.TokenForAdmin))
+	server.Post("/api/rest/v1/attendees/{id}/status", filterhelper.BuildHandler("3s", postStatusHandler, config.TokenForAdmin))
+	server.Get("/api/rest/v1/attendees/{id}/status-history", filterhelper.BuildHandler("3s", getStatusHistoryHandler, config.TokenForAdmin))
 }
 
 // --- handlers ---
@@ -42,6 +43,23 @@ func getStatusHandler(ctx context.Context, w http.ResponseWriter, r *http.Reques
 	}
 
 	// TODO ensure if user, can only get their own data
+
+	// TODO get data from service instead of defaults
+	// TODO mapAttendeeToDto(existingAttendee, &dto)
+	dto := status.StatusDto{
+		Status: "new",
+	}
+	w.Header().Add(headers.ContentType, media.ContentTypeApplicationJson)
+	ctlutil2.WriteJson(ctx, w, dto)
+}
+
+func postStatusHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	_, err := attendeeByIdMustReturnOnError(ctx, w, r)
+	if err != nil {
+		return
+	}
+
+	// TODO implement me
 
 	// TODO get data from service instead of defaults
 	// TODO mapAttendeeToDto(existingAttendee, &dto)
