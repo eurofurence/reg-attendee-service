@@ -806,6 +806,10 @@ components:
             - admin.data.invalid (field data failed to validate, see details for more information)
             - auth.unauthorized (token missing completely or invalid)
             - auth.forbidden (permissions missing)
+            - status.read.error (database error)
+            - status.write.error (database error)
+            - status.unpaid.dues (this status change is blocked because there are outstanding payments)
+            - status.cannot.delete (deletion is not possible, e.g. there are payments, or an invoice was issued and tax law says we have to store this data for 10 years)
           example: attendee.data.invalid
         details:
           type: array

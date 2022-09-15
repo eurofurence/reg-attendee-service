@@ -75,6 +75,14 @@ func (s *MockAttendeeService) UpdateAdminInfo(ctx context.Context, adminInfo *en
 	return nil
 }
 
+func (s *MockAttendeeService) GetFullStatusHistory(ctx context.Context, attendee *entity.Attendee) ([]entity.StatusChange, error) {
+	return []entity.StatusChange{}, nil
+}
+
+func (s *MockAttendeeService) RequestStatusChange(ctx context.Context, attendee *entity.Attendee, newStatus string, comments string) error {
+	return nil
+}
+
 func tstSetupServiceMocks() {
 	attendeeService = &MockAttendeeService{}
 }

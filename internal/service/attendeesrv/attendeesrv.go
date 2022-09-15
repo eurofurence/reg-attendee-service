@@ -12,11 +12,6 @@ import (
 	"time"
 )
 
-type AttendeeServiceImplData struct {
-}
-
-var _ AttendeeService = (*AttendeeServiceImplData)(nil)
-
 func (s *AttendeeServiceImplData) NewAttendee(ctx context.Context) *entity.Attendee {
 	return &entity.Attendee{}
 }

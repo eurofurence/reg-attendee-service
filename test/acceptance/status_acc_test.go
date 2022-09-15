@@ -92,7 +92,7 @@ func TestStatus_StaffDenyOther(t *testing.T) {
 
 func TestStatus_StaffAllowSelf(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstStaffregConfigFile)
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee with no special privileges")
@@ -237,6 +237,7 @@ func TestStatusHistory_AdminOk(t *testing.T) {
 		StatusHistory: []status.StatusChange{{
 			Timestamp: statusHistoryDto.StatusHistory[0].Timestamp,
 			Status:    "new",
+			Comment:   "registration",
 		}},
 	}
 	require.EqualValues(t, expectedStatusHistory, statusHistoryDto, "status history did not match expected value")

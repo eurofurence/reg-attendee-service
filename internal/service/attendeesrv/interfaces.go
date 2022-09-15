@@ -19,4 +19,7 @@ type AttendeeService interface {
 
 	GetAdminInfo(ctx context.Context, attendeeId uint) (*entity.AdminInfo, error)
 	UpdateAdminInfo(ctx context.Context, adminInfo *entity.AdminInfo) error
+
+	GetFullStatusHistory(ctx context.Context, attendee *entity.Attendee) ([]entity.StatusChange, error)
+	RequestStatusChange(ctx context.Context, attendee *entity.Attendee, newStatus string, comments string) error
 }
