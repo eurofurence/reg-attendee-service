@@ -1,12 +1,22 @@
 package acceptance
 
 import (
+	"context"
+	"fmt"
 	"github.com/eurofurence/reg-attendee-service/docs"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/admin"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
+	"github.com/eurofurence/reg-attendee-service/internal/entity"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/paymentservice"
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/url"
+	"strconv"
 	"testing"
+	"time"
 )
 
 // -------------------------------------------
@@ -234,7 +244,7 @@ func TestStatusHistory_AdminOk(t *testing.T) {
 	require.Equal(t, 1, len(statusHistoryDto.StatusHistory))
 	expectedStatusHistory := status.StatusHistoryDto{
 		Id: attendee1.Id,
-		StatusHistory: []status.StatusChange{{
+		StatusHistory: []status.StatusChangeDto{{
 			Timestamp: statusHistoryDto.StatusHistory[0].Timestamp,
 			Status:    "new",
 			Comment:   "registration",
@@ -242,6 +252,453 @@ func TestStatusHistory_AdminOk(t *testing.T) {
 	}
 	require.EqualValues(t, expectedStatusHistory, statusHistoryDto, "status history did not match expected value")
 }
+
+func TestStatusHistory_InvalidId(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given a logged in admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they try to access the status history for an attendee with an invalid id")
+	response := tstPerformGet("/api/rest/v1/attendees/lynx/status-history", token)
+
+	docs.Then("then the request fails and the appropriate error is returned")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.id.invalid", url.Values{})
+}
+
+func TestStatusHistory_Nonexistent(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given a logged in admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they try to access the status history for an attendee that does not exist")
+	response := tstPerformGet("/api/rest/v1/attendees/42/status-history", token)
+
+	docs.Then("then the request fails and the appropriate error is returned")
+	tstRequireErrorResponse(t, response, http.StatusNotFound, "attendee.id.notfound", url.Values{})
+}
+
+// --- status changes ---
+
+// - anonymous is always denied -
+
+func TestStatusChange_Anonymous_Any_Any(t *testing.T) {
+	for o, oldStatus := range config.AllowedStatusValues() {
+		for n, newStatus := range config.AllowedStatusValues() {
+			testname := fmt.Sprintf("TestStatusChange_Anonymous_%s_%s", oldStatus, newStatus)
+			t.Run(testname, func(t *testing.T) {
+				tstStatusChange_Anonymous_Deny(t, fmt.Sprintf("st%danon%d-", o, n), oldStatus, newStatus)
+			})
+		}
+	}
+}
+
+// - other (without regdesk permission) is always denied -
+
+func TestStatusChange_Other_Any_Any(t *testing.T) {
+	for o, oldStatus := range config.AllowedStatusValues() {
+		for n, newStatus := range config.AllowedStatusValues() {
+			testname := fmt.Sprintf("TestStatusChange_Other_%s_%s", oldStatus, newStatus)
+			t.Run(testname, func(t *testing.T) {
+				tstStatusChange_Other_Deny(t, fmt.Sprintf("st%dother%d-", o, n), oldStatus, newStatus)
+			})
+		}
+	}
+}
+
+// - staff (without regdesk permission they are no different from regular attendees) is always denied -
+
+func TestStatusChange_Staff_Any_Any(t *testing.T) {
+	for o, oldStatus := range config.AllowedStatusValues() {
+		for n, newStatus := range config.AllowedStatusValues() {
+			testname := fmt.Sprintf("TestStatusChange_Staff_%s_%s", oldStatus, newStatus)
+			t.Run(testname, func(t *testing.T) {
+				tstStatusChange_Staff_Deny(t, fmt.Sprintf("st%dstaff%d-", o, n), oldStatus, newStatus)
+			})
+		}
+	}
+}
+
+// - self can do self cancellation from new and approved, but nothing else -
+// (note that received payments come in as admin requests either from the payment service or from an admin, so those aren't self reported)
+
+func TestStatusChange_Self_New_Cancelled(t *testing.T) {
+	tstStatusChange_Self_Allow(t, "st0self6-", "new", "cancelled")
+	// TODO refund logic by self cancellation date
+}
+
+func TestStatusChange_Self_Approved_Cancelled(t *testing.T) {
+	tstStatusChange_Self_Allow(t, "st1self6-", "approved", "cancelled")
+}
+
+func TestStatusChange_Self_Any_Any(t *testing.T) {
+	for o, oldStatus := range config.AllowedStatusValues() {
+		for n, newStatus := range config.AllowedStatusValues() {
+			if (oldStatus == "new" || oldStatus == "approved") && newStatus == "cancelled" {
+				// see individual test cases above
+			} else {
+				testname := fmt.Sprintf("TestStatusChange_Self_%s_%s", oldStatus, newStatus)
+				t.Run(testname, func(t *testing.T) {
+					tstStatusChange_Self_Deny(t, fmt.Sprintf("st%dself%d-", o, n), oldStatus, newStatus)
+				})
+			}
+		}
+	}
+}
+
+// - an attendee with regdesk permission can check paid people in, but can do nothing else -
+
+func TestStatusChange_Regdesk_Paid_CheckedIn(t *testing.T) {
+	tstStatusChange_Regdesk_Allow(t, "st3regdsk4-", "paid", "checked in")
+}
+
+func TestStatusChange_Regdesk_Any_Any(t *testing.T) {
+	for o, oldStatus := range config.AllowedStatusValues() {
+		for n, newStatus := range config.AllowedStatusValues() {
+			if oldStatus == "paid" && newStatus == "checked in" {
+				// see individual test case above
+			} else {
+				testname := fmt.Sprintf("TestStatusChange_Regdesk_%s_%s", oldStatus, newStatus)
+				t.Run(testname, func(t *testing.T) {
+					tstStatusChange_Regdesk_Deny(t, fmt.Sprintf("st%dregdsk%d-", o, n), oldStatus, newStatus)
+				})
+			}
+		}
+	}
+}
+
+// - admins can make any available status change, so this tests availability conditions, mails sent and payment bookings
+//   in all these cases -
+
+func TestStatusChange_Admin_Same_Same(t *testing.T) {
+	for b, bothStatus := range config.AllowedStatusValues() {
+		testname := fmt.Sprintf("TestStatusChange_Admin_%s_%s", bothStatus, bothStatus)
+		t.Run(testname, func(t *testing.T) {
+			tstStatusChange_Admin_Unavailable(t, fmt.Sprintf("st%dadm%d-", b, b), bothStatus, bothStatus,
+				"status.unchanged.invalid", "old and new status are the same")
+		})
+	}
+}
+
+// TODO other transitions for admins
+
+// --- detail implementations for the status change tests ---
+
+func tstStatusChange_Anonymous_Deny(t *testing.T, testcase string, oldStatus string, newStatus string) {
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given an attendee in status " + oldStatus)
+	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
+
+	docs.When("when an anonymous user tries to change the status to " + newStatus)
+	body := status.StatusChangeDto{
+		Status:  newStatus,
+		Comment: testcase,
+	}
+	response := tstPerformPost(loc+"/status", tstRenderJson(body), tstNoToken())
+
+	docs.Then("then the request is denied as unauthenticated (401) and the appropriate error is returned")
+	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "missing Authorization header with bearer token")
+
+	docs.Then("and the status is unchanged")
+	tstVerifyStatus(t, loc, oldStatus)
+
+	docs.Then("and no dues or payment changes have been recorded")
+	require.Empty(t, paymentMock.Recording())
+
+	docs.Then("and no email messages have been sent")
+	require.Empty(t, mailMock.Recording())
+}
+
+func tstStatusChange_Self_Deny(t *testing.T, testcase string, oldStatus string, newStatus string) {
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given an attendee in status " + oldStatus)
+	loc, att := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
+
+	docs.When("when they try to change the status to " + newStatus)
+	body := status.StatusChangeDto{
+		Status:  newStatus,
+		Comment: testcase,
+	}
+	response := tstPerformPost(loc+"/status", tstRenderJson(body), tstValidUserToken(t, att.Id))
+
+	docs.Then("then the request is denied as unauthorized (403) and the appropriate error is returned")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not unauthorized for this operation - the attempt has been logged")
+
+	docs.Then("and the status is unchanged")
+	tstVerifyStatus(t, loc, oldStatus)
+
+	docs.Then("and no dues or payment changes have been recorded")
+	require.Empty(t, paymentMock.Recording())
+
+	docs.Then("and no email messages have been sent")
+	require.Empty(t, mailMock.Recording())
+}
+
+func tstStatusChange_Self_Unavailable(t *testing.T, testcase string, oldStatus string, newStatus string) {
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given an attendee in status " + oldStatus)
+	loc, att := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
+
+	docs.When("when they prematurely try to change the status to " + newStatus)
+	body := status.StatusChangeDto{
+		Status:  newStatus,
+		Comment: testcase,
+	}
+	_ = tstPerformPost(loc+"/status", tstRenderJson(body), tstValidUserToken(t, att.Id))
+
+	docs.Limitation("the current fixed-token security model cannot check which user is logged in. Once implemented this should be successful!")
+	// TODO implement this part when working on security model
+
+	docs.Then("then the request fails as conflict (409) and the appropriate error is returned")
+	// TODO
+
+	docs.Then("and the status is unchanged")
+	// TODO
+
+	docs.Then("and no dues or payment changes have been recorded")
+	// TODO
+
+	docs.Then("and no email messages have been sent")
+	// TODO
+}
+
+func tstStatusChange_Self_Allow(t *testing.T, testcase string, oldStatus string, newStatus string) {
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given an attendee in status " + oldStatus)
+	loc, att := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
+
+	docs.When("when they change their own status to " + newStatus)
+	body := status.StatusChangeDto{
+		Status:  newStatus,
+		Comment: testcase,
+	}
+	_ = tstPerformPost(loc+"/status", tstRenderJson(body), tstValidUserToken(t, att.Id))
+
+	docs.Limitation("the current fixed-token security model cannot check which user is logged in. Once implemented this should be successful!")
+	// TODO implement this part when working on security model
+
+	docs.Then("then the request is successful and the status change has been done")
+	// TODO
+
+	docs.Then("and the appropriate dues were booked in the payment-service")
+	// TODO - pass in expected as parameter and record in mock
+
+	docs.Then("and the appropriate email messages were sent via the mail-service")
+	// TODO - pass in expected as parameter and record in mock
+}
+
+func tstStatusChange_Other_Deny(t *testing.T, testcase string, oldStatus string, newStatus string) {
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given an attendee in status " + oldStatus + " and a second user")
+	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
+	_, att2 := tstRegisterAttendee(t, testcase+"second")
+
+	docs.When("when the second user tries to change the first attendee's status to " + newStatus)
+	body := status.StatusChangeDto{
+		Status:  newStatus,
+		Comment: testcase,
+	}
+	response := tstPerformPost(loc+"/status", tstRenderJson(body), tstValidUserToken(t, att2.Id))
+
+	docs.Then("then the request is denied as unauthorized (403) and the appropriate error is returned")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not unauthorized for this operation - the attempt has been logged")
+
+	docs.Then("and the status is unchanged")
+	tstVerifyStatus(t, loc, oldStatus)
+
+	docs.Then("and no dues or payment changes have been recorded")
+	require.Empty(t, paymentMock.Recording())
+
+	docs.Then("and no email messages have been sent")
+	require.Empty(t, mailMock.Recording())
+}
+
+func tstStatusChange_Regdesk_Deny(t *testing.T, testcase string, oldStatus string, newStatus string) {
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given an attendee in status " + oldStatus + " and a second attendee with the regdesk permission")
+	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
+	regdeskUserToken := tstRegisterRegdeskAttendee(t, testcase)
+
+	docs.When("when the regdesk attendee tries to change the first attendee's status to " + newStatus)
+	body := status.StatusChangeDto{
+		Status:  newStatus,
+		Comment: testcase,
+	}
+	response := tstPerformPost(loc+"/status", tstRenderJson(body), regdeskUserToken)
+
+	docs.Then("then the request is denied as unauthorized (403) and the appropriate error is returned")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not unauthorized for this operation - the attempt has been logged")
+
+	docs.Then("and the status is unchanged")
+	tstVerifyStatus(t, loc, oldStatus)
+
+	docs.Then("and no dues or payment changes have been recorded")
+	require.Empty(t, paymentMock.Recording())
+
+	docs.Then("and no email messages have been sent")
+	require.Empty(t, mailMock.Recording())
+}
+
+func tstStatusChange_Regdesk_Unavailable(t *testing.T, testcase string, oldStatus string, newStatus string) {
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given an attendee in status " + oldStatus + " and a second attendee with the regdesk permission")
+	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
+	regdeskUserToken := tstRegisterRegdeskAttendee(t, testcase)
+
+	docs.When("when the regdesk attendee prematurely tries to change the first attendee's status to " + newStatus)
+	body := status.StatusChangeDto{
+		Status:  newStatus,
+		Comment: testcase,
+	}
+	_ = tstPerformPost(loc+"/status", tstRenderJson(body), regdeskUserToken)
+
+	docs.Limitation("the current fixed-token security model cannot check which user is logged in. Once implemented this should be successful!")
+	// TODO implement this part when working on security model
+
+	docs.Then("then the request fails as conflict (409) and the appropriate error is returned")
+	// TODO
+
+	docs.Then("and the status is unchanged")
+	// TODO
+
+	docs.Then("and no dues or payment changes have been recorded")
+	// TODO
+
+	docs.Then("and no email messages have been sent")
+	// TODO
+}
+
+func tstStatusChange_Regdesk_Allow(t *testing.T, testcase string, oldStatus string, newStatus string) {
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given an attendee in status " + oldStatus + " and a second attendee with the regdesk permission")
+	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
+	regdeskUserToken := tstRegisterRegdeskAttendee(t, testcase)
+
+	docs.When("when the regdesk attendee changes the first attendee's status to " + newStatus)
+	body := status.StatusChangeDto{
+		Status:  newStatus,
+		Comment: testcase,
+	}
+	_ = tstPerformPost(loc+"/status", tstRenderJson(body), regdeskUserToken)
+
+	docs.Limitation("the current fixed-token security model cannot check which user is logged in. Once implemented this should be successful!")
+	// TODO implement this part when working on security model
+
+	docs.Then("then the request is successful and the status change has been done")
+	// TODO
+
+	docs.Then("and the appropriate dues were booked in the payment-service")
+	// TODO - pass in expected as parameter and record in mock
+
+	docs.Then("and the appropriate email messages were sent via the mail-service")
+	// TODO - pass in expected as parameter and record in mock
+}
+
+func tstStatusChange_Staff_Deny(t *testing.T, testcase string, oldStatus string, newStatus string) {
+	tstSetup(tstStaffregConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given an attendee in status " + oldStatus + " and a second user who is staff")
+	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
+	_, att2 := tstRegisterAttendee(t, testcase+"second")
+	token := tstValidStaffToken(t, att2.Id)
+
+	docs.When("when the staffer tries to change the first attendee's status to " + newStatus)
+	body := status.StatusChangeDto{
+		Status:  newStatus,
+		Comment: testcase,
+	}
+	response := tstPerformPost(loc+"/status", tstRenderJson(body), token)
+
+	docs.Then("then the request is denied as unauthorized (403) and the appropriate error is returned")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not unauthorized for this operation - the attempt has been logged")
+
+	docs.Then("and the status is unchanged")
+	tstVerifyStatus(t, loc, oldStatus)
+
+	docs.Then("and no dues or payment changes have been recorded")
+	require.Empty(t, paymentMock.Recording())
+
+	docs.Then("and no email messages have been sent")
+	require.Empty(t, mailMock.Recording())
+}
+
+// admins never get deny (403), but they can get "not possible right now" (409)
+
+func tstStatusChange_Admin_Unavailable(t *testing.T, testcase string, oldStatus string, newStatus string, message string, details string) {
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given an attendee in status " + oldStatus)
+	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
+
+	docs.When("when an admin prematurely tries to change the status to " + newStatus)
+	body := status.StatusChangeDto{
+		Status:  newStatus,
+		Comment: testcase,
+	}
+	response := tstPerformPost(loc+"/status", tstRenderJson(body), tstValidAdminToken(t))
+
+	docs.Then("then the request fails as conflict (409) and the appropriate error is returned")
+	tstRequireErrorResponse(t, response, http.StatusConflict, message, details)
+
+	docs.Then("and the status is unchanged")
+	tstVerifyStatus(t, loc, oldStatus)
+
+	docs.Then("and no dues or payment changes have been recorded")
+	require.Empty(t, paymentMock.Recording())
+
+	docs.Then("and no email messages have been sent")
+	require.Empty(t, mailMock.Recording())
+}
+
+func tstStatusChange_Admin_Allow(t *testing.T, testcase string, oldStatus string, newStatus string) {
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given an attendee in status " + oldStatus)
+	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
+
+	docs.When("when an admin changes their status to " + newStatus)
+	body := status.StatusChangeDto{
+		Status:  newStatus,
+		Comment: testcase,
+	}
+	response := tstPerformPost(loc+"/status", tstRenderJson(body), tstValidAdminToken(t))
+
+	docs.Then("then the request is successful and the status change has been done")
+	require.Equal(t, http.StatusNoContent, response.status)
+	// TODO
+
+	docs.Then("and the appropriate dues were booked in the payment service")
+	// TODO - pass in expected as parameter and record in mock
+
+	docs.Then("and the appropriate email messages were sent via the mail service")
+	// TODO - pass in expected as parameter and record in mock
+}
+
+// TODO test invalid values, attendee id, invalid body etc. with admin
 
 // helper functions
 
@@ -253,4 +710,104 @@ func tstRequireAttendeeStatus(t *testing.T, expected string, responseBody string
 		Status: expected,
 	}
 	require.EqualValues(t, expectedStatusDto, statusDto, "status did not match expected value")
+}
+
+func tstRegisterRegdeskAttendee(t *testing.T, testcase string) (token string) {
+	loc2, att2 := tstRegisterAttendee(t, testcase+"second")
+	permBody := admin.AdminInfoDto{
+		Permissions: "regdesk",
+	}
+	permissionResponse := tstPerformPut(loc2+"/admin", tstRenderJson(permBody), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, permissionResponse.status)
+
+	return tstValidUserToken(t, att2.Id)
+}
+
+func tstRegisterAttendeeAndTransitionToStatus(t *testing.T, testcase string, status string) (location string, att attendee.AttendeeDto) {
+	location, att = tstRegisterAttendee(t, testcase)
+	if status == "new" {
+		return
+	}
+
+	ctx := context.Background()
+	attid, _ := strconv.Atoi(att.Id)
+
+	// approved
+	_ = database.GetRepository().AddStatusChange(ctx, tstCreateStatusChange(attid, "approved"))
+	_ = paymentMock.InjectTransaction(ctx, tstCreateTransaction(attid, paymentservice.Due, 25500))
+	if status == "approved" {
+		return
+	}
+
+	if status == "deleted" {
+		_ = database.GetRepository().AddStatusChange(ctx, tstCreateStatusChange(attid, "deleted"))
+		return
+	}
+
+	// partially paid
+	_ = database.GetRepository().AddStatusChange(ctx, tstCreateStatusChange(attid, "partially paid"))
+	_ = paymentMock.InjectTransaction(ctx, tstCreateTransaction(attid, paymentservice.Payment, 15500))
+	if status == "partially paid" {
+		return
+	}
+
+	// paid
+	_ = database.GetRepository().AddStatusChange(ctx, tstCreateStatusChange(attid, "paid"))
+	_ = paymentMock.InjectTransaction(ctx, tstCreateTransaction(attid, paymentservice.Payment, 10000))
+	if status == "paid" {
+		return
+	}
+
+	// checked in
+	_ = database.GetRepository().AddStatusChange(ctx, tstCreateStatusChange(attid, "checked in"))
+	if status == "checked in" {
+		return
+	}
+
+	// cancelled
+	_ = database.GetRepository().AddStatusChange(ctx, tstCreateStatusChange(attid, "cancelled"))
+	if status == "cancelled" {
+		return
+	}
+
+	// invalid status - error in test code
+	t.FailNow()
+	return
+}
+
+func tstCreateStatusChange(attid int, status string) *entity.StatusChange {
+	return &entity.StatusChange{
+		AttendeeId: uint(attid),
+		Status:     status,
+	}
+}
+
+func tstCreateTransaction(attid int, ty paymentservice.TransactionType, amount int64) paymentservice.Transaction {
+	method := paymentservice.Internal
+	if ty == paymentservice.Payment {
+		method = paymentservice.Credit
+	}
+	return paymentservice.Transaction{
+		ID:        "1234-1234abc",
+		DebitorID: uint(attid),
+		Type:      ty,
+		Method:    method,
+		Amount: paymentservice.Amount{
+			Currency:  "EUR",
+			GrossCent: amount,
+			VatRate:   0.19,
+		},
+		Status:        paymentservice.Valid,
+		EffectiveDate: "1999-12-31",
+		DueDate:       time.Now(),
+		Deletion:      nil,
+	}
+}
+
+func tstVerifyStatus(t *testing.T, loc string, expectedStatus string) {
+	response := tstPerformGet(loc+"/status", tstValidAdminToken(t))
+	require.Equal(t, http.StatusOK, response.status)
+	statusDto := status.StatusDto{}
+	tstParseJson(response.body, &statusDto)
+	require.Equal(t, expectedStatus, statusDto.Status)
 }

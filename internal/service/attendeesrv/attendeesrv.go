@@ -45,8 +45,22 @@ func (s *AttendeeServiceImplData) UpdateAttendee(ctx context.Context, attendee *
 		return errors.New("your changes would lead to duplicate attendee data - same nickname, zip, email")
 	}
 
+	// TODO: verify permissions - after first payment, only admins can remove packages
+
 	err = database.GetRepository().UpdateAttendee(ctx, attendee)
-	return err
+	if err != nil {
+		return err
+	}
+
+	// TODO: if status is approved, partially paid, paid, checked in - recalculate dues (may also change status)
+	if false {
+		err = s.UpdateDues(ctx, attendee)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *AttendeeServiceImplData) GetAttendeeMaxId(ctx context.Context) (uint, error) {

@@ -2,6 +2,7 @@ package attendeesrv
 
 import (
 	"context"
+	"errors"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 )
@@ -21,5 +22,15 @@ type AttendeeService interface {
 	UpdateAdminInfo(ctx context.Context, adminInfo *entity.AdminInfo) error
 
 	GetFullStatusHistory(ctx context.Context, attendee *entity.Attendee) ([]entity.StatusChange, error)
-	RequestStatusChange(ctx context.Context, attendee *entity.Attendee, newStatus string, comments string) error
+	DoStatusChange(ctx context.Context, attendee *entity.Attendee, newStatus string, comments string) error
+	StatusChangeAllowed(ctx context.Context, oldStatus string, newStatus string) error
+	StatusChangePossible(ctx context.Context, attendee *entity.Attendee, oldStatus string, newStatus string) error
 }
+
+var (
+	SameStatusError          = errors.New("old and new status are the same")
+	InsufficientPaymentError = errors.New("payment amount not sufficient")
+	HasPaymentBalanceError   = errors.New("there is a non-zero payment balance, please use partially paid, or refund")
+	CannotDeleteError        = errors.New("cannot delete attendee for legal reasons (there were payments or invoices)")
+	UnknownStatusError       = errors.New("unknown status value - this is a programming error")
+)

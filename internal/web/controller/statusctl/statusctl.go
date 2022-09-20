@@ -2,6 +2,7 @@ package statusctl
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
@@ -48,16 +49,11 @@ func getStatusHandler(ctx context.Context, w http.ResponseWriter, r *http.Reques
 	// TODO ensure if user, can only get their own data - once permission system is in
 	// (right now regular users and staff are completely forbidden, but they'll need this)
 
-	history, err := attendeeService.GetFullStatusHistory(ctx, att)
+	latest, err := obtainAttendeeLatestStatusMustReturnOnError(ctx, w, r, att)
 	if err != nil {
-		statusReadErrorHandler(ctx, w, r, err)
-		return
-	} else if len(history) == 0 {
-		statusReadErrorHandler(ctx, w, r, errors.New("got empty status change history"))
 		return
 	}
 
-	latest := history[len(history)-1]
 	dto := status.StatusDto{
 		Status: latest.Status,
 	}
@@ -70,11 +66,36 @@ func postStatusHandler(ctx context.Context, w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		return
 	}
-
-	err = attendeeService.RequestStatusChange(ctx, att, "approved", "")
-	// TODO various error handlers
+	dto, err := parseBodyToStatusChangeDto(ctx, w, r)
 	if err != nil {
+		return
+	}
+	latestStatusChange, err := obtainAttendeeLatestStatusMustReturnOnError(ctx, w, r, att)
+	if err != nil {
+		return
+	}
 
+	validationErrs := validate(ctx, latestStatusChange.Status, dto)
+	if len(validationErrs) != 0 {
+		statusChangeValidationErrorHandler(ctx, w, r, validationErrs)
+		return
+	}
+
+	if err = attendeeService.StatusChangeAllowed(ctx, latestStatusChange.Status, dto.Status); err != nil {
+		statusChangeForbiddenErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	if err = attendeeService.StatusChangePossible(ctx, att, latestStatusChange.Status, dto.Status); err != nil {
+		statusChangeUnavailableErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	err = attendeeService.DoStatusChange(ctx, att, dto.Status, dto.Comment)
+	if err != nil {
+		// TODO distinguish mail service error: status.mail.error -> bad gateway
+		// TODO distinguish payment service error: status.payment.error -> bad gateway
+		statusWriteErrorHandler(ctx, w, r, err)
 	} else {
 		ctlutil.WriteHeader(ctx, w, http.StatusNoContent)
 	}
@@ -95,9 +116,9 @@ func getStatusHistoryHandler(ctx context.Context, w http.ResponseWriter, r *http
 		return
 	}
 
-	mappedHistory := make([]status.StatusChange, 0)
+	mappedHistory := make([]status.StatusChangeDto, 0)
 	for _, h := range history {
-		mappedHistory = append(mappedHistory, status.StatusChange{
+		mappedHistory = append(mappedHistory, status.StatusChangeDto{
 			Timestamp: h.CreatedAt.Format(time.RFC3339),
 			Status:    h.Status,
 			Comment:   h.Comments,
@@ -118,6 +139,42 @@ func statusReadErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.
 	ctlutil.ErrorHandler(ctx, w, r, "status.read.error", http.StatusInternalServerError, url.Values{})
 }
 
+func statusWriteErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
+	logging.Ctx(ctx).Warnf("could not obtain status history: %v", err)
+	ctlutil.ErrorHandler(ctx, w, r, "status.write.error", http.StatusInternalServerError, url.Values{})
+}
+
+func statusParseErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
+	logging.Ctx(ctx).Warnf("status change body could not be parsed: %v", err)
+	ctlutil.ErrorHandler(ctx, w, r, "status.parse.error", http.StatusBadRequest, url.Values{})
+}
+
+func statusChangeValidationErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, errs url.Values) {
+	logging.Ctx(ctx).Warnf("received status change data with validation errors: %v", errs)
+	ctlutil.ErrorHandler(ctx, w, r, "status.data.invalid", http.StatusBadRequest, errs)
+}
+
+func statusChangeForbiddenErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
+	// TODO log user so we can figure out who tried it
+	logging.Ctx(ctx).Warnf("forbidden status change attempted: %v", err)
+	ctlutil.ErrorHandler(ctx, w, r, "auth.forbidden", http.StatusForbidden, url.Values{"details": []string{err.Error()}})
+}
+
+func statusChangeUnavailableErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
+	logging.Ctx(ctx).Warnf("unavailable status change attempted: %v", err)
+	message := "status.data.invalid"
+	if errors.Is(err, attendeesrv.SameStatusError) {
+		message = "status.unchanged.invalid"
+	} else if errors.Is(err, attendeesrv.InsufficientPaymentError) {
+		message = "status.unpaid.dues"
+	} else if errors.Is(err, attendeesrv.HasPaymentBalanceError) {
+		message = "status.has.paid"
+	} else if errors.Is(err, attendeesrv.CannotDeleteError) {
+		message = "status.cannot.delete"
+	}
+	ctlutil.ErrorHandler(ctx, w, r, message, http.StatusConflict, url.Values{"details": []string{err.Error()}})
+}
+
 // --- helpers ---
 
 func attendeeByIdMustReturnOnError(ctx context.Context, w http.ResponseWriter, r *http.Request) (*entity.Attendee, error) {
@@ -131,4 +188,29 @@ func attendeeByIdMustReturnOnError(ctx context.Context, w http.ResponseWriter, r
 		return &entity.Attendee{}, err
 	}
 	return attendee, nil
+}
+
+func obtainAttendeeLatestStatusMustReturnOnError(ctx context.Context, w http.ResponseWriter, r *http.Request, att *entity.Attendee) (entity.StatusChange, error) {
+	history, err := attendeeService.GetFullStatusHistory(ctx, att)
+	if err != nil {
+		statusReadErrorHandler(ctx, w, r, err)
+		return entity.StatusChange{}, err
+	} else if len(history) == 0 {
+		err := errors.New("got empty status change history")
+		statusReadErrorHandler(ctx, w, r, err)
+		return entity.StatusChange{}, err
+	}
+
+	latest := history[len(history)-1]
+	return latest, nil
+}
+
+func parseBodyToStatusChangeDto(ctx context.Context, w http.ResponseWriter, r *http.Request) (*status.StatusChangeDto, error) {
+	decoder := json.NewDecoder(r.Body)
+	dto := &status.StatusChangeDto{}
+	err := decoder.Decode(dto)
+	if err != nil {
+		statusParseErrorHandler(ctx, w, r, err)
+	}
+	return dto, err
 }

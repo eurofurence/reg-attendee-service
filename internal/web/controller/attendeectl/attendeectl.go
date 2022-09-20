@@ -55,7 +55,6 @@ func newAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.Requ
 	newAttendee := attendeeService.NewAttendee(ctx)
 	mapDtoToAttendee(dto, newAttendee)
 	id, err := attendeeService.RegisterNewAttendee(ctx, newAttendee)
-	// TODO react to duplicate by sending 409 instead
 	if err != nil {
 		attendeeWriteErrorHandler(ctx, w, r, err)
 		return
@@ -154,10 +153,11 @@ func attendeeParseErrorHandler(ctx context.Context, w http.ResponseWriter, r *ht
 func attendeeWriteErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
 	logging.Ctx(ctx).Warnf("attendee could not be written: %v", err)
 	if err.Error() == "duplicate attendee data - you are already registered" {
-		ctlutil2.ErrorHandler(ctx, w, r, "attendee.data.duplicate", http.StatusBadRequest, url.Values{"attendee": {"there is already an attendee with this information (looking at nickname, email, and zip code)"}})
+		ctlutil2.ErrorHandler(ctx, w, r, "attendee.data.duplicate", http.StatusConflict, url.Values{"attendee": {"there is already an attendee with this information (looking at nickname, email, and zip code)"}})
 	} else {
 		ctlutil2.ErrorHandler(ctx, w, r, "attendee.write.error", http.StatusInternalServerError, url.Values{})
 	}
+	// TODO: distinguish attendee.payment.error -> bad gateway
 }
 
 func attendeeMaxIdErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {

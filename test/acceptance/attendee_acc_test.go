@@ -261,7 +261,7 @@ func TestCreateNewAttendeeDuplicateHandling(t *testing.T) {
 	duplicateResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(duplicateAttendeeSent), tstNoToken())
 
 	docs.Then("then the attendee is rejected with an error response indicating a duplicate")
-	require.Equal(t, http.StatusBadRequest, duplicateResponse.status, "unexpected http response status")
+	require.Equal(t, http.StatusConflict, duplicateResponse.status, "unexpected http response status")
 	errorDto := errorapi.ErrorDto{}
 	tstParseJson(duplicateResponse.body, &errorDto)
 	require.Equal(t, "attendee.data.duplicate", errorDto.Message, "unexpected error code")

@@ -3,6 +3,8 @@ package acceptance
 import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/mailservice"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/paymentservice"
 	"github.com/eurofurence/reg-attendee-service/internal/web"
 	"net/http/httptest"
 )
@@ -10,7 +12,9 @@ import (
 // placing these here because they are package global
 
 var (
-	ts *httptest.Server
+	ts          *httptest.Server
+	paymentMock paymentservice.Mock
+	mailMock    mailservice.Mock
 )
 
 const tstDefaultConfigFile = "../../test/testconfig.yaml"
@@ -19,6 +23,8 @@ const tstStaffregConfigFile = "../../test/testconfig-staffreg.yaml"
 
 func tstSetup(configFilePath string) {
 	tstSetupConfig(configFilePath)
+	paymentMock = paymentservice.NewMock()
+	mailMock = mailservice.NewMock()
 	tstSetupDatabase()
 	tstSetupHttpTestServer()
 }
@@ -41,4 +47,6 @@ func tstSetupDatabase() {
 func tstShutdown() {
 	ts.Close()
 	database.Close()
+	paymentMock.Reset()
+	mailMock.Reset()
 }

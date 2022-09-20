@@ -192,6 +192,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '502':
+          description: The update leads to an update in the payment service which failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       security:
         - BearerAuth: []
         - ApiKeyAuth: []
@@ -349,6 +355,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '500':
+          description: An unexpected error occurred. This includes database errors. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       security:
         - BearerAuth: []
         - ApiKeyAuth: []
@@ -432,6 +444,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '500':
+          description: An unexpected error occurred. This includes database errors. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '502':
+          description: The update leads to an update in the payment service which failed, or the mail service failed to send an email as part of the update.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       security:
         - BearerAuth: []
         - ApiKeyAuth: []
@@ -478,6 +502,12 @@ paths:
                 $ref: '#/components/schemas/Error'
         '404':
           description: Attendee not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: An unexpected error occurred. This includes database errors. A best effort attempt is made to return details in the body.
           content:
             application/json:
               schema:
@@ -726,6 +756,7 @@ components:
           description: the status, detailed descriptions of the values see below under Schemas/Status (how do I reference this in OpenApi?)
         comment:
           type: string
+          maxLength: 256
           description: The reason for the status change, e.g. cancel reason, or any other comment
           example: cancelled by own request
     StatusHistory:
@@ -798,6 +829,7 @@ components:
             - attendee.data.invalid (field data failed to validate, see details for more information)
             - attendee.data.duplicate (duplicate registration - nickname + email + zip)
             - attendee.write.error (database error)
+            - attendee.payment.error (payment service failure while updating attendee)
             - attendee.id.notfound (no such badge number in the database)
             - attendee.id.invalid (syntactically invalid badge number, must be positive integer)
             - admin.read.error (database error)
@@ -808,7 +840,13 @@ components:
             - auth.forbidden (permissions missing)
             - status.read.error (database error)
             - status.write.error (database error)
+            - status.mail.error (mail service failure while doing status change)
+            - status.payment.error (payment service failure while doing status change)
+            - status.parse.error (json body parse error)
+            - status.unchanged.invalid (not actually a status change)
+            - status.data.invalid (field data failed to validate, see details for more information)            
             - status.unpaid.dues (this status change is blocked because there are outstanding payments)
+            - status.has.paid (this status change is impossible because there is a nonzero payment balance) 
             - status.cannot.delete (deletion is not possible, e.g. there are payments, or an invoice was issued and tax law says we have to store this data for 10 years)
           example: attendee.data.invalid
         details:

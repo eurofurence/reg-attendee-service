@@ -105,6 +105,10 @@ func AllowedCountries() []string {
 	return Configuration().Countries
 }
 
+func AllowedStatusValues() []string {
+	return []string{"new", "approved", "partially paid", "paid", "checked in", "cancelled", "deleted"}
+}
+
 func DefaultFlags() string {
 	return defaultChoiceStr(Configuration().Choices.Flags)
 }

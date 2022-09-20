@@ -79,7 +79,15 @@ func (s *MockAttendeeService) GetFullStatusHistory(ctx context.Context, attendee
 	return []entity.StatusChange{}, nil
 }
 
-func (s *MockAttendeeService) RequestStatusChange(ctx context.Context, attendee *entity.Attendee, newStatus string, comments string) error {
+func (s *MockAttendeeService) DoStatusChange(ctx context.Context, attendee *entity.Attendee, newStatus string, comments string) error {
+	return nil
+}
+
+func (s *MockAttendeeService) StatusChangeAllowed(ctx context.Context, oldStatus string, newStatus string) error {
+	return nil
+}
+
+func (s *MockAttendeeService) StatusChangePossible(ctx context.Context, attendee *entity.Attendee, oldStatus string, newStatus string) error {
 	return nil
 }
 
