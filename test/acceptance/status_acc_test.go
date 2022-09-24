@@ -489,6 +489,67 @@ func TestStatusChange_Admin_Approved_Deleted(t *testing.T) {
 	)
 }
 
+func TestStatusChange_Admin_PartiallyPaid_New(t *testing.T) {
+	testcase := "st2adm0-"
+	tstStatusChange_Admin_Unavailable(t, testcase,
+		"partially paid", "new",
+		"status.has.paid", "there is a non-zero payment balance, please use partially paid, or refund")
+}
+
+func TestStatusChange_Admin_PartiallyPaid_Approved(t *testing.T) {
+	testcase := "st2adm1-"
+	tstStatusChange_Admin_Unavailable(t, testcase,
+		"partially paid", "approved",
+		"status.has.paid", "there is a non-zero payment balance, please use partially paid, or refund")
+}
+
+func TestStatusChange_Admin_PartiallyPaid_Approved_OkAfterRefund(t *testing.T) {
+	testcase := "st2adm1r-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		"partially paid", "approved",
+		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -15500)},
+		[]paymentservice.Transaction{},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "approved")},
+	)
+}
+
+func TestStatusChange_Admin_PartiallyPaid_Paid(t *testing.T) {
+	testcase := "st2adm3-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		"partially paid", "paid",
+		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, 10000)},
+		[]paymentservice.Transaction{},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "paid")},
+	)
+}
+
+func TestStatusChange_Admin_PartiallyPaid_CheckedIn(t *testing.T) {
+	testcase := "st2adm4-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		"partially paid", "checked in",
+		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, 10000)},
+		[]paymentservice.Transaction{},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "checked in")},
+	)
+}
+
+func TestStatusChange_Admin_PartiallyPaid_Cancelled(t *testing.T) {
+	testcase := "st2adm5-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		"partially paid", "cancelled",
+		nil,
+		[]paymentservice.Transaction{tstValidAttendeeDues(-10000, "void unpaid dues on cancel")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "cancelled")},
+	)
+}
+
+func TestStatusChange_Admin_PartiallyPaid_Deleted(t *testing.T) {
+	testcase := "st2adm6-"
+	tstStatusChange_Admin_Unavailable(t, testcase,
+		"partially paid", "deleted",
+		"status.cannot.delete", "cannot delete attendee for legal reasons (there were payments or invoices)")
+}
+
 // ...
 
 // TODO transitions with other payment states (so far we're only testing one example each)
