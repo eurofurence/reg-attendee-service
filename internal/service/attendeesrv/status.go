@@ -48,12 +48,10 @@ func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx contex
 	// controller checks permission via StatusChangeAllowed
 	// controller checks precondition via StatusChangePossible
 
-	if newStatus == "approved" || newStatus == "partially paid" || newStatus == "paid" || newStatus == "checked in" {
-		// Note that UpdateDues may adjust the status according to payment balance
-		newStatus, err = s.UpdateDues(ctx, attendee, oldStatus, newStatus)
-		if err != nil {
-			return err
-		}
+	// Note that UpdateDues may adjust the status according to payment balance
+	newStatus, err = s.UpdateDues(ctx, attendee, oldStatus, newStatus)
+	if err != nil {
+		return err
 	}
 
 	if newStatus != oldStatus {

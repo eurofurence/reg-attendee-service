@@ -390,7 +390,8 @@ func TestStatusChange_Admin_New_Approved(t *testing.T) {
 	testcase := "st0adm1-"
 	tstStatusChange_Admin_Allow(t, testcase,
 		"new", "approved",
-		[]paymentservice.Transaction{tstValidAttendeeDues("dues adjustment due to change in status or selected packages")},
+		nil,
+		[]paymentservice.Transaction{tstValidAttendeeDues(25500, "dues adjustment due to change in status or selected packages")},
 		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "approved")},
 	)
 }
@@ -399,6 +400,7 @@ func TestStatusChange_Admin_New_Cancelled(t *testing.T) {
 	testcase := "st0adm5-"
 	tstStatusChange_Admin_Allow(t, testcase,
 		"new", "cancelled",
+		nil,
 		[]paymentservice.Transaction{},
 		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "cancelled")},
 	)
@@ -408,6 +410,7 @@ func TestStatusChange_Admin_New_Deleted(t *testing.T) {
 	testcase := "st0adm6-"
 	tstStatusChange_Admin_Allow(t, testcase,
 		"new", "deleted",
+		nil,
 		[]paymentservice.Transaction{},
 		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "deleted")},
 	)
@@ -426,7 +429,70 @@ func TestStatusChange_Admin_New_Any(t *testing.T) {
 	}
 }
 
-// TODO other transitions for admins
+func TestStatusChange_Admin_Approved_New(t *testing.T) {
+	testcase := "st1adm0-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		"approved", "new",
+		nil,
+		[]paymentservice.Transaction{tstValidAttendeeDues(-25500, "remove dues balance - status changed to new")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "new")},
+	)
+}
+
+func TestStatusChange_Admin_Approved_PartiallyPaid(t *testing.T) {
+	testcase := "st1adm2-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		"approved", "partially paid",
+		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, 2040)},
+		[]paymentservice.Transaction{},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "partially paid")},
+	)
+}
+
+func TestStatusChange_Admin_Approved_Paid_WithGraceAmount(t *testing.T) {
+	testcase := "st1adm3-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		"approved", "paid",
+		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, 25400)},
+		[]paymentservice.Transaction{},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "paid")},
+	)
+}
+
+func TestStatusChange_Admin_Approved_CheckedIn(t *testing.T) {
+	testcase := "st1adm4-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		"approved", "checked in",
+		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, 25500)},
+		[]paymentservice.Transaction{},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "checked in")},
+	)
+}
+
+func TestStatusChange_Admin_Approved_Cancelled(t *testing.T) {
+	testcase := "st1adm5-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		"approved", "cancelled",
+		nil,
+		[]paymentservice.Transaction{tstValidAttendeeDues(-25500, "void unpaid dues on cancel")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "cancelled")},
+	)
+}
+
+func TestStatusChange_Admin_Approved_Deleted(t *testing.T) {
+	testcase := "st1adm6-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		"approved", "deleted",
+		nil,
+		[]paymentservice.Transaction{tstValidAttendeeDues(-25500, "remove dues balance - status changed to deleted")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "deleted")},
+	)
+}
+
+// ...
+
+// TODO transitions with other payment states (so far we're only testing one example each)
+// TODO transition to cancelled and deleted with more complicated dues / payment histories
 
 // TODO ban check
 
@@ -720,6 +786,7 @@ func tstStatusChange_Admin_Unavailable(t *testing.T, testcase string, oldStatus 
 
 func tstStatusChange_Admin_Allow(t *testing.T, testcase string,
 	oldStatus string, newStatus string,
+	injectExtraTransactions []paymentservice.Transaction,
 	expectedTransactions []paymentservice.Transaction,
 	expectedMailRequests []mailservice.TemplateRequestDto,
 ) {
@@ -728,6 +795,9 @@ func tstStatusChange_Admin_Allow(t *testing.T, testcase string,
 
 	docs.Given("given an attendee in status " + oldStatus)
 	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
+	for _, tx := range injectExtraTransactions {
+		_ = paymentMock.InjectTransaction(context.Background(), tx)
+	}
 
 	docs.When("when an admin changes their status to " + newStatus)
 	body := status.StatusChangeDto{
@@ -854,7 +924,7 @@ func tstCreateTransaction(attid int, ty paymentservice.TransactionType, amount i
 		Amount: paymentservice.Amount{
 			Currency:  "EUR",
 			GrossCent: amount,
-			VatRate:   0.19,
+			VatRate:   19,
 		},
 		Status:        paymentservice.Valid,
 		EffectiveDate: "1999-12-31",

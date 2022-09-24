@@ -152,7 +152,7 @@ func tstParseJson(body string, dto interface{}) {
 	}
 }
 
-func tstValidAttendeeDues(comment string) paymentservice.Transaction {
+func tstValidAttendeeDues(amount int64, comment string) paymentservice.Transaction {
 	return paymentservice.Transaction{
 		ID:        "",
 		DebitorID: 1,
@@ -160,7 +160,7 @@ func tstValidAttendeeDues(comment string) paymentservice.Transaction {
 		Method:    paymentservice.Internal,
 		Amount: paymentservice.Amount{
 			Currency:  "EUR",
-			GrossCent: 25500,
+			GrossCent: amount,
 			VatRate:   19.0,
 		},
 		Comment:       comment,

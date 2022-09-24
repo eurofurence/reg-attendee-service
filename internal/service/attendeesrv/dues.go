@@ -52,7 +52,7 @@ func (s *AttendeeServiceImplData) UpdateDues(ctx context.Context, attendee *enti
 					newStatus = "paid"
 				}
 			} else {
-				if payments < dues {
+				if payments < dues-graceAmount {
 					newStatus = "partially paid"
 				} else {
 					newStatus = "paid"
@@ -142,7 +142,7 @@ func (s *AttendeeServiceImplData) compensateUnpaidDuesOnCancel(ctx context.Conte
 					paid -= tx.Amount.GrossCent
 				} else if paid > 0 {
 					// payments partially cover the dues transaction, book compensating tx for remainder
-					remainderCompensatingTx := s.duesTransactionForAttendee(attendee, tx.Amount.GrossCent-paid, vatStr, "void unpaid dues on cancel")
+					remainderCompensatingTx := s.duesTransactionForAttendee(attendee, -(tx.Amount.GrossCent - paid), vatStr, "void unpaid dues on cancel")
 					err := paymentservice.Get().AddTransaction(ctx, remainderCompensatingTx)
 					if err != nil {
 						return err
@@ -150,7 +150,7 @@ func (s *AttendeeServiceImplData) compensateUnpaidDuesOnCancel(ctx context.Conte
 					paid = 0
 				} else {
 					// no payments left, compensate completely
-					compensatingTx := s.duesTransactionForAttendee(attendee, tx.Amount.GrossCent, vatStr, "void unpaid dues on cancel")
+					compensatingTx := s.duesTransactionForAttendee(attendee, -tx.Amount.GrossCent, vatStr, "void unpaid dues on cancel")
 					err := paymentservice.Get().AddTransaction(ctx, compensatingTx)
 					if err != nil {
 						return err
