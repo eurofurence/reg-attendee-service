@@ -9,6 +9,8 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/mailservice"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/paymentservice"
 	"github.com/eurofurence/reg-attendee-service/internal/service/attendeesrv"
 	"github.com/eurofurence/reg-attendee-service/internal/web/filter/filterhelper"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctlutil"
@@ -87,15 +89,21 @@ func postStatusHandler(ctx context.Context, w http.ResponseWriter, r *http.Reque
 	}
 
 	if err = attendeeService.StatusChangePossible(ctx, att, latestStatusChange.Status, dto.Status); err != nil {
+		if errors.Is(err, paymentservice.DownstreamError) || errors.Is(err, mailservice.DownstreamError) {
+			statusChangeDownstreamError(ctx, w, r, err)
+			return
+		}
 		statusChangeUnavailableErrorHandler(ctx, w, r, err)
 		return
 	}
 
-	err = attendeeService.DoStatusChange(ctx, att, dto.Status, dto.Comment)
+	err = attendeeService.DoStatusChange(ctx, att, latestStatusChange.Status, dto.Status, dto.Comment)
 	if err != nil {
-		// TODO distinguish mail service error: status.mail.error -> bad gateway
-		// TODO distinguish payment service error: status.payment.error -> bad gateway
-		statusWriteErrorHandler(ctx, w, r, err)
+		if errors.Is(err, paymentservice.DownstreamError) || errors.Is(err, mailservice.DownstreamError) {
+			statusChangeDownstreamError(ctx, w, r, err)
+		} else {
+			statusWriteErrorHandler(ctx, w, r, err)
+		}
 	} else {
 		ctlutil.WriteHeader(ctx, w, http.StatusNoContent)
 	}
@@ -173,6 +181,17 @@ func statusChangeUnavailableErrorHandler(ctx context.Context, w http.ResponseWri
 		message = "status.cannot.delete"
 	}
 	ctlutil.ErrorHandler(ctx, w, r, message, http.StatusConflict, url.Values{"details": []string{err.Error()}})
+}
+
+func statusChangeDownstreamError(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
+	logging.Ctx(ctx).Warnf("downstream error during status change: %v", err)
+	message := "unknown"
+	if errors.Is(err, paymentservice.DownstreamError) {
+		message = "status.payment.error"
+	} else if errors.Is(err, mailservice.DownstreamError) {
+		message = "status.mail.error"
+	}
+	ctlutil.ErrorHandler(ctx, w, r, message, http.StatusBadGateway, url.Values{"details": []string{err.Error()}})
 }
 
 // --- helpers ---

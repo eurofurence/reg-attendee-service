@@ -52,12 +52,20 @@ func (s *AttendeeServiceImplData) UpdateAttendee(ctx context.Context, attendee *
 		return err
 	}
 
-	// TODO: if status is approved, partially paid, paid, checked in - recalculate dues (may also change status)
-	if false {
-		err = s.UpdateDues(ctx, attendee)
+	statusHistory, err := s.GetFullStatusHistory(ctx, attendee)
+	if err != nil {
+		return err
+	}
+
+	currentStatus := statusHistory[len(statusHistory)-1].Status
+
+	if currentStatus == "approved" || currentStatus == "partially paid" || currentStatus == "paid" || currentStatus == "checked in" {
+		err = s.UpdateDues(ctx, attendee, currentStatus)
 		if err != nil {
 			return err
 		}
+
+		// TODO: dues update may also change status - maybe move this into UpdateDues?
 	}
 
 	return nil

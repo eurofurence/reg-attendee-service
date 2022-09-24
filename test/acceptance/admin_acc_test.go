@@ -327,6 +327,8 @@ func TestAdminWrite_WrongFlagType(t *testing.T) {
 	tstRequireAdminInfoMatches(t, expectedAdminInfo, response2.body)
 }
 
+// TODO test dues changes caused by setting and removing guest status and corresponding status change logic
+
 // helper functions
 
 func tstRequireAdminInfoMatches(t *testing.T, expected admin.AdminInfoDto, body string) {

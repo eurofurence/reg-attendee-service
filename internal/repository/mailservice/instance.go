@@ -4,11 +4,11 @@ var activeInstance MailService
 
 func Create() {
 	// TODO implement me with non-mock
-	activeInstance = NewMock()
+	activeInstance = newMock()
 }
 
 func CreateMock() Mock {
-	instance := NewMock()
+	instance := newMock()
 	activeInstance = instance
 	return instance
 }

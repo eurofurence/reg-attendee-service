@@ -13,6 +13,7 @@ type PaymentService interface {
 
 var (
 	NoSuchDebitor404Error = errors.New("debitor id not found")
+	DownstreamError       = errors.New("downstream unavailable - see log for details")
 )
 
 type TransactionType int

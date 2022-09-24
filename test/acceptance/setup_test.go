@@ -23,8 +23,8 @@ const tstStaffregConfigFile = "../../test/testconfig-staffreg.yaml"
 
 func tstSetup(configFilePath string) {
 	tstSetupConfig(configFilePath)
-	paymentMock = paymentservice.NewMock()
-	mailMock = mailservice.NewMock()
+	paymentMock = paymentservice.CreateMock()
+	mailMock = mailservice.CreateMock()
 	tstSetupDatabase()
 	tstSetupHttpTestServer()
 }

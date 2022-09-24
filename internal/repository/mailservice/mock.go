@@ -20,7 +20,7 @@ var (
 	_ Mock        = (*MockImpl)(nil)
 )
 
-func NewMock() Mock {
+func newMock() Mock {
 	return &MockImpl{
 		recording: make([]TemplateRequestDto, 0),
 	}

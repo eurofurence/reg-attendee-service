@@ -10,6 +10,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/mailservice"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/paymentservice"
 	"github.com/stretchr/testify/require"
 	"net/http"
@@ -385,6 +386,17 @@ func TestStatusChange_Admin_Same_Same(t *testing.T) {
 	}
 }
 
+func TestStatusChange_Admin_New_Approved(t *testing.T) {
+	testcase := "st0adm1-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		"new", "approved",
+		[]paymentservice.Transaction{tstValidAttendeeDues("dues adjustment due to change in status or selected packages")},
+		[]mailservice.TemplateRequestDto{tstAcceptMail(testcase)},
+	)
+}
+
+// TODO ban check
+
 // TODO other transitions for admins
 
 // --- detail implementations for the status change tests ---
@@ -673,7 +685,11 @@ func tstStatusChange_Admin_Unavailable(t *testing.T, testcase string, oldStatus 
 	require.Empty(t, mailMock.Recording())
 }
 
-func tstStatusChange_Admin_Allow(t *testing.T, testcase string, oldStatus string, newStatus string) {
+func tstStatusChange_Admin_Allow(t *testing.T, testcase string,
+	oldStatus string, newStatus string,
+	expectedTransactions []paymentservice.Transaction,
+	expectedMailRequests []mailservice.TemplateRequestDto,
+) {
 	tstSetup(tstDefaultConfigFile)
 	defer tstShutdown()
 
@@ -689,16 +705,26 @@ func tstStatusChange_Admin_Allow(t *testing.T, testcase string, oldStatus string
 
 	docs.Then("then the request is successful and the status change has been done")
 	require.Equal(t, http.StatusNoContent, response.status)
-	// TODO
+	tstVerifyStatus(t, loc, newStatus)
 
 	docs.Then("and the appropriate dues were booked in the payment service")
-	// TODO - pass in expected as parameter and record in mock
+	require.EqualValues(t, expectedTransactions, paymentMock.Recording())
 
 	docs.Then("and the appropriate email messages were sent via the mail service")
-	// TODO - pass in expected as parameter and record in mock
+	require.Equal(t, len(expectedMailRequests), len(mailMock.Recording()))
+	for i, expected := range expectedMailRequests {
+		actual := mailMock.Recording()[i]
+		require.Contains(t, actual.Email, expected.Email)
+		actual.Email = expected.Email
+		require.EqualValues(t, expected, actual)
+	}
 }
 
+// TODO test unbook unpaid dues on cancel (but not paid dues!), in order of invoicing (don't forget negative dues in history)
+
 // TODO test invalid values, attendee id, invalid body etc. with admin
+
+// TODO test downstream errors (502) by simulating errors in payment and mail service
 
 // helper functions
 

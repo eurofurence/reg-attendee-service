@@ -6,6 +6,8 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/mailservice"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/paymentservice"
 	"github.com/eurofurence/reg-attendee-service/internal/web/filter/ctxvalues"
 	"gorm.io/gorm"
 )
@@ -40,14 +42,14 @@ func (s *AttendeeServiceImplData) GetFullStatusHistory(ctx context.Context, atte
 	return result, nil
 }
 
-func (s *AttendeeServiceImplData) DoStatusChange(ctx context.Context, attendee *entity.Attendee, newStatus string, comments string) error {
+func (s *AttendeeServiceImplData) DoStatusChange(ctx context.Context, attendee *entity.Attendee, oldStatus string, newStatus string, comments string) error {
 	// controller checks value validity
 	// controller checks permission via StatusChangeAllowed
 	// controller checks precondition via StatusChangePossible
 
 	if newStatus == "approved" {
 		// the other dues updates come during attendee updates with package changes
-		err := s.UpdateDues(ctx, attendee)
+		err := s.UpdateDues(ctx, attendee, newStatus)
 		if err != nil {
 			return err
 		}
@@ -63,7 +65,16 @@ func (s *AttendeeServiceImplData) DoStatusChange(ctx context.Context, attendee *
 		return err
 	}
 
-	// TODO: add sending notification emails here
+	err = mailservice.Get().SendEmail(ctx, mailservice.TemplateRequestDto{
+		Name: "new-status-" + newStatus,
+		Variables: map[string]string{
+			"nickname": attendee.Nickname,
+		},
+		Email: attendee.Email,
+	})
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -95,47 +106,75 @@ func (s *AttendeeServiceImplData) StatusChangePossible(ctx context.Context, atte
 		return SameStatusError
 	}
 
+	transactionHistory, err := paymentservice.Get().GetTransactions(ctx, attendee.ID)
+	if err != nil && !errors.Is(err, paymentservice.NoSuchDebitor404Error) {
+		return err
+	}
+
 	switch newStatus {
 	case "new":
-		return s.checkZeroOrNegativePaymentBalance(ctx, attendee)
+		return s.checkZeroOrNegativePaymentBalance(ctx, attendee, transactionHistory)
 	case "approved":
-		return s.checkZeroOrNegativePaymentBalance(ctx, attendee)
+		return s.checkZeroOrNegativePaymentBalance(ctx, attendee, transactionHistory)
 	case "partially paid":
-		return s.checkPositivePaymentBalance(ctx, attendee)
+		return s.checkPositivePaymentBalanceButNotFullPayment(ctx, attendee, transactionHistory)
 	case "paid":
-		return s.checkPaidInFullWithGraceAmount(ctx, attendee)
+		return s.checkPaidInFullWithGraceAmount(ctx, attendee, transactionHistory)
 	case "checked in":
-		return s.checkPaidInFull(ctx, attendee)
+		return s.checkPaidInFull(ctx, attendee, transactionHistory)
 	case "cancelled":
 		return nil
 	case "deleted":
-		return s.checkNoPaymentsExist(ctx, attendee)
+		return s.checkNoPaymentsExist(ctx, attendee, transactionHistory)
 	default:
 		return UnknownStatusError
 	}
 }
 
-func (s *AttendeeServiceImplData) checkNoPaymentsExist(ctx context.Context, attendee *entity.Attendee) error {
-	// TODO implement me
-	return CannotDeleteError
+var graceAmount int64 = 100 // TODO read from config
+
+func (s *AttendeeServiceImplData) checkNoPaymentsExist(ctx context.Context, attendee *entity.Attendee, transactionHistory []paymentservice.Transaction) error {
+	for _, tx := range transactionHistory {
+		if tx.Status == paymentservice.Valid && tx.Type == paymentservice.Payment && tx.Amount.GrossCent != 0 {
+			return CannotDeleteError
+		}
+	}
+	return nil
 }
 
-func (s *AttendeeServiceImplData) checkZeroOrNegativePaymentBalance(ctx context.Context, attendee *entity.Attendee) error {
-	// TODO implement me
-	return HasPaymentBalanceError
+func (s *AttendeeServiceImplData) checkZeroOrNegativePaymentBalance(ctx context.Context, attendee *entity.Attendee, transactionHistory []paymentservice.Transaction) error {
+	_, paid := s.balances(transactionHistory)
+	if paid <= 0 {
+		return nil
+	} else {
+		return HasPaymentBalanceError
+	}
 }
 
-func (s *AttendeeServiceImplData) checkPositivePaymentBalance(ctx context.Context, attendee *entity.Attendee) error {
-	// TODO implement me
-	return InsufficientPaymentError
+func (s *AttendeeServiceImplData) checkPositivePaymentBalanceButNotFullPayment(ctx context.Context, attendee *entity.Attendee, transactionHistory []paymentservice.Transaction) error {
+	dues, paid := s.balances(transactionHistory)
+	if paid >= 0 && paid < dues {
+		return nil
+	} else {
+		return InsufficientPaymentError
+	}
 }
 
-func (s *AttendeeServiceImplData) checkPaidInFullWithGraceAmount(ctx context.Context, attendee *entity.Attendee) error {
-	// TODO implement me - attn, a guest may have 0 balance
-	return InsufficientPaymentError
+func (s *AttendeeServiceImplData) checkPaidInFullWithGraceAmount(ctx context.Context, attendee *entity.Attendee, transactionHistory []paymentservice.Transaction) error {
+	dues, paid := s.balances(transactionHistory)
+	// intentionally do not check paid >= 0, there may be negative dues (previous year refunds)
+	if paid >= dues-graceAmount {
+		return nil
+	} else {
+		return InsufficientPaymentError
+	}
 }
 
-func (s *AttendeeServiceImplData) checkPaidInFull(ctx context.Context, attendee *entity.Attendee) error {
-	// TODO implement me - attn, a guest may have 0 balance
-	return InsufficientPaymentError
+func (s *AttendeeServiceImplData) checkPaidInFull(ctx context.Context, attendee *entity.Attendee, transactionHistory []paymentservice.Transaction) error {
+	dues, paid := s.balances(transactionHistory)
+	if paid >= dues {
+		return nil
+	} else {
+		return InsufficientPaymentError
+	}
 }

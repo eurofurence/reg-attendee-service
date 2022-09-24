@@ -26,7 +26,7 @@ var (
 	_ Mock           = (*MockImpl)(nil)
 )
 
-func NewMock() Mock {
+func newMock() Mock {
 	return &MockImpl{
 		data:      make(map[uint][]Transaction),
 		recording: make([]Transaction, 0),

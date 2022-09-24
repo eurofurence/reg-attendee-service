@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/mailservice"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/paymentservice"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/media"
 	"github.com/go-http-utils/headers"
 	"github.com/stretchr/testify/require"
@@ -147,5 +149,34 @@ func tstParseJson(body string, dto interface{}) {
 	err := json.Unmarshal([]byte(body), dto)
 	if err != nil {
 		log.Fatal(err)
+	}
+}
+
+func tstValidAttendeeDues(comment string) paymentservice.Transaction {
+	return paymentservice.Transaction{
+		ID:        "",
+		DebitorID: 1,
+		Type:      paymentservice.Due,
+		Method:    paymentservice.Internal,
+		Amount: paymentservice.Amount{
+			Currency:  "EUR",
+			GrossCent: 25500,
+			VatRate:   19.0,
+		},
+		Comment:       comment,
+		Status:        paymentservice.Valid,
+		EffectiveDate: "",          // TODO
+		DueDate:       time.Time{}, // TODO
+		Deletion:      nil,         // TODO
+	}
+}
+
+func tstAcceptMail(testcase string) mailservice.TemplateRequestDto {
+	return mailservice.TemplateRequestDto{
+		Name: "new-status-approved",
+		Variables: map[string]string{
+			"nickname": "BlackCheetah",
+		},
+		Email: testcase,
 	}
 }

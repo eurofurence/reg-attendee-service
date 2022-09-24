@@ -22,7 +22,7 @@ type AttendeeService interface {
 	UpdateAdminInfo(ctx context.Context, adminInfo *entity.AdminInfo) error
 
 	GetFullStatusHistory(ctx context.Context, attendee *entity.Attendee) ([]entity.StatusChange, error)
-	DoStatusChange(ctx context.Context, attendee *entity.Attendee, newStatus string, comments string) error
+	DoStatusChange(ctx context.Context, attendee *entity.Attendee, oldStatus string, newStatus string, comments string) error
 	StatusChangeAllowed(ctx context.Context, oldStatus string, newStatus string) error
 	StatusChangePossible(ctx context.Context, attendee *entity.Attendee, oldStatus string, newStatus string) error
 }

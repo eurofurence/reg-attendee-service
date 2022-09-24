@@ -563,6 +563,8 @@ func TestUpdateExistingAttendeeReadOnlyFlag_Admin(t *testing.T) {
 	require.EqualValues(t, "anon,hc,ev", attendeeReadAgain.Flags, "attendee data read did not match expected flags value")
 }
 
+// TODO test dues changes caused by attendee package updates and corresponding status changes
+
 // --- get attendee ---
 
 func TestDenyReadExistingAttendeeWhileNotLoggedIn(t *testing.T) {
