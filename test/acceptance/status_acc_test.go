@@ -784,6 +784,63 @@ func TestStatusChange_Admin_Cancelled_Deleted(t *testing.T) {
 		"status.cannot.delete", "cannot delete attendee for legal reasons (there were payments or invoices)")
 }
 
+func TestStatusChange_Admin_Deleted_New(t *testing.T) {
+	testcase := "st6adm0-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		"deleted", "new",
+		nil,
+		[]paymentservice.Transaction{},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "new")},
+	)
+}
+
+func TestStatusChange_Admin_Deleted_Approved(t *testing.T) {
+	testcase := "st6adm1-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		"deleted", "approved",
+		nil,
+		[]paymentservice.Transaction{tstValidAttendeeDues(25500, "dues adjustment due to change in status or selected packages")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "approved")},
+	)
+}
+
+func TestStatusChange_Admin_Deleted_PartiallyPaid(t *testing.T) {
+	// you cannot directly go back, since there may have been flag, package changes while cancelled which are not reflected in dues
+	testcase := "st6adm2-"
+	tstStatusChange_Admin_Unavailable(t, testcase,
+		"deleted", "partially paid",
+		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -10000)},
+		"status.use.approved", "please change status to approved, this will automatically advance to (partially) paid as appropriate")
+}
+
+func TestStatusChange_Admin_Deleted_Paid(t *testing.T) {
+	// you cannot directly go back, since there may have been flag, package changes while cancelled which are not reflected in dues
+	testcase := "st6adm3-"
+	tstStatusChange_Admin_Unavailable(t, testcase,
+		"deleted", "paid",
+		nil,
+		"status.use.approved", "please change status to approved, this will automatically advance to (partially) paid as appropriate")
+}
+
+func TestStatusChange_Admin_Deleted_CheckedIn(t *testing.T) {
+	// you cannot directly go back, since there may have been flag, package changes while cancelled which are not reflected in dues
+	testcase := "st6adm4-"
+	tstStatusChange_Admin_Unavailable(t, testcase,
+		"deleted", "checked in",
+		nil,
+		"status.use.approved", "please change status to approved, this will automatically advance to (partially) paid as appropriate")
+}
+
+func TestStatusChange_Admin_Deleted_Cancelled(t *testing.T) {
+	testcase := "st6adm5-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		"deleted", "cancelled",
+		nil,
+		[]paymentservice.Transaction{},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "cancelled")},
+	)
+}
+
 // ...
 
 // TODO transitions to new or deleted do not get emails
@@ -1177,6 +1234,7 @@ func tstRegisterAttendeeAndTransitionToStatus(t *testing.T, testcase string, sta
 
 	if status == "deleted" {
 		_ = database.GetRepository().AddStatusChange(ctx, tstCreateStatusChange(attid, "deleted"))
+		_ = paymentMock.InjectTransaction(ctx, tstCreateTransaction(attid, paymentservice.Due, -25500))
 		return
 	}
 

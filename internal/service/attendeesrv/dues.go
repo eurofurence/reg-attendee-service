@@ -118,10 +118,12 @@ func (s *AttendeeServiceImplData) compensateAllDues(ctx context.Context, attende
 	// we want all dues wiped, so book negative balance for each tax rate
 	comment := fmt.Sprintf("remove dues balance - status changed to %s", newStatus) // TODO language
 	for vatStr, duesBalance := range oldDuesByVAT {
-		compensatingTx := s.duesTransactionForAttendee(attendee, -duesBalance, vatStr, comment)
-		err := paymentservice.Get().AddTransaction(ctx, compensatingTx)
-		if err != nil {
-			return err
+		if duesBalance != 0 {
+			compensatingTx := s.duesTransactionForAttendee(attendee, -duesBalance, vatStr, comment)
+			err := paymentservice.Get().AddTransaction(ctx, compensatingTx)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
