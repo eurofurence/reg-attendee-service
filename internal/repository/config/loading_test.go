@@ -101,7 +101,7 @@ go_live:
 `
 	err := parseAndOverwriteConfig([]byte(minimalYaml))
 	require.Nil(t, err, "expected no error")
-	require.Equal(t, "8080", Configuration().Server.Port,  "unexpected value for server.port")
-	require.Equal(t, "INFO", Configuration().Logging.Severity,  "unexpected value for logging.severity")
-	require.Equal(t, "inmemory", Configuration().Database.Use,  "unexpected value for database.use")
+	require.Equal(t, "8080", Configuration().Server.Port, "unexpected value for server.port")
+	require.Equal(t, "INFO", Configuration().Logging.Severity, "unexpected value for logging.severity")
+	require.Equal(t, "inmemory", Configuration().Database.Use, "unexpected value for database.use")
 }

@@ -7,7 +7,7 @@ import (
 	"log"
 )
 
-type LoggerDefaultImpl struct{
+type LoggerDefaultImpl struct {
 	RequestId string
 }
 
@@ -22,8 +22,8 @@ const severityWARNPrintAs = "WARN "
 
 var severityMap = map[string]int{
 	severityDEBUG: 1,
-	severityINFO: 2,
-	severityWARN: 3,
+	severityINFO:  2,
+	severityWARN:  3,
 	severityERROR: 4,
 	severityFATAL: 5,
 }

@@ -33,7 +33,7 @@ func TestProvider(t *testing.T) {
 	_, err := pact.VerifyProvider(t, types.VerifyRequest{
 		ProviderBaseURL: ts.URL,
 		PactURLs:        []string{filepath.ToSlash(fmt.Sprintf("%s/democlient-attendeeservice.json", demoClientPactDir))},
-		StateHandlers: 			types.StateHandlers{
+		StateHandlers: types.StateHandlers{
 			// Setup any state required by the test
 			// example that we are not really using in this test
 			"Attendee 1 exists": func() error {

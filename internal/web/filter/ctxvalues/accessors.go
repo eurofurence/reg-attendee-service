@@ -86,4 +86,3 @@ func AuthorizedAsGroup(ctx context.Context) (config.FixedTokenEnum, error) {
 func SetAuthorizedAsGroup(ctx context.Context, group config.FixedTokenEnum) {
 	setValue(ctx, ContextAuthorizedAs, fmt.Sprint(group))
 }
-

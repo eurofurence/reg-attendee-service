@@ -2,10 +2,10 @@ package inmemorydb
 
 import (
 	"context"
-	"github.com/stretchr/testify/require"
-	"os"
 	"github.com/eurofurence/reg-attendee-service/docs"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
+	"github.com/stretchr/testify/require"
+	"os"
 	"testing"
 )
 

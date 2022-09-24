@@ -9,7 +9,7 @@ var TestingMode = false
 var TestingExitCounter = 0
 
 func Exit(code int) {
-	if (TestingMode) {
+	if TestingMode {
 		TestingExitCounter++
 		log.Printf("would now os.exit with code %v", code)
 	} else {

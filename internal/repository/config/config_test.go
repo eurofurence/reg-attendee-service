@@ -18,7 +18,7 @@ func TestServerAddrWithAddressAndPort(t *testing.T) {
 func TestServerAddrWithOnlyPort(t *testing.T) {
 	docs.Description("ensure ServerAddr() returns the correct server address string, with no address specified")
 	configurationData = &conf{Logging: loggingConfig{Severity: "DEBUG"}, Server: serverConfig{
-		Port:    "1234",
+		Port: "1234",
 	}}
 	require.Equal(t, ":1234", ServerAddr(), "unexpected server address string")
 }

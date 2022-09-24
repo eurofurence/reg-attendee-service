@@ -17,5 +17,5 @@ func TestParseTimeoutInvalid(t *testing.T) {
 	system.TestingMode = true
 	oldcounter := system.TestingExitCounter
 	parseTimeout("3.8e24lightyears")
-	require.Equal(t, oldcounter + 1, system.TestingExitCounter, "should have exited")
+	require.Equal(t, oldcounter+1, system.TestingExitCounter, "should have exited")
 }
