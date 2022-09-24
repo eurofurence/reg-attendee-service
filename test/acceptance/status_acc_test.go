@@ -380,7 +380,9 @@ func TestStatusChange_Admin_Same_Same(t *testing.T) {
 	for b, bothStatus := range config.AllowedStatusValues() {
 		testname := fmt.Sprintf("TestStatusChange_Admin_%s_%s", bothStatus, bothStatus)
 		t.Run(testname, func(t *testing.T) {
-			tstStatusChange_Admin_Unavailable(t, fmt.Sprintf("st%dadm%d-", b, b), bothStatus, bothStatus,
+			tstStatusChange_Admin_Unavailable(t, fmt.Sprintf("st%dadm%d-", b, b),
+				bothStatus, bothStatus,
+				nil,
 				"status.unchanged.invalid", "old and new status are the same")
 		})
 	}
@@ -421,7 +423,9 @@ func TestStatusChange_Admin_New_Any(t *testing.T) {
 		if targetStatus == "partially paid" || targetStatus == "paid" || targetStatus == "checked in" {
 			testname := fmt.Sprintf("TestStatusChange_Admin_%s_%s", "new", targetStatus)
 			t.Run(testname, func(t *testing.T) {
-				tstStatusChange_Admin_Unavailable(t, fmt.Sprintf("st%dadm%d-", 0, n), "new", targetStatus,
+				tstStatusChange_Admin_Unavailable(t, fmt.Sprintf("st%dadm%d-", 0, n),
+					"new", targetStatus,
+					nil,
 					"status.use.approved", "please change status to approved, this will automatically advance to (partially) paid as appropriate")
 			})
 
@@ -493,6 +497,7 @@ func TestStatusChange_Admin_PartiallyPaid_New(t *testing.T) {
 	testcase := "st2adm0-"
 	tstStatusChange_Admin_Unavailable(t, testcase,
 		"partially paid", "new",
+		nil,
 		"status.has.paid", "there is a non-zero payment balance, please use partially paid, or refund")
 }
 
@@ -500,6 +505,7 @@ func TestStatusChange_Admin_PartiallyPaid_Approved(t *testing.T) {
 	testcase := "st2adm1-"
 	tstStatusChange_Admin_Unavailable(t, testcase,
 		"partially paid", "approved",
+		nil,
 		"status.has.paid", "there is a non-zero payment balance, please use partially paid, or refund")
 }
 
@@ -547,6 +553,89 @@ func TestStatusChange_Admin_PartiallyPaid_Deleted(t *testing.T) {
 	testcase := "st2adm6-"
 	tstStatusChange_Admin_Unavailable(t, testcase,
 		"partially paid", "deleted",
+		nil,
+		"status.cannot.delete", "cannot delete attendee for legal reasons (there were payments or invoices)")
+}
+
+func TestStatusChange_Admin_Paid_New(t *testing.T) {
+	testcase := "st3adm0-"
+	tstStatusChange_Admin_Unavailable(t, testcase,
+		"paid", "new",
+		nil,
+		"status.has.paid", "there is a non-zero payment balance, please use partially paid, or refund")
+}
+
+func TestStatusChange_Admin_Paid_New_OkAfterRefund(t *testing.T) {
+	testcase := "st3adm0r-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		"paid", "new",
+		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -25500)},
+		[]paymentservice.Transaction{tstCreateMatcherTransaction(1, paymentservice.Due, -25500, "remove dues balance - status changed to new")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "new")},
+	)
+}
+
+func TestStatusChange_Admin_Paid_Approved(t *testing.T) {
+	testcase := "st3adm1-"
+	tstStatusChange_Admin_Unavailable(t, testcase,
+		"paid", "approved",
+		nil,
+		"status.has.paid", "there is a non-zero payment balance, please use partially paid, or refund")
+}
+
+func TestStatusChange_Admin_Paid_Approved_OkAfterRefund(t *testing.T) {
+	testcase := "st3adm1r-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		"paid", "approved",
+		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -25500)},
+		[]paymentservice.Transaction{},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "approved")},
+	)
+}
+
+func TestStatusChange_Admin_Paid_PartiallyPaid(t *testing.T) {
+	testcase := "st3adm2-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		"paid", "partially paid",
+		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -10000)},
+		[]paymentservice.Transaction{},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "partially paid")},
+	)
+}
+
+func TestStatusChange_Admin_Paid_CheckedIn_HasNoGraceAmount(t *testing.T) {
+	testcase := "st3adm4u-"
+	tstStatusChange_Admin_Unavailable(t, testcase,
+		"paid", "checked in",
+		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -30)},
+		"status.unpaid.dues", "payment amount not sufficient")
+}
+
+func TestStatusChange_Admin_Paid_CheckedIn(t *testing.T) {
+	testcase := "st3adm4-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		"paid", "checked in",
+		[]paymentservice.Transaction{},
+		[]paymentservice.Transaction{},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "checked in")},
+	)
+}
+
+func TestStatusChange_Admin_Paid_Cancelled(t *testing.T) {
+	testcase := "st3adm5-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		"paid", "cancelled",
+		nil,
+		[]paymentservice.Transaction{},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "cancelled")},
+	)
+}
+
+func TestStatusChange_Admin_Paid_Deleted(t *testing.T) {
+	testcase := "st3adm6-"
+	tstStatusChange_Admin_Unavailable(t, testcase,
+		"paid", "deleted",
+		nil,
 		"status.cannot.delete", "cannot delete attendee for legal reasons (there were payments or invoices)")
 }
 
@@ -818,12 +907,18 @@ func tstStatusChange_Staff_Deny(t *testing.T, testcase string, oldStatus string,
 
 // admins never get deny (403), but they can get "not possible right now" (409)
 
-func tstStatusChange_Admin_Unavailable(t *testing.T, testcase string, oldStatus string, newStatus string, message string, details string) {
+func tstStatusChange_Admin_Unavailable(t *testing.T, testcase string,
+	oldStatus string, newStatus string,
+	injectExtraTransactions []paymentservice.Transaction,
+	message string, details string) {
 	tstSetup(tstDefaultConfigFile)
 	defer tstShutdown()
 
 	docs.Given("given an attendee in status " + oldStatus)
 	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
+	for _, tx := range injectExtraTransactions {
+		_ = paymentMock.InjectTransaction(context.Background(), tx)
+	}
 
 	docs.When("when an admin prematurely tries to change the status to " + newStatus)
 	body := status.StatusChangeDto{
@@ -872,7 +967,12 @@ func tstStatusChange_Admin_Allow(t *testing.T, testcase string,
 	tstVerifyStatus(t, loc, newStatus)
 
 	docs.Then("and the appropriate dues were booked in the payment service")
-	require.EqualValues(t, expectedTransactions, paymentMock.Recording())
+	require.Equal(t, len(expectedTransactions), len(paymentMock.Recording()))
+	for i, expected := range expectedTransactions {
+		actual := paymentMock.Recording()[i]
+		expected.DueDate = actual.DueDate // TODO remove when due date logic implemented
+		require.EqualValues(t, expected, actual)
+	}
 
 	docs.Then("and the appropriate email messages were sent via the mail service")
 	require.Equal(t, len(expectedMailRequests), len(mailMock.Recording()))
@@ -991,6 +1091,29 @@ func tstCreateTransaction(attid int, ty paymentservice.TransactionType, amount i
 		EffectiveDate: "1999-12-31",
 		DueDate:       time.Now(),
 		Deletion:      nil,
+	}
+}
+
+func tstCreateMatcherTransaction(attid int, ty paymentservice.TransactionType, amount int64, comment string) paymentservice.Transaction {
+	method := paymentservice.Internal
+	if ty == paymentservice.Payment {
+		method = paymentservice.Credit
+	}
+	return paymentservice.Transaction{
+		ID:        "",
+		DebitorID: uint(attid),
+		Type:      ty,
+		Method:    method,
+		Amount: paymentservice.Amount{
+			Currency:  "EUR",
+			GrossCent: amount,
+			VatRate:   19,
+		},
+		Status:        paymentservice.Valid,
+		EffectiveDate: "",         // TODO
+		DueDate:       time.Now(), // TODO
+		Deletion:      nil,        // TODO
+		Comment:       comment,
 	}
 }
 
