@@ -80,7 +80,7 @@ func writeAdminInfoHandler(ctx context.Context, w http.ResponseWriter, r *http.R
 
 	mapDtoToAdminInfo(dto, adminInfo)
 
-	err = attendeeService.UpdateAdminInfo(ctx, adminInfo)
+	err = attendeeService.UpdateAdminInfo(ctx, attendee, adminInfo)
 	if err != nil {
 		adminInfoWriteErrorHandler(ctx, w, r, err)
 		return

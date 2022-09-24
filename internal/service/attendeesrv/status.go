@@ -42,38 +42,41 @@ func (s *AttendeeServiceImplData) GetFullStatusHistory(ctx context.Context, atte
 	return result, nil
 }
 
-func (s *AttendeeServiceImplData) DoStatusChange(ctx context.Context, attendee *entity.Attendee, oldStatus string, newStatus string, comments string) error {
+func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx context.Context, attendee *entity.Attendee, oldStatus string, newStatus string, comments string) error {
+	var err error
 	// controller checks value validity
 	// controller checks permission via StatusChangeAllowed
 	// controller checks precondition via StatusChangePossible
 
-	if newStatus == "approved" {
-		// the other dues updates come during attendee updates with package changes
-		err := s.UpdateDues(ctx, attendee, newStatus)
+	if newStatus == "approved" || newStatus == "partially paid" || newStatus == "paid" || newStatus == "checked in" {
+		// Note that UpdateDues may adjust the status according to payment balance
+		newStatus, err = s.UpdateDues(ctx, attendee, oldStatus, newStatus)
 		if err != nil {
 			return err
 		}
 	}
 
-	change := entity.StatusChange{
-		AttendeeId: attendee.ID,
-		Status:     newStatus,
-		Comments:   comments,
-	}
-	err := database.GetRepository().AddStatusChange(ctx, &change)
-	if err != nil {
-		return err
-	}
+	if newStatus != oldStatus {
+		change := entity.StatusChange{
+			AttendeeId: attendee.ID,
+			Status:     newStatus,
+			Comments:   comments,
+		}
+		err = database.GetRepository().AddStatusChange(ctx, &change)
+		if err != nil {
+			return err
+		}
 
-	err = mailservice.Get().SendEmail(ctx, mailservice.TemplateRequestDto{
-		Name: "new-status-" + newStatus,
-		Variables: map[string]string{
-			"nickname": attendee.Nickname,
-		},
-		Email: attendee.Email,
-	})
-	if err != nil {
-		return err
+		err = mailservice.Get().SendEmail(ctx, mailservice.TemplateRequestDto{
+			Name: "new-status-" + newStatus,
+			Variables: map[string]string{
+				"nickname": attendee.Nickname,
+			},
+			Email: attendee.Email,
+		})
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -94,7 +97,7 @@ func (s *AttendeeServiceImplData) StatusChangeAllowed(ctx context.Context, oldSt
 
 		return errors.New("you are not allowed to make this status transition")
 	} else if group == config.TokenForAdmin {
-		// admin is allowed to do all status changes
+		// admin is allowed to do all useful status changes
 		return nil
 	} else {
 		return errors.New("you are not allowed to make this status transition")
@@ -117,10 +120,19 @@ func (s *AttendeeServiceImplData) StatusChangePossible(ctx context.Context, atte
 	case "approved":
 		return s.checkZeroOrNegativePaymentBalance(ctx, attendee, transactionHistory)
 	case "partially paid":
+		if oldStatus == "new" || oldStatus == "cancelled" || oldStatus == "deleted" {
+			return GoToApprovedFirst
+		}
 		return s.checkPositivePaymentBalanceButNotFullPayment(ctx, attendee, transactionHistory)
 	case "paid":
+		if oldStatus == "new" || oldStatus == "cancelled" || oldStatus == "deleted" {
+			return GoToApprovedFirst
+		}
 		return s.checkPaidInFullWithGraceAmount(ctx, attendee, transactionHistory)
 	case "checked in":
+		if oldStatus == "new" || oldStatus == "cancelled" || oldStatus == "deleted" {
+			return GoToApprovedFirst
+		}
 		return s.checkPaidInFull(ctx, attendee, transactionHistory)
 	case "cancelled":
 		return nil

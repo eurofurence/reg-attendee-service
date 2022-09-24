@@ -11,32 +11,57 @@ import (
 	"time"
 )
 
-func (s *AttendeeServiceImplData) UpdateDues(ctx context.Context, attendee *entity.Attendee, newStatus string) error {
+func (s *AttendeeServiceImplData) UpdateDues(ctx context.Context, attendee *entity.Attendee, oldStatus string, newStatus string) (string, error) {
 	transactionHistory, err := paymentservice.Get().GetTransactions(ctx, attendee.ID)
 	if err != nil && !errors.Is(err, paymentservice.NoSuchDebitor404Error) {
-		return err
+		return newStatus, err
 	}
 
 	if newStatus == "new" || newStatus == "deleted" {
 		err = s.compensateAllDues(ctx, attendee, newStatus, transactionHistory)
 		if err != nil {
-			return err
+			return newStatus, err
 		}
 	} else if newStatus == "cancelled" {
 		err = s.compensateUnpaidDuesOnCancel(ctx, attendee, transactionHistory)
 		if err != nil {
-			return err
+			return newStatus, err
 		}
 	} else {
 		err = s.adjustDuesAccordingToSelectedPackages(ctx, attendee, transactionHistory)
 		if err != nil {
-			return err
+			return newStatus, err
 		}
 
+		if newStatus == "approved" || newStatus == "partially paid" || newStatus == "paid" {
+			// we do not adjust status back once checked in
+
+			updatedTransactionHistory, err := paymentservice.Get().GetTransactions(ctx, attendee.ID)
+			if err != nil {
+				return newStatus, err
+			}
+
+			// TODO status may have changed between approved <-> partially paid <-> paid
+			dues, payments := s.balances(updatedTransactionHistory)
+
+			if payments <= 0 {
+				if dues > 0 {
+					newStatus = "approved"
+				} else {
+					// guests, or has credit :)
+					newStatus = "paid"
+				}
+			} else {
+				if payments < dues {
+					newStatus = "partially paid"
+				} else {
+					newStatus = "paid"
+				}
+			}
+		}
 	}
 
-	// TODO: implement me
-	return nil
+	return newStatus, nil
 }
 
 func (s *AttendeeServiceImplData) adjustDuesAccordingToSelectedPackages(ctx context.Context, attendee *entity.Attendee, transactionHistory []paymentservice.Transaction) error {

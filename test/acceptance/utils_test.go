@@ -171,9 +171,9 @@ func tstValidAttendeeDues(comment string) paymentservice.Transaction {
 	}
 }
 
-func tstAcceptMail(testcase string) mailservice.TemplateRequestDto {
+func tstNewStatusMail(testcase string, newStatus string) mailservice.TemplateRequestDto {
 	return mailservice.TemplateRequestDto{
-		Name: "new-status-approved",
+		Name: "new-status-" + newStatus,
 		Variables: map[string]string{
 			"nickname": "BlackCheetah",
 		},

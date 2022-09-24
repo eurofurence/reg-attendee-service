@@ -71,7 +71,7 @@ func (s *MockAttendeeService) GetAdminInfo(ctx context.Context, attendeeId uint)
 	return &entity.AdminInfo{}, nil
 }
 
-func (s *MockAttendeeService) UpdateAdminInfo(ctx context.Context, adminInfo *entity.AdminInfo) error {
+func (s *MockAttendeeService) UpdateAdminInfo(ctx context.Context, attendee *entity.Attendee, adminInfo *entity.AdminInfo) error {
 	return nil
 }
 
@@ -79,7 +79,7 @@ func (s *MockAttendeeService) GetFullStatusHistory(ctx context.Context, attendee
 	return []entity.StatusChange{}, nil
 }
 
-func (s *MockAttendeeService) DoStatusChange(ctx context.Context, attendee *entity.Attendee, oldStatus string, newStatus string, comments string) error {
+func (s *MockAttendeeService) UpdateDuesAndDoStatusChangeIfNeeded(ctx context.Context, attendee *entity.Attendee, oldStatus string, newStatus string, comments string) error {
 	return nil
 }
 

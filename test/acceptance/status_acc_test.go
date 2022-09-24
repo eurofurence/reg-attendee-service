@@ -391,13 +391,46 @@ func TestStatusChange_Admin_New_Approved(t *testing.T) {
 	tstStatusChange_Admin_Allow(t, testcase,
 		"new", "approved",
 		[]paymentservice.Transaction{tstValidAttendeeDues("dues adjustment due to change in status or selected packages")},
-		[]mailservice.TemplateRequestDto{tstAcceptMail(testcase)},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "approved")},
 	)
 }
 
-// TODO ban check
+func TestStatusChange_Admin_New_Cancelled(t *testing.T) {
+	testcase := "st0adm5-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		"new", "cancelled",
+		[]paymentservice.Transaction{},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "cancelled")},
+	)
+}
+
+func TestStatusChange_Admin_New_Deleted(t *testing.T) {
+	testcase := "st0adm6-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		"new", "deleted",
+		[]paymentservice.Transaction{},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "deleted")},
+	)
+}
+
+func TestStatusChange_Admin_New_Any(t *testing.T) {
+	for n, targetStatus := range config.AllowedStatusValues() {
+		if targetStatus == "partially paid" || targetStatus == "paid" || targetStatus == "checked in" {
+			testname := fmt.Sprintf("TestStatusChange_Admin_%s_%s", "new", targetStatus)
+			t.Run(testname, func(t *testing.T) {
+				tstStatusChange_Admin_Unavailable(t, fmt.Sprintf("st%dadm%d-", 0, n), "new", targetStatus,
+					"status.use.approved", "please change status to approved, this will automatically advance to (partially) paid as appropriate")
+			})
+
+		}
+	}
+}
 
 // TODO other transitions for admins
+
+// TODO ban check
+
+// TODO guest handling
 
 // --- detail implementations for the status change tests ---
 

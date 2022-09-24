@@ -97,7 +97,7 @@ func postStatusHandler(ctx context.Context, w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	err = attendeeService.DoStatusChange(ctx, att, latestStatusChange.Status, dto.Status, dto.Comment)
+	err = attendeeService.UpdateDuesAndDoStatusChangeIfNeeded(ctx, att, latestStatusChange.Status, dto.Status, dto.Comment)
 	if err != nil {
 		if errors.Is(err, paymentservice.DownstreamError) || errors.Is(err, mailservice.DownstreamError) {
 			statusChangeDownstreamError(ctx, w, r, err)
@@ -179,6 +179,8 @@ func statusChangeUnavailableErrorHandler(ctx context.Context, w http.ResponseWri
 		message = "status.has.paid"
 	} else if errors.Is(err, attendeesrv.CannotDeleteError) {
 		message = "status.cannot.delete"
+	} else if errors.Is(err, attendeesrv.GoToApprovedFirst) {
+		message = "status.use.approved"
 	}
 	ctlutil.ErrorHandler(ctx, w, r, message, http.StatusConflict, url.Values{"details": []string{err.Error()}})
 }

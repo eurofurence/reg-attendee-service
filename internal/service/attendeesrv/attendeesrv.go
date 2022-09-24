@@ -59,13 +59,10 @@ func (s *AttendeeServiceImplData) UpdateAttendee(ctx context.Context, attendee *
 
 	currentStatus := statusHistory[len(statusHistory)-1].Status
 
-	if currentStatus == "approved" || currentStatus == "partially paid" || currentStatus == "paid" || currentStatus == "checked in" {
-		err = s.UpdateDues(ctx, attendee, currentStatus)
-		if err != nil {
-			return err
-		}
-
-		// TODO: dues update may also change status - maybe move this into UpdateDues?
+	// TODO record who made the change in comment
+	err = s.UpdateDuesAndDoStatusChangeIfNeeded(ctx, attendee, currentStatus, currentStatus, "attendee update")
+	if err != nil {
+		return err
 	}
 
 	return nil
