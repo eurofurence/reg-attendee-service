@@ -639,9 +639,82 @@ func TestStatusChange_Admin_Paid_Deleted(t *testing.T) {
 		"status.cannot.delete", "cannot delete attendee for legal reasons (there were payments or invoices)")
 }
 
+func TestStatusChange_Admin_CheckedIn_New(t *testing.T) {
+	testcase := "st4adm0-"
+	tstStatusChange_Admin_Unavailable(t, testcase,
+		"checked in", "new",
+		nil,
+		"status.has.paid", "there is a non-zero payment balance, please use partially paid, or refund")
+}
+
+func TestStatusChange_Admin_CheckedIn_New_OkAfterRefund(t *testing.T) {
+	testcase := "st4adm0r-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		"checked in", "new",
+		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -25500)},
+		[]paymentservice.Transaction{tstCreateMatcherTransaction(1, paymentservice.Due, -25500, "remove dues balance - status changed to new")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "new")},
+	)
+}
+
+func TestStatusChange_Admin_CheckedIn_Approved(t *testing.T) {
+	testcase := "st4adm1-"
+	tstStatusChange_Admin_Unavailable(t, testcase,
+		"checked in", "approved",
+		nil,
+		"status.has.paid", "there is a non-zero payment balance, please use partially paid, or refund")
+}
+
+func TestStatusChange_Admin_CheckedIn_Approved_OkAfterRefund(t *testing.T) {
+	testcase := "st4adm1r-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		"checked in", "approved",
+		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -25500)},
+		[]paymentservice.Transaction{},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "approved")},
+	)
+}
+
+func TestStatusChange_Admin_CheckedIn_PartiallyPaid(t *testing.T) {
+	testcase := "st4adm2-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		"checked in", "partially paid",
+		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -10000)},
+		[]paymentservice.Transaction{},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "partially paid")},
+	)
+}
+
+func TestStatusChange_Admin_CheckedIn_Paid(t *testing.T) {
+	testcase := "st4adm3-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		"checked in", "paid",
+		[]paymentservice.Transaction{},
+		[]paymentservice.Transaction{},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "paid")},
+	)
+}
+
+func TestStatusChange_Admin_CheckedIn_Cancelled(t *testing.T) {
+	testcase := "st4adm5-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		"checked in", "cancelled",
+		nil,
+		[]paymentservice.Transaction{},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "cancelled")},
+	)
+}
+
+func TestStatusChange_Admin_CheckedIn_Deleted(t *testing.T) {
+	testcase := "st4adm6-"
+	tstStatusChange_Admin_Unavailable(t, testcase,
+		"checked in", "deleted",
+		nil,
+		"status.cannot.delete", "cannot delete attendee for legal reasons (there were payments or invoices)")
+}
+
 // ...
 
-// TODO transitions with other payment states (so far we're only testing one example each)
 // TODO transition to cancelled and deleted with more complicated dues / payment histories
 
 // TODO ban check
