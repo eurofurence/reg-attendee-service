@@ -713,7 +713,80 @@ func TestStatusChange_Admin_CheckedIn_Deleted(t *testing.T) {
 		"status.cannot.delete", "cannot delete attendee for legal reasons (there were payments or invoices)")
 }
 
+func TestStatusChange_Admin_Cancelled_New(t *testing.T) {
+	testcase := "st5adm0-"
+	tstStatusChange_Admin_Unavailable(t, testcase,
+		"cancelled", "new",
+		nil,
+		"status.has.paid", "there is a non-zero payment balance, please use partially paid, or refund")
+}
+
+func TestStatusChange_Admin_Cancelled_New_OkAfterRefund(t *testing.T) {
+	testcase := "st5adm0r-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		"cancelled", "new",
+		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -25500)},
+		[]paymentservice.Transaction{tstCreateMatcherTransaction(1, paymentservice.Due, -25500, "remove dues balance - status changed to new")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "new")},
+	)
+}
+
+func TestStatusChange_Admin_Cancelled_Approved(t *testing.T) {
+	testcase := "st5adm1-"
+	tstStatusChange_Admin_Unavailable(t, testcase,
+		"cancelled", "approved",
+		nil,
+		"status.has.paid", "there is a non-zero payment balance, please use partially paid, or refund")
+}
+
+func TestStatusChange_Admin_Cancelled_Approved_OkAfterRefund(t *testing.T) {
+	testcase := "st5adm1r-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		"cancelled", "approved",
+		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -25500)},
+		[]paymentservice.Transaction{},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "approved")},
+	)
+}
+
+func TestStatusChange_Admin_Cancelled_PartiallyPaid(t *testing.T) {
+	// you cannot directly go back, since there may have been flag, package changes while cancelled which are not reflected in dues
+	testcase := "st5adm2-"
+	tstStatusChange_Admin_Unavailable(t, testcase,
+		"cancelled", "partially paid",
+		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -10000)},
+		"status.use.approved", "please change status to approved, this will automatically advance to (partially) paid as appropriate")
+}
+
+func TestStatusChange_Admin_Cancelled_Paid(t *testing.T) {
+	// you cannot directly go back, since there may have been flag, package changes while cancelled which are not reflected in dues
+	testcase := "st5adm3-"
+	tstStatusChange_Admin_Unavailable(t, testcase,
+		"cancelled", "paid",
+		nil,
+		"status.use.approved", "please change status to approved, this will automatically advance to (partially) paid as appropriate")
+}
+
+func TestStatusChange_Admin_Cancelled_CheckedIn(t *testing.T) {
+	// you cannot directly go back, since there may have been flag, package changes while cancelled which are not reflected in dues
+	testcase := "st5adm4-"
+	tstStatusChange_Admin_Unavailable(t, testcase,
+		"cancelled", "checked in",
+		nil,
+		"status.use.approved", "please change status to approved, this will automatically advance to (partially) paid as appropriate")
+}
+
+func TestStatusChange_Admin_Cancelled_Deleted(t *testing.T) {
+	testcase := "st5adm6-"
+	tstStatusChange_Admin_Unavailable(t, testcase,
+		"cancelled", "deleted",
+		nil,
+		"status.cannot.delete", "cannot delete attendee for legal reasons (there were payments or invoices)")
+}
+
 // ...
+
+// TODO transitions to new or deleted do not get emails
 
 // TODO transition to cancelled and deleted with more complicated dues / payment histories
 
