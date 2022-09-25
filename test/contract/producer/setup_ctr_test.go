@@ -5,7 +5,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/service/attendeesrv"
-	"github.com/eurofurence/reg-attendee-service/internal/web"
+	"github.com/eurofurence/reg-attendee-service/internal/web/app"
 	"github.com/eurofurence/reg-attendee-service/internal/web/controller/adminctl"
 	"github.com/eurofurence/reg-attendee-service/internal/web/controller/attendeectl"
 	"github.com/eurofurence/reg-attendee-service/internal/web/controller/statusctl"
@@ -37,7 +37,7 @@ func tstSetupConfig() {
 }
 
 func tstSetupHttpTestServer() {
-	router := web.Create()
+	router := app.CreateRouter()
 	ts = httptest.NewServer(router)
 }
 

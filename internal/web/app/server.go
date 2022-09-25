@@ -1,4 +1,4 @@
-package web
+package app
 
 import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
@@ -13,7 +13,7 @@ import (
 	"net/http"
 )
 
-func Create() chi.Router {
+func CreateRouter() chi.Router {
 	logging.NoCtx().Info("Building routers...")
 	server := chi.NewRouter()
 	countdownctl.Create(server)
@@ -25,11 +25,13 @@ func Create() chi.Router {
 	return server
 }
 
-func StartWebserverAndNeverReturn(server chi.Router) {
+func StartWebserver(server chi.Router) error {
 	address := config.ServerAddr()
 	logging.NoCtx().Info("Listening on " + address)
 	err := http.ListenAndServe(address, server)
 	if err != nil {
 		logging.NoCtx().Error(err)
+		return err
 	}
+	return nil
 }

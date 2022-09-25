@@ -5,7 +5,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/mailservice"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/paymentservice"
-	"github.com/eurofurence/reg-attendee-service/internal/web"
+	"github.com/eurofurence/reg-attendee-service/internal/web/app"
 	"net/http/httptest"
 )
 
@@ -34,7 +34,7 @@ func tstSetupConfig(configFilePath string) {
 }
 
 func tstSetupHttpTestServer() {
-	router := web.Create()
+	router := app.CreateRouter()
 	ts = httptest.NewServer(router)
 }
 
