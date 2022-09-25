@@ -19,14 +19,20 @@ func New() Application {
 
 func (i *Impl) Run() int {
 	config.ParseCommandLineFlags()
+	setupLogging("attendee-service", config.UseEcsLogging())
 
 	if err := config.StartupLoadConfiguration(); err != nil {
 		return 1
 	}
+	setLoglevel(config.LoggingSeverity())
 
-	database.Open()
+	if err := database.Open(); err != nil {
+		return 1
+	}
 	defer database.Close()
-	database.MigrateIfSwitchedOn()
+	if err := database.MigrateIfSwitchedOn(); err != nil {
+		return 1
+	}
 
 	paymentservice.Create()
 	mailservice.Create()

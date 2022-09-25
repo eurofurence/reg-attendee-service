@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
-	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/mailservice"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/paymentservice"
 	"github.com/eurofurence/reg-attendee-service/internal/service/attendeesrv"
@@ -143,33 +143,32 @@ func getStatusHistoryHandler(ctx context.Context, w http.ResponseWriter, r *http
 // --- error handlers ---
 
 func statusReadErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
-	logging.Ctx(ctx).Warnf("could not obtain status history: %v", err)
+	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("could not obtain status history: %s", err.Error())
 	ctlutil.ErrorHandler(ctx, w, r, "status.read.error", http.StatusInternalServerError, url.Values{})
 }
 
 func statusWriteErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
-	logging.Ctx(ctx).Warnf("could not obtain status history: %v", err)
+	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("could not obtain status history: %s", err.Error())
 	ctlutil.ErrorHandler(ctx, w, r, "status.write.error", http.StatusInternalServerError, url.Values{})
 }
 
 func statusParseErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
-	logging.Ctx(ctx).Warnf("status change body could not be parsed: %v", err)
+	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("status change body could not be parsed: %s", err.Error())
 	ctlutil.ErrorHandler(ctx, w, r, "status.parse.error", http.StatusBadRequest, url.Values{})
 }
 
 func statusChangeValidationErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, errs url.Values) {
-	logging.Ctx(ctx).Warnf("received status change data with validation errors: %v", errs)
+	aulogging.Logger.Ctx(ctx).Warn().Printf("received status change data with validation errors: %v", errs)
 	ctlutil.ErrorHandler(ctx, w, r, "status.data.invalid", http.StatusBadRequest, errs)
 }
 
 func statusChangeForbiddenErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
 	// TODO log user so we can figure out who tried it
-	logging.Ctx(ctx).Warnf("forbidden status change attempted: %v", err)
+	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("forbidden status change attempted: %s", err.Error())
 	ctlutil.ErrorHandler(ctx, w, r, "auth.forbidden", http.StatusForbidden, url.Values{"details": []string{err.Error()}})
 }
 
 func statusChangeUnavailableErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
-	logging.Ctx(ctx).Warnf("unavailable status change attempted: %v", err)
 	message := "status.data.invalid"
 	if errors.Is(err, attendeesrv.SameStatusError) {
 		message = "status.unchanged.invalid"
@@ -182,11 +181,12 @@ func statusChangeUnavailableErrorHandler(ctx context.Context, w http.ResponseWri
 	} else if errors.Is(err, attendeesrv.GoToApprovedFirst) {
 		message = "status.use.approved"
 	}
+	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("unavailable status change attempted: %s - %s", message, err.Error())
 	ctlutil.ErrorHandler(ctx, w, r, message, http.StatusConflict, url.Values{"details": []string{err.Error()}})
 }
 
 func statusChangeDownstreamError(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
-	logging.Ctx(ctx).Warnf("downstream error during status change: %v", err)
+	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("downstream error during status change: %s", err.Error())
 	message := "unknown"
 	if errors.Is(err, paymentservice.DownstreamError) {
 		message = "status.payment.error"

@@ -2,6 +2,7 @@ package acceptance
 
 import (
 	"context"
+	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/mailservice"
@@ -31,6 +32,7 @@ func tstSetup(configFilePath string) {
 }
 
 func tstSetupConfig(configFilePath string) {
+	aulogging.SetupNoLoggerForTesting()
 	config.LoadTestingConfigurationFromPathOrAbort(configFilePath)
 }
 

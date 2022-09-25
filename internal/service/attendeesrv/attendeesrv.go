@@ -3,10 +3,10 @@ package attendeesrv
 import (
 	"context"
 	"errors"
+	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
-	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
 	"github.com/eurofurence/reg-attendee-service/internal/web/filter/ctxvalues"
 	"strings"
 	"time"
@@ -22,7 +22,7 @@ func (s *AttendeeServiceImplData) RegisterNewAttendee(ctx context.Context, atten
 		return 0, err
 	}
 	if alreadyExists {
-		logging.Ctx(ctx).Warnf("received new registration duplicate - nick %v zip %v email %v", attendee.Nickname, attendee.Zip, attendee.Email)
+		aulogging.Logger.Ctx(ctx).Warn().Printf("received new registration duplicate - nick %s zip %s email %s", attendee.Nickname, attendee.Zip, attendee.Email)
 		return 0, errors.New("duplicate attendee data - you are already registered")
 	}
 
@@ -41,7 +41,7 @@ func (s *AttendeeServiceImplData) UpdateAttendee(ctx context.Context, attendee *
 		return err
 	}
 	if alreadyExists {
-		logging.Ctx(ctx).Warnf("received update with registration duplicate - nick %v zip %v email %v", attendee.Nickname, attendee.Zip, attendee.Email)
+		aulogging.Logger.Ctx(ctx).Warn().Printf("received update with registration duplicate - nick %s zip %s email %s", attendee.Nickname, attendee.Zip, attendee.Email)
 		return errors.New("your changes would lead to duplicate attendee data - same nickname, zip, email")
 	}
 

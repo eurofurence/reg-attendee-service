@@ -3,10 +3,10 @@ package config
 import (
 	"errors"
 	"flag"
+	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/system"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
-	"log"
 	"net/url"
 	"sort"
 	"sync"
@@ -36,7 +36,6 @@ func init() {
 
 // ParseCommandLineFlags is exposed separately so you can skip it for tests
 func ParseCommandLineFlags() {
-	log.Print("[00000000] INFO  Parsing command line flags...")
 	flag.Parse()
 }
 
@@ -45,7 +44,7 @@ func parseAndOverwriteConfig(yamlFile []byte) error {
 	err := yaml.UnmarshalStrict(yamlFile, newConfigurationData)
 	if err != nil {
 		// cannot use logging package here as this would create a circular dependency (logging needs config)
-		log.Printf("[00000000] ERROR failed to parse configuration file '%s': %v", configurationFilename, err)
+		aulogging.Logger.NoCtx().Error().Printf("failed to parse configuration file '%s': %v", configurationFilename, err)
 		return err
 	}
 
@@ -73,7 +72,7 @@ func parseAndOverwriteConfig(yamlFile []byte) error {
 			key := k
 			val := errs[k]
 			// cannot use logging package here as this would create a circular dependency (logging needs config)
-			log.Printf("[00000000] ERROR configuration error: %s: %s", key, val[0])
+			aulogging.Logger.NoCtx().Error().Printf("configuration error: %s: %s", key, val[0])
 		}
 		return errors.New("configuration validation error")
 	}
@@ -89,7 +88,7 @@ func loadConfiguration() error {
 	yamlFile, err := ioutil.ReadFile(configurationFilename)
 	if err != nil {
 		// cannot use logging package here as this would create a circular dependency (logging needs config)
-		log.Printf("[00000000] ERROR failed to load configuration file '%s': %v", configurationFilename, err)
+		aulogging.Logger.NoCtx().Error().Printf("failed to load configuration file '%s': %v", configurationFilename, err)
 		return err
 	}
 	err = parseAndOverwriteConfig(yamlFile)
@@ -110,16 +109,16 @@ func EnableTestingMigrateDatabase() {
 }
 
 func StartupLoadConfiguration() error {
-	log.Print("[00000000] INFO  Reading configuration...")
+	aulogging.Logger.NoCtx().Info().Print("Reading configuration...")
 	if configurationFilename == "" {
 		// cannot use logging package here as this would create a circular dependency (logging needs config)
-		log.Print("[00000000] FATAL Configuration file argument missing. Please specify using -config argument. Aborting.")
+		aulogging.Logger.NoCtx().Error().Print("Configuration file argument missing. Please specify using -config argument. Aborting.")
 		return ErrorConfigArgumentMissing
 	}
 	err := loadConfiguration()
 	if err != nil {
 		// cannot use logging package here as this would create a circular dependency (logging needs config)
-		log.Print("[00000000] FATAL Error reading or parsing configuration file. Aborting.")
+		aulogging.Logger.NoCtx().Error().Print("Error reading or parsing configuration file. Aborting.")
 		return ErrorConfigFile
 	}
 	return nil

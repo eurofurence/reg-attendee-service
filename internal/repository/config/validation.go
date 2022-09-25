@@ -39,7 +39,7 @@ func validateServerConfiguration(errs url.Values, c serverConfig) {
 	validation.CheckIntValueRange(&errs, 1, 300, "server.idle_timeout_seconds", c.IdleTimeout)
 }
 
-var allowedSeverities = [...]string{"DEBUG", "INFO", "WARN", "ERROR"}
+var allowedSeverities = []string{"DEBUG", "INFO", "WARN", "ERROR"}
 
 func validateLoggingConfiguration(errs url.Values, c loggingConfig) {
 	if validation.NotInAllowedValues(allowedSeverities[:], c.Severity) {
@@ -47,7 +47,7 @@ func validateLoggingConfiguration(errs url.Values, c loggingConfig) {
 	}
 }
 
-var allowedSecurity = [...]string{"fixed-token"}
+var allowedSecurity = []string{"fixed-token"}
 
 func validateSecurityConfiguration(errs url.Values, c securityConfig) {
 	if validation.NotInAllowedValues(allowedSecurity[:], c.Use) {
@@ -60,7 +60,7 @@ func validateSecurityConfiguration(errs url.Values, c securityConfig) {
 	}
 }
 
-var allowedDatabases = [...]string{"mysql", "inmemory"}
+var allowedDatabases = []string{"mysql", "inmemory"}
 
 func validateDatabaseConfiguration(errs url.Values, c databaseConfig) {
 	if validation.NotInAllowedValues(allowedDatabases[:], c.Use) {

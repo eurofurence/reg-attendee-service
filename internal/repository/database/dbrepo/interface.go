@@ -6,9 +6,9 @@ import (
 )
 
 type Repository interface {
-	Open()
+	Open() error
 	Close()
-	Migrate()
+	Migrate() error
 
 	AddAttendee(ctx context.Context, a *entity.Attendee) (uint, error)
 	UpdateAttendee(ctx context.Context, a *entity.Attendee) error

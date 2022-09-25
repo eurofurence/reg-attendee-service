@@ -2,6 +2,7 @@ package producer
 
 import (
 	"context"
+	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/service/attendeesrv"
@@ -33,6 +34,7 @@ func tstSetup() {
 }
 
 func tstSetupConfig() {
+	aulogging.SetupNoLoggerForTesting()
 	config.LoadTestingConfigurationFromPathOrAbort("../../../test/testconfig.yaml")
 }
 

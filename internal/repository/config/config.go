@@ -5,10 +5,14 @@ package config
 import (
 	"errors"
 	"fmt"
-	"log"
+	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"strings"
 	"time"
 )
+
+func UseEcsLogging() bool {
+	return ecsLogging
+}
 
 func ServerAddr() string {
 	c := Configuration()
@@ -63,7 +67,7 @@ func FixedToken(forGroup FixedTokenEnum) (string, error) {
 	case OptionalTokenForInitialReg:
 		return tokens.InitialReg, nil
 	default:
-		log.Printf("[00000000] ERROR invalid argument to config.FixedToken: %v, this is an error in your code! Find it and fix it. Returning invalid token!", forGroup)
+		aulogging.Logger.NoCtx().Error().Printf("invalid argument to config.FixedToken: %v, this is an error in your code! Find it and fix it. Returning invalid token!", forGroup)
 		return "", errors.New("invalid token group argument")
 	}
 }

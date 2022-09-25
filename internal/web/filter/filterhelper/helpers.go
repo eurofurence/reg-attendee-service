@@ -1,8 +1,9 @@
 package filterhelper
 
 import (
+	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
-	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/system"
 	"github.com/eurofurence/reg-attendee-service/internal/web/filter"
 	"github.com/eurofurence/reg-attendee-service/internal/web/filter/corsfilter"
 	"github.com/eurofurence/reg-attendee-service/internal/web/filter/ctxfilter"
@@ -20,7 +21,8 @@ func buildHandlerFunc(f filter.Filter) func(w http.ResponseWriter, r *http.Reque
 func parseTimeout(timeout string) time.Duration {
 	parsedDuration, err := time.ParseDuration(timeout)
 	if err != nil {
-		logging.NoCtx().Fatalf("invalid timeout duration '%s', try something like '800ms' or '4s': %v", timeout, err)
+		aulogging.Logger.NoCtx().Error().WithErr(err).Printf("invalid timeout duration '%s', try something like '800ms' or '4s': %s", timeout, err.Error())
+		system.Exit(1)
 	}
 	return parsedDuration
 }

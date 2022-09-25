@@ -3,8 +3,8 @@ package securityfilter
 import (
 	"context"
 	"errors"
+	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
-	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
 	"github.com/eurofurence/reg-attendee-service/internal/web/filter"
 	"github.com/eurofurence/reg-attendee-service/internal/web/filter/ctxvalues"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctlutil"
@@ -47,7 +47,7 @@ func (f *SecurityFilter) checkAuthenticated(ctx context.Context, w http.Response
 
 		return f.checkTokenValidAndAddToContext(ctx, bearerToken)
 	} else {
-		logging.Ctx(ctx).Warn("invalid or missing authorization header, denying access, not authenticated")
+		aulogging.Logger.Ctx(ctx).Warn().Print("invalid or missing authorization header, denying access, not authenticated")
 		return errors.New("missing " + headers.Authorization + " header with bearer token")
 	}
 }
@@ -59,7 +59,7 @@ func (f *SecurityFilter) checkTokenValidAndAddToContext(ctx context.Context, bea
 		ctxvalues.SetBearerToken(ctx, bearerToken)
 		return nil
 	} else {
-		logging.Ctx(ctx).Warn("invalid bearer token, denying access")
+		aulogging.Logger.Ctx(ctx).Warn().Print("invalid bearer token, denying access")
 		return errors.New("invalid bearer token")
 	}
 }
@@ -71,7 +71,7 @@ func (f *SecurityFilter) checkAuthorized(ctx context.Context, w http.ResponseWri
 		ctxvalues.SetAuthorizedAsGroup(ctx, matchesGroup)
 		return nil
 	} else {
-		logging.Ctx(ctx).Warn("unauthorized access attempt, denying access, not authorized")
+		aulogging.Logger.Ctx(ctx).Warn().Print("unauthorized access attempt, denying access, not authorized")
 		return errors.New("you are not unauthorized for this operation - the attempt has been logged")
 	}
 }

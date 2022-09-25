@@ -1,12 +1,13 @@
 package database
 
 import (
+	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database/dbrepo"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database/historizeddb"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database/inmemorydb"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database/mysqldb"
-	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/system"
 )
 
 var (
@@ -18,37 +19,40 @@ func SetRepository(repository dbrepo.Repository) {
 	ActiveRepository = repository
 }
 
-func Open() {
+func Open() error {
 	var r dbrepo.Repository
 	if config.DatabaseUse() == "mysql" {
-		logging.NoCtx().Info("Opening mysql database...")
+		aulogging.Logger.NoCtx().Info().Print("Opening mysql database...")
 		r = historizeddb.Create(mysqldb.Create())
 	} else {
-		logging.NoCtx().Info("Opening inmemory database...")
+		aulogging.Logger.NoCtx().Info().Print("Opening inmemory database...")
 		r = historizeddb.Create(inmemorydb.Create())
 	}
-	r.Open()
+	err := r.Open()
 	SetRepository(r)
+	return err
 }
 
 func Close() {
-	logging.NoCtx().Info("Closing database...")
+	aulogging.Logger.NoCtx().Info().Print("Closing database...")
 	GetRepository().Close()
 	SetRepository(nil)
 }
 
-func MigrateIfSwitchedOn() {
+func MigrateIfSwitchedOn() (err error) {
 	if config.MigrateDatabase() {
-		logging.NoCtx().Info("Migrating database...")
-		GetRepository().Migrate()
+		aulogging.Logger.NoCtx().Info().Print("Migrating database...")
+		err = GetRepository().Migrate()
 	} else {
-		logging.NoCtx().Info("Not migrating database. Provide -migrate-database command line switch to enable.")
+		aulogging.Logger.NoCtx().Info().Print("Not migrating database. Provide -migrate-database command line switch to enable.")
 	}
+	return
 }
 
 func GetRepository() dbrepo.Repository {
 	if ActiveRepository == nil {
-		logging.NoCtx().Fatal("You must Open() the database before using it. This is an error in your implementation.")
+		aulogging.Logger.NoCtx().Error().Print("You must Open() the database before using it. This is an error in your implementation.")
+		system.Exit(1)
 	}
 	return ActiveRepository
 }

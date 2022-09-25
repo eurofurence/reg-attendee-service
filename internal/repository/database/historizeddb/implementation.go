@@ -18,16 +18,16 @@ func Create(wrappedRepository dbrepo.Repository) dbrepo.Repository {
 	return &HistorizingRepository{wrappedRepository: wrappedRepository}
 }
 
-func (r *HistorizingRepository) Open() {
-	r.wrappedRepository.Open()
+func (r *HistorizingRepository) Open() error {
+	return r.wrappedRepository.Open()
 }
 
 func (r *HistorizingRepository) Close() {
 	r.wrappedRepository.Close()
 }
 
-func (r *HistorizingRepository) Migrate() {
-	r.wrappedRepository.Migrate()
+func (r *HistorizingRepository) Migrate() error {
+	return r.wrappedRepository.Migrate()
 }
 
 // --- attendee ---

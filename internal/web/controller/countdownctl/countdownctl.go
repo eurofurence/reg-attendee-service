@@ -2,9 +2,9 @@ package countdownctl
 
 import (
 	"context"
+	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/countdown"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
-	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
 	"github.com/eurofurence/reg-attendee-service/internal/web/filter/filterhelper"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctlutil"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/media"
@@ -37,11 +37,11 @@ func realCountdownHandler(ctx context.Context, w http.ResponseWriter, r *http.Re
 
 func mockCountdownHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, currentStr string) {
 	// added for ease of testing0
-	logging.Ctx(ctx).Info("used mock with currentTime=" + currentStr)
+	aulogging.Logger.Ctx(ctx).Info().Printf("used mock with currentTime=%s", currentStr)
 	current, err := time.Parse(config.StartTimeFormat, currentStr)
 	if err != nil {
 		// ignore unparseable date and use actual time instead (this is only for testing calls anyway)
-		logging.Ctx(ctx).Warn("used mock with unparseable currentTime, using current time instead")
+		aulogging.Logger.Ctx(ctx).Warn().Print("used mock with unparseable currentTime, using current time instead")
 		current = time.Now()
 	}
 	commonCountdownHandler(ctx, w, r, current)

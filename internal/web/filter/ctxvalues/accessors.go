@@ -55,7 +55,7 @@ func SetHttpStatus(ctx context.Context, status int) {
 }
 
 func RequestId(ctx context.Context) string {
-	return valueOrDefault(ctx, ContextRequestId, "")
+	return valueOrDefault(ctx, ContextRequestId, "00000000")
 }
 
 func SetRequestId(ctx context.Context, requestId string) {

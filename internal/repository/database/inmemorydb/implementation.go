@@ -20,11 +20,12 @@ func Create() dbrepo.Repository {
 	return &InMemoryRepository{}
 }
 
-func (r *InMemoryRepository) Open() {
+func (r *InMemoryRepository) Open() error {
 	r.attendees = make(map[uint]*entity.Attendee)
 	r.adminInfo = make(map[uint]*entity.AdminInfo)
 	r.statusChanges = make(map[uint][]entity.StatusChange)
 	r.history = make(map[uint]*entity.History)
+	return nil
 }
 
 func (r *InMemoryRepository) Close() {
@@ -34,8 +35,9 @@ func (r *InMemoryRepository) Close() {
 	r.history = nil
 }
 
-func (r *InMemoryRepository) Migrate() {
+func (r *InMemoryRepository) Migrate() error {
 	// nothing to do
+	return nil
 }
 
 // --- attendee ---

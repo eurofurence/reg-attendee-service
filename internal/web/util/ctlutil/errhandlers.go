@@ -2,8 +2,8 @@ package ctlutil
 
 import (
 	"context"
+	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/errorapi"
-	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
 	"github.com/eurofurence/reg-attendee-service/internal/web/filter/ctxvalues"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/media"
 	"github.com/go-http-utils/headers"
@@ -17,12 +17,12 @@ import (
 // note, remember to bail out after calling these
 
 func InvalidAttendeeIdErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, id string) {
-	logging.Ctx(ctx).Warnf("received invalid attendee id '%s'", id)
+	aulogging.Logger.Ctx(ctx).Warn().Printf("received invalid attendee id '%s'", id)
 	ErrorHandler(ctx, w, r, "attendee.id.invalid", http.StatusBadRequest, url.Values{})
 }
 
 func AttendeeNotFoundErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, id uint) {
-	logging.Ctx(ctx).Warnf("attendee id %v not found", id)
+	aulogging.Logger.Ctx(ctx).Warn().Printf("attendee id %d not found", id)
 	ErrorHandler(ctx, w, r, "attendee.id.notfound", http.StatusNotFound, url.Values{})
 }
 

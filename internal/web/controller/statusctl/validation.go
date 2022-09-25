@@ -2,13 +2,13 @@ package statusctl
 
 import (
 	"context"
+	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/validation"
 	"net/url"
 	"strings"
 
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
-	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
 )
 
 func validate(ctx context.Context, trustedOriginalStatus string, s *status.StatusChangeDto) url.Values {
@@ -20,10 +20,10 @@ func validate(ctx context.Context, trustedOriginalStatus string, s *status.Statu
 	validation.CheckLength(&errs, 1, 256, "comment", s.Comment)
 
 	if len(errs) != 0 {
-		logger := logging.Ctx(ctx)
-		if logger.IsDebugEnabled() {
+		if config.LoggingSeverity() == "DEBUG" {
+			logger := aulogging.Logger.Ctx(ctx).Debug()
 			for key, val := range errs {
-				logger.Debugf("status change dto validation error for key %s: %s", key, val)
+				logger.Printf("status change dto validation error for key %s: %s", key, val)
 			}
 		}
 	}

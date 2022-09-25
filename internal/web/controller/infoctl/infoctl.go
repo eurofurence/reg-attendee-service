@@ -10,6 +10,7 @@ import (
 )
 
 func Create(server chi.Router) {
+	server.Get("/", filterhelper.BuildUnauthenticatedHandler("800ms", healthHandler))
 	server.Get("/info/health", filterhelper.BuildUnauthenticatedNologgingHandler("800ms", healthHandler))
 	server.Get("/info/timeout", filterhelper.BuildUnauthenticatedHandler("800ms", timeoutHandler))
 }
