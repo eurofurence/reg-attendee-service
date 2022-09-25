@@ -286,6 +286,96 @@ func TestStatusHistory_Nonexistent(t *testing.T) {
 
 // --- status changes ---
 
+func TestStatusChange_InvalidId(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
+	docs.When("when an admin attempts a status change for an invalid attendee id")
+	body := status.StatusChangeDto{
+		Status:  "approved",
+		Comment: "stat40",
+	}
+	response := tstPerformPost("/api/rest/v1/attendees/tigress/status", tstRenderJson(body), tstValidAdminToken(t))
+
+	docs.Then("then the request fails and the appropriate error is returned")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.id.invalid", "")
+}
+
+func TestStatusChange_Nonexistant(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
+	docs.When("when an admin attempts a status change for an attendee that does not exist")
+	body := status.StatusChangeDto{
+		Status:  "approved",
+		Comment: "stat41",
+	}
+	response := tstPerformPost("/api/rest/v1/attendees/444/status", tstRenderJson(body), tstValidAdminToken(t))
+
+	docs.Then("then the request fails and the appropriate error is returned")
+	tstRequireErrorResponse(t, response, http.StatusNotFound, "attendee.id.notfound", "")
+
+	docs.Then("and no dues or payment changes have been recorded")
+	require.Empty(t, paymentMock.Recording())
+
+	docs.Then("and no email messages have been sent")
+	require.Empty(t, mailMock.Recording())
+}
+
+func TestStatusChange_InvalidBodySyntax(t *testing.T) {
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given an attendee in status approved")
+	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, "stat42", "approved")
+
+	docs.When("when an admin prematurely tries to change their status but sends a syntactically invalid request body")
+	response := tstPerformPost(loc+"/status", "{{-}}}}", tstValidAdminToken(t))
+
+	docs.Then("then the request fails and the appropriate error is returned")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "status.parse.error", url.Values{})
+
+	docs.Then("and the status is unchanged")
+	tstVerifyStatus(t, loc, "approved")
+
+	docs.Then("and no dues or payment changes have been recorded")
+	require.Empty(t, paymentMock.Recording())
+
+	docs.Then("and no email messages have been sent")
+	require.Empty(t, mailMock.Recording())
+}
+
+func TestStatusChange_InvalidBodyValues(t *testing.T) {
+	tstSetup(tstDefaultConfigFile)
+	defer tstShutdown()
+
+	docs.Given("given an attendee in status approved")
+	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, "stat43", "approved")
+
+	docs.When("when an admin tries to change the status to an invalid value")
+	body := status.StatusChangeDto{
+		Status:  "fluffy",
+		Comment: "why isn't there a status fluffy?",
+	}
+	response := tstPerformPost(loc+"/status", tstRenderJson(body), tstValidAdminToken(t))
+
+	docs.Then("then the request fails and the appropriate error is returned")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "status.data.invalid", url.Values{
+		"status": []string{"status must be one of new,approved,partially paid,paid,checked in,cancelled,deleted"},
+	})
+
+	docs.Then("and the status is unchanged")
+	tstVerifyStatus(t, loc, "approved")
+
+	docs.Then("and no dues or payment changes have been recorded")
+	require.Empty(t, paymentMock.Recording())
+
+	docs.Then("and no email messages have been sent")
+	require.Empty(t, mailMock.Recording())
+}
+
 // - anonymous is always denied -
 
 func TestStatusChange_Anonymous_Any_Any(t *testing.T) {
@@ -1188,8 +1278,6 @@ func tstStatusChange_Admin_Allow(t *testing.T, testcase string,
 }
 
 // TODO test unbook unpaid dues on cancel (but not paid dues!), in order of invoicing (don't forget negative dues in history)
-
-// TODO test invalid values, attendee id, invalid body etc. with admin
 
 // TODO test downstream errors (502) by simulating errors in payment and mail service
 
