@@ -22,6 +22,12 @@ func CheckLength(errs *url.Values, min int, max int, key string, value string) {
 	}
 }
 
+func CheckIntValueRange(errs *url.Values, min int, max int, key string, value int) {
+	if value < min || value > max {
+		errs.Add(key, fmt.Sprintf("%s field must be an integer at least %d and at most %d", key, min, max))
+	}
+}
+
 const isoDateFormat = "2006-01-02"
 
 func InvalidISODate(value string) bool {

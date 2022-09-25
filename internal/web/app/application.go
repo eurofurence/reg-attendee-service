@@ -1,7 +1,6 @@
 package app
 
 import (
-	"flag"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/mailservice"
@@ -19,8 +18,11 @@ func New() Application {
 }
 
 func (i *Impl) Run() int {
-	flag.Parse()
-	config.StartupLoadConfiguration()
+	config.ParseCommandLineFlags()
+
+	if err := config.StartupLoadConfiguration(); err != nil {
+		return 1
+	}
 
 	database.Open()
 	defer database.Close()
@@ -29,10 +31,9 @@ func (i *Impl) Run() int {
 	paymentservice.Create()
 	mailservice.Create()
 
-	server := CreateRouter()
-	err := StartWebserver(server)
-	if err != nil {
-		return 1
+	if err := runServerWithGracefulShutdown(); err != nil {
+		return 2
 	}
+
 	return 0
 }

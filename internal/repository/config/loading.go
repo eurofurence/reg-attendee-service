@@ -17,13 +17,27 @@ var (
 	configurationLock     *sync.RWMutex
 	configurationFilename string
 	dbMigrate             bool
+	ecsLogging            bool
+)
+
+var (
+	ErrorConfigArgumentMissing = errors.New("configuration file argument missing. Please specify using -config argument. Aborting")
+	ErrorConfigFile            = errors.New("failed to read or parse configuration file. Aborting")
 )
 
 func init() {
 	configurationData = &conf{Logging: loggingConfig{Severity: "DEBUG"}}
 	configurationLock = &sync.RWMutex{}
+
 	flag.StringVar(&configurationFilename, "config", "", "config file path")
 	flag.BoolVar(&dbMigrate, "migrate-database", false, "migrate database on startup")
+	flag.BoolVar(&ecsLogging, "ecs-json-logging", false, "switch to structured json logging")
+}
+
+// ParseCommandLineFlags is exposed separately so you can skip it for tests
+func ParseCommandLineFlags() {
+	log.Print("[00000000] INFO  Parsing command line flags...")
+	flag.Parse()
 }
 
 func parseAndOverwriteConfig(yamlFile []byte) error {
@@ -85,7 +99,9 @@ func loadConfiguration() error {
 // use this for tests to set a hardcoded yaml configuration
 func LoadTestingConfigurationFromPathOrAbort(configFilenameForTests string) {
 	configurationFilename = configFilenameForTests
-	StartupLoadConfiguration()
+	if err := StartupLoadConfiguration(); err != nil {
+		system.Exit(1)
+	}
 }
 
 // use this for tests
@@ -93,19 +109,20 @@ func EnableTestingMigrateDatabase() {
 	dbMigrate = true
 }
 
-func StartupLoadConfiguration() {
+func StartupLoadConfiguration() error {
 	log.Print("[00000000] INFO  Reading configuration...")
 	if configurationFilename == "" {
 		// cannot use logging package here as this would create a circular dependency (logging needs config)
 		log.Print("[00000000] FATAL Configuration file argument missing. Please specify using -config argument. Aborting.")
-		system.Exit(1)
+		return ErrorConfigArgumentMissing
 	}
 	err := loadConfiguration()
 	if err != nil {
 		// cannot use logging package here as this would create a circular dependency (logging needs config)
 		log.Print("[00000000] FATAL Error reading or parsing configuration file. Aborting.")
-		system.Exit(1)
+		return ErrorConfigFile
 	}
+	return nil
 }
 
 func Configuration() *conf {

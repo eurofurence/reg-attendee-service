@@ -11,6 +11,15 @@ func setConfigurationDefaults(c *conf) {
 	if c.Server.Port == "" {
 		c.Server.Port = "8080"
 	}
+	if c.Server.ReadTimeout <= 0 {
+		c.Server.ReadTimeout = 5
+	}
+	if c.Server.WriteTimeout <= 0 {
+		c.Server.WriteTimeout = 5
+	}
+	if c.Server.IdleTimeout <= 0 {
+		c.Server.IdleTimeout = 5
+	}
 	if c.Logging.Severity == "" {
 		c.Logging.Severity = "INFO"
 	}
@@ -25,6 +34,9 @@ func validateServerConfiguration(errs url.Values, c serverConfig) {
 	if validation.ViolatesPattern(portPattern, c.Port) {
 		errs.Add("server.port", "must be a number between 1 and 65535")
 	}
+	validation.CheckIntValueRange(&errs, 1, 300, "server.read_timeout_seconds", c.ReadTimeout)
+	validation.CheckIntValueRange(&errs, 1, 300, "server.write_timeout_seconds", c.WriteTimeout)
+	validation.CheckIntValueRange(&errs, 1, 300, "server.idle_timeout_seconds", c.IdleTimeout)
 }
 
 var allowedSeverities = [...]string{"DEBUG", "INFO", "WARN", "ERROR"}

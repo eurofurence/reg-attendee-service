@@ -4,6 +4,7 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -11,7 +12,19 @@ import (
 
 func ServerAddr() string {
 	c := Configuration()
-	return c.Server.Address + ":" + c.Server.Port
+	return fmt.Sprintf("%s:%s", c.Server.Address, c.Server.Port)
+}
+
+func ServerReadTimeout() time.Duration {
+	return time.Second * time.Duration(Configuration().Server.ReadTimeout)
+}
+
+func ServerWriteTimeout() time.Duration {
+	return time.Second * time.Duration(Configuration().Server.WriteTimeout)
+}
+
+func ServerIdleTimeout() time.Duration {
+	return time.Second * time.Duration(Configuration().Server.IdleTimeout)
 }
 
 func DatabaseUse() string {

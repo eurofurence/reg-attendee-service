@@ -36,8 +36,7 @@ func TestStartupLoadConfigurationNoFilename(t *testing.T) {
 	system.TestingExitCounter = 0
 	system.TestingMode = true
 	LoadTestingConfigurationFromPathOrAbort("")
-	// since system.Exit does not exit in TestingMode, both checks are run, so we end up with a count of 2
-	require.Equal(t, 2, system.TestingExitCounter, "should have called system.Exit()")
+	require.Equal(t, 1, system.TestingExitCounter, "should have called system.Exit()")
 }
 
 func TestStartupLoadConfigurationFileNotFound(t *testing.T) {
