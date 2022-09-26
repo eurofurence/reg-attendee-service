@@ -28,6 +28,9 @@ func CreateRouter(ctx context.Context) chi.Router {
 
 	server.Use(middleware.AddRequestIdToContextAndResponse)
 	server.Use(loggermiddleware.AddZerologLoggerToContext)
+	server.Use(middleware.RequestLogger)
+	server.Use(middleware.PanicRecoverer)
+	server.Use(middleware.CorsHandling)
 
 	countdownctl.Create(server)
 	attendeectl.Create(server)

@@ -2,8 +2,8 @@ package fallbackctl
 
 import (
 	"context"
-	"github.com/eurofurence/reg-attendee-service/internal/web/filter/ctxvalues"
 	"github.com/eurofurence/reg-attendee-service/internal/web/filter/filterhelper"
+	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
 	"github.com/go-chi/chi/v5"
 	"net/http"
 )

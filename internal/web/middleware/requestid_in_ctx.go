@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"github.com/eurofurence/reg-attendee-service/internal/web/filter/ctxvalues"
+	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
 	"github.com/google/uuid"
 	"net/http"
 )

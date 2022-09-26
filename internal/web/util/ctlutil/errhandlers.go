@@ -4,7 +4,7 @@ import (
 	"context"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/errorapi"
-	"github.com/eurofurence/reg-attendee-service/internal/web/filter/ctxvalues"
+	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/media"
 	"github.com/go-http-utils/headers"
 	"net/http"

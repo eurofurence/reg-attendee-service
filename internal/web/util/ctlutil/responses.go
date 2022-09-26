@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
-	"github.com/eurofurence/reg-attendee-service/internal/web/filter/ctxvalues"
+	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
 	"net/http"
 )
 
