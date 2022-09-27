@@ -10,7 +10,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/service/attendeesrv"
 	"github.com/eurofurence/reg-attendee-service/internal/web/filter/filterhelper"
-	ctlutil2 "github.com/eurofurence/reg-attendee-service/internal/web/util/ctlutil"
+	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctlutil"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/media"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-http-utils/headers"
@@ -62,7 +62,7 @@ func newAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.Requ
 	location := fmt.Sprintf("%s/%d", r.RequestURI, id)
 	aulogging.Logger.Ctx(ctx).Info().Printf("sending Location %s", location)
 	w.Header().Set(headers.Location, location)
-	ctlutil2.WriteHeader(ctx, w, http.StatusCreated)
+	w.WriteHeader(http.StatusCreated)
 }
 
 func getAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
@@ -72,13 +72,13 @@ func getAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.Requ
 	}
 	existingAttendee, err := attendeeService.GetAttendee(ctx, id)
 	if err != nil {
-		ctlutil2.AttendeeNotFoundErrorHandler(ctx, w, r, id)
+		ctlutil.AttendeeNotFoundErrorHandler(ctx, w, r, id)
 		return
 	}
 	dto := attendee.AttendeeDto{}
 	mapAttendeeToDto(existingAttendee, &dto)
 	w.Header().Add(headers.ContentType, media.ContentTypeApplicationJson)
-	ctlutil2.WriteJson(ctx, w, dto)
+	ctlutil.WriteJson(ctx, w, dto)
 }
 
 func updateAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
@@ -92,7 +92,7 @@ func updateAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.R
 	}
 	attd, err := attendeeService.GetAttendee(ctx, id)
 	if err != nil {
-		ctlutil2.AttendeeNotFoundErrorHandler(ctx, w, r, id)
+		ctlutil.AttendeeNotFoundErrorHandler(ctx, w, r, id)
 		return
 	}
 	validationErrs := validate(ctx, dto, attd)
@@ -118,14 +118,14 @@ func getAttendeeMaxIdHandler(ctx context.Context, w http.ResponseWriter, r *http
 	dto := attendee.AttendeeMaxIdDto{}
 	dto.MaxId = max
 	w.Header().Add(headers.ContentType, media.ContentTypeApplicationJson)
-	ctlutil2.WriteJson(ctx, w, dto)
+	ctlutil.WriteJson(ctx, w, dto)
 }
 
 func idFromVars(ctx context.Context, w http.ResponseWriter, r *http.Request) (uint, error) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
-		ctlutil2.InvalidAttendeeIdErrorHandler(ctx, w, r, idStr)
+		ctlutil.InvalidAttendeeIdErrorHandler(ctx, w, r, idStr)
 	}
 	return uint(id), err
 }
@@ -142,25 +142,25 @@ func parseBodyToAttendeeDto(ctx context.Context, w http.ResponseWriter, r *http.
 
 func attendeeValidationErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, errs url.Values) {
 	aulogging.Logger.Ctx(ctx).Warn().Printf("received attendee data with validation errors: %v", errs)
-	ctlutil2.ErrorHandler(ctx, w, r, "attendee.data.invalid", http.StatusBadRequest, errs)
+	ctlutil.ErrorHandler(ctx, w, r, "attendee.data.invalid", http.StatusBadRequest, errs)
 }
 
 func attendeeParseErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
 	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("attendee body could not be parsed: %s", err.Error())
-	ctlutil2.ErrorHandler(ctx, w, r, "attendee.parse.error", http.StatusBadRequest, url.Values{})
+	ctlutil.ErrorHandler(ctx, w, r, "attendee.parse.error", http.StatusBadRequest, url.Values{})
 }
 
 func attendeeWriteErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
 	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("attendee could not be written: %s", err.Error())
 	if err.Error() == "duplicate attendee data - you are already registered" {
-		ctlutil2.ErrorHandler(ctx, w, r, "attendee.data.duplicate", http.StatusConflict, url.Values{"attendee": {"there is already an attendee with this information (looking at nickname, email, and zip code)"}})
+		ctlutil.ErrorHandler(ctx, w, r, "attendee.data.duplicate", http.StatusConflict, url.Values{"attendee": {"there is already an attendee with this information (looking at nickname, email, and zip code)"}})
 	} else {
-		ctlutil2.ErrorHandler(ctx, w, r, "attendee.write.error", http.StatusInternalServerError, url.Values{})
+		ctlutil.ErrorHandler(ctx, w, r, "attendee.write.error", http.StatusInternalServerError, url.Values{})
 	}
 	// TODO: distinguish attendee.payment.error -> bad gateway
 }
 
 func attendeeMaxIdErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
 	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("could not determine max id: %s", err.Error())
-	ctlutil2.ErrorHandler(ctx, w, r, "attendee.max_id.error", http.StatusInternalServerError, url.Values{})
+	ctlutil.ErrorHandler(ctx, w, r, "attendee.max_id.error", http.StatusInternalServerError, url.Values{})
 }

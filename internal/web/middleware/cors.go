@@ -3,7 +3,6 @@ package middleware
 import (
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
-	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
 	"github.com/go-http-utils/headers"
 	"net/http"
 )
@@ -22,11 +21,7 @@ func CorsHandling(next http.Handler) http.Handler {
 
 		if r.Method == http.MethodOptions {
 			aulogging.Logger.Ctx(ctx).Debug().Print("received OPTIONS request. Responding with OK.")
-
-			status := http.StatusOK
-			w.WriteHeader(status)
-			ctxvalues.SetHttpStatus(ctx, status)
-
+			w.WriteHeader(http.StatusOK)
 			return
 		}
 

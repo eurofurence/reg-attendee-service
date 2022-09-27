@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
-	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
 	"net/http"
 )
 
@@ -18,9 +17,4 @@ func WriteJson(ctx context.Context, w http.ResponseWriter, v interface{}) {
 	if err != nil {
 		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("error while encoding json response: %s", err.Error())
 	}
-}
-
-func WriteHeader(ctx context.Context, w http.ResponseWriter, status int) {
-	w.WriteHeader(status)
-	ctxvalues.SetHttpStatus(ctx, status)
 }

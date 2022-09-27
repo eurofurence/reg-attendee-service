@@ -41,7 +41,7 @@ func TestErrorFallback(t *testing.T) {
 	docs.When("when they perform GET on an unimplemented endpoint")
 	response := tstPerformGet("/info/does-not-exist", tstNoToken())
 
-	docs.Then("then they receive a 404 error with no body")
+	docs.Then("then they receive a 404 error")
 	require.Equal(t, http.StatusNotFound, response.status, "unexpected http response status")
 	require.Equal(t, "", response.body, "unexpected body")
 }

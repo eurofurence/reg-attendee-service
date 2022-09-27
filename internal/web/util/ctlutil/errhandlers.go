@@ -30,6 +30,6 @@ func ErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, m
 	timestamp := time.Now().Format(time.RFC3339)
 	response := errorapi.ErrorDto{Message: msg, Timestamp: timestamp, Details: details, RequestId: ctxvalues.RequestId(ctx)}
 	w.Header().Set(headers.ContentType, media.ContentTypeApplicationJson)
-	WriteHeader(ctx, w, status)
+	w.WriteHeader(status)
 	WriteJson(ctx, w, response)
 }

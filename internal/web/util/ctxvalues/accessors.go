@@ -5,13 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
-	"net/http"
 	"strconv"
 )
 
 const ContextMap = "map"
 
-const ContextHttpStatusKey = "httpstatus"
 const ContextRequestId = "requestid"
 const ContextBearerToken = "bearertoken"
 const ContextAuthorizedAs = "authorizedas"
@@ -46,12 +44,8 @@ func setValue(ctx context.Context, key string, value string) {
 	}
 }
 
-func HttpStatus(ctx context.Context) string {
-	return valueOrDefault(ctx, ContextHttpStatusKey, fmt.Sprint(http.StatusOK))
-}
-
 func SetHttpStatus(ctx context.Context, status int) {
-	setValue(ctx, ContextHttpStatusKey, fmt.Sprint(status))
+	setValue(ctx, "a", fmt.Sprint(status))
 }
 
 func RequestId(ctx context.Context) string {

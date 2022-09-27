@@ -37,6 +37,7 @@ func CreateRouter(ctx context.Context) chi.Router {
 	adminctl.Create(server)
 	statusctl.Create(server)
 	infoctl.Create(server)
+
 	fallbackctl.Create(server)
 	return server
 }

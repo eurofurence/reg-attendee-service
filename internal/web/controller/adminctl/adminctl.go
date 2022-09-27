@@ -86,7 +86,7 @@ func writeAdminInfoHandler(ctx context.Context, w http.ResponseWriter, r *http.R
 		return
 	}
 
-	ctlutil.WriteHeader(ctx, w, http.StatusNoContent)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // --- helpers ---

@@ -105,7 +105,7 @@ func postStatusHandler(ctx context.Context, w http.ResponseWriter, r *http.Reque
 			statusWriteErrorHandler(ctx, w, r, err)
 		}
 	} else {
-		ctlutil.WriteHeader(ctx, w, http.StatusNoContent)
+		w.WriteHeader(http.StatusNoContent)
 	}
 }
 
