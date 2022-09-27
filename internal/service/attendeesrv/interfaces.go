@@ -28,7 +28,7 @@ type AttendeeService interface {
 	// This is because depending on package and flag changes (guests attend for free!), the dues may change, and
 	// so paid may turn into partially paid etc.
 	UpdateDuesAndDoStatusChangeIfNeeded(ctx context.Context, attendee *entity.Attendee, oldStatus string, newStatus string, comments string) error
-	StatusChangeAllowed(ctx context.Context, oldStatus string, newStatus string) error
+	StatusChangeAllowed(ctx context.Context, attendee *entity.Attendee, oldStatus string, newStatus string) error
 	StatusChangePossible(ctx context.Context, attendee *entity.Attendee, oldStatus string, newStatus string) error
 }
 

@@ -25,15 +25,20 @@ type loggingConfig struct {
 }
 
 type fixedTokenConfig struct {
-	Admin      string `yaml:"admin"`
-	User       string `yaml:"user"`
-	InitialReg string `yaml:"reg"`
+	Api string `yaml:"api"` // shared-secret for server-to-server backend authentication
+}
+
+type openIdConnectConfig struct {
+	TokenCookieName    string   `yaml:"token_cookie_name"`     // optional, if set, the jwt token is also read from this cookie (useful for mixed web application setups, see reg-auth-service)
+	TokenPublicKeysPEM []string `yaml:"token_public_keys_PEM"` // a list of public RSA keys in PEM format, see https://github.com/Jumpy-Squirrel/jwks2pem for obtaining PEM from openid keyset endpoint
+	AdminRole          string   `yaml:"admin_role"`            // the role/group claim that supplies admin rights
+	EarlyReg           string   `yaml:"early_reg_role"`        // optional, the role/group claim that turns on early staff registration
 }
 
 type securityConfig struct {
-	Use         string           `yaml:"use"` // fixed-token, currently only supported value
-	Fixed       fixedTokenConfig `yaml:"fixed"`
-	DisableCors bool             `yaml:"disable_cors"`
+	Fixed       fixedTokenConfig    `yaml:"fixed_token"`
+	Oidc        openIdConnectConfig `yaml:"oidc"`
+	DisableCors bool                `yaml:"disable_cors"`
 }
 
 type ChoiceConfig struct {
@@ -64,7 +69,8 @@ type birthdayConfig struct {
 const StartTimeFormat = "2006-01-02T15:04:05-07:00"
 
 type goLiveConfig struct {
-	StartIsoDatetime string `yaml:"start_iso_datetime"`
+	StartIsoDatetime         string `yaml:"start_iso_datetime"`
+	EarlyRegStartIsoDatetime string `yaml:"early_reg_start_iso_datetime"` // optional, only useful if you also set early_reg_role
 }
 
 type conf struct {

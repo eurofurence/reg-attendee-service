@@ -9,7 +9,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/service/attendeesrv"
-	"github.com/eurofurence/reg-attendee-service/internal/web/filter/filterhelper"
+	"github.com/eurofurence/reg-attendee-service/internal/web/filter"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctlutil"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/media"
 	"github.com/go-chi/chi/v5"
@@ -31,18 +31,15 @@ func OverrideAttendeeService(overrideAttendeeServiceForTesting attendeesrv.Atten
 }
 
 func Create(server chi.Router) {
-	if config.OptionalInitialRegTokenConfigured() {
-		server.Post("/api/rest/v1/attendees", filterhelper.BuildHandler("3s", newAttendeeHandler, config.TokenForAdmin, config.OptionalTokenForInitialReg))
-	} else {
-		server.Post("/api/rest/v1/attendees", filterhelper.BuildUnauthenticatedHandler("3s", newAttendeeHandler))
-	}
-
-	server.Get("/api/rest/v1/attendees/max-id", filterhelper.BuildUnauthenticatedHandler("3s", getAttendeeMaxIdHandler))
-	server.Get("/api/rest/v1/attendees/{id}", filterhelper.BuildHandler("3s", getAttendeeHandler, config.TokenForAdmin))
-	server.Put("/api/rest/v1/attendees/{id}", filterhelper.BuildHandler("3s", updateAttendeeHandler, config.TokenForAdmin))
+	server.Post("/api/rest/v1/attendees", filter.WithTimeout("3s", newAttendeeHandler))
+	server.Get("/api/rest/v1/attendees/max-id", filter.WithTimeout("3s", getAttendeeMaxIdHandler))
+	server.Get("/api/rest/v1/attendees/{id}", filter.LoggedInOrApiToken(filter.WithTimeout("3s", getAttendeeHandler)))
+	server.Put("/api/rest/v1/attendees/{id}", filter.LoggedInOrApiToken(filter.WithTimeout("3s", updateAttendeeHandler)))
 }
 
-func newAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func newAttendeeHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	dto, err := parseBodyToAttendeeDto(ctx, w, r)
 	if err != nil {
 		return
@@ -65,7 +62,9 @@ func newAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.Requ
 	w.WriteHeader(http.StatusCreated)
 }
 
-func getAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func getAttendeeHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	id, err := idFromVars(ctx, w, r)
 	if err != nil {
 		return
@@ -75,13 +74,21 @@ func getAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		ctlutil.AttendeeNotFoundErrorHandler(ctx, w, r, id)
 		return
 	}
+
+	// TODO probably not quite correct
+	if err := filter.IsSubjectOrRoleOrApiToken(w, r, existingAttendee.Email, config.OidcAdminRole()); err != nil {
+		return
+	}
+
 	dto := attendee.AttendeeDto{}
 	mapAttendeeToDto(existingAttendee, &dto)
 	w.Header().Add(headers.ContentType, media.ContentTypeApplicationJson)
 	ctlutil.WriteJson(ctx, w, dto)
 }
 
-func updateAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func updateAttendeeHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	id, err := idFromVars(ctx, w, r)
 	if err != nil {
 		return
@@ -95,6 +102,12 @@ func updateAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.R
 		ctlutil.AttendeeNotFoundErrorHandler(ctx, w, r, id)
 		return
 	}
+
+	// TODO probably not quite correct
+	if err := filter.IsSubjectOrRoleOrApiToken(w, r, attd.Email, config.OidcAdminRole()); err != nil {
+		return
+	}
+
 	validationErrs := validate(ctx, dto, attd)
 	if len(validationErrs) != 0 {
 		attendeeValidationErrorHandler(ctx, w, r, validationErrs)
@@ -109,7 +122,9 @@ func updateAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.R
 	w.Header().Add(headers.Location, r.RequestURI)
 }
 
-func getAttendeeMaxIdHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func getAttendeeMaxIdHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	max, err := attendeeService.GetAttendeeMaxId(ctx)
 	if err != nil {
 		attendeeMaxIdErrorHandler(ctx, w, r, err)

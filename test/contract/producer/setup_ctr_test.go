@@ -99,7 +99,7 @@ func (s *MockAttendeeService) UpdateDuesAndDoStatusChangeIfNeeded(ctx context.Co
 	return nil
 }
 
-func (s *MockAttendeeService) StatusChangeAllowed(ctx context.Context, oldStatus string, newStatus string) error {
+func (s *MockAttendeeService) StatusChangeAllowed(ctx context.Context, attendee *entity.Attendee, oldStatus string, newStatus string) error {
 	return nil
 }
 

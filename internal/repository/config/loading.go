@@ -1,6 +1,7 @@
 package config
 
 import (
+	"crypto/rsa"
 	"errors"
 	"flag"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
@@ -18,6 +19,8 @@ var (
 	configurationFilename string
 	dbMigrate             bool
 	ecsLogging            bool
+
+	parsedKeySet []*rsa.PublicKey
 )
 
 var (
@@ -59,11 +62,11 @@ func parseAndOverwriteConfig(yamlFile []byte) error {
 	validatePackagesConfiguration(errs, newConfigurationData.Choices.Packages)
 	validateOptionsConfiguration(errs, newConfigurationData.Choices.Options)
 	validateBirthdayConfiguration(errs, newConfigurationData.Birthday)
-	validateRegistrationStartTime(errs, newConfigurationData.GoLive)
+	validateRegistrationStartTime(errs, newConfigurationData.GoLive, newConfigurationData.Security)
 
 	if len(errs) != 0 {
 		var keys []string
-		for key, _ := range errs {
+		for key := range errs {
 			keys = append(keys, key)
 		}
 		sort.Strings(keys)
@@ -95,7 +98,7 @@ func loadConfiguration() error {
 	return err
 }
 
-// use this for tests to set a hardcoded yaml configuration
+// LoadTestingConfigurationFromPathOrAbort is for tests to set a hardcoded yaml configuration
 func LoadTestingConfigurationFromPathOrAbort(configFilenameForTests string) {
 	configurationFilename = configFilenameForTests
 	if err := StartupLoadConfiguration(); err != nil {
@@ -103,7 +106,7 @@ func LoadTestingConfigurationFromPathOrAbort(configFilenameForTests string) {
 	}
 }
 
-// use this for tests
+// EnableTestingMigrateDatabase is for tests
 func EnableTestingMigrateDatabase() {
 	dbMigrate = true
 }

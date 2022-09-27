@@ -88,17 +88,30 @@ func (s *AttendeeServiceImplData) CanChangeChoiceTo(ctx context.Context, origina
 }
 
 func (s *AttendeeServiceImplData) CanRegisterAtThisTime(ctx context.Context) error {
-	group, err := ctxvalues.AuthorizedAsGroup(ctx)
-	if err != nil || (group != config.TokenForAdmin && group != config.OptionalTokenForInitialReg) {
-		// staff and admin may always register, but regular people have to wait until the registration start time
-		current := time.Now()
-		target := config.RegistrationStartTime()
-		secondsToGo := target.Sub(current).Seconds()
-		if secondsToGo > 0 {
-			return errors.New("public registration has not opened at this time, please come back later")
-		}
+	// admin / api can always register
+	if ctxvalues.HasApiToken(ctx) || ctxvalues.IsAuthorizedAsRole(ctx, config.OidcAdminRole()) {
+		return nil
 	}
 
+	// staff early reg?
+	earlyRole := config.OidcEarlyRegRole()
+	if earlyRole != "" && ctxvalues.IsAuthorizedAsRole(ctx, earlyRole) {
+		current := time.Now()
+		target := config.EarlyRegistrationStartTime()
+		secondsToGo := target.Sub(current).Seconds()
+		if secondsToGo > 0 {
+			return errors.New("staff registration has not opened at this time, please come back later")
+		}
+		return nil
+	}
+
+	// regular people have to wait until the registration start time
+	current := time.Now()
+	target := config.RegistrationStartTime()
+	secondsToGo := target.Sub(current).Seconds()
+	if secondsToGo > 0 {
+		return errors.New("public registration has not opened at this time, please come back later")
+	}
 	return nil
 }
 
@@ -113,8 +126,7 @@ func isDuplicateAttendee(ctx context.Context, nickname string, zip string, email
 func checkNoForbiddenChanges(ctx context.Context, key string, choiceConfig config.ChoiceConfig, originalChoices map[string]bool, newChoices map[string]bool) error {
 	if choiceConfig.AdminOnly || choiceConfig.ReadOnly {
 		if originalChoices[key] != newChoices[key] {
-			group, err := ctxvalues.AuthorizedAsGroup(ctx)
-			if err != nil || group != config.TokenForAdmin {
+			if !ctxvalues.HasApiToken(ctx) && !ctxvalues.IsAuthorizedAsRole(ctx, config.OidcAdminRole()) {
 				return errors.New("forbidden change in state of choice key " + key + " - only an admin can do that")
 			}
 		}

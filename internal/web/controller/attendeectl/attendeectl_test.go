@@ -31,7 +31,7 @@ func TestGetAttendeeHandlerInvalidIdUnset(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := tstMockGetRequest("")
 
-	getAttendeeHandler(context.TODO(), w, r)
+	getAttendeeHandler(w, r)
 	tstRequireErrorResponse(t, w, http.StatusBadRequest, "attendee.id.invalid")
 }
 
@@ -40,7 +40,7 @@ func TestNewAttendeeHandlerWriteError(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := tstMockPostRequest(tstRenderJson(tstCreateValidAttendee()))
 
-	newAttendeeHandler(context.TODO(), w, r)
+	newAttendeeHandler(w, r)
 	tstRequireErrorResponse(t, w, http.StatusInternalServerError, "attendee.write.error")
 }
 

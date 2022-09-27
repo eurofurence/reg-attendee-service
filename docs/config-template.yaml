@@ -15,14 +15,30 @@ database:
       - 'timeout=30s' # connection timeout
 go_live:
   start_iso_datetime: '2022-01-29T20:00:00+01:00'
+  # optional, only useful if you also set early_reg_role, should be earlier than start_iso_datetime
+  early_reg_start_iso_datetime: ''
 security:
-  use: 'fixed-token'
-  fixed:
-    admin: 'put_secure_random_string_here_for_admin_token'
-    user: 'put_secure_random_string_here_for_logged_in_user_token'
-    # omit the next line to leave initial reg unsecured (public reg vs. staff reg)
-    reg: 'optionally_put_secure_random_string_here_for_securing_initial_reg'
-  # set this to true to send disable cors headers - not for production - local test instances only
+  fixed_token:
+    api: 'put_secure_random_string_here_for_api_token'
+  oidc:
+    # set this nonempty to also try to read the jwt token from a cookie
+    token_cookie_name: 'JWT'
+    # a list of public RSA keys in PEM format, see https://github.com/Jumpy-Squirrel/jwks2pem for obtaining PEM from openid keyset endpoint
+    token_public_keys_PEM:
+      - |
+        -----BEGIN PUBLIC KEY-----
+        MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnzyis1ZjfNB0bBgKFMSv
+        vkTtwlvBsaJq7S5wA+kzeVOVpVWwkWdVha4s38XM/pa/yr47av7+z3VTmvDRyAHc
+        aT92whREFpLv9cj5lTeJSibyr/Mrm/YtjCZVWgaOYIhwrXwKLqPr/11inWsAkfIy
+        tvHWTxZYEcXLgAXFuUuaS3uF9gEiNQwzGTU1v0FqkqTBr4B8nW3HCN47XUu0t8Y0
+        e+lf4s4OxQawWD79J9/5d3Ry0vbV3Am1FtGJiJvOwRsIfVChDpYStTcHTCMqtvWb
+        V6L11BWkpzGXSW4Hv43qa+GSYOD2QU68Mb59oSk2OB+BtOLpJofmbGEGgvmwyCI9
+        MwIDAQAB
+        -----END PUBLIC KEY-----
+    admin_role: 'admin'
+    # set this nonempty to allow early reg
+    early_reg_role: ''
+  # set this to true to send disable cors headers - not for production - local/test instances only - will log lots of warnings
   disable_cors: false
 choices:
   flags:

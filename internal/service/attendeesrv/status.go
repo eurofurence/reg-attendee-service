@@ -80,26 +80,30 @@ func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx contex
 	return nil
 }
 
-func (s *AttendeeServiceImplData) StatusChangeAllowed(ctx context.Context, oldStatus string, newStatus string) error {
-	group, err := ctxvalues.AuthorizedAsGroup(ctx)
-	if err != nil {
-		return errors.New("all status changes require a logged in user")
-	} else if group == config.OptionalTokenForInitialReg || group == config.TokenForLoggedInUser {
+func (s *AttendeeServiceImplData) StatusChangeAllowed(ctx context.Context, attendee *entity.Attendee, oldStatus string, newStatus string) error {
+	if ctxvalues.HasApiToken(ctx) || ctxvalues.IsAuthorizedAsRole(ctx, config.OidcAdminRole()) {
+		return nil
+	}
+
+	// TODO probably not quite correct - for self
+	if ctxvalues.Subject(ctx) == attendee.Email {
+		if oldStatus == "new" && newStatus == "cancelled" || oldStatus == "approved" && newStatus == "cancelled" {
+			// TODO: allow for self
+		}
+
+		return errors.New("you are not allowed to make this status transition")
+	}
+
+	// TODO probably not quite correct - for others (regdesk only)
+	if ctxvalues.Subject(ctx) != "" {
 		if oldStatus == "paid" && newStatus == "checked in" {
 			// TODO: load and check for regdesk permission, and allow if set
 		}
 
-		if oldStatus == "new" && newStatus == "cancelled" || oldStatus == "approved" && newStatus == "cancelled" {
-			// TODO: allow for self (current model cannot check this)
-		}
-
-		return errors.New("you are not allowed to make this status transition")
-	} else if group == config.TokenForAdmin {
-		// admin is allowed to do all useful status changes
-		return nil
-	} else {
 		return errors.New("you are not allowed to make this status transition")
 	}
+
+	return errors.New("all status changes require a logged in user")
 }
 
 func (s *AttendeeServiceImplData) StatusChangePossible(ctx context.Context, attendee *entity.Attendee, oldStatus string, newStatus string) error {
@@ -141,7 +145,7 @@ func (s *AttendeeServiceImplData) StatusChangePossible(ctx context.Context, atte
 	}
 }
 
-var graceAmount int64 = 100 // TODO read from config
+var graceAmountCents int64 = 100 // TODO read from config
 
 func (s *AttendeeServiceImplData) checkNoPaymentsExist(ctx context.Context, attendee *entity.Attendee, transactionHistory []paymentservice.Transaction) error {
 	for _, tx := range transactionHistory {
@@ -173,7 +177,7 @@ func (s *AttendeeServiceImplData) checkPositivePaymentBalanceButNotFullPayment(c
 func (s *AttendeeServiceImplData) checkPaidInFullWithGraceAmount(ctx context.Context, attendee *entity.Attendee, transactionHistory []paymentservice.Transaction) error {
 	dues, paid := s.balances(transactionHistory)
 	// intentionally do not check paid >= 0, there may be negative dues (previous year refunds)
-	if paid >= dues-graceAmount {
+	if paid >= dues-graceAmountCents {
 		return nil
 	} else {
 		return InsufficientPaymentError

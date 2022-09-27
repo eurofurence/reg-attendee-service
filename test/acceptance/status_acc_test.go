@@ -60,7 +60,7 @@ func TestStatus_UserDenyOther(t *testing.T) {
 	response := tstPerformGet(location2+"/status", token)
 
 	docs.Then("then the request is denied as unauthorized (403) and the appropriate error is returned")
-	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not unauthorized for this operation - the attempt has been logged")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized to access this data - the attempt has been logged")
 }
 
 func TestStatus_UserAllowSelf(t *testing.T) {
@@ -98,7 +98,7 @@ func TestStatus_StaffDenyOther(t *testing.T) {
 	response := tstPerformGet(location2+"/status", token)
 
 	docs.Then("then the request is denied as unauthorized (403) and the appropriate error is returned")
-	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not unauthorized for this operation - the attempt has been logged")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized to access this data - the attempt has been logged")
 }
 
 func TestStatus_StaffAllowSelf(t *testing.T) {
@@ -204,7 +204,7 @@ func TestStatusHistory_UserDeny(t *testing.T) {
 	response := tstPerformGet(location1+"/status-history", token)
 
 	docs.Then("then the request is denied as unauthorized (403) and the appropriate error is returned")
-	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not unauthorized for this operation - the attempt has been logged")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this operation - the attempt has been logged")
 }
 
 func TestStatusHistory_StaffDeny(t *testing.T) {
@@ -220,7 +220,7 @@ func TestStatusHistory_StaffDeny(t *testing.T) {
 	response := tstPerformGet(location1+"/status-history", token)
 
 	docs.Then("then the request is denied as unauthorized (403) and the appropriate error is returned")
-	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not unauthorized for this operation - the attempt has been logged")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this operation - the attempt has been logged")
 }
 
 func TestStatusHistory_AdminOk(t *testing.T) {
@@ -985,7 +985,7 @@ func tstStatusChange_Self_Deny(t *testing.T, testcase string, oldStatus string, 
 	response := tstPerformPost(loc+"/status", tstRenderJson(body), tstValidUserToken(t, att.Id))
 
 	docs.Then("then the request is denied as unauthorized (403) and the appropriate error is returned")
-	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not unauthorized for this operation - the attempt has been logged")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this operation - the attempt has been logged")
 
 	docs.Then("and the status is unchanged")
 	tstVerifyStatus(t, loc, oldStatus)
@@ -1070,7 +1070,7 @@ func tstStatusChange_Other_Deny(t *testing.T, testcase string, oldStatus string,
 	response := tstPerformPost(loc+"/status", tstRenderJson(body), tstValidUserToken(t, att2.Id))
 
 	docs.Then("then the request is denied as unauthorized (403) and the appropriate error is returned")
-	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not unauthorized for this operation - the attempt has been logged")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this operation - the attempt has been logged")
 
 	docs.Then("and the status is unchanged")
 	tstVerifyStatus(t, loc, oldStatus)
@@ -1098,7 +1098,7 @@ func tstStatusChange_Regdesk_Deny(t *testing.T, testcase string, oldStatus strin
 	response := tstPerformPost(loc+"/status", tstRenderJson(body), regdeskUserToken)
 
 	docs.Then("then the request is denied as unauthorized (403) and the appropriate error is returned")
-	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not unauthorized for this operation - the attempt has been logged")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this operation - the attempt has been logged")
 
 	docs.Then("and the status is unchanged")
 	tstVerifyStatus(t, loc, oldStatus)
@@ -1186,7 +1186,7 @@ func tstStatusChange_Staff_Deny(t *testing.T, testcase string, oldStatus string,
 	response := tstPerformPost(loc+"/status", tstRenderJson(body), token)
 
 	docs.Then("then the request is denied as unauthorized (403) and the appropriate error is returned")
-	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not unauthorized for this operation - the attempt has been logged")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this operation - the attempt has been logged")
 
 	docs.Then("and the status is unchanged")
 	tstVerifyStatus(t, loc, oldStatus)

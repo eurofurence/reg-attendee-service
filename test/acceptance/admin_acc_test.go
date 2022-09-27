@@ -48,7 +48,7 @@ func TestAdminDefaults_UserDeny(t *testing.T) {
 	response := tstPerformGet(location1+"/admin", token)
 
 	docs.Then("then the request is denied as unauthorized (403) and the correct error is returned")
-	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not unauthorized for this operation - the attempt has been logged")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this operation - the attempt has been logged")
 }
 
 func TestAdminDefaults_StaffDeny(t *testing.T) {
@@ -64,7 +64,7 @@ func TestAdminDefaults_StaffDeny(t *testing.T) {
 	response := tstPerformGet(location1+"/admin", token)
 
 	docs.Then("then the request is denied as unauthorized (403) and the correct error is returned")
-	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not unauthorized for this operation - the attempt has been logged")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this operation - the attempt has been logged")
 }
 
 func TestAdminDefaults_AdminOk(t *testing.T) {
@@ -161,7 +161,7 @@ func TestAdminWrite_UserDeny(t *testing.T) {
 	response := tstPerformPut(location1+"/admin", tstRenderJson(body), token)
 
 	docs.Then("then the request is denied as unauthenticated (401) and the appropriate error is returned")
-	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not unauthorized for this operation - the attempt has been logged")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this operation - the attempt has been logged")
 
 	docs.Then("and no changes have been made")
 	response2 := tstPerformGet(location1+"/admin", tstValidAdminToken(t))
@@ -184,7 +184,7 @@ func TestAdminWrite_StaffDeny(t *testing.T) {
 	response := tstPerformPut(location1+"/admin", tstRenderJson(body), token)
 
 	docs.Then("then the request is denied as unauthenticated (401) and the appropriate error is returned")
-	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not unauthorized for this operation - the attempt has been logged")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this operation - the attempt has been logged")
 
 	docs.Then("and no changes have been made")
 	response2 := tstPerformGet(location1+"/admin", tstValidAdminToken(t))

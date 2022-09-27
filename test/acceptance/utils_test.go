@@ -126,7 +126,7 @@ func tstBuildValidAttendee(testcase string) attendee.AttendeeDto {
 
 func tstRegisterAttendee(t *testing.T, testcase string) (location string, dtoWithId attendee.AttendeeDto) {
 	dto := tstBuildValidAttendee(testcase)
-	creationResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(dto), tstValidStaffOrEmptyToken(t))
+	creationResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(dto), tstValidStaffToken(t, "1"))
 	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status")
 
 	rereadResponse := tstPerformGet(creationResponse.location, tstValidAdminToken(t))

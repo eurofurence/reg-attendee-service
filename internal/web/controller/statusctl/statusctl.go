@@ -12,7 +12,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/mailservice"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/paymentservice"
 	"github.com/eurofurence/reg-attendee-service/internal/service/attendeesrv"
-	"github.com/eurofurence/reg-attendee-service/internal/web/filter/filterhelper"
+	"github.com/eurofurence/reg-attendee-service/internal/web/filter"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctlutil"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/media"
 	"github.com/go-chi/chi/v5"
@@ -35,21 +35,25 @@ func OverrideAttendeeService(overrideAttendeeServiceForTesting attendeesrv.Atten
 }
 
 func Create(server chi.Router) {
-	server.Get("/api/rest/v1/attendees/{id}/status", filterhelper.BuildHandler("3s", getStatusHandler, config.TokenForAdmin))
-	server.Post("/api/rest/v1/attendees/{id}/status", filterhelper.BuildHandler("3s", postStatusHandler, config.TokenForAdmin))
-	server.Get("/api/rest/v1/attendees/{id}/status-history", filterhelper.BuildHandler("3s", getStatusHistoryHandler, config.TokenForAdmin))
+	server.Get("/api/rest/v1/attendees/{id}/status", filter.LoggedInOrApiToken(filter.WithTimeout("3s", getStatusHandler)))
+	server.Post("/api/rest/v1/attendees/{id}/status", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout("3s", postStatusHandler)))
+	server.Get("/api/rest/v1/attendees/{id}/status-history", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout("3s", getStatusHistoryHandler)))
 }
 
 // --- handlers ---
 
-func getStatusHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func getStatusHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	att, err := attendeeByIdMustReturnOnError(ctx, w, r)
 	if err != nil {
 		return
 	}
 
-	// TODO ensure if user, can only get their own data - once permission system is in
-	// (right now regular users and staff are completely forbidden, but they'll need this)
+	// TODO probably not quite correct
+	if err := filter.IsSubjectOrRoleOrApiToken(w, r, att.Email, config.OidcAdminRole()); err != nil {
+		return
+	}
 
 	latest, err := obtainAttendeeLatestStatusMustReturnOnError(ctx, w, r, att)
 	if err != nil {
@@ -63,7 +67,9 @@ func getStatusHandler(ctx context.Context, w http.ResponseWriter, r *http.Reques
 	ctlutil.WriteJson(ctx, w, dto)
 }
 
-func postStatusHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func postStatusHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	att, err := attendeeByIdMustReturnOnError(ctx, w, r)
 	if err != nil {
 		return
@@ -83,7 +89,7 @@ func postStatusHandler(ctx context.Context, w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if err = attendeeService.StatusChangeAllowed(ctx, latestStatusChange.Status, dto.Status); err != nil {
+	if err = attendeeService.StatusChangeAllowed(ctx, att, latestStatusChange.Status, dto.Status); err != nil {
 		statusChangeForbiddenErrorHandler(ctx, w, r, err)
 		return
 	}
@@ -109,7 +115,9 @@ func postStatusHandler(ctx context.Context, w http.ResponseWriter, r *http.Reque
 	}
 }
 
-func getStatusHistoryHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func getStatusHistoryHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	att, err := attendeeByIdMustReturnOnError(ctx, w, r)
 	if err != nil {
 		return

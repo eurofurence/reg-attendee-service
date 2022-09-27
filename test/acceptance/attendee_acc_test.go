@@ -108,8 +108,10 @@ func TestCreateNewAttendeeStaffregNotLoggedIn(t *testing.T) {
 	attendeeSent := tstBuildValidAttendee("na4-")
 	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), tstNoToken())
 
-	docs.Then("then the request is denied as unauthenticated (401) and no location header is supplied")
-	require.Equal(t, http.StatusUnauthorized, response.status, "unexpected http response status")
+	docs.Then("then the request is denied with the appropriate error response and no location header is supplied")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
+		"timing": []string{"public registration has not opened at this time, please come back later"},
+	})
 	require.Equal(t, "", response.location, "non-empty location header in response")
 }
 
@@ -142,8 +144,10 @@ func TestCreateNewAttendeeStaffregUser(t *testing.T) {
 	attendeeSent := tstBuildValidAttendee("na6-")
 	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), userToken)
 
-	docs.Then("then the request is denied as unauthorized (403) and no location header is supplied")
-	require.Equal(t, http.StatusForbidden, response.status, "unexpected http response status")
+	docs.Then("then the request is denied with the appropriate error response and no location header is supplied")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
+		"timing": []string{"public registration has not opened at this time, please come back later"},
+	})
 	require.Equal(t, "", response.location, "non-empty location header in response")
 }
 
@@ -332,7 +336,7 @@ func TestUpdateExistingAttendee_Other(t *testing.T) {
 	response := tstPerformPut(location2, tstRenderJson(changedAttendee), token)
 
 	docs.Then("then the request is denied as unauthorized (403) and the data remains unchanged")
-	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not unauthorized for this operation - the attempt has been logged")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized to access this data - the attempt has been logged")
 }
 
 func TestUpdateExistingAttendeeSyntaxInvalid(t *testing.T) {
@@ -597,7 +601,7 @@ func TestDenyReadExistingAttendee_Other(t *testing.T) {
 	readResponse := tstPerformGet(location2, tstValidUserToken(t, attendee1.Id))
 
 	docs.Then("then the request is denied as unauthorized (403) and the appropriate error is returned")
-	tstRequireErrorResponse(t, readResponse, http.StatusForbidden, "auth.forbidden", "you are not unauthorized for this operation - the attempt has been logged")
+	tstRequireErrorResponse(t, readResponse, http.StatusForbidden, "auth.forbidden", "you are not authorized to access this data - the attempt has been logged")
 }
 
 func TestAllowReadExistingAttendee_Self(t *testing.T) {
@@ -630,7 +634,7 @@ func TestDenyReadExistingAttendeeWithStaffToken(t *testing.T) {
 	readResponse := tstPerformGet(location1, tstValidStaffToken(t, attendee2.Id))
 
 	docs.Then("then the request is denied as unauthorized (403) and the appropriate error is returned")
-	tstRequireErrorResponse(t, readResponse, http.StatusForbidden, "auth.forbidden", "you are not unauthorized for this operation - the attempt has been logged")
+	tstRequireErrorResponse(t, readResponse, http.StatusForbidden, "auth.forbidden", "you are not authorized to access this data - the attempt has been logged")
 }
 
 func TestReadAttendeeNotFound(t *testing.T) {

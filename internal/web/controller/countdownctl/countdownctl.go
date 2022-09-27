@@ -5,7 +5,7 @@ import (
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/countdown"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
-	"github.com/eurofurence/reg-attendee-service/internal/web/filter/filterhelper"
+	"github.com/eurofurence/reg-attendee-service/internal/web/filter"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctlutil"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/media"
 	"github.com/go-chi/chi/v5"
@@ -16,12 +16,14 @@ import (
 )
 
 func Create(server chi.Router) {
-	server.Get("/api/rest/v1/countdown", filterhelper.BuildUnauthenticatedHandler("1s", countdownHandler))
+	server.Get("/api/rest/v1/countdown", filter.WithTimeout("1s", countdownHandler))
 }
 
 const isoDateTimeFormat = "2006-01-02T15:04:05-07:00"
 
-func countdownHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func countdownHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	currentStr := r.URL.Query().Get("currentTime")
 	if currentStr == "" {
 		realCountdownHandler(ctx, w, r)
@@ -48,6 +50,8 @@ func mockCountdownHandler(ctx context.Context, w http.ResponseWriter, r *http.Re
 }
 
 func commonCountdownHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, current time.Time) {
+	// TODO handle staff role and use other time if configured
+
 	target := config.RegistrationStartTime()
 	secondsToGo := target.Sub(current).Seconds()
 	if secondsToGo < 0 {

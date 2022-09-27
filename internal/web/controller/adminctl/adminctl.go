@@ -8,7 +8,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/service/attendeesrv"
-	"github.com/eurofurence/reg-attendee-service/internal/web/filter/filterhelper"
+	"github.com/eurofurence/reg-attendee-service/internal/web/filter"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctlutil"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/media"
 	"github.com/go-chi/chi/v5"
@@ -30,13 +30,15 @@ func OverrideAttendeeService(overrideAttendeeServiceForTesting attendeesrv.Atten
 }
 
 func Create(server chi.Router) {
-	server.Get("/api/rest/v1/attendees/{id}/admin", filterhelper.BuildHandler("3s", getAdminInfoHandler, config.TokenForAdmin))
-	server.Put("/api/rest/v1/attendees/{id}/admin", filterhelper.BuildHandler("3s", writeAdminInfoHandler, config.TokenForAdmin))
+	server.Get("/api/rest/v1/attendees/{id}/admin", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout("3s", getAdminInfoHandler)))
+	server.Put("/api/rest/v1/attendees/{id}/admin", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout("3s", writeAdminInfoHandler)))
 }
 
 // --- handlers ---
 
-func getAdminInfoHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func getAdminInfoHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	attendee, err := attendeeByIdMustReturnOnError(ctx, w, r)
 	if err != nil {
 		return
@@ -54,7 +56,9 @@ func getAdminInfoHandler(ctx context.Context, w http.ResponseWriter, r *http.Req
 	ctlutil.WriteJson(ctx, w, dto)
 }
 
-func writeAdminInfoHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func writeAdminInfoHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	attendee, err := attendeeByIdMustReturnOnError(ctx, w, r)
 	if err != nil {
 		return

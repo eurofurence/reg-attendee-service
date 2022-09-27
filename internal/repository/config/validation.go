@@ -1,7 +1,10 @@
 package config
 
 import (
+	"crypto/rsa"
+	"fmt"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/validation"
+	"github.com/golang-jwt/jwt/v4"
 	"net/url"
 	"strings"
 	"time"
@@ -47,16 +50,18 @@ func validateLoggingConfiguration(errs url.Values, c loggingConfig) {
 	}
 }
 
-var allowedSecurity = []string{"fixed-token"}
-
 func validateSecurityConfiguration(errs url.Values, c securityConfig) {
-	if validation.NotInAllowedValues(allowedSecurity[:], c.Use) {
-		errs.Add("security.use", "currently must be fixed-token")
-	}
-	validation.CheckLength(&errs, 16, 256, "security.fixed.admin", c.Fixed.Admin)
-	validation.CheckLength(&errs, 16, 256, "security.fixed.user", c.Fixed.User)
-	if c.Fixed.InitialReg != "" {
-		validation.CheckLength(&errs, 16, 256, "security.fixed.reg", c.Fixed.InitialReg)
+	validation.CheckLength(&errs, 16, 256, "security.fixed.api", c.Fixed.Api)
+	validation.CheckLength(&errs, 1, 256, "security.oidc.admin_role", c.Oidc.AdminRole)
+
+	parsedKeySet = make([]*rsa.PublicKey, 0)
+	for i, keyStr := range c.Oidc.TokenPublicKeysPEM {
+		publicKeyPtr, err := jwt.ParseRSAPublicKeyFromPEM([]byte(keyStr))
+		if err != nil {
+			errs.Add(fmt.Sprintf("security.oidc.token_public_keys_PEM[%d]", i), fmt.Sprintf("failed to parse RSA public key in PEM format: %s", err.Error()))
+		} else {
+			parsedKeySet = append(parsedKeySet, publicKeyPtr)
+		}
 	}
 }
 
@@ -155,9 +160,24 @@ func checkConstraints(errs url.Values, c map[string]ChoiceConfig, keyPrefix stri
 	}
 }
 
-func validateRegistrationStartTime(errs url.Values, c goLiveConfig) {
-	_, err := time.Parse(StartTimeFormat, c.StartIsoDatetime)
+func validateRegistrationStartTime(errs url.Values, c goLiveConfig, s securityConfig) {
+	normal, err := time.Parse(StartTimeFormat, c.StartIsoDatetime)
 	if err != nil {
-		errs.Add("go_live.start_iso_datetime", "invalid date format, use ISO with numeric timezone as in "+StartTimeFormat)
+		errs.Add("go_live.start_iso_datetime", "invalid date/time format, use ISO with numeric timezone as in "+StartTimeFormat)
+	}
+
+	if c.EarlyRegStartIsoDatetime != "" {
+		early, err := time.Parse(StartTimeFormat, c.EarlyRegStartIsoDatetime)
+		if err != nil {
+			errs.Add("go_live.early_reg_start_iso_datetime", "invalid date/time format, use ISO with numeric timezone as in "+StartTimeFormat)
+		}
+
+		if normal.Before(early) {
+			errs.Add("go_live.early_reg_start_iso_datetime", "if supplied, must be earlier than go_live.start_iso_datetime")
+		}
+
+		if s.Oidc.EarlyReg == "" {
+			errs.Add("go_live.early_reg_start_iso_datetime", "if supplied, must also supply security.oidc.early_reg_role so early registration is possible")
+		}
 	}
 }
