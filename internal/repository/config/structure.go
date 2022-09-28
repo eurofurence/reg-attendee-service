@@ -20,6 +20,11 @@ type serverConfig struct {
 	IdleTimeout  int    `yaml:"idle_timeout_seconds"`
 }
 
+type downstreamConfig struct {
+	PaymentService string `yaml:"payment_service"` // base url, usually http://localhost:nnnn, will use in-memory-mock if unset
+	MailService    string `yaml:"mail_service"`    // base url, usually http://localhost:nnnn, will use in-memory-mock if unset
+}
+
 type loggingConfig struct {
 	Severity string `yaml:"severity"`
 }
@@ -84,4 +89,5 @@ type conf struct {
 	Birthday    birthdayConfig    `yaml:"birthday"`
 	GoLive      goLiveConfig      `yaml:"go_live"`
 	Countries   []string          `yaml:"countries"`
+	Downstream  downstreamConfig  `yaml:"downstream"`
 }

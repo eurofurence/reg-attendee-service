@@ -181,3 +181,14 @@ func validateRegistrationStartTime(errs url.Values, c goLiveConfig, s securityCo
 		}
 	}
 }
+
+const downstreamPattern = "^(|https?://.*[^/])$"
+
+func validateDownstreamConfiguration(errs url.Values, c downstreamConfig) {
+	if validation.ViolatesPattern(downstreamPattern, c.PaymentService) {
+		errs.Add("downstream.payment_service", "base url must be empty (enables in-memory simulator) or start with http:// or https:// and may not end in a /")
+	}
+	if validation.ViolatesPattern(downstreamPattern, c.MailService) {
+		errs.Add("downstream.payment_service", "base url must be empty (enables in-memory simulator) or start with http:// or https:// and may not end in a /")
+	}
+}

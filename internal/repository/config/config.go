@@ -196,11 +196,9 @@ func RequireLoginForReg() bool {
 }
 
 func PaymentServiceBaseUrl() string {
-	// TODO move to config, validate, remove trailing / if present during validation
-	return "http://localhost:9094"
+	return Configuration().Downstream.PaymentService
 }
 
 func MailServiceBaseUrl() string {
-	// TODO move to config, validate, remove trailing / if present during validation
-	return "http://localhost:9093"
+	return Configuration().Downstream.MailService
 }

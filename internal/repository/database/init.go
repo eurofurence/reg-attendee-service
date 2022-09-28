@@ -25,7 +25,7 @@ func Open() error {
 		aulogging.Logger.NoCtx().Info().Print("Opening mysql database...")
 		r = historizeddb.Create(mysqldb.Create())
 	} else {
-		aulogging.Logger.NoCtx().Info().Print("Opening inmemory database...")
+		aulogging.Logger.NoCtx().Warn().Print("Opening inmemory database (not useful for production!)...")
 		r = historizeddb.Create(inmemorydb.Create())
 	}
 	err := r.Open()
