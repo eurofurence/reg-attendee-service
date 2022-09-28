@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 )
 
 var attendeeService attendeesrv.AttendeeService
@@ -31,10 +32,10 @@ func OverrideAttendeeService(overrideAttendeeServiceForTesting attendeesrv.Atten
 }
 
 func Create(server chi.Router) {
-	server.Post("/api/rest/v1/attendees", filter.WithTimeout("3s", newAttendeeHandler))
-	server.Get("/api/rest/v1/attendees/max-id", filter.WithTimeout("3s", getAttendeeMaxIdHandler))
-	server.Get("/api/rest/v1/attendees/{id}", filter.LoggedInOrApiToken(filter.WithTimeout("3s", getAttendeeHandler)))
-	server.Put("/api/rest/v1/attendees/{id}", filter.LoggedInOrApiToken(filter.WithTimeout("3s", updateAttendeeHandler)))
+	server.Post("/api/rest/v1/attendees", filter.WithTimeout(3*time.Second, newAttendeeHandler))
+	server.Get("/api/rest/v1/attendees/max-id", filter.WithTimeout(3*time.Second, getAttendeeMaxIdHandler))
+	server.Get("/api/rest/v1/attendees/{id}", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, getAttendeeHandler)))
+	server.Put("/api/rest/v1/attendees/{id}", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, updateAttendeeHandler)))
 }
 
 func newAttendeeHandler(w http.ResponseWriter, r *http.Request) {

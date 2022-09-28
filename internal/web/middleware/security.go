@@ -1,16 +1,13 @@
 package middleware
 
 import (
-	"context"
 	"crypto/rsa"
-	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctlutil"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
 	"github.com/go-http-utils/headers"
 	"github.com/golang-jwt/jwt/v4"
 	"net/http"
-	"net/url"
 	"strings"
 )
 
@@ -86,7 +83,7 @@ func TokenValidator(next http.Handler) http.Handler {
 				ctxvalues.SetApiToken(ctx, apiTokenValue)
 				next.ServeHTTP(w, r)
 			} else {
-				unauthenticatedError(ctx, w, r, "invalid api token", "request supplied invalid api token, denying")
+				ctlutil.UnauthenticatedError(ctx, w, r, "invalid api token", "request supplied invalid api token, denying")
 			}
 			return
 		}
@@ -96,7 +93,7 @@ func TokenValidator(next http.Handler) http.Handler {
 		if bearerTokenValue != "" {
 			const bearerPrefix = "Bearer "
 			if !strings.HasPrefix(bearerTokenValue, bearerPrefix) {
-				unauthenticatedError(ctx, w, r, "value of Authorization header did not start with 'Bearer '", "request supplied malformed bearer token, denying")
+				ctlutil.UnauthenticatedError(ctx, w, r, "value of Authorization header did not start with 'Bearer '", "request supplied malformed bearer token, denying")
 				return
 			}
 
@@ -128,7 +125,7 @@ func TokenValidator(next http.Handler) http.Handler {
 					errorMessage = "token parsed but invalid"
 				}
 			}
-			unauthenticatedError(ctx, w, r, "invalid bearer token", errorMessage)
+			ctlutil.UnauthenticatedError(ctx, w, r, "invalid bearer token", errorMessage)
 			return
 		}
 
@@ -137,11 +134,6 @@ func TokenValidator(next http.Handler) http.Handler {
 		return
 	}
 	return http.HandlerFunc(fn)
-}
-
-func unauthenticatedError(ctx context.Context, w http.ResponseWriter, r *http.Request, details string, logmessage string) {
-	aulogging.Logger.Ctx(ctx).Warn().Print(logmessage)
-	ctlutil.ErrorHandler(ctx, w, r, "auth.unauthorized", http.StatusUnauthorized, url.Values{"details": []string{details}})
 }
 
 // --- accessors see ctxvalues ---

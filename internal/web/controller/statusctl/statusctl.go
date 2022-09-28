@@ -35,9 +35,9 @@ func OverrideAttendeeService(overrideAttendeeServiceForTesting attendeesrv.Atten
 }
 
 func Create(server chi.Router) {
-	server.Get("/api/rest/v1/attendees/{id}/status", filter.LoggedInOrApiToken(filter.WithTimeout("3s", getStatusHandler)))
-	server.Post("/api/rest/v1/attendees/{id}/status", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout("3s", postStatusHandler)))
-	server.Get("/api/rest/v1/attendees/{id}/status-history", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout("3s", getStatusHistoryHandler)))
+	server.Get("/api/rest/v1/attendees/{id}/status", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, getStatusHandler)))
+	server.Post("/api/rest/v1/attendees/{id}/status", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(3*time.Second, postStatusHandler)))
+	server.Get("/api/rest/v1/attendees/{id}/status-history", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(3*time.Second, getStatusHistoryHandler)))
 }
 
 // --- handlers ---

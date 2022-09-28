@@ -26,6 +26,16 @@ func AttendeeNotFoundErrorHandler(ctx context.Context, w http.ResponseWriter, r 
 	ErrorHandler(ctx, w, r, "attendee.id.notfound", http.StatusNotFound, url.Values{})
 }
 
+func UnauthenticatedError(ctx context.Context, w http.ResponseWriter, r *http.Request, details string, logMessage string) {
+	aulogging.Logger.Ctx(ctx).Warn().Print(logMessage)
+	ErrorHandler(ctx, w, r, "auth.unauthorized", http.StatusUnauthorized, url.Values{"details": []string{details}})
+}
+
+func UnauthorizedError(ctx context.Context, w http.ResponseWriter, r *http.Request, details string, logMessage string) {
+	aulogging.Logger.Ctx(ctx).Warn().Print(logMessage)
+	ErrorHandler(ctx, w, r, "auth.forbidden", http.StatusForbidden, url.Values{"details": []string{details}})
+}
+
 func ErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, msg string, status int, details url.Values) {
 	timestamp := time.Now().Format(time.RFC3339)
 	response := errorapi.ErrorDto{Message: msg, Timestamp: timestamp, Details: details, RequestId: ctxvalues.RequestId(ctx)}
