@@ -5,6 +5,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctlutil"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
+	"github.com/eurofurence/reg-attendee-service/internal/web/util/media"
 	"github.com/go-http-utils/headers"
 	"github.com/golang-jwt/jwt/v4"
 	"net/http"
@@ -43,7 +44,7 @@ func fromAuthHeaderOrCookie(r *http.Request) string {
 }
 
 func fromApiTokenHeader(r *http.Request) string {
-	return r.Header.Get("X-Api-Token")
+	return r.Header.Get(media.HeaderXApiKey)
 }
 
 // --- middleware validating the values and adding to context values ---

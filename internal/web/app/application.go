@@ -34,8 +34,12 @@ func (i *Impl) Run() int {
 		return 1
 	}
 
-	paymentservice.Create()
-	mailservice.Create()
+	if err := paymentservice.Create(); err != nil {
+		return 1
+	}
+	if err := mailservice.Create(); err != nil {
+		return 1
+	}
 
 	if err := runServerWithGracefulShutdown(); err != nil {
 		return 2

@@ -2,9 +2,9 @@ package paymentservice
 
 var activeInstance PaymentService
 
-func Create() {
-	// TODO implement me with non-mock
-	activeInstance = newMock()
+func Create() (err error) {
+	activeInstance, err = newClient()
+	return err
 }
 
 func CreateMock() Mock {

@@ -86,11 +86,11 @@ Limitations:
  - ✅ implements admin fields handling
  - ✅ implements status transitions
  - ✅ includes an openapi spec
- - 🚧 talks to payment service as appropriate
- - 🚧 talks to mail service as appropriate
+ - 🚧 talks to payment service as appropriate (with contract tests)
+ - 🚧 talks to mail service as appropriate (with contract tests)
  - ✅ obtains IDP tokens from the cookies set by the auth service, as well as fixed token security for backend requests
  - ✅ auth header and tokens are honored for all requests, even the ones that do not require authorization
- - 🚧 fields for MMC have been added as well (partner, ...) 
+ - ❌ fields for MMC have been added as well (partner, ...) 
  - ✅ day guests are supported simply via the package subsystem 
  - 🚧 guests are supported as an admin only flag which will cause the system to assign 0 dues
  - ✅ implements a general request timeout and panic handling
@@ -101,5 +101,7 @@ Limitations:
 
 ### for later
 
+- search feature
+- ban resource and handling
 - more fine-grained permissions using JWT
   - viewAttendees, changeAttendees, viewAttendeeAdmininfo, changeAttendeeAdmininfo rights

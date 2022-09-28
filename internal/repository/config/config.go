@@ -194,3 +194,13 @@ func IsCorsDisabled() bool {
 func RequireLoginForReg() bool {
 	return Configuration().Security.RequireLogin
 }
+
+func PaymentServiceBaseUrl() string {
+	// TODO move to config, validate, remove trailing / if present during validation
+	return "http://localhost:9094"
+}
+
+func MailServiceBaseUrl() string {
+	// TODO move to config, validate, remove trailing / if present during validation
+	return "http://localhost:9093"
+}
