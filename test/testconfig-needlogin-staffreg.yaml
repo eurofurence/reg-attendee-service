@@ -17,10 +17,13 @@ security:
         mwIDAQAB
         -----END PUBLIC KEY-----
     admin_role: 'admin'
-    early_reg_role: ''
+    early_reg_role: 'staff'
   disable_cors: true
+  require_login_for_reg: true
 go_live:
-  start_iso_datetime: '2019-10-31T20:00:00+01:00'
+  # public reg has not started yet, so only staff may register
+  start_iso_datetime: '2030-11-28T20:00:00+01:00'
+  early_reg_start_iso_datetime: '2019-10-31T20:00:00+01:00'
 choices:
   flags:
     hc:

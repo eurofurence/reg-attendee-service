@@ -18,8 +18,8 @@ import (
 // --- create new attendee ---
 
 func TestCreateNewAttendee(t *testing.T) {
-	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	docs.Given("given the configuration for public standard registration")
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an unauthenticated user")
@@ -35,7 +35,7 @@ func TestCreateNewAttendee(t *testing.T) {
 
 func TestCreateNewAttendeeInvalid(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an unauthenticated user")
@@ -59,7 +59,7 @@ func TestCreateNewAttendeeInvalid(t *testing.T) {
 
 func TestCreateNewAttendeeSyntaxInvalid(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an unauthenticated user")
@@ -78,7 +78,7 @@ func TestCreateNewAttendeeSyntaxInvalid(t *testing.T) {
 
 func TestCreateNewAttendeeCanBeReadAgainByAdmin(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an unauthenticated user")
@@ -99,7 +99,7 @@ func TestCreateNewAttendeeCanBeReadAgainByAdmin(t *testing.T) {
 
 func TestCreateNewAttendeeStaffregNotLoggedIn(t *testing.T) {
 	docs.Given("given the configuration for staff pre-registration")
-	tstSetup(tstStaffregConfigFile)
+	tstSetup(tstConfigFile(false, true, false))
 	defer tstShutdown()
 
 	docs.Given("given an unauthenticated user")
@@ -117,7 +117,7 @@ func TestCreateNewAttendeeStaffregNotLoggedIn(t *testing.T) {
 
 func TestCreateNewAttendeeStaffregStaff(t *testing.T) {
 	docs.Given("given the configuration for staff pre-registration")
-	tstSetup(tstStaffregConfigFile)
+	tstSetup(tstConfigFile(false, true, false))
 	defer tstShutdown()
 
 	docs.Given("given a staffer")
@@ -134,7 +134,7 @@ func TestCreateNewAttendeeStaffregStaff(t *testing.T) {
 
 func TestCreateNewAttendeeStaffregUser(t *testing.T) {
 	docs.Given("given the configuration for staff pre-registration")
-	tstSetup(tstStaffregConfigFile)
+	tstSetup(tstConfigFile(false, true, false))
 	defer tstShutdown()
 
 	docs.Given("given an authenticated regular user")
@@ -153,7 +153,7 @@ func TestCreateNewAttendeeStaffregUser(t *testing.T) {
 
 func TestCreateNewAttendeeStaffregAdmin(t *testing.T) {
 	docs.Given("given the configuration for staff pre-registration")
-	tstSetup(tstStaffregConfigFile)
+	tstSetup(tstConfigFile(false, true, false))
 	defer tstShutdown()
 
 	docs.Given("given an admin")
@@ -170,7 +170,7 @@ func TestCreateNewAttendeeStaffregAdmin(t *testing.T) {
 
 func TestCreateNewAttendeeAdminOnlyFlag(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an unauthenticated user")
@@ -189,7 +189,7 @@ func TestCreateNewAttendeeAdminOnlyFlag(t *testing.T) {
 
 func TestCreateNewAttendeeReadOnlyFlag(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an unauthenticated user")
@@ -208,7 +208,7 @@ func TestCreateNewAttendeeReadOnlyFlag(t *testing.T) {
 
 func TestCreateNewAttendeeAdminOnlyFlag_Admin(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an admin")
@@ -228,7 +228,7 @@ func TestCreateNewAttendeeAdminOnlyFlag_Admin(t *testing.T) {
 
 func TestCreateNewAttendeeDefaultReadOnlyPackage(t *testing.T) {
 	docs.Given("given the configuration for staff pre-registration")
-	tstSetup(tstStaffregConfigFile)
+	tstSetup(tstConfigFile(false, true, false))
 	defer tstShutdown()
 
 	docs.Given("given a staffer")
@@ -248,7 +248,7 @@ func TestCreateNewAttendeeDefaultReadOnlyPackage(t *testing.T) {
 
 func TestCreateNewAttendeeDuplicateHandling(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an unauthenticated user and an existing registration")
@@ -275,7 +275,7 @@ func TestCreateNewAttendeeDuplicateHandling(t *testing.T) {
 
 func TestCreateNewAttendeeTooEarly(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFileBeforeTarget)
+	tstSetup(tstConfigFile(false, false, false))
 	defer tstShutdown()
 
 	docs.Given("given an unauthenticated user")
@@ -296,7 +296,7 @@ func TestCreateNewAttendeeTooEarly(t *testing.T) {
 
 func TestUpdateExistingAttendee_Self(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -321,7 +321,7 @@ func TestUpdateExistingAttendee_Self(t *testing.T) {
 
 func TestUpdateExistingAttendee_Other(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given two existing attendees")
@@ -341,7 +341,7 @@ func TestUpdateExistingAttendee_Other(t *testing.T) {
 
 func TestUpdateExistingAttendeeSyntaxInvalid(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -360,7 +360,7 @@ func TestUpdateExistingAttendeeSyntaxInvalid(t *testing.T) {
 
 func TestUpdateExistingAttendeeDataInvalid(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee who is logged in")
@@ -386,7 +386,7 @@ func TestUpdateExistingAttendeeDataInvalid(t *testing.T) {
 
 func TestUpdateNonExistingAttendee(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an admin")
@@ -402,7 +402,7 @@ func TestUpdateNonExistingAttendee(t *testing.T) {
 
 func TestUpdateAttendeeInvalidId(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an admin")
@@ -418,7 +418,7 @@ func TestUpdateAttendeeInvalidId(t *testing.T) {
 
 func TestDenyUpdateExistingAttendeeWhileNotLoggedIn(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee and a user who is not logged in")
@@ -441,7 +441,7 @@ func TestDenyUpdateExistingAttendeeWhileNotLoggedIn(t *testing.T) {
 
 func TestDenyUpdateExistingAttendeeWithStaffToken(t *testing.T) {
 	docs.Given("given the configuration for staff pre-registration (the other config doesn't even have a staff token)")
-	tstSetup(tstStaffregConfigFile)
+	tstSetup(tstConfigFile(false, true, false))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -465,7 +465,7 @@ func TestDenyUpdateExistingAttendeeWithStaffToken(t *testing.T) {
 
 func TestUpdateExistingAttendeeAdminOnlyFlag(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee who is logged in")
@@ -492,7 +492,7 @@ func TestUpdateExistingAttendeeAdminOnlyFlag(t *testing.T) {
 
 func TestUpdateExistingAttendeeAdminOnlyFlag_Admin(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -518,7 +518,7 @@ func TestUpdateExistingAttendeeAdminOnlyFlag_Admin(t *testing.T) {
 
 func TestUpdateExistingAttendeeReadOnlyFlag(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee who is logged in")
@@ -545,7 +545,7 @@ func TestUpdateExistingAttendeeReadOnlyFlag(t *testing.T) {
 
 func TestUpdateExistingAttendeeReadOnlyFlag_Admin(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -573,7 +573,7 @@ func TestUpdateExistingAttendeeReadOnlyFlag_Admin(t *testing.T) {
 
 func TestDenyReadExistingAttendeeWhileNotLoggedIn(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -590,7 +590,7 @@ func TestDenyReadExistingAttendeeWhileNotLoggedIn(t *testing.T) {
 
 func TestDenyReadExistingAttendee_Other(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given two existing attendees")
@@ -606,7 +606,7 @@ func TestDenyReadExistingAttendee_Other(t *testing.T) {
 
 func TestAllowReadExistingAttendee_Self(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee who is logged in")
@@ -623,7 +623,7 @@ func TestAllowReadExistingAttendee_Self(t *testing.T) {
 
 func TestDenyReadExistingAttendeeWithStaffToken(t *testing.T) {
 	docs.Given("given the configuration for staff pre-registration (the other config doesn't even have a staff token)")
-	tstSetup(tstStaffregConfigFile)
+	tstSetup(tstConfigFile(false, true, false))
 	defer tstShutdown()
 
 	docs.Given("given two existing attendees, one of which is staff")
@@ -639,7 +639,7 @@ func TestDenyReadExistingAttendeeWithStaffToken(t *testing.T) {
 
 func TestReadAttendeeNotFound(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an admin")
@@ -654,7 +654,7 @@ func TestReadAttendeeNotFound(t *testing.T) {
 
 func TestReadAttendeeInvalidId(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an admin")
@@ -671,7 +671,7 @@ func TestReadAttendeeInvalidId(t *testing.T) {
 
 func TestAttendeeMaxIdAvailable(t *testing.T) {
 	docs.Given("given an existing attendee")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	someAttendee := tstBuildValidAttendee("max1-")

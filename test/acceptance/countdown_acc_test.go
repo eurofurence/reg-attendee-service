@@ -14,7 +14,7 @@ import (
 
 func TestCountdownBeforeTarget(t *testing.T) {
 	docs.Given("given the configuration for standard registration with a target date in the future")
-	tstSetup(tstDefaultConfigFileBeforeTarget)
+	tstSetup(tstConfigFile(false, false, false))
 	defer tstShutdown()
 
 	docs.Given("given an unauthenticated user")
@@ -32,7 +32,7 @@ func TestCountdownBeforeTarget(t *testing.T) {
 
 func TestCountdownAfterTarget(t *testing.T) {
 	docs.Given("given the configuration for standard registration with a target date in the past")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an unauthenticated user")
@@ -50,7 +50,7 @@ func TestCountdownAfterTarget(t *testing.T) {
 
 func TestMockedCountdownAfterTarget(t *testing.T) {
 	docs.Given("given the configuration for standard registration with a target date in the future")
-	tstSetup(tstDefaultConfigFileBeforeTarget)
+	tstSetup(tstConfigFile(false, false, false))
 	defer tstShutdown()
 
 	docs.Given("given an unauthenticated user")

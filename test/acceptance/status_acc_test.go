@@ -28,7 +28,7 @@ import (
 
 func TestStatus_AnonDeny(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -46,7 +46,7 @@ func TestStatus_AnonDeny(t *testing.T) {
 
 func TestStatus_UserDenyOther(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given two existing attendees")
@@ -65,7 +65,7 @@ func TestStatus_UserDenyOther(t *testing.T) {
 
 func TestStatus_UserAllowSelf(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -84,7 +84,7 @@ func TestStatus_UserAllowSelf(t *testing.T) {
 
 func TestStatus_StaffDenyOther(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstStaffregConfigFile)
+	tstSetup(tstConfigFile(false, true, false))
 	defer tstShutdown()
 
 	docs.Given("given two existing attendees")
@@ -103,7 +103,7 @@ func TestStatus_StaffDenyOther(t *testing.T) {
 
 func TestStatus_StaffAllowSelf(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstStaffregConfigFile)
+	tstSetup(tstConfigFile(false, true, false))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee with no special privileges")
@@ -122,7 +122,7 @@ func TestStatus_StaffAllowSelf(t *testing.T) {
 
 func TestStatus_AdminOk(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -141,7 +141,7 @@ func TestStatus_AdminOk(t *testing.T) {
 
 func TestStatus_InvalidId(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given a logged in admin")
@@ -156,7 +156,7 @@ func TestStatus_InvalidId(t *testing.T) {
 
 func TestStatus_Nonexistent(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given a logged in admin")
@@ -173,7 +173,7 @@ func TestStatus_Nonexistent(t *testing.T) {
 
 func TestStatusHistory_AnonDeny(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -191,7 +191,7 @@ func TestStatusHistory_AnonDeny(t *testing.T) {
 
 func TestStatusHistory_UserDeny(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -209,7 +209,7 @@ func TestStatusHistory_UserDeny(t *testing.T) {
 
 func TestStatusHistory_StaffDeny(t *testing.T) {
 	docs.Given("given the configuration for staff registration")
-	tstSetup(tstStaffregConfigFile)
+	tstSetup(tstConfigFile(false, true, false))
 	defer tstShutdown()
 
 	docs.Given("given an authenticated staffer who has made a valid registration")
@@ -225,7 +225,7 @@ func TestStatusHistory_StaffDeny(t *testing.T) {
 
 func TestStatusHistory_AdminOk(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee right after registration")
@@ -256,7 +256,7 @@ func TestStatusHistory_AdminOk(t *testing.T) {
 
 func TestStatusHistory_InvalidId(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given a logged in admin")
@@ -271,7 +271,7 @@ func TestStatusHistory_InvalidId(t *testing.T) {
 
 func TestStatusHistory_Nonexistent(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given a logged in admin")
@@ -288,7 +288,7 @@ func TestStatusHistory_Nonexistent(t *testing.T) {
 
 func TestStatusChange_InvalidId(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.When("when an admin attempts a status change for an invalid attendee id")
@@ -304,7 +304,7 @@ func TestStatusChange_InvalidId(t *testing.T) {
 
 func TestStatusChange_Nonexistant(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.When("when an admin attempts a status change for an attendee that does not exist")
@@ -325,7 +325,7 @@ func TestStatusChange_Nonexistant(t *testing.T) {
 }
 
 func TestStatusChange_InvalidBodySyntax(t *testing.T) {
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an attendee in status approved")
@@ -348,7 +348,7 @@ func TestStatusChange_InvalidBodySyntax(t *testing.T) {
 }
 
 func TestStatusChange_InvalidBodyValues(t *testing.T) {
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an attendee in status approved")
@@ -944,7 +944,7 @@ func TestStatusChange_Admin_Deleted_Cancelled(t *testing.T) {
 // --- detail implementations for the status change tests ---
 
 func tstStatusChange_Anonymous_Deny(t *testing.T, testcase string, oldStatus string, newStatus string) {
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an attendee in status " + oldStatus)
@@ -971,7 +971,7 @@ func tstStatusChange_Anonymous_Deny(t *testing.T, testcase string, oldStatus str
 }
 
 func tstStatusChange_Self_Deny(t *testing.T, testcase string, oldStatus string, newStatus string) {
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an attendee in status " + oldStatus)
@@ -998,7 +998,7 @@ func tstStatusChange_Self_Deny(t *testing.T, testcase string, oldStatus string, 
 }
 
 func tstStatusChange_Self_Unavailable(t *testing.T, testcase string, oldStatus string, newStatus string) {
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an attendee in status " + oldStatus)
@@ -1028,7 +1028,7 @@ func tstStatusChange_Self_Unavailable(t *testing.T, testcase string, oldStatus s
 }
 
 func tstStatusChange_Self_Allow(t *testing.T, testcase string, oldStatus string, newStatus string) {
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an attendee in status " + oldStatus)
@@ -1055,7 +1055,7 @@ func tstStatusChange_Self_Allow(t *testing.T, testcase string, oldStatus string,
 }
 
 func tstStatusChange_Other_Deny(t *testing.T, testcase string, oldStatus string, newStatus string) {
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an attendee in status " + oldStatus + " and a second user")
@@ -1083,7 +1083,7 @@ func tstStatusChange_Other_Deny(t *testing.T, testcase string, oldStatus string,
 }
 
 func tstStatusChange_Regdesk_Deny(t *testing.T, testcase string, oldStatus string, newStatus string) {
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an attendee in status " + oldStatus + " and a second attendee with the regdesk permission")
@@ -1111,7 +1111,7 @@ func tstStatusChange_Regdesk_Deny(t *testing.T, testcase string, oldStatus strin
 }
 
 func tstStatusChange_Regdesk_Unavailable(t *testing.T, testcase string, oldStatus string, newStatus string) {
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an attendee in status " + oldStatus + " and a second attendee with the regdesk permission")
@@ -1142,7 +1142,7 @@ func tstStatusChange_Regdesk_Unavailable(t *testing.T, testcase string, oldStatu
 }
 
 func tstStatusChange_Regdesk_Allow(t *testing.T, testcase string, oldStatus string, newStatus string) {
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an attendee in status " + oldStatus + " and a second attendee with the regdesk permission")
@@ -1170,7 +1170,7 @@ func tstStatusChange_Regdesk_Allow(t *testing.T, testcase string, oldStatus stri
 }
 
 func tstStatusChange_Staff_Deny(t *testing.T, testcase string, oldStatus string, newStatus string) {
-	tstSetup(tstStaffregConfigFile)
+	tstSetup(tstConfigFile(false, true, false))
 	defer tstShutdown()
 
 	docs.Given("given an attendee in status " + oldStatus + " and a second user who is staff")
@@ -1204,7 +1204,7 @@ func tstStatusChange_Admin_Unavailable(t *testing.T, testcase string,
 	oldStatus string, newStatus string,
 	injectExtraTransactions []paymentservice.Transaction,
 	message string, details string) {
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an attendee in status " + oldStatus)
@@ -1239,7 +1239,7 @@ func tstStatusChange_Admin_Allow(t *testing.T, testcase string,
 	expectedTransactions []paymentservice.Transaction,
 	expectedMailRequests []mailservice.TemplateRequestDto,
 ) {
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an attendee in status " + oldStatus)

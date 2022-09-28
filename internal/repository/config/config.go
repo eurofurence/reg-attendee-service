@@ -190,3 +190,7 @@ func EarlyRegistrationStartTime() time.Time {
 func IsCorsDisabled() bool {
 	return Configuration().Security.DisableCors
 }
+
+func RequireLoginForReg() bool {
+	return Configuration().Security.RequireLogin
+}

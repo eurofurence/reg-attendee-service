@@ -16,7 +16,11 @@ import (
 )
 
 func Create(server chi.Router) {
-	server.Get("/api/rest/v1/countdown", filter.WithTimeout(1*time.Second, countdownHandler))
+	if config.RequireLoginForReg() {
+		server.Get("/api/rest/v1/countdown", filter.LoggedInOrApiToken(filter.WithTimeout(1*time.Second, countdownHandler)))
+	} else {
+		server.Get("/api/rest/v1/countdown", filter.WithTimeout(1*time.Second, countdownHandler))
+	}
 }
 
 const isoDateTimeFormat = "2006-01-02T15:04:05-07:00"

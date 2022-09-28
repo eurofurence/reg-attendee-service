@@ -19,9 +19,26 @@ var (
 	mailMock    mailservice.Mock
 )
 
-const tstDefaultConfigFile = "../../test/testconfig.yaml"
 const tstDefaultConfigFileBeforeTarget = "../../test/testconfig-before-target.yaml"
-const tstStaffregConfigFile = "../../test/testconfig-staffreg.yaml"
+
+func tstConfigFile(needLogin bool, staffReg bool, afterTarget bool) string {
+	path := "../../test/testconfig-"
+	if needLogin {
+		path += "needlogin"
+	} else {
+		path += "public"
+	}
+	if afterTarget {
+		path += ".yaml"
+	} else {
+		if staffReg {
+			path += "-staffreg.yaml"
+		} else {
+			path += "-before-target.yaml"
+		}
+	}
+	return path
+}
 
 func tstSetup(configFilePath string) {
 	tstSetupConfig(configFilePath)
