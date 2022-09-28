@@ -11,14 +11,14 @@ Implemented in go.
 
 Command line arguments
 ```
--config <path-to-config-file> [-migrate-database]
+-config <path-to-config-file> [-migrate-database] [-ecs-json-logging]
 ```
 
 ## Installation
 
 This service uses go modules to provide dependency management, see `go.mod`.
 
-If you place this repository outside of your gopath, build and test runs will download all required 
+If you place this repository outside of your GOPATH, build and test runs will download all required 
 dependencies by default. 
 
 ## Running on localhost
@@ -83,26 +83,23 @@ Limitations:
 
 **MVP 2.** The absolute minimum needed for EF and MMC reg to work.
 
- - implements admin fields handling 
- - implements status transitions
- - includes an openapi spec
- - talks to payment service as appropriate
- - talks to mail service as appropriate
- - obtains IDP tokens from the cookies set by the auth service, as well as fixed token security for backend requests
- - auth header and tokens are honored for all requests, even the ones that do not require authorization
- - fields for MMC have been added as well (partner, ...) 
- - day guests are supported simply via the package subsystem 
- - guests are supported as an admin only flag which will cause the system to assign 0 dues
- - implements a general request timeout and panic handling
+ - ✅ implements admin fields handling
+ - ✅ implements status transitions
+ - ✅ includes an openapi spec
+ - 🚧 talks to payment service as appropriate
+ - 🚧 talks to mail service as appropriate
+ - ✅ obtains IDP tokens from the cookies set by the auth service, as well as fixed token security for backend requests
+ - ✅ auth header and tokens are honored for all requests, even the ones that do not require authorization
+ - 🚧 fields for MMC have been added as well (partner, ...) 
+ - ✅ day guests are supported simply via the package subsystem 
+ - 🚧 guests are supported as an admin only flag which will cause the system to assign 0 dues
+ - ✅ implements a general request timeout and panic handling
 
 Limitations:
- - no search functionality yet - note this will make search and interfaces in regsys classic very slow
+ - ❌ no search functionality yet - note this will make search and interfaces in regsys classic very slow
+ - ❌ no bans support at this point
 
 ### for later
 
-- separate logging target for log output during test runs, so log output can be asserted (and isn't output)
-- security with oauth2 server
-    - JWT keyset integration with IDP
-    - more fine-grained permissions using JWT
-        - viewAttendees, changeAttendees, viewAttendeeAdmininfo, changeAttendeeAdmininfo rights
-    - additional acceptance tests for security
+- more fine-grained permissions using JWT
+  - viewAttendees, changeAttendees, viewAttendeeAdmininfo, changeAttendeeAdmininfo rights
