@@ -30,7 +30,7 @@ func TestAdminDefaults_AnonDeny(t *testing.T) {
 	response := tstPerformGet(location1+"/admin", token)
 
 	docs.Then("then the request is denied as unauthenticated (401) and the correct error is returned")
-	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "missing Authorization header with bearer token")
+	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "you must be logged in for this operation")
 }
 
 func TestAdminDefaults_UserDeny(t *testing.T) {
@@ -53,7 +53,7 @@ func TestAdminDefaults_UserDeny(t *testing.T) {
 
 func TestAdminDefaults_StaffDeny(t *testing.T) {
 	docs.Given("given the configuration for staff registration")
-	tstSetup(tstConfigFile(false, true, false))
+	tstSetup(tstConfigFile(false, true, true))
 	defer tstShutdown()
 
 	docs.Given("given an authenticated staffer who has registered")
@@ -136,7 +136,7 @@ func TestAdminWrite_AnonDeny(t *testing.T) {
 	response := tstPerformPut(location1+"/admin", tstRenderJson(body), token)
 
 	docs.Then("then the request is denied as unauthenticated (401) and the appropriate error is returned")
-	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "missing Authorization header with bearer token")
+	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "you must be logged in for this operation")
 
 	docs.Then("and no changes have been made")
 	response2 := tstPerformGet(location1+"/admin", tstValidAdminToken(t))
@@ -170,7 +170,7 @@ func TestAdminWrite_UserDeny(t *testing.T) {
 
 func TestAdminWrite_StaffDeny(t *testing.T) {
 	docs.Given("given the configuration for staff registration")
-	tstSetup(tstConfigFile(false, true, false))
+	tstSetup(tstConfigFile(false, true, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee who is staff")

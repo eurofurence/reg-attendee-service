@@ -7,6 +7,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/web/filter"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctlutil"
+	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/media"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-http-utils/headers"
@@ -54,9 +55,13 @@ func mockCountdownHandler(ctx context.Context, w http.ResponseWriter, r *http.Re
 }
 
 func commonCountdownHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, current time.Time) {
-	// TODO handle staff role and use other time if configured
-
 	target := config.RegistrationStartTime()
+	if config.OidcEarlyRegRole() != "" {
+		if ctxvalues.IsAuthorizedAsRole(ctx, config.OidcEarlyRegRole()) {
+			target = config.EarlyRegistrationStartTime()
+		}
+	}
+
 	secondsToGo := target.Sub(current).Seconds()
 	if secondsToGo < 0 {
 		secondsToGo = 0

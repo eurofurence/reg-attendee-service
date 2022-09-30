@@ -41,7 +41,7 @@ func TestStatus_AnonDeny(t *testing.T) {
 	response := tstPerformGet(attendeeLocation+"/status", token)
 
 	docs.Then("then the request is denied as unauthenticated (401) and the appropriate error is returned")
-	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "missing Authorization header with bearer token")
+	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "you must be logged in for this operation")
 }
 
 func TestStatus_UserDenyOther(t *testing.T) {
@@ -84,7 +84,7 @@ func TestStatus_UserAllowSelf(t *testing.T) {
 
 func TestStatus_StaffDenyOther(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, true, false))
+	tstSetup(tstConfigFile(false, true, true))
 	defer tstShutdown()
 
 	docs.Given("given two existing attendees")
@@ -103,7 +103,7 @@ func TestStatus_StaffDenyOther(t *testing.T) {
 
 func TestStatus_StaffAllowSelf(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, true, false))
+	tstSetup(tstConfigFile(false, true, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee with no special privileges")
@@ -186,7 +186,7 @@ func TestStatusHistory_AnonDeny(t *testing.T) {
 	response := tstPerformGet(location1+"/status-history", token)
 
 	docs.Then("then the request is denied as unauthenticated (401) and the appropriate error is returned")
-	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "missing Authorization header with bearer token")
+	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "you must be logged in for this operation")
 }
 
 func TestStatusHistory_UserDeny(t *testing.T) {
@@ -209,7 +209,7 @@ func TestStatusHistory_UserDeny(t *testing.T) {
 
 func TestStatusHistory_StaffDeny(t *testing.T) {
 	docs.Given("given the configuration for staff registration")
-	tstSetup(tstConfigFile(false, true, false))
+	tstSetup(tstConfigFile(false, true, true))
 	defer tstShutdown()
 
 	docs.Given("given an authenticated staffer who has made a valid registration")
@@ -958,7 +958,7 @@ func tstStatusChange_Anonymous_Deny(t *testing.T, testcase string, oldStatus str
 	response := tstPerformPost(loc+"/status", tstRenderJson(body), tstNoToken())
 
 	docs.Then("then the request is denied as unauthenticated (401) and the appropriate error is returned")
-	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "missing Authorization header with bearer token")
+	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "you must be logged in for this operation")
 
 	docs.Then("and the status is unchanged")
 	tstVerifyStatus(t, loc, oldStatus)
@@ -1170,7 +1170,7 @@ func tstStatusChange_Regdesk_Allow(t *testing.T, testcase string, oldStatus stri
 }
 
 func tstStatusChange_Staff_Deny(t *testing.T, testcase string, oldStatus string, newStatus string) {
-	tstSetup(tstConfigFile(false, true, false))
+	tstSetup(tstConfigFile(false, true, true))
 	defer tstShutdown()
 
 	docs.Given("given an attendee in status " + oldStatus + " and a second user who is staff")

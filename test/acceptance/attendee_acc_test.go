@@ -17,6 +17,8 @@ import (
 
 // --- create new attendee ---
 
+// -- no login required for new registrations --
+
 func TestCreateNewAttendee(t *testing.T) {
 	docs.Given("given the configuration for public standard registration")
 	tstSetup(tstConfigFile(false, false, true))
@@ -34,7 +36,7 @@ func TestCreateNewAttendee(t *testing.T) {
 }
 
 func TestCreateNewAttendeeInvalid(t *testing.T) {
-	docs.Given("given the configuration for standard registration")
+	docs.Given("given the configuration for public standard registration")
 	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
@@ -58,7 +60,7 @@ func TestCreateNewAttendeeInvalid(t *testing.T) {
 }
 
 func TestCreateNewAttendeeSyntaxInvalid(t *testing.T) {
-	docs.Given("given the configuration for standard registration")
+	docs.Given("given the configuration for public standard registration")
 	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
@@ -77,7 +79,7 @@ func TestCreateNewAttendeeSyntaxInvalid(t *testing.T) {
 }
 
 func TestCreateNewAttendeeCanBeReadAgainByAdmin(t *testing.T) {
-	docs.Given("given the configuration for standard registration")
+	docs.Given("given the configuration for public standard registration")
 	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
@@ -98,7 +100,7 @@ func TestCreateNewAttendeeCanBeReadAgainByAdmin(t *testing.T) {
 }
 
 func TestCreateNewAttendeeStaffregNotLoggedIn(t *testing.T) {
-	docs.Given("given the configuration for staff pre-registration")
+	docs.Given("given the configuration for staff pre-registration before public registration")
 	tstSetup(tstConfigFile(false, true, false))
 	defer tstShutdown()
 
@@ -116,8 +118,8 @@ func TestCreateNewAttendeeStaffregNotLoggedIn(t *testing.T) {
 }
 
 func TestCreateNewAttendeeStaffregStaff(t *testing.T) {
-	docs.Given("given the configuration for staff pre-registration")
-	tstSetup(tstConfigFile(false, true, false))
+	docs.Given("given the configuration for staff pre-registration before public registration")
+	tstSetup(tstConfigFile(false, true, true))
 	defer tstShutdown()
 
 	docs.Given("given a staffer")
@@ -133,7 +135,7 @@ func TestCreateNewAttendeeStaffregStaff(t *testing.T) {
 }
 
 func TestCreateNewAttendeeStaffregUser(t *testing.T) {
-	docs.Given("given the configuration for staff pre-registration")
+	docs.Given("given the configuration for staff pre-registration before public registration")
 	tstSetup(tstConfigFile(false, true, false))
 	defer tstShutdown()
 
@@ -152,8 +154,8 @@ func TestCreateNewAttendeeStaffregUser(t *testing.T) {
 }
 
 func TestCreateNewAttendeeStaffregAdmin(t *testing.T) {
-	docs.Given("given the configuration for staff pre-registration")
-	tstSetup(tstConfigFile(false, true, false))
+	docs.Given("given the configuration for staff pre-registration before public registration")
+	tstSetup(tstConfigFile(false, true, true))
 	defer tstShutdown()
 
 	docs.Given("given an admin")
@@ -169,7 +171,7 @@ func TestCreateNewAttendeeStaffregAdmin(t *testing.T) {
 }
 
 func TestCreateNewAttendeeAdminOnlyFlag(t *testing.T) {
-	docs.Given("given the configuration for standard registration")
+	docs.Given("given the configuration for standard public registration")
 	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
@@ -188,7 +190,7 @@ func TestCreateNewAttendeeAdminOnlyFlag(t *testing.T) {
 }
 
 func TestCreateNewAttendeeReadOnlyFlag(t *testing.T) {
-	docs.Given("given the configuration for standard registration")
+	docs.Given("given the configuration for standard public registration")
 	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
@@ -207,7 +209,7 @@ func TestCreateNewAttendeeReadOnlyFlag(t *testing.T) {
 }
 
 func TestCreateNewAttendeeAdminOnlyFlag_Admin(t *testing.T) {
-	docs.Given("given the configuration for standard registration")
+	docs.Given("given the configuration for standard public registration")
 	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
@@ -227,7 +229,7 @@ func TestCreateNewAttendeeAdminOnlyFlag_Admin(t *testing.T) {
 }
 
 func TestCreateNewAttendeeDefaultReadOnlyPackage(t *testing.T) {
-	docs.Given("given the configuration for staff pre-registration")
+	docs.Given("given the configuration for staff pre-registration before public registration")
 	tstSetup(tstConfigFile(false, true, false))
 	defer tstShutdown()
 
@@ -247,7 +249,7 @@ func TestCreateNewAttendeeDefaultReadOnlyPackage(t *testing.T) {
 }
 
 func TestCreateNewAttendeeDuplicateHandling(t *testing.T) {
-	docs.Given("given the configuration for standard registration")
+	docs.Given("given the configuration for standard public registration")
 	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
@@ -274,7 +276,7 @@ func TestCreateNewAttendeeDuplicateHandling(t *testing.T) {
 }
 
 func TestCreateNewAttendeeTooEarly(t *testing.T) {
-	docs.Given("given the configuration for standard registration")
+	docs.Given("given the configuration for standard public registration")
 	tstSetup(tstConfigFile(false, false, false))
 	defer tstShutdown()
 
@@ -290,6 +292,218 @@ func TestCreateNewAttendeeTooEarly(t *testing.T) {
 	tstParseJson(response.body, &errorDto)
 	require.Equal(t, "attendee.data.invalid", errorDto.Message, "unexpected error code")
 	require.Equal(t, "public registration has not opened at this time, please come back later", errorDto.Details.Get("timing"))
+}
+
+// -- login required for all new registrations --
+
+// we only test the timing-related cases, validation is no different
+
+// - before both target times -
+
+func TestCreateNewAttendee_LoginRequired_TooEarly_Anon(t *testing.T) {
+	docs.Given("given the configuration for login-only registration before any registration target time")
+	tstSetup(tstConfigFile(true, false, false))
+	defer tstShutdown()
+
+	docs.Given("given an unauthenticated user")
+
+	docs.When("when they attempt to create a new attendee with valid data before public registration has begun")
+	attendeeSent := tstBuildValidAttendee("na30-")
+	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), tstNoToken())
+
+	docs.Then("then the attempt is rejected as unauthenticated (401) with an appropriate error response")
+	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "you must be logged in for this operation")
+}
+
+func TestCreateNewAttendee_LoginRequired_TooEarly_User(t *testing.T) {
+	docs.Given("given the configuration for login-only registration before any registration target time")
+	tstSetup(tstConfigFile(true, false, false))
+	defer tstShutdown()
+
+	docs.Given("given a logged in user")
+	token := tstValidUserToken(t, "1")
+
+	docs.When("when they attempt to create a new attendee with valid data before public registration has begun")
+	attendeeSent := tstBuildValidAttendee("na31-")
+	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), token)
+
+	docs.Then("then the attempt is rejected as too early with an appropriate error response")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
+		"timing": []string{"public registration has not opened at this time, please come back later"},
+	})
+}
+
+func TestCreateNewAttendee_LoginRequired_TooEarly_Staff(t *testing.T) {
+	docs.Given("given the configuration for login-only registration before any registration target time")
+	tstSetup(tstConfigFile(true, true, false))
+	defer tstShutdown()
+
+	docs.Given("given a logged in staffer")
+	token := tstValidStaffToken(t, "1")
+
+	docs.When("when they attempt to create a new attendee with valid data before public registration has begun")
+	attendeeSent := tstBuildValidAttendee("na31-")
+	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), token)
+
+	docs.Then("then the attempt is rejected with an appropriate error response")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
+		"timing": []string{"staff registration has not opened at this time, please come back later"},
+	})
+}
+
+func TestCreateNewAttendee_LoginRequired_TooEarly_AdminIsLikeStaff(t *testing.T) {
+	docs.Given("given the configuration for login-only registration before any registration target time")
+	tstSetup(tstConfigFile(true, true, false))
+	defer tstShutdown()
+
+	docs.Given("given a logged in admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they attempt to create a new attendee with valid data before public registration has begun")
+	attendeeSent := tstBuildValidAttendee("na31-")
+	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), token)
+
+	docs.Then("then the attempt is rejected with an appropriate error response, that is, admins are treated just like staff")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
+		"timing": []string{"staff registration has not opened at this time, please come back later"},
+	})
+}
+
+// - between both target times -
+
+func TestCreateNewAttendee_LoginRequired_Between_Anon(t *testing.T) {
+	docs.Given("given the configuration for login-only registration after staff reg is open but before normal reg is open")
+	tstSetup(tstConfigFile(true, true, true))
+	defer tstShutdown()
+
+	docs.Given("given an unauthenticated user")
+
+	docs.When("when they attempt to create a new attendee with valid data before public registration has begun")
+	attendeeSent := tstBuildValidAttendee("na30-")
+	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), tstNoToken())
+
+	docs.Then("then the attempt is rejected as unauthenticated (401) with an appropriate error response")
+	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "you must be logged in for this operation")
+}
+
+func TestCreateNewAttendee_LoginRequired_Between_User(t *testing.T) {
+	docs.Given("given the configuration for login-only registration after staff reg is open but before normal reg is open")
+	tstSetup(tstConfigFile(true, true, true))
+	defer tstShutdown()
+
+	docs.Given("given a logged in user")
+	token := tstValidUserToken(t, "1")
+
+	docs.When("when they attempt to create a new attendee with valid data before public registration has begun")
+	attendeeSent := tstBuildValidAttendee("na31-")
+	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), token)
+
+	docs.Then("then the attempt is rejected as too early with an appropriate error response")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
+		"timing": []string{"public registration has not opened at this time, please come back later"},
+	})
+}
+
+func TestCreateNewAttendee_LoginRequired_Between_Staff(t *testing.T) {
+	docs.Given("given the configuration for login-only registration after staff reg is open but before normal reg is open")
+	tstSetup(tstConfigFile(true, true, true))
+	defer tstShutdown()
+
+	docs.Given("given a logged in staffer")
+	token := tstValidStaffToken(t, "1")
+
+	docs.When("when they attempt to create a new attendee with valid data after staff registration has begun")
+	attendeeSent := tstBuildValidAttendee("na31-")
+	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), token)
+
+	docs.Then("then the attendee is successfully created")
+	require.Equal(t, http.StatusCreated, response.status, "unexpected http response status")
+	require.Regexp(t, "^\\/api\\/rest\\/v1\\/attendees\\/[1-9][0-9]*$", response.location, "invalid location header in response")
+}
+
+func TestCreateNewAttendee_LoginRequired_Between_AdminIsLikeStaff(t *testing.T) {
+	docs.Given("given the configuration for login-only registration after staff reg is open but before normal reg is open")
+	tstSetup(tstConfigFile(true, true, true))
+	defer tstShutdown()
+
+	docs.Given("given a logged in admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they attempt to create a new attendee with valid data after staff registration has begun")
+	attendeeSent := tstBuildValidAttendee("na31-")
+	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), token)
+
+	docs.Then("then the attendee is successfully created, that is, admins are treated just like staff")
+	require.Equal(t, http.StatusCreated, response.status, "unexpected http response status")
+	require.Regexp(t, "^\\/api\\/rest\\/v1\\/attendees\\/[1-9][0-9]*$", response.location, "invalid location header in response")
+}
+
+// - after public target time -
+
+func TestCreateNewAttendee_LoginRequired_After_Anon(t *testing.T) {
+	docs.Given("given the configuration for login-only registration after normal reg is open")
+	tstSetup(tstConfigFile(true, false, true))
+	defer tstShutdown()
+
+	docs.Given("given an unauthenticated user")
+
+	docs.When("when they attempt to create a new attendee with valid data after public registration has begun")
+	attendeeSent := tstBuildValidAttendee("na30-")
+	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), tstNoToken())
+
+	docs.Then("then the attempt is rejected as unauthenticated (401) with an appropriate error response")
+	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "you must be logged in for this operation")
+}
+
+func TestCreateNewAttendee_LoginRequired_After_User(t *testing.T) {
+	docs.Given("given the configuration for login-only registration after normal reg is open")
+	tstSetup(tstConfigFile(true, false, true))
+	defer tstShutdown()
+
+	docs.Given("given a logged in user")
+	token := tstValidUserToken(t, "1")
+
+	docs.When("when they attempt to create a new attendee with valid data after public registration has begun")
+	attendeeSent := tstBuildValidAttendee("na31-")
+	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), token)
+
+	docs.Then("then the attendee is successfully created")
+	require.Equal(t, http.StatusCreated, response.status, "unexpected http response status")
+	require.Regexp(t, "^\\/api\\/rest\\/v1\\/attendees\\/[1-9][0-9]*$", response.location, "invalid location header in response")
+}
+
+func TestCreateNewAttendee_LoginRequired_After_Staff(t *testing.T) {
+	docs.Given("given the configuration for login-only registration after normal reg is open")
+	tstSetup(tstConfigFile(true, false, true))
+	defer tstShutdown()
+
+	docs.Given("given a logged in staffer")
+	token := tstValidStaffToken(t, "1")
+
+	docs.When("when they attempt to create a new attendee with valid data after public registration has begun")
+	attendeeSent := tstBuildValidAttendee("na31-")
+	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), token)
+
+	docs.Then("then the attendee is successfully created")
+	require.Equal(t, http.StatusCreated, response.status, "unexpected http response status")
+	require.Regexp(t, "^\\/api\\/rest\\/v1\\/attendees\\/[1-9][0-9]*$", response.location, "invalid location header in response")
+}
+
+func TestCreateNewAttendee_LoginRequired_After_AdminIsLikeStaff(t *testing.T) {
+	docs.Given("given the configuration for login-only registration after normal reg is open")
+	tstSetup(tstConfigFile(true, false, true))
+	defer tstShutdown()
+
+	docs.Given("given a logged in admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they attempt to create a new attendee with valid data after public registration has begun")
+	attendeeSent := tstBuildValidAttendee("na31-")
+	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), token)
+
+	docs.Then("then the attendee is successfully created, that is, admins are treated just like staff")
+	require.Equal(t, http.StatusCreated, response.status, "unexpected http response status")
+	require.Regexp(t, "^\\/api\\/rest\\/v1\\/attendees\\/[1-9][0-9]*$", response.location, "invalid location header in response")
 }
 
 // --- update attendee ---
@@ -441,7 +655,7 @@ func TestDenyUpdateExistingAttendeeWhileNotLoggedIn(t *testing.T) {
 
 func TestDenyUpdateExistingAttendeeWithStaffToken(t *testing.T) {
 	docs.Given("given the configuration for staff pre-registration (the other config doesn't even have a staff token)")
-	tstSetup(tstConfigFile(false, true, false))
+	tstSetup(tstConfigFile(false, true, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -623,7 +837,7 @@ func TestAllowReadExistingAttendee_Self(t *testing.T) {
 
 func TestDenyReadExistingAttendeeWithStaffToken(t *testing.T) {
 	docs.Given("given the configuration for staff pre-registration (the other config doesn't even have a staff token)")
-	tstSetup(tstConfigFile(false, true, false))
+	tstSetup(tstConfigFile(false, true, true))
 	defer tstShutdown()
 
 	docs.Given("given two existing attendees, one of which is staff")

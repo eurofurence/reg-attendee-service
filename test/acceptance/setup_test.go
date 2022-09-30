@@ -28,12 +28,21 @@ func tstConfigFile(needLogin bool, staffReg bool, afterTarget bool) string {
 	} else {
 		path += "public"
 	}
-	if afterTarget {
-		path += ".yaml"
-	} else {
-		if staffReg {
+	if staffReg {
+		if afterTarget {
+			// after the staffreg target but before the normal target
 			path += "-staffreg.yaml"
 		} else {
+			// neither public reg nor staff reg has started yet
+			path += "-before-target-staffreg.yaml"
+		}
+		// we do not test the after both targets case separately because it is a low risk case
+	} else {
+		if afterTarget {
+			// after main target, no staff reg configured
+			path += ".yaml"
+		} else {
+			// no staff reg configured
 			path += "-before-target.yaml"
 		}
 	}

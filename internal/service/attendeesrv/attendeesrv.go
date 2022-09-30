@@ -88,14 +88,9 @@ func (s *AttendeeServiceImplData) CanChangeChoiceTo(ctx context.Context, origina
 }
 
 func (s *AttendeeServiceImplData) CanRegisterAtThisTime(ctx context.Context) error {
-	// admin / api can always register
-	if ctxvalues.HasApiToken(ctx) || ctxvalues.IsAuthorizedAsRole(ctx, config.OidcAdminRole()) {
-		return nil
-	}
-
-	// staff early reg?
+	// staff early reg? (also for admins)
 	earlyRole := config.OidcEarlyRegRole()
-	if earlyRole != "" && ctxvalues.IsAuthorizedAsRole(ctx, earlyRole) {
+	if earlyRole != "" && (ctxvalues.IsAuthorizedAsRole(ctx, earlyRole) || ctxvalues.IsAuthorizedAsRole(ctx, config.OidcAdminRole())) {
 		current := time.Now()
 		target := config.EarlyRegistrationStartTime()
 		secondsToGo := target.Sub(current).Seconds()

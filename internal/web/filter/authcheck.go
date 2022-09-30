@@ -18,7 +18,7 @@ func HasRoleOrApiToken(role string, handler http.HandlerFunc) http.HandlerFunc {
 			if culprit != "" {
 				ctlutil.UnauthorizedError(ctx, w, r, "you are not authorized for this operation - the attempt has been logged", fmt.Sprintf("unauthorized access attempt for role %s by %s", role, culprit))
 			} else {
-				ctlutil.UnauthenticatedError(ctx, w, r, "missing Authorization header with bearer token", "anonymous access attempt")
+				ctlutil.UnauthenticatedError(ctx, w, r, "you must be logged in for this operation", "anonymous access attempt")
 			}
 		}
 	}
@@ -30,7 +30,7 @@ func LoggedInOrApiToken(handler http.HandlerFunc) http.HandlerFunc {
 		if ctxvalues.HasApiToken(ctx) || ctxvalues.Subject(ctx) != "" {
 			handler(w, r)
 		} else {
-			ctlutil.UnauthenticatedError(ctx, w, r, "missing Authorization header with bearer token", "anonymous access attempt")
+			ctlutil.UnauthenticatedError(ctx, w, r, "you must be logged in for this operation", "anonymous access attempt")
 		}
 	}
 }
