@@ -125,11 +125,15 @@ func tstBuildValidAttendee(testcase string) attendee.AttendeeDto {
 }
 
 func tstRegisterAttendee(t *testing.T, testcase string) (location string, dtoWithId attendee.AttendeeDto) {
+	return tstRegisterAttendeeWithToken(t, testcase, tstValidStaffToken(t, "1"))
+}
+
+func tstRegisterAttendeeWithToken(t *testing.T, testcase string, token string) (location string, dtoWithId attendee.AttendeeDto) {
 	dto := tstBuildValidAttendee(testcase)
-	creationResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(dto), tstValidStaffToken(t, "1"))
+	creationResponse := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(dto), token)
 	require.Equal(t, http.StatusCreated, creationResponse.status, "unexpected http response status")
 
-	rereadResponse := tstPerformGet(creationResponse.location, tstValidAdminToken(t))
+	rereadResponse := tstPerformGet(creationResponse.location, token)
 	require.Equal(t, http.StatusOK, rereadResponse.status, "unexpected http response status")
 	tstParseJson(rereadResponse.body, &dtoWithId)
 

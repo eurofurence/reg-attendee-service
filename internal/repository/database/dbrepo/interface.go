@@ -26,5 +26,7 @@ type Repository interface {
 	GetStatusChangesByAttendeeId(ctx context.Context, attendeeId uint) ([]entity.StatusChange, error)
 	AddStatusChange(ctx context.Context, sc *entity.StatusChange) error
 
+	FindByIdentity(ctx context.Context, identity string) ([]*entity.Attendee, error)
+
 	RecordHistory(ctx context.Context, h *entity.History) error
 }

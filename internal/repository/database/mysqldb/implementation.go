@@ -192,6 +192,32 @@ func (r *MysqlRepository) AddStatusChange(ctx context.Context, sc *entity.Status
 	return err
 }
 
+func (r *MysqlRepository) FindByIdentity(ctx context.Context, identity string) ([]*entity.Attendee, error) {
+	result := make([]*entity.Attendee, 0)
+	rows, err := r.db.Model(&entity.Attendee{}).Where(&entity.Attendee{Identity: identity}).Rows()
+	if err != nil {
+		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("mysql error during identity select: %s", err.Error())
+		return result, err
+	}
+	defer func() {
+		err := rows.Close()
+		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("mysql error during attendee by identity result set close: %s", err.Error())
+	}()
+
+	for rows.Next() {
+		var a entity.Attendee
+		err := r.db.ScanRows(rows, &a)
+		if err != nil {
+			aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("mysql error during attendee by identity read: %s", err.Error())
+			return make([]*entity.Attendee, 0), err
+		}
+
+		result = append(result, &a)
+	}
+
+	return result, nil
+}
+
 // --- history ---
 
 func (r *MysqlRepository) RecordHistory(ctx context.Context, h *entity.History) error {

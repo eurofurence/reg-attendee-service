@@ -3,6 +3,7 @@ package attendeesrv
 import (
 	"context"
 	"errors"
+	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
@@ -82,28 +83,53 @@ func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx contex
 
 func (s *AttendeeServiceImplData) StatusChangeAllowed(ctx context.Context, attendee *entity.Attendee, oldStatus string, newStatus string) error {
 	if ctxvalues.HasApiToken(ctx) || ctxvalues.IsAuthorizedAsRole(ctx, config.OidcAdminRole()) {
+		// api or admin
 		return nil
 	}
 
-	// TODO probably not quite correct - for self
-	if ctxvalues.Subject(ctx) == attendee.Email {
+	subject := ctxvalues.Subject(ctx)
+	if subject == "" {
+		// anon
+		return errors.New("all status changes require a logged in user")
+	}
+
+	if subject == attendee.Identity {
+		// self
 		if oldStatus == "new" && newStatus == "cancelled" || oldStatus == "approved" && newStatus == "cancelled" {
-			// TODO: allow for self
+			aulogging.Logger.Ctx(ctx).Info().Printf("self cancellation for attendee %d by %s", attendee.ID, subject)
+			return nil
 		}
 
-		return errors.New("you are not allowed to make this status transition")
+		aulogging.Logger.Ctx(ctx).Warn().Printf("forbidden self status change attempt %s -> %s for attendee %d by %s", oldStatus, newStatus, attendee.ID, subject)
+		return errors.New("you are not allowed to make this status transition - the attempt has been logged")
 	}
 
-	// TODO probably not quite correct - for others (regdesk only)
-	if ctxvalues.Subject(ctx) != "" {
-		if oldStatus == "paid" && newStatus == "checked in" {
-			// TODO: load and check for regdesk permission, and allow if set
+	// others
+
+	if oldStatus == "paid" && newStatus == "checked in" {
+		// TODO - this is kind of ugly
+
+		// check that any of the registrations owned by subject have the regdesk permission
+		ownedAttendees, err := database.GetRepository().FindByIdentity(ctx, subject)
+		if err != nil {
+			return err
 		}
-
-		return errors.New("you are not allowed to make this status transition")
+		for _, oa := range ownedAttendees {
+			adminInfo, err := database.GetRepository().GetAdminInfoByAttendeeId(ctx, oa.ID)
+			if err != nil {
+				return err
+			}
+			permissions := choiceStrToMap(adminInfo.Permissions)
+			allowed, _ := permissions["regdesk"]
+			if allowed {
+				aulogging.Logger.Ctx(ctx).Info().Printf("regdesk check in for attendee %d by %s", attendee.ID, subject)
+				return nil
+			}
+		}
 	}
 
-	return errors.New("all status changes require a logged in user")
+	aulogging.Logger.Ctx(ctx).Warn().Printf("forbidden status change attempt %s -> %s for attendee %d by %s", oldStatus, newStatus, attendee.ID, subject)
+	return errors.New("you are not allowed to make this status transition - the attempt has been logged")
 }
 
 func (s *AttendeeServiceImplData) StatusChangePossible(ctx context.Context, attendee *entity.Attendee, oldStatus string, newStatus string) error {
@@ -190,5 +216,14 @@ func (s *AttendeeServiceImplData) checkPaidInFull(ctx context.Context, attendee 
 		return nil
 	} else {
 		return InsufficientPaymentError
+	}
+}
+
+func (s *AttendeeServiceImplData) IsOwnerFor(ctx context.Context) ([]*entity.Attendee, error) {
+	identity := ctxvalues.Subject(ctx)
+	if identity != "" {
+		return database.GetRepository().FindByIdentity(ctx, identity)
+	} else {
+		return make([]*entity.Attendee, 0), nil
 	}
 }

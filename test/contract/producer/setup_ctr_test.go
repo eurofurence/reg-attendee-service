@@ -107,6 +107,10 @@ func (s *MockAttendeeService) StatusChangePossible(ctx context.Context, attendee
 	return nil
 }
 
+func (s *MockAttendeeService) IsOwnerFor(ctx context.Context) ([]*entity.Attendee, error) {
+	return make([]*entity.Attendee, 0), nil
+}
+
 func tstSetupServiceMocks() {
 	attendeeServiceMock := MockAttendeeService{}
 	attendeectl.OverrideAttendeeService(&attendeeServiceMock)

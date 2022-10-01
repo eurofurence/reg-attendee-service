@@ -2,8 +2,10 @@ package attendeesrv
 
 import (
 	"context"
+	"fmt"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
+	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
 )
 
 func (s *AttendeeServiceImplData) GetAdminInfo(ctx context.Context, attendeeId uint) (*entity.AdminInfo, error) {
@@ -29,9 +31,9 @@ func (s *AttendeeServiceImplData) UpdateAdminInfo(ctx context.Context, attendee 
 	}
 	currentStatus := statusHistory[len(statusHistory)-1].Status
 
-	// TODO record in comment which admin made the change
 	// setting admin flags such as guest may change dues, and change status
-	err = s.UpdateDuesAndDoStatusChangeIfNeeded(ctx, attendee, currentStatus, currentStatus, "admin info update")
+	subject := ctxvalues.Subject(ctx)
+	err = s.UpdateDuesAndDoStatusChangeIfNeeded(ctx, attendee, currentStatus, currentStatus, fmt.Sprintf("admin info update by %s", subject))
 	if err != nil {
 		return err
 	}

@@ -160,6 +160,16 @@ func (r *InMemoryRepository) AddStatusChange(ctx context.Context, sc *entity.Sta
 	return nil
 }
 
+func (r *InMemoryRepository) FindByIdentity(ctx context.Context, identity string) ([]*entity.Attendee, error) {
+	result := make([]*entity.Attendee, 0)
+	for _, a := range r.attendees {
+		if a.Identity == identity {
+			result = append(result, a)
+		}
+	}
+	return result, nil
+}
+
 // --- history ---
 
 func (r *InMemoryRepository) RecordHistory(ctx context.Context, h *entity.History) error {

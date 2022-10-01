@@ -14,6 +14,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/service/attendeesrv"
 	"github.com/eurofurence/reg-attendee-service/internal/web/filter"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctlutil"
+	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/media"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-http-utils/headers"
@@ -36,7 +37,7 @@ func OverrideAttendeeService(overrideAttendeeServiceForTesting attendeesrv.Atten
 
 func Create(server chi.Router) {
 	server.Get("/api/rest/v1/attendees/{id}/status", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, getStatusHandler)))
-	server.Post("/api/rest/v1/attendees/{id}/status", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(3*time.Second, postStatusHandler)))
+	server.Post("/api/rest/v1/attendees/{id}/status", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, postStatusHandler)))
 	server.Get("/api/rest/v1/attendees/{id}/status-history", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(3*time.Second, getStatusHistoryHandler)))
 }
 
@@ -50,8 +51,7 @@ func getStatusHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO probably not quite correct
-	if err := filter.IsSubjectOrRoleOrApiToken(w, r, att.Email, config.OidcAdminRole()); err != nil {
+	if err := filter.IsSubjectOrRoleOrApiToken(w, r, att.Identity, config.OidcAdminRole()); err != nil {
 		return
 	}
 
@@ -171,8 +171,8 @@ func statusChangeValidationErrorHandler(ctx context.Context, w http.ResponseWrit
 }
 
 func statusChangeForbiddenErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
-	// TODO log user so we can figure out who tried it
-	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("forbidden status change attempted: %s", err.Error())
+	subject := ctxvalues.Subject(ctx)
+	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("forbidden status change attempted by %s: %s", subject, err.Error())
 	ctlutil.ErrorHandler(ctx, w, r, "auth.forbidden", http.StatusForbidden, url.Values{"details": []string{err.Error()}})
 }
 

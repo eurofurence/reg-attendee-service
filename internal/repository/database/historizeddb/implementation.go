@@ -127,6 +127,10 @@ func (r *HistorizingRepository) AddStatusChange(ctx context.Context, sc *entity.
 	return r.wrappedRepository.AddStatusChange(ctx, sc)
 }
 
+func (r *HistorizingRepository) FindByIdentity(ctx context.Context, identity string) ([]*entity.Attendee, error) {
+	return r.wrappedRepository.FindByIdentity(ctx, identity)
+}
+
 // --- history ---
 
 // it is an error to call this from the outside. From the inside use wrappedRepository.RecordHistory to bypass the error

@@ -3,6 +3,7 @@ package attendeesrv
 import (
 	"context"
 	"errors"
+	"fmt"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
@@ -25,6 +26,9 @@ func (s *AttendeeServiceImplData) RegisterNewAttendee(ctx context.Context, atten
 		aulogging.Logger.Ctx(ctx).Warn().Printf("received new registration duplicate - nick %s zip %s email %s", attendee.Nickname, attendee.Zip, attendee.Email)
 		return 0, errors.New("duplicate attendee data - you are already registered")
 	}
+
+	// record which user owns this attendee
+	attendee.Identity = ctxvalues.Subject(ctx)
 
 	id, err := database.GetRepository().AddAttendee(ctx, attendee)
 	return id, err
@@ -59,8 +63,8 @@ func (s *AttendeeServiceImplData) UpdateAttendee(ctx context.Context, attendee *
 
 	currentStatus := statusHistory[len(statusHistory)-1].Status
 
-	// TODO record who made the change in comment
-	err = s.UpdateDuesAndDoStatusChangeIfNeeded(ctx, attendee, currentStatus, currentStatus, "attendee update")
+	subject := ctxvalues.Subject(ctx)
+	err = s.UpdateDuesAndDoStatusChangeIfNeeded(ctx, attendee, currentStatus, currentStatus, fmt.Sprintf("attendee update by %s", subject))
 	if err != nil {
 		return err
 	}
