@@ -52,7 +52,7 @@ func (s *AttendeeServiceImplData) UpdateDues(ctx context.Context, attendee *enti
 					newStatus = "paid"
 				}
 			} else {
-				if payments < dues-graceAmount {
+				if payments < dues-graceAmountCents {
 					newStatus = "partially paid"
 				} else {
 					newStatus = "paid"

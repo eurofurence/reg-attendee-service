@@ -3,10 +3,10 @@ package adminctl
 import (
 	"context"
 	"fmt"
+	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/admin"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
-	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/validation"
 	"net/url"
 )
@@ -26,10 +26,10 @@ func validate(ctx context.Context, a *admin.AdminInfoDto, trustedOriginalState *
 	}
 
 	if len(errs) != 0 {
-		logger := logging.Ctx(ctx)
-		if logger.IsDebugEnabled() {
+		if config.LoggingSeverity() == "DEBUG" {
+			logger := aulogging.Logger.Ctx(ctx).Debug()
 			for key, val := range errs {
-				logger.Debugf("adminInfo dto validation error for key %s: %s", key, val)
+				logger.Printf("adminInfo dto validation error for key %s: %s", key, val)
 			}
 		}
 	}

@@ -17,7 +17,7 @@ import (
 
 func TestHealthEndpoint(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an unauthenticated user")
@@ -33,7 +33,7 @@ func TestHealthEndpoint(t *testing.T) {
 
 func TestErrorFallback(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an unauthenticated user")
@@ -41,7 +41,7 @@ func TestErrorFallback(t *testing.T) {
 	docs.When("when they perform GET on an unimplemented endpoint")
 	response := tstPerformGet("/info/does-not-exist", tstNoToken())
 
-	docs.Then("then they receive a 404 error with no body")
+	docs.Then("then they receive a 404 error")
 	require.Equal(t, http.StatusNotFound, response.status, "unexpected http response status")
 	require.Equal(t, "", response.body, "unexpected body")
 }

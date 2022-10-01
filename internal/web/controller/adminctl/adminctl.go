@@ -3,18 +3,19 @@ package adminctl
 import (
 	"context"
 	"encoding/json"
+	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/admin"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
-	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
 	"github.com/eurofurence/reg-attendee-service/internal/service/attendeesrv"
-	"github.com/eurofurence/reg-attendee-service/internal/web/filter/filterhelper"
-	ctlutil2 "github.com/eurofurence/reg-attendee-service/internal/web/util/ctlutil"
+	"github.com/eurofurence/reg-attendee-service/internal/web/filter"
+	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctlutil"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/media"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-http-utils/headers"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 var attendeeService attendeesrv.AttendeeService
@@ -30,13 +31,15 @@ func OverrideAttendeeService(overrideAttendeeServiceForTesting attendeesrv.Atten
 }
 
 func Create(server chi.Router) {
-	server.Get("/api/rest/v1/attendees/{id}/admin", filterhelper.BuildHandler("3s", getAdminInfoHandler, config.TokenForAdmin))
-	server.Put("/api/rest/v1/attendees/{id}/admin", filterhelper.BuildHandler("3s", writeAdminInfoHandler, config.TokenForAdmin))
+	server.Get("/api/rest/v1/attendees/{id}/admin", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(3*time.Second, getAdminInfoHandler)))
+	server.Put("/api/rest/v1/attendees/{id}/admin", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(3*time.Second, writeAdminInfoHandler)))
 }
 
 // --- handlers ---
 
-func getAdminInfoHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func getAdminInfoHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	attendee, err := attendeeByIdMustReturnOnError(ctx, w, r)
 	if err != nil {
 		return
@@ -51,10 +54,12 @@ func getAdminInfoHandler(ctx context.Context, w http.ResponseWriter, r *http.Req
 	dto := admin.AdminInfoDto{}
 	mapAdminInfoToDto(adminInfo, &dto)
 	w.Header().Add(headers.ContentType, media.ContentTypeApplicationJson)
-	ctlutil2.WriteJson(ctx, w, dto)
+	ctlutil.WriteJson(ctx, w, dto)
 }
 
-func writeAdminInfoHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func writeAdminInfoHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	attendee, err := attendeeByIdMustReturnOnError(ctx, w, r)
 	if err != nil {
 		return
@@ -86,19 +91,19 @@ func writeAdminInfoHandler(ctx context.Context, w http.ResponseWriter, r *http.R
 		return
 	}
 
-	ctlutil2.WriteHeader(ctx, w, http.StatusNoContent)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // --- helpers ---
 
 func attendeeByIdMustReturnOnError(ctx context.Context, w http.ResponseWriter, r *http.Request) (*entity.Attendee, error) {
-	id, err := ctlutil2.AttendeeIdFromVars(ctx, w, r)
+	id, err := ctlutil.AttendeeIdFromVars(ctx, w, r)
 	if err != nil {
 		return &entity.Attendee{}, err
 	}
 	attendee, err := attendeeService.GetAttendee(ctx, id)
 	if err != nil {
-		ctlutil2.AttendeeNotFoundErrorHandler(ctx, w, r, id)
+		ctlutil.AttendeeNotFoundErrorHandler(ctx, w, r, id)
 		return &entity.Attendee{}, err
 	}
 	return attendee, nil
@@ -117,21 +122,21 @@ func parseBodyToAdminInfoDto(ctx context.Context, w http.ResponseWriter, r *http
 // --- error handlers ---
 
 func adminInfoReadErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
-	logging.Ctx(ctx).Warnf("adminInfo could not be read for existing attendee: %v", err)
-	ctlutil2.ErrorHandler(ctx, w, r, "admin.read.error", http.StatusInternalServerError, url.Values{})
+	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("adminInfo could not be read for existing attendee: %s", err.Error())
+	ctlutil.ErrorHandler(ctx, w, r, "admin.read.error", http.StatusInternalServerError, url.Values{})
 }
 
 func adminInfoWriteErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
-	logging.Ctx(ctx).Warnf("adminInfo could not be written for existing attendee: %v", err)
-	ctlutil2.ErrorHandler(ctx, w, r, "admin.write.error", http.StatusInternalServerError, url.Values{})
+	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("adminInfo could not be written for existing attendee: %s", err.Error())
+	ctlutil.ErrorHandler(ctx, w, r, "admin.write.error", http.StatusInternalServerError, url.Values{})
 }
 
 func adminInfoParseErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
-	logging.Ctx(ctx).Warnf("adminInfo body could not be parsed: %v", err)
-	ctlutil2.ErrorHandler(ctx, w, r, "admin.parse.error", http.StatusBadRequest, url.Values{})
+	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("adminInfo body could not be parsed: %s", err.Error())
+	ctlutil.ErrorHandler(ctx, w, r, "admin.parse.error", http.StatusBadRequest, url.Values{})
 }
 
 func adminInfoValidationErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, errs url.Values) {
-	logging.Ctx(ctx).Warnf("received adminInfo data with validation errors: %v", errs)
-	ctlutil2.ErrorHandler(ctx, w, r, "admin.data.invalid", http.StatusBadRequest, errs)
+	aulogging.Logger.Ctx(ctx).Warn().Printf("received adminInfo data with validation errors: %v", errs)
+	ctlutil.ErrorHandler(ctx, w, r, "admin.data.invalid", http.StatusBadRequest, errs)
 }

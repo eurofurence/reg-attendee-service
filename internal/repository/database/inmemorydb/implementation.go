@@ -20,11 +20,12 @@ func Create() dbrepo.Repository {
 	return &InMemoryRepository{}
 }
 
-func (r *InMemoryRepository) Open() {
+func (r *InMemoryRepository) Open() error {
 	r.attendees = make(map[uint]*entity.Attendee)
 	r.adminInfo = make(map[uint]*entity.AdminInfo)
 	r.statusChanges = make(map[uint][]entity.StatusChange)
 	r.history = make(map[uint]*entity.History)
+	return nil
 }
 
 func (r *InMemoryRepository) Close() {
@@ -34,8 +35,9 @@ func (r *InMemoryRepository) Close() {
 	r.history = nil
 }
 
-func (r *InMemoryRepository) Migrate() {
+func (r *InMemoryRepository) Migrate() error {
 	// nothing to do
+	return nil
 }
 
 // --- attendee ---
@@ -156,6 +158,16 @@ func (r *InMemoryRepository) AddStatusChange(ctx context.Context, sc *entity.Sta
 		r.statusChanges[sc.AttendeeId] = []entity.StatusChange{scCopy}
 	}
 	return nil
+}
+
+func (r *InMemoryRepository) FindByIdentity(ctx context.Context, identity string) ([]*entity.Attendee, error) {
+	result := make([]*entity.Attendee, 0)
+	for _, a := range r.attendees {
+		if a.Identity == identity {
+			result = append(result, a)
+		}
+	}
+	return result, nil
 }
 
 // --- history ---

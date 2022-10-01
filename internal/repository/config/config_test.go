@@ -4,6 +4,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/docs"
 	"github.com/stretchr/testify/require"
 	"testing"
+	"time"
 )
 
 func TestServerAddrWithAddressAndPort(t *testing.T) {
@@ -21,6 +22,20 @@ func TestServerAddrWithOnlyPort(t *testing.T) {
 		Port: "1234",
 	}}
 	require.Equal(t, ":1234", ServerAddr(), "unexpected server address string")
+}
+
+func TestServerTimeouts(t *testing.T) {
+	docs.Description("ensure ServerRead/Write/IdleTimout() return the correct timeouts")
+	configurationData = &conf{Logging: loggingConfig{Severity: "DEBUG"}, Server: serverConfig{
+		Address:      "localhost",
+		Port:         "1234",
+		ReadTimeout:  13,
+		WriteTimeout: 17,
+		IdleTimeout:  23,
+	}}
+	require.Equal(t, 13*time.Second, ServerReadTimeout())
+	require.Equal(t, 17*time.Second, ServerWriteTimeout())
+	require.Equal(t, 23*time.Second, ServerIdleTimeout())
 }
 
 func TestDatabaseMysqlConnectString(t *testing.T) {
@@ -48,13 +63,4 @@ func TestMigrateDatabase(t *testing.T) {
 
 	dbMigrate = false
 	require.Equal(t, false, MigrateDatabase(), "unexpected return value")
-}
-
-func TestFixedTokenInvalidGroup(t *testing.T) {
-	docs.Description("test the normally unreachable fixed token lookup for an invalid enum value")
-	configurationData = &conf{Security: securityConfig{Fixed: fixedTokenConfig{Admin: "admin", User: "user", InitialReg: "reg"}}}
-
-	token, err := FixedToken(-1)
-	require.NotNil(t, err)
-	require.Equal(t, "", token)
 }

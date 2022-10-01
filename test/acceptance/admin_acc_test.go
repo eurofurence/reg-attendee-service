@@ -17,7 +17,7 @@ import (
 
 func TestAdminDefaults_AnonDeny(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -30,12 +30,12 @@ func TestAdminDefaults_AnonDeny(t *testing.T) {
 	response := tstPerformGet(location1+"/admin", token)
 
 	docs.Then("then the request is denied as unauthenticated (401) and the correct error is returned")
-	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "missing Authorization header with bearer token")
+	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "you must be logged in for this operation")
 }
 
 func TestAdminDefaults_UserDeny(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -48,12 +48,12 @@ func TestAdminDefaults_UserDeny(t *testing.T) {
 	response := tstPerformGet(location1+"/admin", token)
 
 	docs.Then("then the request is denied as unauthorized (403) and the correct error is returned")
-	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not unauthorized for this operation - the attempt has been logged")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this operation - the attempt has been logged")
 }
 
 func TestAdminDefaults_StaffDeny(t *testing.T) {
 	docs.Given("given the configuration for staff registration")
-	tstSetup(tstStaffregConfigFile)
+	tstSetup(tstConfigFile(false, true, true))
 	defer tstShutdown()
 
 	docs.Given("given an authenticated staffer who has registered")
@@ -64,12 +64,12 @@ func TestAdminDefaults_StaffDeny(t *testing.T) {
 	response := tstPerformGet(location1+"/admin", token)
 
 	docs.Then("then the request is denied as unauthorized (403) and the correct error is returned")
-	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not unauthorized for this operation - the attempt has been logged")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this operation - the attempt has been logged")
 }
 
 func TestAdminDefaults_AdminOk(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee right after registration")
@@ -88,7 +88,7 @@ func TestAdminDefaults_AdminOk(t *testing.T) {
 
 func TestReadAdminInfo_NonexistentAttendee(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given a logged in admin")
@@ -103,7 +103,7 @@ func TestReadAdminInfo_NonexistentAttendee(t *testing.T) {
 
 func TestReadAdminInfo_InvalidAttendeeId(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given a logged in admin")
@@ -120,7 +120,7 @@ func TestReadAdminInfo_InvalidAttendeeId(t *testing.T) {
 
 func TestAdminWrite_AnonDeny(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an unauthenticated user")
@@ -136,7 +136,7 @@ func TestAdminWrite_AnonDeny(t *testing.T) {
 	response := tstPerformPut(location1+"/admin", tstRenderJson(body), token)
 
 	docs.Then("then the request is denied as unauthenticated (401) and the appropriate error is returned")
-	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "missing Authorization header with bearer token")
+	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "you must be logged in for this operation")
 
 	docs.Then("and no changes have been made")
 	response2 := tstPerformGet(location1+"/admin", tstValidAdminToken(t))
@@ -145,7 +145,7 @@ func TestAdminWrite_AnonDeny(t *testing.T) {
 
 func TestAdminWrite_UserDeny(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -161,7 +161,7 @@ func TestAdminWrite_UserDeny(t *testing.T) {
 	response := tstPerformPut(location1+"/admin", tstRenderJson(body), token)
 
 	docs.Then("then the request is denied as unauthenticated (401) and the appropriate error is returned")
-	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not unauthorized for this operation - the attempt has been logged")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this operation - the attempt has been logged")
 
 	docs.Then("and no changes have been made")
 	response2 := tstPerformGet(location1+"/admin", tstValidAdminToken(t))
@@ -170,7 +170,7 @@ func TestAdminWrite_UserDeny(t *testing.T) {
 
 func TestAdminWrite_StaffDeny(t *testing.T) {
 	docs.Given("given the configuration for staff registration")
-	tstSetup(tstStaffregConfigFile)
+	tstSetup(tstConfigFile(false, true, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee who is staff")
@@ -184,7 +184,7 @@ func TestAdminWrite_StaffDeny(t *testing.T) {
 	response := tstPerformPut(location1+"/admin", tstRenderJson(body), token)
 
 	docs.Then("then the request is denied as unauthenticated (401) and the appropriate error is returned")
-	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not unauthorized for this operation - the attempt has been logged")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this operation - the attempt has been logged")
 
 	docs.Then("and no changes have been made")
 	response2 := tstPerformGet(location1+"/admin", tstValidAdminToken(t))
@@ -193,7 +193,7 @@ func TestAdminWrite_StaffDeny(t *testing.T) {
 
 func TestAdminWrite_AdminOk(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee right after registration")
@@ -225,7 +225,7 @@ func TestAdminWrite_AdminOk(t *testing.T) {
 
 func TestAdminWrite_NonexistentAttendee(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given a logged in admin")
@@ -243,7 +243,7 @@ func TestAdminWrite_NonexistentAttendee(t *testing.T) {
 
 func TestAdminWrite_InvalidAttendeeId(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given a logged in admin")
@@ -261,7 +261,7 @@ func TestAdminWrite_InvalidAttendeeId(t *testing.T) {
 
 func TestAdminWrite_InvalidBody(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee right after registration")
@@ -280,7 +280,7 @@ func TestAdminWrite_InvalidBody(t *testing.T) {
 
 func TestAdminWrite_CannotChangeId(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -301,7 +301,7 @@ func TestAdminWrite_CannotChangeId(t *testing.T) {
 
 func TestAdminWrite_WrongFlagType(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstDefaultConfigFile)
+	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")

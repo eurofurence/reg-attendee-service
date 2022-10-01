@@ -67,3 +67,7 @@ type Transaction struct {
 	DueDate       time.Time
 	Deletion      *Deletion
 }
+
+type TransactionResponse struct {
+	Payload []Transaction
+}

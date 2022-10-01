@@ -36,8 +36,7 @@ func TestStartupLoadConfigurationNoFilename(t *testing.T) {
 	system.TestingExitCounter = 0
 	system.TestingMode = true
 	LoadTestingConfigurationFromPathOrAbort("")
-	// since system.Exit does not exit in TestingMode, both checks are run, so we end up with a count of 2
-	require.Equal(t, 2, system.TestingExitCounter, "should have called system.Exit()")
+	require.Equal(t, 1, system.TestingExitCounter, "should have called system.Exit()")
 }
 
 func TestStartupLoadConfigurationFileNotFound(t *testing.T) {
@@ -89,10 +88,10 @@ func TestParseAndOverwriteDefaults(t *testing.T) {
 	docs.Description("check that a minimal yaml leads to all defaults being set")
 	minimalYaml := `# yaml with minimal settings
 security:
-  use: 'fixed-token'
-  fixed:
-    admin: 'fixed-testing-token-abc'
-    user: 'fixed-testing-user-token-def'
+  fixed_token:
+    api: 'fixed-testing-token-abc'
+  oidc:
+    admin_role: 'admin'
 birthday:
   earliest: '1851-01-01'
   latest: '2048-01-01'

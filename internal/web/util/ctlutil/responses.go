@@ -3,8 +3,7 @@ package ctlutil
 import (
 	"context"
 	"encoding/json"
-	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
-	"github.com/eurofurence/reg-attendee-service/internal/web/filter/ctxvalues"
+	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"net/http"
 )
 
@@ -16,11 +15,6 @@ func WriteJson(ctx context.Context, w http.ResponseWriter, v interface{}) {
 	encoder.SetEscapeHTML(false)
 	err := encoder.Encode(v)
 	if err != nil {
-		logging.Ctx(ctx).Warnf("error while encoding json response: %v", err)
+		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("error while encoding json response: %s", err.Error())
 	}
-}
-
-func WriteHeader(ctx context.Context, w http.ResponseWriter, status int) {
-	w.WriteHeader(status)
-	ctxvalues.SetHttpStatus(ctx, status)
 }

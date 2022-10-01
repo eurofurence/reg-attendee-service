@@ -2,19 +2,19 @@ package ctxvalues
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
-	"net/http"
-	"strconv"
 )
 
 const ContextMap = "map"
 
-const ContextHttpStatusKey = "httpstatus"
 const ContextRequestId = "requestid"
 const ContextBearerToken = "bearertoken"
+const ContextApiToken = "apitoken"
 const ContextAuthorizedAs = "authorizedas"
+const ContextEmail = "email"
+const ContextName = "name"
+const ContextSubject = "subject"
 
 func CreateContextWithValueMap(ctx context.Context) context.Context {
 	// this is so we can add values to our context, like ... I don't know ... the http status from the response!
@@ -46,16 +46,8 @@ func setValue(ctx context.Context, key string, value string) {
 	}
 }
 
-func HttpStatus(ctx context.Context) string {
-	return valueOrDefault(ctx, ContextHttpStatusKey, fmt.Sprint(http.StatusOK))
-}
-
-func SetHttpStatus(ctx context.Context, status int) {
-	setValue(ctx, ContextHttpStatusKey, fmt.Sprint(status))
-}
-
 func RequestId(ctx context.Context) string {
-	return valueOrDefault(ctx, ContextRequestId, "")
+	return valueOrDefault(ctx, ContextRequestId, "00000000")
 }
 
 func SetRequestId(ctx context.Context, requestId string) {
@@ -70,19 +62,44 @@ func SetBearerToken(ctx context.Context, bearerToken string) {
 	setValue(ctx, ContextBearerToken, bearerToken)
 }
 
-func AuthorizedAsGroup(ctx context.Context) (config.FixedTokenEnum, error) {
-	authStr := valueOrDefault(ctx, ContextAuthorizedAs, "")
-	if authStr == "" {
-		return -1, errors.New("no authorization entry found")
-	} else {
-		i, err := strconv.Atoi(authStr)
-		if err != nil {
-			return -1, err
-		}
-		return config.FixedTokenEnum(i), nil
-	}
+func Email(ctx context.Context) string {
+	return valueOrDefault(ctx, ContextEmail, "")
 }
 
-func SetAuthorizedAsGroup(ctx context.Context, group config.FixedTokenEnum) {
-	setValue(ctx, ContextAuthorizedAs, fmt.Sprint(group))
+func SetEmail(ctx context.Context, email string) {
+	setValue(ctx, ContextEmail, email)
+}
+
+func Name(ctx context.Context) string {
+	return valueOrDefault(ctx, ContextName, "")
+}
+
+func SetName(ctx context.Context, Name string) {
+	setValue(ctx, ContextName, Name)
+}
+
+func Subject(ctx context.Context) string {
+	return valueOrDefault(ctx, ContextSubject, "")
+}
+
+func SetSubject(ctx context.Context, Subject string) {
+	setValue(ctx, ContextSubject, Subject)
+}
+
+func HasApiToken(ctx context.Context) bool {
+	v := valueOrDefault(ctx, ContextApiToken, "")
+	return v == config.FixedApiToken()
+}
+
+func SetApiToken(ctx context.Context, apiToken string) {
+	setValue(ctx, ContextApiToken, apiToken)
+}
+
+func IsAuthorizedAsRole(ctx context.Context, role string) bool {
+	value := valueOrDefault(ctx, fmt.Sprintf("%s-%s", ContextAuthorizedAs, role), "")
+	return value == role
+}
+
+func SetAuthorizedAsRole(ctx context.Context, role string) {
+	setValue(ctx, fmt.Sprintf("%s-%s", ContextAuthorizedAs, role), role)
 }

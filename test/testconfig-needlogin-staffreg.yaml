@@ -1,14 +1,29 @@
 logging:
   severity: DEBUG
 security:
-  use: 'fixed-token'
-  fixed:
-    admin: 'fixed-admin-token'
-    user: 'fixed-user-token'
-    # no reg token in default testing config
+  fixed_token:
+    api: 'api-token-for-testing-must-be-pretty-long'
+  oidc:
+    token_cookie_name: 'JWT'
+    token_public_keys_PEM:
+      - |
+        -----BEGIN PUBLIC KEY-----
+        MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu1SU1LfVLPHCozMxH2Mo
+        4lgOEePzNm0tRgeLezV6ffAt0gunVTLw7onLRnrq0/IzW7yWR7QkrmBL7jTKEn5u
+        +qKhbwKfBstIs+bMY2Zkp18gnTxKLxoS2tFczGkPLPgizskuemMghRniWaoLcyeh
+        kd3qqGElvW/VDL5AaWTg0nLVkjRo9z+40RQzuVaE8AkAFmxZzow3x+VJYKdjykkJ
+        0iT9wCS0DRTXu269V264Vf/3jvredZiKRkgwlL9xNAwxXFg0x/XFw005UWVRIkdg
+        cKWTjpBP2dPwVZ4WWC+9aGVd+Gyn1o0CLelf4rEjGoXbAAEgAqeGUxrcIlbjXfbc
+        mwIDAQAB
+        -----END PUBLIC KEY-----
+    admin_role: 'admin'
+    early_reg_role: 'staff'
   disable_cors: true
+  require_login_for_reg: true
 go_live:
+  # public reg has not started yet, so only staff may register
   start_iso_datetime: '2030-11-28T20:00:00+01:00'
+  early_reg_start_iso_datetime: '2019-10-31T20:00:00+01:00'
 choices:
   flags:
     hc:

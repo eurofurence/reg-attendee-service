@@ -3,10 +3,10 @@ package mysqldb
 import (
 	"context"
 	"errors"
+	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database/dbrepo"
-	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"time"
@@ -20,18 +20,20 @@ func Create() dbrepo.Repository {
 	return &MysqlRepository{}
 }
 
-func (r *MysqlRepository) Open() {
+func (r *MysqlRepository) Open() error {
 	gormConfig := gorm.Config{}
 	connectString := config.DatabaseMysqlConnectString()
 
 	db, err := gorm.Open(mysql.Open(connectString), &gormConfig)
 	if err != nil {
-		logging.NoCtx().Fatalf("failed to open mysql connection: %v", err)
+		aulogging.Logger.NoCtx().Error().WithErr(err).Printf("failed to open mysql connection: %s", err.Error())
+		return err
 	}
 
 	sqlDb, err := db.DB()
 	if err != nil {
-		logging.NoCtx().Fatalf("failed to configure mysql connection: %v", err)
+		aulogging.Logger.NoCtx().Error().WithErr(err).Printf("failed to configure mysql connection: %s", err.Error())
+		return err
 	}
 
 	// see https://making.pusher.com/production-ready-connection-pooling-in-go/
@@ -40,17 +42,20 @@ func (r *MysqlRepository) Open() {
 	sqlDb.SetConnMaxLifetime(time.Minute * 10)
 
 	r.db = db
+	return nil
 }
 
 func (r *MysqlRepository) Close() {
 	// no more db close in gorm v2
 }
 
-func (r *MysqlRepository) Migrate() {
-	err := r.db.AutoMigrate(&entity.Attendee{}, &entity.History{}, &entity.AdminInfo{}, &entity.StatusChange{}).Error
+func (r *MysqlRepository) Migrate() error {
+	err := r.db.AutoMigrate(&entity.Attendee{}, &entity.History{}, &entity.AdminInfo{}, &entity.StatusChange{})
 	if err != nil {
-		logging.NoCtx().Fatalf("failed to migrate mysql db: %v", err)
+		aulogging.Logger.NoCtx().Error().WithErr(err).Printf("failed to migrate mysql db: %s", err.Error())
+		return err
 	}
+	return nil
 }
 
 // --- attendee ---
@@ -58,7 +63,7 @@ func (r *MysqlRepository) Migrate() {
 func (r *MysqlRepository) AddAttendee(ctx context.Context, a *entity.Attendee) (uint, error) {
 	err := r.db.Create(a).Error
 	if err != nil {
-		logging.Ctx(ctx).Warnf("mysql error during attendee insert: %v", err)
+		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("mysql error during attendee insert: %s", err.Error())
 	}
 	return a.ID, err
 }
@@ -66,7 +71,7 @@ func (r *MysqlRepository) AddAttendee(ctx context.Context, a *entity.Attendee) (
 func (r *MysqlRepository) UpdateAttendee(ctx context.Context, a *entity.Attendee) error {
 	err := r.db.Save(a).Error
 	if err != nil {
-		logging.Ctx(ctx).Warnf("mysql error during attendee update: %v", err)
+		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("mysql error during attendee update: %s", err.Error())
 	}
 	return err
 }
@@ -75,7 +80,7 @@ func (r *MysqlRepository) GetAttendeeById(ctx context.Context, id uint) (*entity
 	var a entity.Attendee
 	err := r.db.First(&a, id).Error
 	if err != nil {
-		logging.Ctx(ctx).Infof("mysql error during attendee select - might be ok: %v", err)
+		aulogging.Logger.Ctx(ctx).Info().WithErr(err).Printf("mysql error during attendee select - might be ok: %s", err.Error())
 	}
 	return &a, err
 }
@@ -93,19 +98,19 @@ func (r *MysqlRepository) MaxAttendeeId(ctx context.Context) (uint, error) {
 	var max uint
 	rows, err := r.db.Model(&entity.Attendee{}).Select("ifnull(max(id),0) AS max_id").Rows()
 	if err != nil {
-		logging.Ctx(ctx).Error("error querying for max attendee id: " + err.Error())
+		aulogging.Logger.Ctx(ctx).Error().WithErr(err).Printf("error querying for max attendee id: %s", err.Error())
 		return 0, err
 	}
 	for rows.Next() {
 		err = rows.Scan(&max)
 		if err != nil {
-			logging.Ctx(ctx).Error("error reading max attendee id: " + err.Error())
+			aulogging.Logger.Ctx(ctx).Error().WithErr(err).Printf("error reading max attendee id: %s", err.Error())
 			break
 		}
 	}
 	err2 := rows.Close()
 	if err2 != nil {
-		logging.Ctx(ctx).Warn("secondary error closing recordset: " + err2.Error())
+		aulogging.Logger.Ctx(ctx).Warn().WithErr(err2).Printf("secondary error closing recordset: %s", err2.Error())
 	}
 	return max, err
 }
@@ -120,7 +125,7 @@ func (r *MysqlRepository) GetAdminInfoByAttendeeId(ctx context.Context, attendee
 			ai.ID = attendeeId
 			err = nil // acceptable situation - we only write admin info on change
 		} else {
-			logging.Ctx(ctx).Infof("mysql error during admin info select - not record not found: %v", err)
+			aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("mysql error during admin info select - not record not found: %s", err.Error())
 			ai.ID = attendeeId
 		}
 	}
@@ -130,7 +135,7 @@ func (r *MysqlRepository) GetAdminInfoByAttendeeId(ctx context.Context, attendee
 func (r *MysqlRepository) WriteAdminInfo(ctx context.Context, ai *entity.AdminInfo) error {
 	err := r.db.Save(ai).Error
 	if err != nil {
-		logging.Ctx(ctx).Warnf("mysql error during admin info save: %v", err)
+		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("mysql error during admin info save: %s", err.Error())
 	}
 	return err
 }
@@ -156,12 +161,12 @@ func (r *MysqlRepository) GetLatestStatusChangeByAttendeeId(ctx context.Context,
 func (r *MysqlRepository) GetStatusChangesByAttendeeId(ctx context.Context, attendeeId uint) ([]entity.StatusChange, error) {
 	rows, err := r.db.Model(&entity.StatusChange{}).Where(&entity.StatusChange{AttendeeId: attendeeId}).Rows()
 	if err != nil {
-		logging.Ctx(ctx).Warnf("mysql error during status change select: %v", err)
+		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("mysql error during status change select: %s", err.Error())
 		return make([]entity.StatusChange, 0), err
 	}
 	defer func() {
 		err := rows.Close()
-		logging.Ctx(ctx).Warnf("mysql error during status change result set close: %v", err)
+		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("mysql error during status change result set close: %s", err.Error())
 	}()
 
 	result := make([]entity.StatusChange, 0)
@@ -169,7 +174,7 @@ func (r *MysqlRepository) GetStatusChangesByAttendeeId(ctx context.Context, atte
 		var sc entity.StatusChange
 		err := r.db.ScanRows(rows, &sc)
 		if err != nil {
-			logging.Ctx(ctx).Warnf("mysql error during status change read: %v", err)
+			aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("mysql error during status change read: %s", err.Error())
 			return make([]entity.StatusChange, 0), err
 		}
 
@@ -182,9 +187,35 @@ func (r *MysqlRepository) GetStatusChangesByAttendeeId(ctx context.Context, atte
 func (r *MysqlRepository) AddStatusChange(ctx context.Context, sc *entity.StatusChange) error {
 	err := r.db.Create(sc).Error
 	if err != nil {
-		logging.Ctx(ctx).Warnf("mysql error during status change insert: %v", err)
+		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("mysql error during status change insert: %s", err.Error())
 	}
 	return err
+}
+
+func (r *MysqlRepository) FindByIdentity(ctx context.Context, identity string) ([]*entity.Attendee, error) {
+	result := make([]*entity.Attendee, 0)
+	rows, err := r.db.Model(&entity.Attendee{}).Where(&entity.Attendee{Identity: identity}).Rows()
+	if err != nil {
+		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("mysql error during identity select: %s", err.Error())
+		return result, err
+	}
+	defer func() {
+		err := rows.Close()
+		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("mysql error during attendee by identity result set close: %s", err.Error())
+	}()
+
+	for rows.Next() {
+		var a entity.Attendee
+		err := r.db.ScanRows(rows, &a)
+		if err != nil {
+			aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("mysql error during attendee by identity read: %s", err.Error())
+			return make([]*entity.Attendee, 0), err
+		}
+
+		result = append(result, &a)
+	}
+
+	return result, nil
 }
 
 // --- history ---
@@ -192,7 +223,7 @@ func (r *MysqlRepository) AddStatusChange(ctx context.Context, sc *entity.Status
 func (r *MysqlRepository) RecordHistory(ctx context.Context, h *entity.History) error {
 	err := r.db.Create(h).Error
 	if err != nil {
-		logging.Ctx(ctx).Warnf("mysql error during history entry insert: %v", err)
+		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("mysql error during history entry insert: %s", err.Error())
 	}
 	return err
 }

@@ -3,15 +3,31 @@
 package config
 
 import (
-	"errors"
-	"log"
+	"crypto/rsa"
+	"fmt"
 	"strings"
 	"time"
 )
 
+func UseEcsLogging() bool {
+	return ecsLogging
+}
+
 func ServerAddr() string {
 	c := Configuration()
-	return c.Server.Address + ":" + c.Server.Port
+	return fmt.Sprintf("%s:%s", c.Server.Address, c.Server.Port)
+}
+
+func ServerReadTimeout() time.Duration {
+	return time.Second * time.Duration(Configuration().Server.ReadTimeout)
+}
+
+func ServerWriteTimeout() time.Duration {
+	return time.Second * time.Duration(Configuration().Server.WriteTimeout)
+}
+
+func ServerIdleTimeout() time.Duration {
+	return time.Second * time.Duration(Configuration().Server.IdleTimeout)
 }
 
 func DatabaseUse() string {
@@ -32,39 +48,25 @@ func LoggingSeverity() string {
 	return Configuration().Logging.Severity
 }
 
-type FixedTokenEnum int
-
-const (
-	TokenForAdmin              FixedTokenEnum = iota
-	TokenForLoggedInUser       FixedTokenEnum = iota
-	OptionalTokenForInitialReg FixedTokenEnum = iota
-)
-
-func FixedToken(forGroup FixedTokenEnum) (string, error) {
-	tokens := Configuration().Security.Fixed
-	switch forGroup {
-	case TokenForAdmin:
-		return tokens.Admin, nil
-	case TokenForLoggedInUser:
-		return tokens.User, nil
-	case OptionalTokenForInitialReg:
-		return tokens.InitialReg, nil
-	default:
-		log.Printf("[00000000] ERROR invalid argument to config.FixedToken: %v, this is an error in your code! Find it and fix it. Returning invalid token!", forGroup)
-		return "", errors.New("invalid token group argument")
-	}
+func FixedApiToken() string {
+	return Configuration().Security.Fixed.Api
 }
 
-func OptionalInitialRegTokenConfigured() bool {
-	return Configuration().Security.Fixed.InitialReg != ""
+func OidcTokenCookieName() string {
+	return Configuration().Security.Oidc.TokenCookieName
 }
 
-func AllAvailableFixedTokenGroups() []FixedTokenEnum {
-	if OptionalInitialRegTokenConfigured() {
-		return []FixedTokenEnum{TokenForAdmin, TokenForLoggedInUser, OptionalTokenForInitialReg}
-	} else {
-		return []FixedTokenEnum{TokenForAdmin, TokenForLoggedInUser}
-	}
+func OidcKeySet() []*rsa.PublicKey {
+	// TODO implement parsing during validation
+	return parsedKeySet
+}
+
+func OidcAdminRole() string {
+	return Configuration().Security.Oidc.AdminRole
+}
+
+func OidcEarlyRegRole() string {
+	return Configuration().Security.Oidc.EarlyReg
 }
 
 func AllowedFlagsNoAdmin() []string {
@@ -175,6 +177,28 @@ func RegistrationStartTime() time.Time {
 	return t
 }
 
+func EarlyRegistrationStartTime() time.Time {
+	early := Configuration().GoLive.EarlyRegStartIsoDatetime
+	if early != "" {
+		t, _ := time.Parse(StartTimeFormat, Configuration().GoLive.EarlyRegStartIsoDatetime)
+		return t
+	} else {
+		return RegistrationStartTime() // same as normal
+	}
+}
+
 func IsCorsDisabled() bool {
 	return Configuration().Security.DisableCors
+}
+
+func RequireLoginForReg() bool {
+	return Configuration().Security.RequireLogin
+}
+
+func PaymentServiceBaseUrl() string {
+	return Configuration().Downstream.PaymentService
+}
+
+func MailServiceBaseUrl() string {
+	return Configuration().Downstream.MailService
 }

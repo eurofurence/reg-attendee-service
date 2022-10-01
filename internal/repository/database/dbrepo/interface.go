@@ -6,9 +6,9 @@ import (
 )
 
 type Repository interface {
-	Open()
+	Open() error
 	Close()
-	Migrate()
+	Migrate() error
 
 	AddAttendee(ctx context.Context, a *entity.Attendee) (uint, error)
 	UpdateAttendee(ctx context.Context, a *entity.Attendee) error
@@ -25,6 +25,8 @@ type Repository interface {
 	GetLatestStatusChangeByAttendeeId(ctx context.Context, attendeeId uint) (*entity.StatusChange, error)
 	GetStatusChangesByAttendeeId(ctx context.Context, attendeeId uint) ([]entity.StatusChange, error)
 	AddStatusChange(ctx context.Context, sc *entity.StatusChange) error
+
+	FindByIdentity(ctx context.Context, identity string) ([]*entity.Attendee, error)
 
 	RecordHistory(ctx context.Context, h *entity.History) error
 }

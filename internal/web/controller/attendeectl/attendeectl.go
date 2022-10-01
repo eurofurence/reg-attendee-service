@@ -4,19 +4,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
-	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
 	"github.com/eurofurence/reg-attendee-service/internal/service/attendeesrv"
-	"github.com/eurofurence/reg-attendee-service/internal/web/filter/filterhelper"
-	ctlutil2 "github.com/eurofurence/reg-attendee-service/internal/web/util/ctlutil"
+	"github.com/eurofurence/reg-attendee-service/internal/web/filter"
+	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctlutil"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/media"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-http-utils/headers"
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 )
 
 var attendeeService attendeesrv.AttendeeService
@@ -31,18 +32,19 @@ func OverrideAttendeeService(overrideAttendeeServiceForTesting attendeesrv.Atten
 }
 
 func Create(server chi.Router) {
-	if config.OptionalInitialRegTokenConfigured() {
-		server.Post("/api/rest/v1/attendees", filterhelper.BuildHandler("3s", newAttendeeHandler, config.TokenForAdmin, config.OptionalTokenForInitialReg))
+	if config.RequireLoginForReg() {
+		server.Post("/api/rest/v1/attendees", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, newAttendeeHandler)))
 	} else {
-		server.Post("/api/rest/v1/attendees", filterhelper.BuildUnauthenticatedHandler("3s", newAttendeeHandler))
+		server.Post("/api/rest/v1/attendees", filter.WithTimeout(3*time.Second, newAttendeeHandler))
 	}
-
-	server.Get("/api/rest/v1/attendees/max-id", filterhelper.BuildUnauthenticatedHandler("3s", getAttendeeMaxIdHandler))
-	server.Get("/api/rest/v1/attendees/{id}", filterhelper.BuildHandler("3s", getAttendeeHandler, config.TokenForAdmin))
-	server.Put("/api/rest/v1/attendees/{id}", filterhelper.BuildHandler("3s", updateAttendeeHandler, config.TokenForAdmin))
+	server.Get("/api/rest/v1/attendees/max-id", filter.WithTimeout(3*time.Second, getAttendeeMaxIdHandler))
+	server.Get("/api/rest/v1/attendees/{id}", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, getAttendeeHandler)))
+	server.Put("/api/rest/v1/attendees/{id}", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, updateAttendeeHandler)))
 }
 
-func newAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func newAttendeeHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	dto, err := parseBodyToAttendeeDto(ctx, w, r)
 	if err != nil {
 		return
@@ -60,28 +62,37 @@ func newAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.Requ
 		return
 	}
 	location := fmt.Sprintf("%s/%d", r.RequestURI, id)
-	logging.Ctx(ctx).Info("sending Location " + location)
+	aulogging.Logger.Ctx(ctx).Info().Printf("sending Location %s", location)
 	w.Header().Set(headers.Location, location)
-	ctlutil2.WriteHeader(ctx, w, http.StatusCreated)
+	w.WriteHeader(http.StatusCreated)
 }
 
-func getAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func getAttendeeHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	id, err := idFromVars(ctx, w, r)
 	if err != nil {
 		return
 	}
 	existingAttendee, err := attendeeService.GetAttendee(ctx, id)
 	if err != nil {
-		ctlutil2.AttendeeNotFoundErrorHandler(ctx, w, r, id)
+		ctlutil.AttendeeNotFoundErrorHandler(ctx, w, r, id)
 		return
 	}
+
+	if err := filter.IsSubjectOrRoleOrApiToken(w, r, existingAttendee.Identity, config.OidcAdminRole()); err != nil {
+		return
+	}
+
 	dto := attendee.AttendeeDto{}
 	mapAttendeeToDto(existingAttendee, &dto)
 	w.Header().Add(headers.ContentType, media.ContentTypeApplicationJson)
-	ctlutil2.WriteJson(ctx, w, dto)
+	ctlutil.WriteJson(ctx, w, dto)
 }
 
-func updateAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func updateAttendeeHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	id, err := idFromVars(ctx, w, r)
 	if err != nil {
 		return
@@ -92,9 +103,14 @@ func updateAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.R
 	}
 	attd, err := attendeeService.GetAttendee(ctx, id)
 	if err != nil {
-		ctlutil2.AttendeeNotFoundErrorHandler(ctx, w, r, id)
+		ctlutil.AttendeeNotFoundErrorHandler(ctx, w, r, id)
 		return
 	}
+
+	if err := filter.IsSubjectOrRoleOrApiToken(w, r, attd.Identity, config.OidcAdminRole()); err != nil {
+		return
+	}
+
 	validationErrs := validate(ctx, dto, attd)
 	if len(validationErrs) != 0 {
 		attendeeValidationErrorHandler(ctx, w, r, validationErrs)
@@ -109,7 +125,9 @@ func updateAttendeeHandler(ctx context.Context, w http.ResponseWriter, r *http.R
 	w.Header().Add(headers.Location, r.RequestURI)
 }
 
-func getAttendeeMaxIdHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func getAttendeeMaxIdHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	max, err := attendeeService.GetAttendeeMaxId(ctx)
 	if err != nil {
 		attendeeMaxIdErrorHandler(ctx, w, r, err)
@@ -118,14 +136,14 @@ func getAttendeeMaxIdHandler(ctx context.Context, w http.ResponseWriter, r *http
 	dto := attendee.AttendeeMaxIdDto{}
 	dto.MaxId = max
 	w.Header().Add(headers.ContentType, media.ContentTypeApplicationJson)
-	ctlutil2.WriteJson(ctx, w, dto)
+	ctlutil.WriteJson(ctx, w, dto)
 }
 
 func idFromVars(ctx context.Context, w http.ResponseWriter, r *http.Request) (uint, error) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
-		ctlutil2.InvalidAttendeeIdErrorHandler(ctx, w, r, idStr)
+		ctlutil.InvalidAttendeeIdErrorHandler(ctx, w, r, idStr)
 	}
 	return uint(id), err
 }
@@ -141,26 +159,26 @@ func parseBodyToAttendeeDto(ctx context.Context, w http.ResponseWriter, r *http.
 }
 
 func attendeeValidationErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, errs url.Values) {
-	logging.Ctx(ctx).Warnf("received attendee data with validation errors: %v", errs)
-	ctlutil2.ErrorHandler(ctx, w, r, "attendee.data.invalid", http.StatusBadRequest, errs)
+	aulogging.Logger.Ctx(ctx).Warn().Printf("received attendee data with validation errors: %v", errs)
+	ctlutil.ErrorHandler(ctx, w, r, "attendee.data.invalid", http.StatusBadRequest, errs)
 }
 
 func attendeeParseErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
-	logging.Ctx(ctx).Warnf("attendee body could not be parsed: %v", err)
-	ctlutil2.ErrorHandler(ctx, w, r, "attendee.parse.error", http.StatusBadRequest, url.Values{})
+	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("attendee body could not be parsed: %s", err.Error())
+	ctlutil.ErrorHandler(ctx, w, r, "attendee.parse.error", http.StatusBadRequest, url.Values{})
 }
 
 func attendeeWriteErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
-	logging.Ctx(ctx).Warnf("attendee could not be written: %v", err)
+	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("attendee could not be written: %s", err.Error())
 	if err.Error() == "duplicate attendee data - you are already registered" {
-		ctlutil2.ErrorHandler(ctx, w, r, "attendee.data.duplicate", http.StatusConflict, url.Values{"attendee": {"there is already an attendee with this information (looking at nickname, email, and zip code)"}})
+		ctlutil.ErrorHandler(ctx, w, r, "attendee.data.duplicate", http.StatusConflict, url.Values{"attendee": {"there is already an attendee with this information (looking at nickname, email, and zip code)"}})
 	} else {
-		ctlutil2.ErrorHandler(ctx, w, r, "attendee.write.error", http.StatusInternalServerError, url.Values{})
+		ctlutil.ErrorHandler(ctx, w, r, "attendee.write.error", http.StatusInternalServerError, url.Values{})
 	}
 	// TODO: distinguish attendee.payment.error -> bad gateway
 }
 
 func attendeeMaxIdErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
-	logging.Ctx(ctx).Warnf("could not determine max id: %v", err)
-	ctlutil2.ErrorHandler(ctx, w, r, "attendee.max_id.error", http.StatusInternalServerError, url.Values{})
+	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("could not determine max id: %s", err.Error())
+	ctlutil.ErrorHandler(ctx, w, r, "attendee.max_id.error", http.StatusInternalServerError, url.Values{})
 }

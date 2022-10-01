@@ -7,7 +7,7 @@ import (
 	_ "github.com/d4l3k/messagediff"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database/dbrepo"
-	"github.com/eurofurence/reg-attendee-service/internal/web/filter/ctxvalues"
+	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
 )
 
 type HistorizingRepository struct {
@@ -18,16 +18,16 @@ func Create(wrappedRepository dbrepo.Repository) dbrepo.Repository {
 	return &HistorizingRepository{wrappedRepository: wrappedRepository}
 }
 
-func (r *HistorizingRepository) Open() {
-	r.wrappedRepository.Open()
+func (r *HistorizingRepository) Open() error {
+	return r.wrappedRepository.Open()
 }
 
 func (r *HistorizingRepository) Close() {
 	r.wrappedRepository.Close()
 }
 
-func (r *HistorizingRepository) Migrate() {
-	r.wrappedRepository.Migrate()
+func (r *HistorizingRepository) Migrate() error {
+	return r.wrappedRepository.Migrate()
 }
 
 // --- attendee ---
@@ -125,6 +125,10 @@ func (r *HistorizingRepository) GetStatusChangesByAttendeeId(ctx context.Context
 func (r *HistorizingRepository) AddStatusChange(ctx context.Context, sc *entity.StatusChange) error {
 	// status changes are only appended, so we don't need history
 	return r.wrappedRepository.AddStatusChange(ctx, sc)
+}
+
+func (r *HistorizingRepository) FindByIdentity(ctx context.Context, identity string) ([]*entity.Attendee, error) {
+	return r.wrappedRepository.FindByIdentity(ctx, identity)
 }
 
 // --- history ---

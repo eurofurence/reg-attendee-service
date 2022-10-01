@@ -3,11 +3,12 @@ package attendeesrv
 import (
 	"context"
 	"errors"
+	"fmt"
+	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
-	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
-	"github.com/eurofurence/reg-attendee-service/internal/web/filter/ctxvalues"
+	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
 	"strings"
 	"time"
 )
@@ -22,9 +23,12 @@ func (s *AttendeeServiceImplData) RegisterNewAttendee(ctx context.Context, atten
 		return 0, err
 	}
 	if alreadyExists {
-		logging.Ctx(ctx).Warnf("received new registration duplicate - nick %v zip %v email %v", attendee.Nickname, attendee.Zip, attendee.Email)
+		aulogging.Logger.Ctx(ctx).Warn().Printf("received new registration duplicate - nick %s zip %s email %s", attendee.Nickname, attendee.Zip, attendee.Email)
 		return 0, errors.New("duplicate attendee data - you are already registered")
 	}
+
+	// record which user owns this attendee
+	attendee.Identity = ctxvalues.Subject(ctx)
 
 	id, err := database.GetRepository().AddAttendee(ctx, attendee)
 	return id, err
@@ -41,7 +45,7 @@ func (s *AttendeeServiceImplData) UpdateAttendee(ctx context.Context, attendee *
 		return err
 	}
 	if alreadyExists {
-		logging.Ctx(ctx).Warnf("received update with registration duplicate - nick %v zip %v email %v", attendee.Nickname, attendee.Zip, attendee.Email)
+		aulogging.Logger.Ctx(ctx).Warn().Printf("received update with registration duplicate - nick %s zip %s email %s", attendee.Nickname, attendee.Zip, attendee.Email)
 		return errors.New("your changes would lead to duplicate attendee data - same nickname, zip, email")
 	}
 
@@ -59,8 +63,8 @@ func (s *AttendeeServiceImplData) UpdateAttendee(ctx context.Context, attendee *
 
 	currentStatus := statusHistory[len(statusHistory)-1].Status
 
-	// TODO record who made the change in comment
-	err = s.UpdateDuesAndDoStatusChangeIfNeeded(ctx, attendee, currentStatus, currentStatus, "attendee update")
+	subject := ctxvalues.Subject(ctx)
+	err = s.UpdateDuesAndDoStatusChangeIfNeeded(ctx, attendee, currentStatus, currentStatus, fmt.Sprintf("attendee update by %s", subject))
 	if err != nil {
 		return err
 	}
@@ -88,17 +92,25 @@ func (s *AttendeeServiceImplData) CanChangeChoiceTo(ctx context.Context, origina
 }
 
 func (s *AttendeeServiceImplData) CanRegisterAtThisTime(ctx context.Context) error {
-	group, err := ctxvalues.AuthorizedAsGroup(ctx)
-	if err != nil || (group != config.TokenForAdmin && group != config.OptionalTokenForInitialReg) {
-		// staff and admin may always register, but regular people have to wait until the registration start time
+	// staff early reg? (also for admins)
+	earlyRole := config.OidcEarlyRegRole()
+	if earlyRole != "" && (ctxvalues.IsAuthorizedAsRole(ctx, earlyRole) || ctxvalues.IsAuthorizedAsRole(ctx, config.OidcAdminRole())) {
 		current := time.Now()
-		target := config.RegistrationStartTime()
+		target := config.EarlyRegistrationStartTime()
 		secondsToGo := target.Sub(current).Seconds()
 		if secondsToGo > 0 {
-			return errors.New("public registration has not opened at this time, please come back later")
+			return errors.New("staff registration has not opened at this time, please come back later")
 		}
+		return nil
 	}
 
+	// regular people have to wait until the registration start time
+	current := time.Now()
+	target := config.RegistrationStartTime()
+	secondsToGo := target.Sub(current).Seconds()
+	if secondsToGo > 0 {
+		return errors.New("public registration has not opened at this time, please come back later")
+	}
 	return nil
 }
 
@@ -113,8 +125,7 @@ func isDuplicateAttendee(ctx context.Context, nickname string, zip string, email
 func checkNoForbiddenChanges(ctx context.Context, key string, choiceConfig config.ChoiceConfig, originalChoices map[string]bool, newChoices map[string]bool) error {
 	if choiceConfig.AdminOnly || choiceConfig.ReadOnly {
 		if originalChoices[key] != newChoices[key] {
-			group, err := ctxvalues.AuthorizedAsGroup(ctx)
-			if err != nil || group != config.TokenForAdmin {
+			if !ctxvalues.HasApiToken(ctx) && !ctxvalues.IsAuthorizedAsRole(ctx, config.OidcAdminRole()) {
 				return errors.New("forbidden change in state of choice key " + key + " - only an admin can do that")
 			}
 		}

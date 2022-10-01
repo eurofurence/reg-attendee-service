@@ -5,15 +5,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
-	"github.com/eurofurence/reg-attendee-service/internal/repository/logging"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/mailservice"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/paymentservice"
 	"github.com/eurofurence/reg-attendee-service/internal/service/attendeesrv"
-	"github.com/eurofurence/reg-attendee-service/internal/web/filter/filterhelper"
+	"github.com/eurofurence/reg-attendee-service/internal/web/filter"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctlutil"
+	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/media"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-http-utils/headers"
@@ -35,21 +36,24 @@ func OverrideAttendeeService(overrideAttendeeServiceForTesting attendeesrv.Atten
 }
 
 func Create(server chi.Router) {
-	server.Get("/api/rest/v1/attendees/{id}/status", filterhelper.BuildHandler("3s", getStatusHandler, config.TokenForAdmin))
-	server.Post("/api/rest/v1/attendees/{id}/status", filterhelper.BuildHandler("3s", postStatusHandler, config.TokenForAdmin))
-	server.Get("/api/rest/v1/attendees/{id}/status-history", filterhelper.BuildHandler("3s", getStatusHistoryHandler, config.TokenForAdmin))
+	server.Get("/api/rest/v1/attendees/{id}/status", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, getStatusHandler)))
+	server.Post("/api/rest/v1/attendees/{id}/status", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, postStatusHandler)))
+	server.Get("/api/rest/v1/attendees/{id}/status-history", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(3*time.Second, getStatusHistoryHandler)))
 }
 
 // --- handlers ---
 
-func getStatusHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func getStatusHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	att, err := attendeeByIdMustReturnOnError(ctx, w, r)
 	if err != nil {
 		return
 	}
 
-	// TODO ensure if user, can only get their own data - once permission system is in
-	// (right now regular users and staff are completely forbidden, but they'll need this)
+	if err := filter.IsSubjectOrRoleOrApiToken(w, r, att.Identity, config.OidcAdminRole()); err != nil {
+		return
+	}
 
 	latest, err := obtainAttendeeLatestStatusMustReturnOnError(ctx, w, r, att)
 	if err != nil {
@@ -63,7 +67,9 @@ func getStatusHandler(ctx context.Context, w http.ResponseWriter, r *http.Reques
 	ctlutil.WriteJson(ctx, w, dto)
 }
 
-func postStatusHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func postStatusHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	att, err := attendeeByIdMustReturnOnError(ctx, w, r)
 	if err != nil {
 		return
@@ -83,7 +89,7 @@ func postStatusHandler(ctx context.Context, w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if err = attendeeService.StatusChangeAllowed(ctx, latestStatusChange.Status, dto.Status); err != nil {
+	if err = attendeeService.StatusChangeAllowed(ctx, att, latestStatusChange.Status, dto.Status); err != nil {
 		statusChangeForbiddenErrorHandler(ctx, w, r, err)
 		return
 	}
@@ -105,11 +111,13 @@ func postStatusHandler(ctx context.Context, w http.ResponseWriter, r *http.Reque
 			statusWriteErrorHandler(ctx, w, r, err)
 		}
 	} else {
-		ctlutil.WriteHeader(ctx, w, http.StatusNoContent)
+		w.WriteHeader(http.StatusNoContent)
 	}
 }
 
-func getStatusHistoryHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func getStatusHistoryHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	att, err := attendeeByIdMustReturnOnError(ctx, w, r)
 	if err != nil {
 		return
@@ -143,33 +151,32 @@ func getStatusHistoryHandler(ctx context.Context, w http.ResponseWriter, r *http
 // --- error handlers ---
 
 func statusReadErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
-	logging.Ctx(ctx).Warnf("could not obtain status history: %v", err)
+	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("could not obtain status history: %s", err.Error())
 	ctlutil.ErrorHandler(ctx, w, r, "status.read.error", http.StatusInternalServerError, url.Values{})
 }
 
 func statusWriteErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
-	logging.Ctx(ctx).Warnf("could not obtain status history: %v", err)
+	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("could not obtain status history: %s", err.Error())
 	ctlutil.ErrorHandler(ctx, w, r, "status.write.error", http.StatusInternalServerError, url.Values{})
 }
 
 func statusParseErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
-	logging.Ctx(ctx).Warnf("status change body could not be parsed: %v", err)
+	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("status change body could not be parsed: %s", err.Error())
 	ctlutil.ErrorHandler(ctx, w, r, "status.parse.error", http.StatusBadRequest, url.Values{})
 }
 
 func statusChangeValidationErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, errs url.Values) {
-	logging.Ctx(ctx).Warnf("received status change data with validation errors: %v", errs)
+	aulogging.Logger.Ctx(ctx).Warn().Printf("received status change data with validation errors: %v", errs)
 	ctlutil.ErrorHandler(ctx, w, r, "status.data.invalid", http.StatusBadRequest, errs)
 }
 
 func statusChangeForbiddenErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
-	// TODO log user so we can figure out who tried it
-	logging.Ctx(ctx).Warnf("forbidden status change attempted: %v", err)
+	subject := ctxvalues.Subject(ctx)
+	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("forbidden status change attempted by %s: %s", subject, err.Error())
 	ctlutil.ErrorHandler(ctx, w, r, "auth.forbidden", http.StatusForbidden, url.Values{"details": []string{err.Error()}})
 }
 
 func statusChangeUnavailableErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
-	logging.Ctx(ctx).Warnf("unavailable status change attempted: %v", err)
 	message := "status.data.invalid"
 	if errors.Is(err, attendeesrv.SameStatusError) {
 		message = "status.unchanged.invalid"
@@ -182,11 +189,12 @@ func statusChangeUnavailableErrorHandler(ctx context.Context, w http.ResponseWri
 	} else if errors.Is(err, attendeesrv.GoToApprovedFirst) {
 		message = "status.use.approved"
 	}
+	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("unavailable status change attempted: %s - %s", message, err.Error())
 	ctlutil.ErrorHandler(ctx, w, r, message, http.StatusConflict, url.Values{"details": []string{err.Error()}})
 }
 
 func statusChangeDownstreamError(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
-	logging.Ctx(ctx).Warnf("downstream error during status change: %v", err)
+	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("downstream error during status change: %s", err.Error())
 	message := "unknown"
 	if errors.Is(err, paymentservice.DownstreamError) {
 		message = "status.payment.error"

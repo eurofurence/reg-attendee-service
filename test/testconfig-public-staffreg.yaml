@@ -1,47 +1,27 @@
-server:
-  port: 9091
 logging:
-  severity: INFO
-database:
-  use: 'inmemory'
-  mysql:
-    username: 'demouser'
-    password: 'demopw'
-    database: 'tcp(localhost:3306)/dbname'
-    parameters:
-      - 'charset=utf8mb4'
-      - 'collation=utf8mb4_general_ci'
-      - 'parseTime=True'
-      - 'timeout=30s' # connection timeout
-go_live:
-  start_iso_datetime: '2022-01-29T20:00:00+01:00'
-  # optional, only useful if you also set early_reg_role, should be earlier than start_iso_datetime
-  early_reg_start_iso_datetime: ''
+  severity: DEBUG
 security:
   fixed_token:
-    api: 'put_secure_random_string_here_for_api_token'
+    api: 'api-token-for-testing-must-be-pretty-long'
   oidc:
-    # set this nonempty to also try to read the jwt token from a cookie
     token_cookie_name: 'JWT'
-    # a list of public RSA keys in PEM format, see https://github.com/Jumpy-Squirrel/jwks2pem for obtaining PEM from openid keyset endpoint
     token_public_keys_PEM:
       - |
         -----BEGIN PUBLIC KEY-----
-        MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnzyis1ZjfNB0bBgKFMSv
-        vkTtwlvBsaJq7S5wA+kzeVOVpVWwkWdVha4s38XM/pa/yr47av7+z3VTmvDRyAHc
-        aT92whREFpLv9cj5lTeJSibyr/Mrm/YtjCZVWgaOYIhwrXwKLqPr/11inWsAkfIy
-        tvHWTxZYEcXLgAXFuUuaS3uF9gEiNQwzGTU1v0FqkqTBr4B8nW3HCN47XUu0t8Y0
-        e+lf4s4OxQawWD79J9/5d3Ry0vbV3Am1FtGJiJvOwRsIfVChDpYStTcHTCMqtvWb
-        V6L11BWkpzGXSW4Hv43qa+GSYOD2QU68Mb59oSk2OB+BtOLpJofmbGEGgvmwyCI9
-        MwIDAQAB
+        MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu1SU1LfVLPHCozMxH2Mo
+        4lgOEePzNm0tRgeLezV6ffAt0gunVTLw7onLRnrq0/IzW7yWR7QkrmBL7jTKEn5u
+        +qKhbwKfBstIs+bMY2Zkp18gnTxKLxoS2tFczGkPLPgizskuemMghRniWaoLcyeh
+        kd3qqGElvW/VDL5AaWTg0nLVkjRo9z+40RQzuVaE8AkAFmxZzow3x+VJYKdjykkJ
+        0iT9wCS0DRTXu269V264Vf/3jvredZiKRkgwlL9xNAwxXFg0x/XFw005UWVRIkdg
+        cKWTjpBP2dPwVZ4WWC+9aGVd+Gyn1o0CLelf4rEjGoXbAAEgAqeGUxrcIlbjXfbc
+        mwIDAQAB
         -----END PUBLIC KEY-----
     admin_role: 'admin'
-    # set this nonempty to allow early reg
-    early_reg_role: ''
-  # set this to true to send disable cors headers - not for production - local/test instances only - will log lots of warnings
-  disable_cors: false
-  # set this to true to require a valid oidc token for initial reg. This allow the service to store the subject of the token and use it for authorization
-  require_login_for_reg: false
+    early_reg_role: 'staff'
+go_live:
+  # public reg has not started yet, so only staff may register
+  start_iso_datetime: '2030-11-28T20:00:00+01:00'
+  early_reg_start_iso_datetime: '2019-10-31T20:00:00+01:00'
 choices:
   flags:
     hc:
@@ -53,6 +33,7 @@ choices:
     ev:
       description: 'Eurofurence e.V. Member'
       help_url: 'help/opt_member.html'
+      read_only: true
     guest:
       description: 'Guest of the Convention'
       help_url: 'help/guest.html'
@@ -67,9 +48,9 @@ choices:
     attendance:
       description: 'Entrance Fee (Convention Ticket)'
       help_url: 'help/fee_basic.html'
-      price_early: 95.00
-      price_late: 110.00
-      price_atcon: 135.00
+      price_early: 90.00
+      price_late: 100.00
+      price_atcon: 125.00
       vat_percent: 19
       default: true
       read_only: true
@@ -101,9 +82,9 @@ choices:
     day-thu:
       description: 'Day Guest (Thursday)'
       help_url: 'help/fee_day_thu.html'
-      price_early: 70.00
-      price_late: 70.00
-      price_atcon: 70.00
+      price_early: 60.00
+      price_late: 60.00
+      price_atcon: 60.00
       vat_percent: 19
       read_only: true
       constraint: '!attendance,!stage'
@@ -111,9 +92,9 @@ choices:
     day-fri:
       description: 'Day Guest (Friday)'
       help_url: 'help/fee_day_fri.html'
-      price_early: 70.00
-      price_late: 70.00
-      price_atcon: 70.00
+      price_early: 60.00
+      price_late: 60.00
+      price_atcon: 60.00
       vat_percent: 19
       read_only: true
       constraint: '!attendance,!stage'
@@ -121,9 +102,9 @@ choices:
     day-sat:
       description: 'Day Guest (Saturday)'
       help_url: 'help/fee_day_sat.html'
-      price_early: 70.00
-      price_late: 70.00
-      price_atcon: 70.00
+      price_early: 60.00
+      price_late: 60.00
+      price_atcon: 60.00
       vat_percent: 19
       read_only: true
       constraint: '!attendance,!stage'
@@ -160,10 +141,9 @@ tshirtsizes:
   - 'w4XL'
 birthday:
   earliest: '1901-01-01'
-  latest: '2004-08-24'
+  latest: '2001-08-14'
 countries:
   - 'AF'
-  - 'AN'
   - 'AX'
   - 'AL'
   - 'DZ'
@@ -412,4 +392,3 @@ countries:
   - 'YE'
   - 'ZM'
   - 'ZW'
-  - 'XK'

@@ -2,10 +2,11 @@ package producer
 
 import (
 	"context"
+	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/service/attendeesrv"
-	"github.com/eurofurence/reg-attendee-service/internal/web"
+	"github.com/eurofurence/reg-attendee-service/internal/web/app"
 	"github.com/eurofurence/reg-attendee-service/internal/web/controller/adminctl"
 	"github.com/eurofurence/reg-attendee-service/internal/web/controller/attendeectl"
 	"github.com/eurofurence/reg-attendee-service/internal/web/controller/statusctl"
@@ -33,11 +34,12 @@ func tstSetup() {
 }
 
 func tstSetupConfig() {
-	config.LoadTestingConfigurationFromPathOrAbort("../../../test/testconfig.yaml")
+	aulogging.SetupNoLoggerForTesting()
+	config.LoadTestingConfigurationFromPathOrAbort("../../../test/testconfig-public.yaml")
 }
 
 func tstSetupHttpTestServer() {
-	router := web.Create()
+	router := app.CreateRouter(context.Background())
 	ts = httptest.NewServer(router)
 }
 
@@ -97,12 +99,16 @@ func (s *MockAttendeeService) UpdateDuesAndDoStatusChangeIfNeeded(ctx context.Co
 	return nil
 }
 
-func (s *MockAttendeeService) StatusChangeAllowed(ctx context.Context, oldStatus string, newStatus string) error {
+func (s *MockAttendeeService) StatusChangeAllowed(ctx context.Context, attendee *entity.Attendee, oldStatus string, newStatus string) error {
 	return nil
 }
 
 func (s *MockAttendeeService) StatusChangePossible(ctx context.Context, attendee *entity.Attendee, oldStatus string, newStatus string) error {
 	return nil
+}
+
+func (s *MockAttendeeService) IsOwnerFor(ctx context.Context) ([]*entity.Attendee, error) {
+	return make([]*entity.Attendee, 0), nil
 }
 
 func tstSetupServiceMocks() {

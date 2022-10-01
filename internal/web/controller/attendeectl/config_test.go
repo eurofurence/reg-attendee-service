@@ -30,7 +30,7 @@ func tstShutdown() {
 }
 
 func tstSetupConfig() {
-	config.LoadTestingConfigurationFromPathOrAbort("../../../../test/testconfig.yaml")
+	config.LoadTestingConfigurationFromPathOrAbort("../../../../test/testconfig-public.yaml")
 }
 
 type MockAttendeeService struct {
@@ -83,12 +83,16 @@ func (s *MockAttendeeService) UpdateDuesAndDoStatusChangeIfNeeded(ctx context.Co
 	return nil
 }
 
-func (s *MockAttendeeService) StatusChangeAllowed(ctx context.Context, oldStatus string, newStatus string) error {
+func (s *MockAttendeeService) StatusChangeAllowed(ctx context.Context, attendee *entity.Attendee, oldStatus string, newStatus string) error {
 	return nil
 }
 
 func (s *MockAttendeeService) StatusChangePossible(ctx context.Context, attendee *entity.Attendee, oldStatus string, newStatus string) error {
 	return nil
+}
+
+func (s *MockAttendeeService) IsOwnerFor(ctx context.Context) ([]*entity.Attendee, error) {
+	return make([]*entity.Attendee, 0), nil
 }
 
 func tstSetupServiceMocks() {
