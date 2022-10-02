@@ -20,7 +20,7 @@ func RequestLogger(next http.Handler) http.Handler {
 
 		defer func() {
 			elapsed := time.Since(start)
-			aulogging.Logger.Ctx(ctx).Info().Printf("request %s %s -> %s (%d ms)", method, path, ww.Status(), elapsed.Nanoseconds()/1000000)
+			aulogging.Logger.Ctx(ctx).Info().Printf("request %s %s -> %d (%d ms)", method, path, ww.Status(), elapsed.Nanoseconds()/1000000)
 		}()
 
 		next.ServeHTTP(ww, r)
