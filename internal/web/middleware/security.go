@@ -27,7 +27,7 @@ func fromCookie(r *http.Request) string {
 		return ""
 	}
 
-	return authCookie.Value
+	return "Bearer " + authCookie.Value
 }
 
 func fromAuthHeader(r *http.Request) string {

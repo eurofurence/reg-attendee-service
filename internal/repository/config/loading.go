@@ -75,7 +75,6 @@ func parseAndOverwriteConfig(yamlFile []byte) error {
 		for _, k := range keys {
 			key := k
 			val := errs[k]
-			// cannot use logging package here as this would create a circular dependency (logging needs config)
 			aulogging.Logger.NoCtx().Error().Printf("configuration error: %s: %s", key, val[0])
 		}
 		return errors.New("configuration validation error")
