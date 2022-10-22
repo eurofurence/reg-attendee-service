@@ -1,6 +1,6 @@
 module github.com/eurofurence/reg-attendee-service
 
-go 1.18
+go 1.19
 
 require (
 	github.com/StephanHCB/go-autumn-logging v0.3.0
