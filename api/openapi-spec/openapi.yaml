@@ -21,6 +21,8 @@ servers:
 tags:
   - name: registration
     description: Register and change attendees
+  - name: additional
+    description: Additional info (for use by external systems such as sponsordesk, regdesk, ...)
   - name: status
     description: Status progression
   - name: privileged
@@ -29,6 +31,59 @@ tags:
     description: Health and other public status information
 paths:
   /attendees:
+    get:
+      tags:
+        - registration
+      summary: List my own registration ids
+      description: |-
+        List attendee registrations that are owned by the current user, provided they are still visible to them.
+        
+        When a registration is first made, the currently logged in user is recorded in the registration,
+        and thus assigned as the 'owner' of the registration. 
+        
+        - The frontend can use this to determine which registrations to offer for editing to a regular user.
+        - The payment service can use this to determine which payment histories should be visible to a regular user.
+        
+        Even if an admin calls this, they will only receive those registrations that they own.
+        An admin can transfer/assign ownership of a registration, for the cases where a registration is sold to a new owner.
+        
+        Since the user's identity is taken from the JWT representing the currently logged in user, 
+        this endpoint cannot be called with an API token. It must be called on behalf of a logged in user.
+        
+        If you want lists of attendees according to search criteria, have a look at the attendees/find endpoint
+        (assuming you have the necessary permissions).
+        
+        Note that allowing multiple registrations per user id is configuration dependant. If the configuration
+        is set to allow only a single registration per user id, this endpoint will always return at most a single
+        registration.
+      operationId: listMyRegistrations
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttendeeIdList'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No matching attendees found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: An unexpected error occurred. This includes database errors. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
     post:
       tags:
         - registration
@@ -37,6 +92,10 @@ paths:
         Register a new attendee and assign them a badge number. 
         
         The attendee will initially be in status new and the privileged information is set to all defaults.
+        
+        Note that depending on configuration, there needs to be a logged in user to make a registration.
+        If this configuration is set, attempting to register without a valid login cookie will result
+        in response status 401.
       operationId: addAttendee
       requestBody:
         description: Create a new attendee
@@ -194,6 +253,137 @@ paths:
                 $ref: '#/components/schemas/Error'
         '502':
           description: The update leads to an update in the payment service which failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+  /attendees/{id}/additional-info/{area}:
+    get:
+      tags:
+        - additional
+      summary: obtain the current additional info for an area
+      description: Returns the current additional info for an area (e.g. regdesk, sponsordesk, ...). User will need to have permission called {area} to access it.
+      operationId: getAdditionalInfo
+      parameters:
+        - name: id
+          in: path
+          description: Badge number of attendee
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            format: int64
+        - name: area
+          in: path
+          description: Area (must match [a-z]+)
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          description: Invalid ID or area supplied (area must match [a-z]+)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: You do not have permission to see this attendee or area
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Attendee or area not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: An unexpected error occurred. This includes database errors. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+    post:
+      tags:
+        - additional
+      summary: set the current additional info for an area
+      description: |
+        Set the current additional info for an area (e.g. regdesk, sponsordesk, ...). User will need to have permission "area" to access it.
+        
+        You can store an arbitrary json object here, but the length is limited to 1024 characters.
+      operationId: setAdditionalInfo
+      parameters:
+        - name: id
+          in: path
+          description: Badge number of attendee
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            format: int64
+        - name: area
+          in: path
+          description: Area (must match [a-z]+)
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: The data to store as additional info. Limited to 1024 characters when represented as a non-indented json object.
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+        required: true
+      responses:
+        '204':
+          description: successful operation
+        '400':
+          description: Invalid ID or area supplied (area must match [a-z]+)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: You do not have permission to see this attendee or area.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Attendee not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: An unexpected error occurred. This includes database errors. A best effort attempt is made to return details in the body.
           content:
             application/json:
               schema:
@@ -515,6 +705,271 @@ paths:
       security:
         - BearerAuth: []
         - ApiKeyAuth: []
+  /attendees/find:
+    post:
+      tags:
+        - privileged
+      summary: Find attendees by criteria sets
+      description: Returns all matching attendees (privileged operation)
+      operationId: findAttendees
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttendeeSearchCriteria'
+        required: true
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttendeeSearchResultList'
+        '400':
+          description: Invalid search specification supplied, see details for precise error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: You do not have permission to perform this operation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No attendees matched your criteria.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: An unexpected error occurred. This includes database errors. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+  /bans:
+    get:
+      tags:
+        - privileged
+      summary: List all ban rules
+      description: obtain the list of all ban rules.
+      operationId: listBanRules
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BanRuleList'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: You do not have permission to see ban rules
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: An unexpected error occurred. This includes database errors. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+    post:
+      tags:
+        - privileged
+      summary: Add a new ban rule
+      description: |-
+        Add a new rule to flag potentially banned attendees.
+        
+        Even if the system is configured to normally auto-approve registrations, any registration where
+        at least one of name, email or nickname matches the respective regex, will be put on hold
+        for decision by an admin.
+      operationId: addBanRule
+      requestBody:
+        description: Create a new ban rule
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BanRule'
+        required: true
+      responses:
+        '201':
+          description: Successfully created
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URL of the created resource, ending in the assigned id.
+        '400':
+          description: Invalid input, possibly malformed json or fields did not contain a valid regular expression. See detail message for details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required (must be admin)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: duplicate (same regexes)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: An unexpected error occurred. This includes database errors. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+  /bans/{id}:
+    get:
+      tags:
+        - privileged
+      summary: Find ban rule by id
+      description: Returns a single ban rule
+      operationId: getBanRuleById
+      parameters:
+        - name: id
+          in: path
+          description: id to return
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BanRule'
+        '400':
+          description: Invalid ID supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: You do not have permission to see ban rules
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Ban rule not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: An unexpected error occurred. This includes database errors. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+    put:
+      tags:
+        - privileged
+      summary: Update an existing ban rule
+      description: Update an existing ban rule by Id
+      operationId: updateBanRule
+      parameters:
+        - name: id
+          in: path
+          description: id of ban rule to update
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BanRule'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URL of the resource, ending in the assigned id.
+        '400':
+          description: Invalid ID supplied or invalid data in request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: You do not have permission to change ban rules
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Ban rule not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: your changes would turn this ban rule into a duplicate (all three patterns identical)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: An unexpected error occurred. This includes database errors. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
   /countdown:
     get:
       tags:
@@ -625,20 +1080,16 @@ components:
         telegram:
           type: string
           description: Your telegram handle (optional), but has turned out tremendously useful during the convention. Supply complete handle including the @ character, or leave blank if you do not have one or don't wish to provide it.
+        partner:
+          type: string
+          description: The nickname of your significant other (optional). Used by some conventions to facilitate manual room assignment. Not used by all conventions.
         birthday:
           type: string
           format: date
           description: Your date of birth, in ISO date format (yyyy-mm-dd)
           example: 1980-08-20
         gender:
-          type: string
-          enum:
-            - notprovided
-            - male
-            - female
-            - other
-          default: notprovided
-          description: Your gender (optional). Collected for statistical purposes only. Conventions are at liberty to hide this field in the UI altogether, in which case all attendees will have it set to "notprovided".
+          $ref: '#/components/schemas/Gender'
         pronouns:
           type: string
           maxLength: 40
@@ -664,6 +1115,343 @@ components:
           type: string
           description: Optional comments the attendee wishes to make regarding their registration. Not processed in any way.
           example: I love eurofurence
+    AttendeeIdList:
+      type: object
+      required:
+        - ids
+      properties:
+        ids:
+          type: array
+          description: a list of attendee ids
+          items:
+            type: integer
+            format: int64
+            minimum: 1
+            description: This badge number is automatically assigned during initial registration.
+            example: 10
+    AttendeeSearchResultList:
+      type: object
+      required:
+        - attendees
+      properties:
+        attendees:
+          type: array
+          description: a list of search results
+          items:
+            $ref: '#/components/schemas/AttendeeSearchResult'
+    AttendeeSearchResult:
+      type: object
+      description: a single search result. Note that field visibility may depend on your search query and also on your permissions. Effectively, the only field that is always present is the id field.
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+          description: This badge number is automatically assigned during initial registration. Optional for request bodies, but if specified it must match. It is not possible to change your badge number.
+          example: 10
+        badge_id:
+          type: string
+          description: the badge number including the checksum letter, as it will be printed on the badge.
+          example: 4Y
+        nickname:
+          type: string
+          maxLength: 80
+          example: FluffyCheetah
+        first_name:
+          type: string
+          maxLength: 80
+          example: John
+        last_name:
+          type: string
+          maxLength: 80
+          example: Doe
+        street:
+          type: string
+          maxLength: 120
+          example: Teststraße 24
+        zip:
+          type: string
+          maxLength: 20
+          example: 13591
+        city:
+          type: string
+          maxLength: 80
+          example: Berlin
+        country:
+          type: string
+          maxLength: 2
+          description: 2 letter ISO-3166-1 country code for the address (Alpha-2 code), for example DE for Germany.
+          example: DE
+        country_badge:
+          type: string
+          maxLength: 2
+          description: 2 letter ISO-3166-1 country code for printing on Badge (Alpha-2 code). This allows non-German speaking attendees to select UK here and get a UK flag on their badge, even though they currently live in Germany. Essentially, prevents getting spoken to in a language you do not speak.
+          example: DE
+        state:
+          type: string
+          maxLength: 80
+          example: Bavaria
+        email:
+          type: string
+          example: email@mailinator.com
+        phone:
+          type: string
+          example: +1 500 0000 000
+        telegram:
+          type: string
+          description: complete telegram handle including the @ character
+        partner:
+          type: string
+          description: The nickname of a significant other
+        birthday:
+          type: string
+          format: date
+          description: The date of birth, in ISO date format (yyyy-mm-dd)
+          example: 1980-08-20
+        gender:
+          $ref: '#/components/schemas/Gender'
+        pronouns:
+          type: string
+          maxLength: 40
+          example: they/them
+        tshirt_size:
+          type: string
+          example: XXL
+        flags:
+          type: string
+          description: A comma separated list of flags as declared in configuration. Flags are used to store yes/no-style information about an attendee, and displayed as checkboxes. Flags can be configured with respect to their visibility and who may change them (admin only, normal user). Flags are used to represent properties of the attendee, such as "is staff", "does not wish their name to appear in the convention booklet", etc.
+          example: anon,ev
+        options:
+          type: string
+          description: A comma separated list of options as declared in configuration. Options are used to store yes/no-style choices an attendee makes that do not cost money, and displayed as checkboxes. With Options, you cannot control the visibility in the configuration, as they are basically options given to the attendee that do not cost money. Use these for "I wish to receive emails about x subject" or "I am a fursuiter" etc.
+          example: art,anim,music,suit
+        packages:
+          type: string
+          description: A comma separated list of packages as declared in configuration. Packages are the things that cost money, like being a supersponsor or a day guest for a certain day. They can be configured with respect to who may add / remove them, if they are on by default, and whether they are visible if not selected (admin only, normal user, completely disabled). There is also configuration as to which packages are mutually exclusive, such as sponsor and supersponsor.
+          example: room-none,attendance,sponsor
+        user_comments:
+          type: string
+          description: Optional comments the attendee wishes to make regarding their registration. Not processed in any way.
+          example: I love eurofurence
+        status:
+          $ref: '#/components/schemas/Status'
+        total_dues:
+          type: integer
+          format: int64
+          description: the total dues in cents, or whatever the smallest denomination is in the currency of the convention. Taken from cached information, so may not always be 100% accurate.
+        payment_balance:
+          type: integer
+          format: int64
+          description: the current payment balance in cents (valid payments only), or whatever the smallest denomination is in the currency of the convention. Taken from cached information, so may not always be 100% accurate.
+        current_dues:
+          type: integer
+          format: int64
+          description: the current outstanding dues in cents, or whatever the smallest denomination is in the currency of the convention. Taken from cached information, so may not always be 100% accurate.
+        due_date:
+          type: string
+          format: date
+          example: '2022-06-18'
+          description: the date at which dues become/became overdue.
+    AttendeeSearchCriteria:
+      type: object
+      required:
+        - match_any
+      properties:
+        match_any:
+          type: array
+          description: |
+            A list of search criteria. 
+            
+            An attendee matches if they match ANY of the given criteria sets, so these are effectively connected by OR.
+            
+            If you give the empty list, all attendees that are visible to you will match.
+            
+            Your permissions may also limit which fields or attendees you will see in the response.
+          items:
+            $ref: '#/components/schemas/AttendeeSearchSingleCriterion'
+        min_id:
+          items:
+            type: integer
+            format: int64
+            minimum: 1
+            description: badge number to begin search at (inclusive)
+            example: 10
+        max_id:
+          items:
+            type: integer
+            format: int64
+            minimum: 1
+            description: badge number to end search at (inclusive)
+            example: 400
+        num_results:
+          items:
+            type: integer
+            format: int64
+            minimum: 1
+            description: maximum number of results to return. Together with min_id, this can be used for pagination if you sort by id.
+            example: 100
+        fill_fields:
+          type: object
+          description: optionally specifies which fields to return. Fields are grouped into some sensible sets of fields, and turning off fields may significantly reduce bandwidth and improve response times.
+          properties:
+            schema:
+              $ref: '#/components/schemas/AttendeeFieldSelection'
+        sort_by:
+          type: string
+          description: specifies the sort order, defaults to id
+          default: id
+          enum:
+            - id
+            - nickname
+            - name
+            - country
+            # TODO look up in classic
+        sort_order:
+          type: string
+          description: specifies the direction of the sort order, defaults to ascending
+          default: ascending
+          enum:
+            - ascending
+            - descending
+    AttendeeSearchSingleCriterion:
+      type: object
+      description: a set of search criteria. All criteria are optional, but if you set multiple ones, they are connected by AND.
+      properties:
+        ids:
+          type: array
+          items:
+            type: integer
+            format: int64
+            minimum: 1
+            description: badge number (exact match)
+            example: 10
+        nickname:
+          type: string
+          description: full match, case insensitive, use * as a wildcard for substring matches
+          example: '*chee*h'
+        name:
+          type: string
+          description: full match on first and last name, case insensitive, use * as a wildcard for substring matches
+          example: 'john*doe'
+        address:
+          type: string
+          maxLength: 120
+          description: substring match on the mailing address, case insensitive, use * as a wildcard for substring matches inside, no need to supply surrounding *
+          example: 'straße*24'
+        country:
+          type: string
+          maxLength: 2
+          description: 2 letter ISO-3166-1 country code for the address (Alpha-2 code), for example DE for Germany.
+          example: DE
+        country_badge:
+          type: string
+          maxLength: 2
+          description: 2 letter ISO-3166-1 country code for printing on Badge (Alpha-2 code), for example DE for Germany.
+          example: DE
+        email:
+          type: string
+          description: full match on email, case insensitive, use * as a wildcard for substring matches
+          example: email@mailinator.com
+        telegram:
+          type: string
+          description: full match on telegram handle, case insensitive, use * as a wildcard for substring matches
+        flags:
+          description: desired state of flags as declared in configuration. If specified at all, flag must be present the given number of times (0 or 1).
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ChoiceStateCondition'
+          example:
+            anon: 1
+            ev: 0
+        options:
+          description: desired state of options as declared in configuration. If specified at all, flag must be present the given number of times (0 or 1).
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ChoiceStateCondition'
+          example:
+            music: 1
+            suit: 0
+        packages:
+          description: desired state of packages as declared in configuration. If specified at all, flag must be present the given number of times (0 or 1).
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ChoiceStateCondition'
+          example:
+            attendance: 1
+            sponsor: 0
+        user_comments:
+          type: string
+          description: substring match on the user comments, case insensitive, use * as a wildcard for substring matches, no need to supply surrounding *
+          example: 'euro*rence'
+    ChoiceStateCondition:
+      type: integer
+      format: int64
+      minimum: 0
+      maximum: 1
+      description: desired state of choice, 0 = must be no, 1 = must be yes. Leave missing to pose no condition.
+      example: 1
+    AttendeeFieldSelection:
+      type: object
+      required:
+        - include
+      properties:
+        include:
+          type: array
+          description: pick the fields or field sets you'd like the search to return. The only field you cannot turn off is the id, which is why you don't need to list it (you can, though).
+          items:
+            type: string
+            enum:
+              # individual fields
+              - id
+              - nickname
+              - first_name
+              - last_name
+              - street
+              - zip
+              - city
+              - country
+              - country_badge
+              - state
+              - email
+              - phone
+              - telegram
+              - partner
+              - birthday
+              - gender
+              - pronouns
+              - tshirt_size
+              - flags
+              - options
+              - packages
+              - user_comments
+              - status
+              - total_dues
+              - payment_balance
+              - current_dues
+              # and the field sets
+              - name
+              - address
+              - contact
+              - configuration
+              - balances
+            description: |-
+              Apart from listing individual fields, which are all available, these sets are defined: 
+              
+              - name: first_name, last_name
+              - address: street, zip, city, state, country
+              - contact: email, phone, telegram
+              - configuration: flags, options, packages
+              - balances: total_dues, payment_balance, current_dues
+              
+              For a detailed description of the fields, please see the AttendeeSearchResult schema.
+              
+              Keep in mind that your permissions may limit field visibility.
+              
+              Also remember that even if you don't list the id field, you will still get it.
+              
+              You will not get fields that you don't have permission to see even if you request them.
     AdminInfo:
       type: object
       required:
@@ -693,6 +1481,49 @@ components:
         admin_comments:
           type: string
           description: Optional comments only visible to admins. Not processed in any way.
+        manual_dues:
+          type: integer
+          format: int64
+          description: Offset to book on the due amount, may be negative. If negative, will offset the highest VAT rates first. If positive, will be added at highest available VAT rate.
+        manual_dues_description:
+          type: string
+          description: Description to use for the manual dues booking.
+    BanRule:
+      type: object
+      required:
+        - reason
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: brief description of why there is a ban
+          example: started a howl
+        name_pattern:
+          type: string
+          maxLength: 255
+          description: regular expression to match the name (first last) against. Blank value or omission means no condition.
+          example: 'John.*Doe'
+        nickname_pattern:
+          type: string
+          maxLength: 255
+          description: regular expression to match the nickname against. Blank value or omission means no condition.
+          example: '(abc|def[^x-z]+)'
+        email_pattern:
+          type: string
+          maxLength: 255
+          description: regular expression to match the email address against. Blank value or omission means no condition.
+          example: 'a@mailinator.com'
+    BanRuleList:
+      type: object
+      required:
+        - bans
+      properties:
+        bans:
+          type: array
+          items:
+            $ref: '#/components/schemas/BanRule'
+          description: the list of ban rules
     Countdown:
       type: object
       required:
@@ -721,17 +1552,7 @@ components:
         - status
       properties:
         status:
-          type: string
-          enum:
-            - new
-            - approved
-            - partially paid
-            - paid
-            - checked in
-            - cancelled
-            - deleted
-            - waiting
-          description: the status, detailed descriptions of the values see below under Schemas/Status (how do I reference this in OpenApi?)
+          $ref: '#/components/schemas/Status'
     StatusChange:
       type: object
       required:
@@ -743,17 +1564,7 @@ components:
           description: The time at which the status change occurred. Ignored when you send us a status change and replaced with the current server time. Always present when we return a status change entry to you.
           example: 2006-01-02T15:04:05+07:00
         status:
-          type: string
-          enum:
-            - new
-            - approved
-            - partially paid
-            - paid
-            - checked in
-            - cancelled
-            - deleted
-            - waiting
-          description: the status, detailed descriptions of the values see below under Schemas/Status (how do I reference this in OpenApi?)
+          $ref: '#/components/schemas/Status'
         comment:
           type: string
           maxLength: 256
@@ -802,6 +1613,20 @@ components:
         
         For a detailed description of available status transitions and who may do them see the documentation of the 
         "request a status change" POST endpoint.
+    Gender:
+      type: string
+      enum:
+        - notprovided
+        - male
+        - female
+        - other
+      default: notprovided
+      description: |
+        Your gender (optional).
+        
+        Usually collected for statistical purposes only, unless the system does room assignment for youth hostel situations in the presence of minors, in which case this may be important information.
+
+        Conventions are at liberty to hide this field in the UI altogether, in which case all attendees will have it set to "notprovided".
     Error:
       type: object
       required:
