@@ -818,7 +818,7 @@ components:
           type: string
           description: An internal trace id assigned to the error. Used to find logs associated with errors across our services. Display to the user as something to communicate to us with inquiries about the error.
           example: a8b7c6d5
-        messsage:
+        message:
           type: string
           description: |-
             A keyed description of the error. We do not write human readable text here because the user interface will be multi language.
