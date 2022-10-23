@@ -95,11 +95,11 @@ Limitations:
  - ✅ day guests are supported simply via the package subsystem 
  - 🚧 guests are supported as an admin only flag which will cause the system to assign 0 dues
  - ✅ implements a general request timeout and panic handling
- - ❌ no search functionality implemented yet
- - ❌ no bans support implemented at this point
- - ❌ no manual dues support implemented yet
-- 🚧 key_deposit/key_received/sponsor_items flag are supported as additional-info not implement yet
-- 🚧 track who (subject, if set) performed a status change
+ - 🚧 no search functionality implemented yet
+ - 🚧 no bans support implemented at this point
+ - 🚧 no manual dues support implemented yet
+ - 🚧 key_deposit/key_received/sponsor_items flag are supported as additional-info not implement yet
+ - ✅ track who (subject, if set) performed a database change (recorded in history table)
 
 ### for later
 

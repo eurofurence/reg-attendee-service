@@ -67,6 +67,7 @@ func validate(ctx context.Context, a *attendee.AttendeeDto, trustedOriginalState
 	validation.CheckLength(&errs, 1, 20, "zip", a.Zip)
 	validation.CheckLength(&errs, 1, 80, "city", a.City)
 	validation.CheckLength(&errs, 0, 80, "state", a.State)
+	validation.CheckLength(&errs, 0, 80, "partner", a.Partner)
 	if validation.ViolatesPattern(countryPattern, a.Country) || !validateCountry(ctx, a.Country) {
 		errs.Add("country", "country field must contain a 2 letter upper case ISO-3166-1 country code (Alpha-2 code, see https://en.wikipedia.org/wiki/ISO_3166-1)")
 	}
@@ -75,7 +76,7 @@ func validate(ctx context.Context, a *attendee.AttendeeDto, trustedOriginalState
 	}
 	validation.CheckLength(&errs, 1, 200, "email", a.Email)
 	if validation.ViolatesPattern(emailPattern, a.Email) {
-		errs.Add("email", "email field is not plausible")
+		errs.Add("email", "email field is not plausible, must match "+emailPattern)
 	}
 	validation.CheckLength(&errs, 1, 32, "phone", a.Phone)
 	if validation.ViolatesPattern("^(|@.+)$", a.Telegram) {
