@@ -1272,42 +1272,39 @@ components:
           items:
             $ref: '#/components/schemas/AttendeeSearchSingleCriterion'
         min_id:
-          items:
-            type: integer
-            format: int64
-            minimum: 1
-            description: badge number to begin search at (inclusive)
-            example: 10
+          type: integer
+          format: int64
+          minimum: 1
+          description: badge number to begin search at (inclusive)
+          example: 10
         max_id:
-          items:
-            type: integer
-            format: int64
-            minimum: 1
-            description: badge number to end search at (inclusive)
-            example: 400
+          type: integer
+          format: int64
+          minimum: 1
+          description: badge number to end search at (inclusive)
+          example: 400
         num_results:
-          items:
-            type: integer
-            format: int64
-            minimum: 1
-            description: maximum number of results to return. Together with min_id, this can be used for pagination if you sort by id.
-            example: 100
+          type: integer
+          format: int64
+          minimum: 1
+          description: maximum number of results to return. Together with min_id, this can be used for pagination if you sort by id.
+          example: 100
         fill_fields:
-          type: object
-          description: optionally specifies which fields to return. Fields are grouped into some sensible sets of fields, and turning off fields may significantly reduce bandwidth and improve response times.
-          properties:
-            schema:
-              $ref: '#/components/schemas/AttendeeFieldSelection'
+          $ref: '#/components/schemas/AttendeeFieldSelection'
         sort_by:
           type: string
           description: specifies the sort order, defaults to id
           default: id
           enum:
             - id
+            - status
             - nickname
+            - birthday
+            - email
             - name
+            - zip
+            - city
             - country
-            # TODO look up in classic
         sort_order:
           type: string
           description: specifies the direction of the sort order, defaults to ascending
@@ -1393,65 +1390,65 @@ components:
       description: desired state of choice, 0 = must be no, 1 = must be yes. Leave missing to pose no condition.
       example: 1
     AttendeeFieldSelection:
-      type: object
-      required:
-        - include
-      properties:
-        include:
-          type: array
-          description: pick the fields or field sets you'd like the search to return. The only field you cannot turn off is the id, which is why you don't need to list it (you can, though).
-          items:
-            type: string
-            enum:
-              # individual fields
-              - id
-              - nickname
-              - first_name
-              - last_name
-              - street
-              - zip
-              - city
-              - country
-              - country_badge
-              - state
-              - email
-              - phone
-              - telegram
-              - partner
-              - birthday
-              - gender
-              - pronouns
-              - tshirt_size
-              - flags
-              - options
-              - packages
-              - user_comments
-              - status
-              - total_dues
-              - payment_balance
-              - current_dues
-              # and the field sets
-              - name
-              - address
-              - contact
-              - configuration
-              - balances
-            description: |-
-              Apart from listing individual fields, which are all available, these sets are defined: 
-              
-              - name: first_name, last_name
-              - address: street, zip, city, state, country
-              - contact: email, phone, telegram
-              - configuration: flags, options, packages
-              - balances: total_dues, payment_balance, current_dues
-              
-              For a detailed description of the fields, please see the AttendeeSearchResult schema.
-              
-              Keep in mind that your permissions may limit field visibility.
-              
-              Also remember that even if you don't list the id field, you will still get it.
-              
-              You will not get fields that you don't have permission to see even if you request them.
+      type: array
+      description: |-
+        Pick the fields or field sets you'd like the search to return. The only field you cannot turn off is the id, which is why you don't need to list it (you can, though).
+        
+        Turning off fields may significantly reduce bandwidth and improve response times.
+
+        Apart from listing individual fields, which are all available, these sets are defined: 
+      
+        - name: first_name, last_name
+        - address: street, zip, city, state, country
+        - contact: email, phone, telegram
+        - configuration: flags, options, packages
+        - balances: total_dues, payment_balance, current_dues
+      
+        For a detailed description of the fields, please see the AttendeeSearchResult schema.
+      
+        Keep in mind that your permissions may limit field visibility.
+      
+        Also remember that even if you don't list the id field, you will still get it.
+      
+        You will not get fields that you don't have permission to see even if you request them.
+        
+        If you do not specify any fields, only the id will be returned.
+      items:
+        type: string
+        enum:
+          # individual fields
+          - id
+          - nickname
+          - first_name
+          - last_name
+          - street
+          - zip
+          - city
+          - country
+          - country_badge
+          - state
+          - email
+          - phone
+          - telegram
+          - partner
+          - birthday
+          - gender
+          - pronouns
+          - tshirt_size
+          - flags
+          - options
+          - packages
+          - user_comments
+          - status
+          - total_dues
+          - payment_balance
+          - current_dues
+          # and the field sets
+          - name
+          - address
+          - contact
+          - configuration
+          - balances
     AdminInfo:
       type: object
       required:
@@ -1484,7 +1481,7 @@ components:
         manual_dues:
           type: integer
           format: int64
-          description: Offset to book on the due amount, may be negative. If negative, will offset the highest VAT rates first. If positive, will be added at highest available VAT rate.
+          description: Offset to book on the due amount, may be negative. Smallest denomination of convention currency, for example cents. If negative, will offset the highest VAT rates first. If positive, will be added at highest available VAT rate.
         manual_dues_description:
           type: string
           description: Description to use for the manual dues booking.
@@ -1676,10 +1673,16 @@ components:
             - status.use.approved (you tried to go directly to partially paid, paid, or checked in from new, cancelled, deleted - please use approved, this will automatically set (partially) paid as appropriate)
           example: attendee.data.invalid
         details:
-          type: array
-          items:
-            type: string
-          description: Optional list of additional details about the error. If available, will usually contain English language technobabble.
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          description: Optional additional details about the error. If available, will usually contain English language technobabble.
+          example:
+            other:
+              - email address does not match the regular expression
+              - you need to refill the flux capacitor before the operation can succeed
   securitySchemes:
     BearerAuth:
       type: http
