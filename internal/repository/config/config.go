@@ -191,6 +191,10 @@ func IsCorsDisabled() bool {
 	return Configuration().Security.DisableCors
 }
 
+func CorsAllowOrigin() string {
+	return Configuration().Security.CorsAllowOrigin
+}
+
 func RequireLoginForReg() bool {
 	return Configuration().Security.RequireLogin
 }

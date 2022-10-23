@@ -40,6 +40,8 @@ security:
     early_reg_role: ''
   # set this to true to send disable cors headers - not for production - local/test instances only - will log lots of warnings
   disable_cors: false
+  # if setting disable_cors, you should also specify this, as a comma separated list of allowed origins
+  # cors_allow_origin: 'http://localhost:8000,http://localhost:8001'
   # set this to true to require a valid oidc token for initial reg. This allow the service to store the subject of the token and use it for authorization
   require_login_for_reg: false
 choices:
