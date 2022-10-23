@@ -347,6 +347,9 @@ paths:
           required: true
           schema:
             type: string
+            minLength: 1
+            maxLength: 32
+            example: sponsordesk
       requestBody:
         description: The data to store as additional info. Limited to 1024 characters when represented as a non-indented json object.
         content:
@@ -1082,6 +1085,7 @@ components:
           description: Your telegram handle (optional), but has turned out tremendously useful during the convention. Supply complete handle including the @ character, or leave blank if you do not have one or don't wish to provide it.
         partner:
           type: string
+          maxLength: 80
           description: The nickname of your significant other (optional). Used by some conventions to facilitate manual room assignment. Not used by all conventions.
         birthday:
           type: string
@@ -1481,10 +1485,16 @@ components:
         manual_dues:
           type: integer
           format: int64
-          description: Offset to book on the due amount, may be negative. Smallest denomination of convention currency, for example cents. If negative, will offset the highest VAT rates first. If positive, will be added at highest available VAT rate.
+          example: -8000
+          description: |-
+            Offset to book on the due amount, may be negative. If negative, will offset the highest VAT rates first. If positive, will be added at highest available VAT rate. 
+            
+            Smallest denomination of convention currency, for example cents. If the currency is EUR, the example would be a credit of 80 EUR.
         manual_dues_description:
           type: string
+          maxLength: 80
           description: Description to use for the manual dues booking.
+          example: credit from last year
     BanRule:
       type: object
       required:
