@@ -28,5 +28,13 @@ type Repository interface {
 
 	FindByIdentity(ctx context.Context, identity string) ([]*entity.Attendee, error)
 
+	GetAllBans(ctx context.Context) ([]*entity.Ban, error)
+	GetBanById(ctx context.Context, id uint) (*entity.Ban, error)
+	AddBan(ctx context.Context, b *entity.Ban) (uint, error)
+	UpdateBan(ctx context.Context, b *entity.Ban) error
+
+	GetAdditionalInfoFor(ctx context.Context, attendeeId uint, area string) (*entity.AdditionalInfo, error)
+	WriteAdditionalInfo(ctx context.Context, ad *entity.AdditionalInfo) error
+
 	RecordHistory(ctx context.Context, h *entity.History) error
 }

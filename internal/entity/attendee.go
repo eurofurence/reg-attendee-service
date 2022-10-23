@@ -18,6 +18,7 @@ type Attendee struct {
 	Email        string `gorm:"type:varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;NOT NULL;index:email_idx"`
 	Phone        string `gorm:"type:varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;NOT NULL"`
 	Telegram     string `gorm:"type:varchar(80) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci"`
+	Partner      string `gorm:"type:varchar(80) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci"`
 	Birthday     string `gorm:"type:varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;NOT NULL"`
 	Gender       string `gorm:"type:varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;NOT NULL"`
 	Pronouns     string `gorm:"type:varchar(40) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci"`

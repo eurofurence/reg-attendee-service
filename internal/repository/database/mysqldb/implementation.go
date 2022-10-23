@@ -50,7 +50,14 @@ func (r *MysqlRepository) Close() {
 }
 
 func (r *MysqlRepository) Migrate() error {
-	err := r.db.AutoMigrate(&entity.Attendee{}, &entity.History{}, &entity.AdminInfo{}, &entity.StatusChange{})
+	err := r.db.AutoMigrate(
+		&entity.AdditionalInfo{},
+		&entity.AdminInfo{},
+		&entity.Attendee{},
+		&entity.Ban{},
+		&entity.History{},
+		&entity.StatusChange{},
+	)
 	if err != nil {
 		aulogging.Logger.NoCtx().Error().WithErr(err).Printf("failed to migrate mysql db: %s", err.Error())
 		return err
@@ -216,6 +223,34 @@ func (r *MysqlRepository) FindByIdentity(ctx context.Context, identity string) (
 	}
 
 	return result, nil
+}
+
+// --- bans ---
+
+func (r *MysqlRepository) GetAllBans(ctx context.Context) ([]*entity.Ban, error) {
+	return make([]*entity.Ban, 0), errors.New("TODO - not implemented")
+}
+
+func (r *MysqlRepository) GetBanById(ctx context.Context, id uint) (*entity.Ban, error) {
+	return &entity.Ban{}, errors.New("TODO - not implemented")
+}
+
+func (r *MysqlRepository) AddBan(ctx context.Context, b *entity.Ban) (uint, error) {
+	return 0, errors.New("TODO - not implemented")
+}
+
+func (r *MysqlRepository) UpdateBan(ctx context.Context, b *entity.Ban) error {
+	return errors.New("TODO - not implemented")
+}
+
+// --- additional info ---
+
+func (r *MysqlRepository) GetAdditionalInfoFor(ctx context.Context, attendeeId uint, area string) (*entity.AdditionalInfo, error) {
+	return &entity.AdditionalInfo{}, errors.New("TODO - not implemented")
+}
+
+func (r *MysqlRepository) WriteAdditionalInfo(ctx context.Context, ad *entity.AdditionalInfo) error {
+	return errors.New("TODO - not implemented")
 }
 
 // --- history ---

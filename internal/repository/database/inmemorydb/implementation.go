@@ -2,6 +2,7 @@ package inmemorydb
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database/dbrepo"
@@ -168,6 +169,34 @@ func (r *InMemoryRepository) FindByIdentity(ctx context.Context, identity string
 		}
 	}
 	return result, nil
+}
+
+// --- bans ---
+
+func (r *InMemoryRepository) GetAllBans(ctx context.Context) ([]*entity.Ban, error) {
+	return make([]*entity.Ban, 0), errors.New("TODO - not implemented")
+}
+
+func (r *InMemoryRepository) GetBanById(ctx context.Context, id uint) (*entity.Ban, error) {
+	return &entity.Ban{}, errors.New("TODO - not implemented")
+}
+
+func (r *InMemoryRepository) AddBan(ctx context.Context, b *entity.Ban) (uint, error) {
+	return 0, errors.New("TODO - not implemented")
+}
+
+func (r *InMemoryRepository) UpdateBan(ctx context.Context, b *entity.Ban) error {
+	return errors.New("TODO - not implemented")
+}
+
+// --- additional info ---
+
+func (r *InMemoryRepository) GetAdditionalInfoFor(ctx context.Context, attendeeId uint, area string) (*entity.AdditionalInfo, error) {
+	return &entity.AdditionalInfo{}, errors.New("TODO - not implemented")
+}
+
+func (r *InMemoryRepository) WriteAdditionalInfo(ctx context.Context, ad *entity.AdditionalInfo) error {
+	return errors.New("TODO - not implemented")
 }
 
 // --- history ---

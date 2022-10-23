@@ -8,6 +8,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database/dbrepo"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
+	"gorm.io/gorm"
 )
 
 type HistorizingRepository struct {
@@ -36,26 +37,13 @@ func (r *HistorizingRepository) AddAttendee(ctx context.Context, a *entity.Atten
 	return r.wrappedRepository.AddAttendee(ctx, a)
 }
 
-// we diff reverse so the OLD value is printed in the diffs. The new value is in the database now.
-func attendeeDiffReverse(ctx context.Context, oldVersion *entity.Attendee, newVersion *entity.Attendee) *entity.History {
-	histEntry := &entity.History{
-		Entity:    "Attendee",
-		EntityId:  newVersion.ID,
-		RequestId: ctxvalues.RequestId(ctx),
-		UserId:    0, // TODO: we don't really have user ids yet
-	}
-	diff, _ := messagediff.PrettyDiff(newVersion, oldVersion)
-	histEntry.Diff = diff
-	return histEntry
-}
-
 func (r *HistorizingRepository) UpdateAttendee(ctx context.Context, a *entity.Attendee) error {
 	oldVersion, err := r.wrappedRepository.GetAttendeeById(ctx, a.ID)
 	if err != nil {
 		return err
 	}
 
-	histEntry := attendeeDiffReverse(ctx, oldVersion, a)
+	histEntry := diffReverse(ctx, oldVersion, a, "Attendee", a.ID)
 
 	err = r.wrappedRepository.RecordHistory(ctx, histEntry)
 	if err != nil {
@@ -79,19 +67,6 @@ func (r *HistorizingRepository) MaxAttendeeId(ctx context.Context) (uint, error)
 
 // --- admin info ---
 
-// we diff reverse so the OLD value is printed in the diffs. The new value is in the database now.
-func adminInfoDiffReverse(ctx context.Context, oldVersion *entity.AdminInfo, newVersion *entity.AdminInfo) *entity.History {
-	histEntry := &entity.History{
-		Entity:    "AdminInfo",
-		EntityId:  newVersion.ID,
-		RequestId: ctxvalues.RequestId(ctx),
-		UserId:    0, // TODO: we don't really have user ids yet
-	}
-	diff, _ := messagediff.PrettyDiff(newVersion, oldVersion)
-	histEntry.Diff = diff
-	return histEntry
-}
-
 func (r *HistorizingRepository) GetAdminInfoByAttendeeId(ctx context.Context, attendeeId uint) (*entity.AdminInfo, error) {
 	return r.wrappedRepository.GetAdminInfoByAttendeeId(ctx, attendeeId)
 }
@@ -102,7 +77,7 @@ func (r *HistorizingRepository) WriteAdminInfo(ctx context.Context, ai *entity.A
 		return err
 	}
 
-	histEntry := adminInfoDiffReverse(ctx, oldVersion, ai)
+	histEntry := diffReverse(ctx, oldVersion, ai, "AdminInfo", ai.ID)
 
 	err = r.wrappedRepository.RecordHistory(ctx, histEntry)
 	if err != nil {
@@ -131,9 +106,79 @@ func (r *HistorizingRepository) FindByIdentity(ctx context.Context, identity str
 	return r.wrappedRepository.FindByIdentity(ctx, identity)
 }
 
+// --- bans ---
+
+func (r *HistorizingRepository) GetAllBans(ctx context.Context) ([]*entity.Ban, error) {
+	return r.wrappedRepository.GetAllBans(ctx)
+}
+
+func (r *HistorizingRepository) GetBanById(ctx context.Context, id uint) (*entity.Ban, error) {
+	return r.wrappedRepository.GetBanById(ctx, id)
+}
+
+func (r *HistorizingRepository) AddBan(ctx context.Context, b *entity.Ban) (uint, error) {
+	return r.wrappedRepository.AddBan(ctx, b)
+}
+
+func (r *HistorizingRepository) UpdateBan(ctx context.Context, b *entity.Ban) error {
+	oldVersion, err := r.wrappedRepository.GetBanById(ctx, b.ID)
+	if err != nil {
+		return err
+	}
+
+	histEntry := diffReverse(ctx, oldVersion, b, "Ban", b.ID)
+
+	err = r.wrappedRepository.RecordHistory(ctx, histEntry)
+	if err != nil {
+		return err
+	}
+
+	return r.wrappedRepository.UpdateBan(ctx, b)
+}
+
+// --- additional info ---
+
+func (r *HistorizingRepository) GetAdditionalInfoFor(ctx context.Context, attendeeId uint, area string) (*entity.AdditionalInfo, error) {
+	return r.wrappedRepository.GetAdditionalInfoFor(ctx, attendeeId, area)
+}
+
+func (r *HistorizingRepository) WriteAdditionalInfo(ctx context.Context, ad *entity.AdditionalInfo) error {
+	oldVersion, err := r.wrappedRepository.GetAdditionalInfoFor(ctx, ad.AttendeeId, ad.Area)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// acceptable situation - first entry needs no history
+			return r.wrappedRepository.WriteAdditionalInfo(ctx, ad)
+		} else {
+			return err
+		}
+	}
+
+	histEntry := diffReverse(ctx, oldVersion, ad, "AdditionalInfo", ad.ID)
+
+	err = r.wrappedRepository.RecordHistory(ctx, histEntry)
+	if err != nil {
+		return err
+	}
+
+	return r.wrappedRepository.WriteAdditionalInfo(ctx, ad)
+}
+
 // --- history ---
 
 // it is an error to call this from the outside. From the inside use wrappedRepository.RecordHistory to bypass the error
 func (r *HistorizingRepository) RecordHistory(ctx context.Context, h *entity.History) error {
 	return errors.New("not allowed to directly manipulate history")
+}
+
+// we diff reverse so the OLD value is printed in the diffs. The new value is in the database now.
+func diffReverse[T any](ctx context.Context, oldVersion *T, newVersion *T, entityName string, entityID uint) *entity.History {
+	histEntry := &entity.History{
+		Entity:    entityName,
+		EntityId:  entityID,
+		RequestId: ctxvalues.RequestId(ctx),
+		UserId:    ctxvalues.Subject(ctx),
+	}
+	diff, _ := messagediff.PrettyDiff(newVersion, oldVersion)
+	histEntry.Diff = diff
+	return histEntry
 }
