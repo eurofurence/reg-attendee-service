@@ -47,27 +47,27 @@ type AttendeeIdList struct {
 
 type AttendeeSearchCriteria struct {
 	MatchAny   []AttendeeSearchSingleCriterion `json:"match_any"`
-	MinId      int64                           `json:"min_id"`
-	MaxId      int64                           `json:"max_id"`
-	NumResults int64                           `json:"num_results"`
+	MinId      uint                            `json:"min_id"`
+	MaxId      uint                            `json:"max_id"`
+	NumResults uint                            `json:"num_results"`
 	FillFields []string                        `json:"fill_fields"`
 	SortBy     string                          `json:"sort_by"`
 	SortOrder  string                          `json:"sort_order"`
 }
 
 type AttendeeSearchSingleCriterion struct {
-	Ids          []int64          `json:"ids,omitempty"`
-	Nickname     string           `json:"nickname"`
-	Name         string           `json:"name"`
-	Address      string           `json:"address"`
-	Country      string           `json:"country"`
-	CountryBadge string           `json:"country_badge"`
-	Email        string           `json:"email"`
-	Telegram     string           `json:"telegram"`
-	Flags        map[string]int64 `json:"flags"`
-	Options      map[string]int64 `json:"options"`
-	Packages     map[string]int64 `json:"packages"`
-	UserComments string           `json:"user_comments"`
+	Ids          []uint          `json:"ids,omitempty"`
+	Nickname     string          `json:"nickname"`
+	Name         string          `json:"name"`
+	Address      string          `json:"address"`
+	Country      string          `json:"country"`
+	CountryBadge string          `json:"country_badge"`
+	Email        string          `json:"email"`
+	Telegram     string          `json:"telegram"`
+	Flags        map[string]int8 `json:"flags"`
+	Options      map[string]int8 `json:"options"`
+	Packages     map[string]int8 `json:"packages"`
+	UserComments string          `json:"user_comments"`
 }
 
 // --- search result ---

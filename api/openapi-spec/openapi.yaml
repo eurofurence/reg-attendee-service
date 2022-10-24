@@ -1334,7 +1334,7 @@ components:
           example: '*chee*h'
         name:
           type: string
-          description: full match on first and last name, case insensitive, use * as a wildcard for substring matches
+          description: full match on first and last name separated by a space, case insensitive, use * as a wildcard for substring matches
           example: 'john*doe'
         address:
           type: string

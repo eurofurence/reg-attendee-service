@@ -94,6 +94,8 @@ func (r *InMemoryRepository) MaxAttendeeId(ctx context.Context) (uint, error) {
 	return max, nil
 }
 
+// --- attendee search ---
+
 // --- admin info ---
 
 func (r *InMemoryRepository) GetAdminInfoByAttendeeId(ctx context.Context, attendeeId uint) (*entity.AdminInfo, error) {
