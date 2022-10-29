@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database/dbrepo"
+	"sort"
 	"sync/atomic"
 )
 
@@ -95,6 +97,76 @@ func (r *InMemoryRepository) MaxAttendeeId(ctx context.Context) (uint, error) {
 }
 
 // --- attendee search ---
+
+func (r *InMemoryRepository) FindAttendees(ctx context.Context, criteria *attendee.AttendeeSearchCriteria) ([]*entity.Attendee, error) {
+	resultIds := make([]uint, 0)
+	for id, a := range r.attendees {
+		if matchesCriteria(criteria, a) {
+			resultIds = append(resultIds, id)
+		}
+	}
+
+	sort.Slice(resultIds, r.lessFunction(criteria.SortBy, criteria.SortOrder, resultIds))
+
+	resultLen := len(resultIds)
+	if criteria.NumResults > 0 && resultLen > int(criteria.NumResults) {
+		resultLen = int(criteria.NumResults)
+	}
+
+	result := make([]*entity.Attendee, resultLen)
+	for i, aid := range resultIds {
+		if i < resultLen {
+			copiedAttendee := *(r.attendees[aid])
+			result[i] = &copiedAttendee
+		}
+	}
+
+	return result, nil
+}
+
+func (r *InMemoryRepository) lessFunction(sortBy string, sortOrder string, matchingIds []uint) func(i, j int) bool {
+	return func(i, j int) bool {
+		a1 := r.attendees[matchingIds[i]]
+		a2 := r.attendees[matchingIds[j]]
+		switch sortBy {
+		case "status":
+			// TODO status lookup and sort by it
+			return lessFunctionId(a1, a2, sortOrder)
+		case "nickname":
+			return lessFunctionString(a1, a2, func(a *entity.Attendee) string { return a.Nickname }, sortOrder)
+		case "birthday":
+			return lessFunctionString(a1, a2, func(a *entity.Attendee) string { return a.Birthday }, sortOrder)
+		case "email":
+			return lessFunctionString(a1, a2, func(a *entity.Attendee) string { return a.Email }, sortOrder)
+		case "name":
+			return lessFunctionString(a1, a2, func(a *entity.Attendee) string { return a.FirstName + " " + a.LastName }, sortOrder)
+		case "zip":
+			return lessFunctionString(a1, a2, func(a *entity.Attendee) string { return a.Zip }, sortOrder)
+		case "city":
+			return lessFunctionString(a1, a2, func(a *entity.Attendee) string { return a.City }, sortOrder)
+		case "country":
+			return lessFunctionString(a1, a2, func(a *entity.Attendee) string { return a.Country }, sortOrder)
+		default:
+			return lessFunctionId(a1, a2, sortOrder)
+		}
+	}
+}
+
+func lessFunctionId(a1 *entity.Attendee, a2 *entity.Attendee, sortOrder string) bool {
+	if sortOrder == "descending" {
+		return a1.ID > a2.ID
+	} else {
+		return a1.ID < a2.ID
+	}
+}
+
+func lessFunctionString(a1 *entity.Attendee, a2 *entity.Attendee, get func(a *entity.Attendee) string, sortOrder string) bool {
+	if sortOrder == "descending" {
+		return get(a1) > get(a2)
+	} else {
+		return get(a1) < get(a2)
+	}
+}
 
 // --- admin info ---
 

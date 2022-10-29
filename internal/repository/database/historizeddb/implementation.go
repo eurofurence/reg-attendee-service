@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/d4l3k/messagediff"
 	_ "github.com/d4l3k/messagediff"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database/dbrepo"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
@@ -63,6 +64,12 @@ func (r *HistorizingRepository) CountAttendeesByNicknameZipEmail(ctx context.Con
 
 func (r *HistorizingRepository) MaxAttendeeId(ctx context.Context) (uint, error) {
 	return r.wrappedRepository.MaxAttendeeId(ctx)
+}
+
+// --- attendee search ---
+
+func (r *HistorizingRepository) FindAttendees(ctx context.Context, criteria *attendee.AttendeeSearchCriteria) ([]*entity.Attendee, error) {
+	return r.wrappedRepository.FindAttendees(ctx, criteria)
 }
 
 // --- admin info ---

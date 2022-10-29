@@ -2,6 +2,7 @@ package dbrepo
 
 import (
 	"context"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 )
 
@@ -26,6 +27,7 @@ type Repository interface {
 	GetStatusChangesByAttendeeId(ctx context.Context, attendeeId uint) ([]entity.StatusChange, error)
 	AddStatusChange(ctx context.Context, sc *entity.StatusChange) error
 
+	FindAttendees(ctx context.Context, criteria *attendee.AttendeeSearchCriteria) ([]*entity.Attendee, error)
 	FindByIdentity(ctx context.Context, identity string) ([]*entity.Attendee, error)
 
 	GetAllBans(ctx context.Context) ([]*entity.Ban, error)
