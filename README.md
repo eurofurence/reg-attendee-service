@@ -83,6 +83,7 @@ Limitations:
 
 **MVP 2.** The absolute minimum needed for EF and MMC reg to work.
 
+ - ✅ finalized open api v3 spec
  - ✅ implements admin fields handling
  - ✅ implements status transitions
  - ✅ includes an openapi spec
@@ -90,18 +91,19 @@ Limitations:
  - 🚧 talks to mail service as appropriate (with contract tests)
  - ✅ obtains IDP tokens from the cookies set by the auth service, as well as fixed token security for backend requests
  - ✅ auth header and tokens are honored for all requests, even the ones that do not require authorization
- - ❌ fields for MMC have been added as well (partner, ...) 
+ - 🚧 fields for MMC have been added as well (partner, ...) 
  - ✅ day guests are supported simply via the package subsystem 
  - 🚧 guests are supported as an admin only flag which will cause the system to assign 0 dues
  - ✅ implements a general request timeout and panic handling
-
-Limitations:
- - ❌ no search functionality yet - note this will make search and interfaces in regsys classic very slow
- - ❌ no bans support at this point
+ - 🚧 no search functionality implemented yet
+ - 🚧 no bans support implemented at this point
+ - 🚧 no manual dues support implemented yet
+ - 🚧 key_deposit/key_received/sponsor_items flag are supported as additional-info not implement yet
+ - ✅ track who (subject, if set) performed a database change (recorded in history table)
 
 ### for later
 
-- search feature
-- ban resource and handling
-- more fine-grained permissions using JWT
+- ❌ more fine-grained permissions using JWT
   - viewAttendees, changeAttendees, viewAttendeeAdmininfo, changeAttendeeAdmininfo rights
+- ❌ container build and associated changes
+

@@ -13,9 +13,10 @@ func CorsHandling(next http.Handler) http.Handler {
 
 		if config.IsCorsDisabled() {
 			aulogging.Logger.Ctx(ctx).Info().Print("sending headers to disable CORS. This configuration is not intended for production use, only for local development!")
-			w.Header().Set(headers.AccessControlAllowOrigin, "*")
+			w.Header().Set(headers.AccessControlAllowOrigin, config.CorsAllowOrigin())
 			w.Header().Set(headers.AccessControlAllowMethods, "POST, GET, OPTIONS, PUT, DELETE")
 			w.Header().Set(headers.AccessControlAllowHeaders, "content-type")
+			w.Header().Set(headers.AccessControlAllowCredentials, "true")
 			w.Header().Set(headers.AccessControlExposeHeaders, "Location, "+TraceIdHeader)
 		}
 

@@ -29,6 +29,9 @@ func setConfigurationDefaults(c *conf) {
 	if c.Database.Use == "" {
 		c.Database.Use = "inmemory"
 	}
+	if c.Security.CorsAllowOrigin == "" {
+		c.Security.CorsAllowOrigin = "*"
+	}
 }
 
 const portPattern = "^[1-9][0-9]{0,4}$"

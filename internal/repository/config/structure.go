@@ -41,10 +41,11 @@ type openIdConnectConfig struct {
 }
 
 type securityConfig struct {
-	Fixed        fixedTokenConfig    `yaml:"fixed_token"`
-	Oidc         openIdConnectConfig `yaml:"oidc"`
-	DisableCors  bool                `yaml:"disable_cors"`
-	RequireLogin bool                `yaml:"require_login_for_reg"`
+	Fixed           fixedTokenConfig    `yaml:"fixed_token"`
+	Oidc            openIdConnectConfig `yaml:"oidc"`
+	DisableCors     bool                `yaml:"disable_cors"`
+	CorsAllowOrigin string              `yaml:"cors_allow_origin"`
+	RequireLogin    bool                `yaml:"require_login_for_reg"`
 }
 
 type ChoiceConfig struct {

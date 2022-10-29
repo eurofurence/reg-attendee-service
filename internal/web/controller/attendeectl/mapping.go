@@ -20,6 +20,7 @@ func mapDtoToAttendee(dto *attendee.AttendeeDto, a *entity.Attendee) {
 	a.Email = dto.Email
 	a.Phone = dto.Phone
 	a.Telegram = dto.Telegram
+	a.Partner = dto.Partner
 	a.Birthday = dto.Birthday
 	a.Gender = dto.Gender
 	a.Pronouns = dto.Pronouns
@@ -45,6 +46,7 @@ func mapAttendeeToDto(a *entity.Attendee, dto *attendee.AttendeeDto) {
 	dto.Email = a.Email
 	dto.Phone = a.Phone
 	dto.Telegram = a.Telegram
+	dto.Partner = a.Partner
 	dto.Birthday = a.Birthday
 	dto.Gender = a.Gender
 	dto.Pronouns = a.Pronouns

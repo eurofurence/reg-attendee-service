@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database/dbrepo"
@@ -50,7 +51,14 @@ func (r *MysqlRepository) Close() {
 }
 
 func (r *MysqlRepository) Migrate() error {
-	err := r.db.AutoMigrate(&entity.Attendee{}, &entity.History{}, &entity.AdminInfo{}, &entity.StatusChange{})
+	err := r.db.AutoMigrate(
+		&entity.AdditionalInfo{},
+		&entity.AdminInfo{},
+		&entity.Attendee{},
+		&entity.Ban{},
+		&entity.History{},
+		&entity.StatusChange{},
+	)
 	if err != nil {
 		aulogging.Logger.NoCtx().Error().WithErr(err).Printf("failed to migrate mysql db: %s", err.Error())
 		return err
@@ -113,6 +121,40 @@ func (r *MysqlRepository) MaxAttendeeId(ctx context.Context) (uint, error) {
 		aulogging.Logger.Ctx(ctx).Warn().WithErr(err2).Printf("secondary error closing recordset: %s", err2.Error())
 	}
 	return max, err
+}
+
+// --- attendee search ---
+
+func (r *MysqlRepository) FindAttendees(ctx context.Context, criteria *attendee.AttendeeSearchCriteria) ([]*entity.Attendee, error) {
+	params := make(map[string]interface{})
+	query := constructAttendeeSearchQuery(criteria, params)
+
+	result := make([]*entity.Attendee, 0)
+	attendeeBuffer := entity.Attendee{}
+
+	rows, err := r.db.Raw(query, params).Find(&attendeeBuffer).Rows()
+	if err != nil {
+		aulogging.Logger.Ctx(ctx).Error().WithErr(err).Printf("error finding attendees: %s", err.Error())
+		return result, err
+	}
+	defer func() {
+		err2 := rows.Close()
+		if err2 != nil {
+			aulogging.Logger.Ctx(ctx).Warn().WithErr(err2).Printf("secondary error closing recordset during find: %s", err2.Error())
+		}
+	}()
+
+	for rows.Next() {
+		err = rows.Scan(&attendeeBuffer)
+		if err != nil {
+			aulogging.Logger.Ctx(ctx).Error().WithErr(err).Printf("error reading attendeeBuffer during find: %s", err.Error())
+			return result, err
+		}
+		copiedAttendee := attendeeBuffer
+		result = append(result, &copiedAttendee)
+	}
+
+	return result, nil
 }
 
 // --- admin info ---
@@ -216,6 +258,34 @@ func (r *MysqlRepository) FindByIdentity(ctx context.Context, identity string) (
 	}
 
 	return result, nil
+}
+
+// --- bans ---
+
+func (r *MysqlRepository) GetAllBans(ctx context.Context) ([]*entity.Ban, error) {
+	return make([]*entity.Ban, 0), errors.New("TODO - not implemented")
+}
+
+func (r *MysqlRepository) GetBanById(ctx context.Context, id uint) (*entity.Ban, error) {
+	return &entity.Ban{}, errors.New("TODO - not implemented")
+}
+
+func (r *MysqlRepository) AddBan(ctx context.Context, b *entity.Ban) (uint, error) {
+	return 0, errors.New("TODO - not implemented")
+}
+
+func (r *MysqlRepository) UpdateBan(ctx context.Context, b *entity.Ban) error {
+	return errors.New("TODO - not implemented")
+}
+
+// --- additional info ---
+
+func (r *MysqlRepository) GetAdditionalInfoFor(ctx context.Context, attendeeId uint, area string) (*entity.AdditionalInfo, error) {
+	return &entity.AdditionalInfo{}, errors.New("TODO - not implemented")
+}
+
+func (r *MysqlRepository) WriteAdditionalInfo(ctx context.Context, ad *entity.AdditionalInfo) error {
+	return errors.New("TODO - not implemented")
 }
 
 // --- history ---

@@ -27,6 +27,7 @@ func tstCreateValidAttendee() attendee.AttendeeDto {
 		Email:        "jsquirrel_github_9a6d@packetloss.de",
 		Phone:        "+49-30-123",
 		Telegram:     "@ihopethisuserdoesnotexist",
+		Partner:      "GuestWhiteFerret",
 		Birthday:     "1998-11-23",
 		Gender:       "other",
 		Flags:        "anon,ev",
@@ -54,7 +55,7 @@ func TestValidateMissingInfo(t *testing.T) {
 		"city":          []string{"city field must be at least 1 and at most 80 characters long"},
 		"country":       []string{"country field must contain a 2 letter upper case ISO-3166-1 country code (Alpha-2 code, see https://en.wikipedia.org/wiki/ISO_3166-1)"},
 		"country_badge": []string{"country_badge field must contain a 2 letter upper case ISO-3166-1 country code (Alpha-2 code, see https://en.wikipedia.org/wiki/ISO_3166-1)"},
-		"email":         []string{"email field must be at least 1 and at most 200 characters long", "email field is not plausible"},
+		"email":         []string{"email field must be at least 1 and at most 200 characters long", "email field is not plausible, must match " + emailPattern},
 		"first_name":    []string{"first_name field must be at least 1 and at most 80 characters long"},
 		"last_name":     []string{"last_name field must be at least 1 and at most 80 characters long"},
 		"nickname": []string{"nickname field must contain at least one alphanumeric character",
@@ -79,13 +80,15 @@ func TestValidateTooLong(t *testing.T) {
 	a.Phone = tooLong[0:33]
 	a.Street = tooLong[0:121]
 	a.Zip = tooLong[0:21]
+	a.Partner = tooLong[0:81]
 
 	expected := url.Values{
 		"city":       []string{"city field must be at least 1 and at most 80 characters long"},
-		"email":      []string{"email field must be at least 1 and at most 200 characters long", "email field is not plausible"},
+		"email":      []string{"email field must be at least 1 and at most 200 characters long", "email field is not plausible, must match " + emailPattern},
 		"first_name": []string{"first_name field must be at least 1 and at most 80 characters long"},
 		"last_name":  []string{"last_name field must be at least 1 and at most 80 characters long"},
 		"nickname":   []string{"nickname field must be at least 1 and at most 80 characters long"},
+		"partner":    []string{"partner field must be at least 0 and at most 80 characters long"},
 		"phone":      []string{"phone field must be at least 1 and at most 32 characters long"},
 		"street":     []string{"street field must be at least 1 and at most 120 characters long"},
 		"zip":        []string{"zip field must be at least 1 and at most 20 characters long"},
@@ -245,7 +248,7 @@ func TestValidateWrongEmailMultipleAtSigns(t *testing.T) {
 func performEmailValidationTest(t *testing.T, wrongEmail string) {
 	a := tstCreateValidAttendee()
 	a.Email = wrongEmail
-	expected := url.Values{"email": []string{"email field is not plausible"}}
+	expected := url.Values{"email": []string{"email field is not plausible, must match " + emailPattern}}
 	performValidationTest(t, &a, expected, 0)
 }
 

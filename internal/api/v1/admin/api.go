@@ -11,4 +11,10 @@ type AdminInfoDto struct {
 
 	// comments
 	AdminComments string `json:"admin_comments"`
+
+	// Offset to book on the due amount, may be negative. If negative, will offset the highest VAT rates first. If positive, will be added at highest available VAT rate.
+	ManualDues int64 `json:"manual_dues"`
+
+	// Description to use for the manual dues booking.
+	ManualDuesDescription string `json:"manual_dues_description"`
 }
