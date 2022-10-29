@@ -27,6 +27,8 @@ tags:
     description: Status progression
   - name: privileged
     description: Privileged (admin only) functionality
+  - name: webhook
+    description: Webhook notifications
   - name: info
     description: Health and other public status information
 paths:
@@ -500,6 +502,51 @@ paths:
                 $ref: '#/components/schemas/Error'
       security:
         - BearerAuth: []
+        - ApiKeyAuth: []
+  /attendees/{id}/payments-changed:
+    post:
+      tags:
+        - webhook
+      summary: notify service about a change to payments
+      description: The payment service uses this to tell the attendee service that something about the payments of an attendee (id = debitor_id) has changed.
+      operationId: webhookPaymentsChanged
+      parameters:
+        - name: id
+          in: path
+          description: Badge number of attendee for whom there was a change in payments or payment status
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            format: int64
+      responses:
+        '204':
+          description: successful operation
+        '400':
+          description: Invalid ID supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required (only api key available)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Attendee not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: An unexpected error occurred. This includes database errors. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
         - ApiKeyAuth: []
   /attendees/{id}/status:
     get:
