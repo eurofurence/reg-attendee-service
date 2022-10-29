@@ -4,5 +4,5 @@ config.yaml
 test/contract/*/log/**
 attendee-service
 main
-
 api-generator
+target

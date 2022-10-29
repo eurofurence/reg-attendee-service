@@ -1,0 +1,98 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  GO_VERSION: 1.19
+  SERVICE_NAME: reg-attendee-service
+
+jobs:
+  # call_build_and_test:
+  #   uses: ./.github/workflows/go.yml
+
+  # call_codeql_analysis:
+  #   uses: ./.github/workflows/codeql-analysis.yml
+
+  matrix_build_upload:
+    permissions:
+      contents: write
+    # needs: [call_build_and_test, call_codeql_analysis]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ linux, windows, darwin ]
+        arch: [ 386, amd64, arm64 ]
+        exclude:
+          - os: linux
+            arch: arm64
+          - os: windows
+            arch: arm64
+          - os: darwin
+            arch: 386
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Build
+        env:
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+        run: mkdir -p target; go build -o target -v -x ./...
+
+      - name: Create release archive (tar.gz)
+        if: ${{ matrix.os != 'windows' }}
+        run: tar -cvzf ${{ env.SERVICE_NAME }}.${{ matrix.os }}-${{ matrix.arch }}.tar.gz target/* README.md LICENSE install.sh run-*.sh
+
+      - name: Upload release archive (tar.gz)
+        if: ${{ matrix.os != 'windows' }}
+        uses: actions/upload-artifact@v3
+        with:
+          path: ${{ env.SERVICE_NAME }}.${{ matrix.os }}-${{ matrix.arch }}.tar.gz
+          if-no-files-found: warn
+
+      - name: Create release archive (zip)
+        if: ${{ matrix.os == 'windows' }}
+        run: zip -v ${{ env.SERVICE_NAME }}.${{ matrix.os }}-${{ matrix.arch }}.zip target/* README.md LICENSE install.sh run-*.sh
+
+      - name: Upload release archive (zip)
+        if: ${{ matrix.os == 'windows' }}
+        uses: actions/upload-artifact@v3
+        with:
+          path: ${{ env.SERVICE_NAME }}.${{ matrix.os }}-${{ matrix.arch }}.zip
+          if-no-files-found: warn
+
+  create_release:
+    permissions:
+      contents: write
+      pull-requests: read
+      issues: read
+    needs: matrix_build_upload
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - name: Release Changelog Builder
+        uses: mikepenz/release-changelog-builder-action@v3.4.0
+        id: build_changelog
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: Download Release Artifacts
+        uses: actions/download-artifact@v3
+        id: download
+        with:
+          path: release-artifacts
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: false
+          prerelease: false
+          body: ${{ steps.build_changelog.outputs.changelog }}
+          files: ${{steps.download.outputs.download-path}}/**

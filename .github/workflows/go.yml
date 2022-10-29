@@ -2,73 +2,75 @@ name: Go
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths-ignore:
-      - '**.md'
+      - "**.md"
+    tags-ignore:
+      - "v*"
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths-ignore:
-      - '**.md'
+      - "**.md"
+    tags-ignore:
+      - "v*"
+  workflow_call:
+
+env:
+  GO_VERSION: 1.19
+  BASE_DIRECTORY: ./reg-attendee-service
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-      with:
-        path: ./reg-attendee-service
+      - uses: actions/checkout@v3
+        with:
+          path: ${{ env.BASE_DIRECTORY }}
 
-    - name: Set up Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.19
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
 
-    # START pact-1.88.84 has a syntax error
-    # curl -L https://raw.githubusercontent.com/pact-foundation/pact-ruby-standalone/master/install.sh -o ./install-pact.sh &&
-    # cat ./install-pact.sh &&
-    # chmod u+x ./install-pact.sh &&
-    # ./install-pact.sh &&
-    # rm ./install-pact.sh &&
-    # END pact-1.88.84 has a syntax error
+      - name: Set up pact-foundation/pact-ruby-standalone
+        run: >
+          curl -L https://raw.githubusercontent.com/pact-foundation/pact-ruby-standalone/master/install.sh -o ./install-pact.sh &&
+          cat ./install-pact.sh &&
+          chmod u+x ./install-pact.sh &&
+          ./install-pact.sh &&
+          rm ./install-pact.sh &&
+          ls -al ./pact/bin &&
+          echo "$(pwd)/pact/bin" >> $GITHUB_PATH
+        shell: bash
 
-    - name: Set up pact-foundation/pact-ruby-standalone
-      run: >
-        curl -L https://github.com/pact-foundation/pact-ruby-standalone/releases/download/v1.88.83/pact-1.88.83-linux-x86_64.tar.gz -o pact-1.88.83-linux-x86_64.tar.gz &&
-        tar xzf pact-1.88.83-linux-x86_64.tar.gz &&
-        rm pact-1.88.83-linux-x86_64.tar.gz &&
-        ls -al ./pact/bin &&
-        echo "$(pwd)/pact/bin" >> $GITHUB_PATH
-      shell: bash
+      - name: Print pact CLI versions
+        run: |-
+          echo "PATH=$PATH
+          pact-broker: $(pact-broker version)
+          pact-message: $(pact-message version)
+          pact-mock-service: $(pact-mock-service version)
+          pact-provider-verifier: $(pact-provider-verifier version)
+          pact-stub-service: $(pact-stub-service version)"
+        shell: bash
 
-    - name: Print pact CLI versions
-      run: |-
-        echo "PATH=$PATH
-        pact-broker: $(pact-broker version)
-        pact-message: $(pact-message version)
-        pact-mock-service: $(pact-mock-service version)
-        pact-provider-verifier: $(pact-provider-verifier version)
-        pact-stub-service: $(pact-stub-service version)"
-      shell: bash
+      - name: Build
+        run: go build -v ./...
+        working-directory: ${{ env.BASE_DIRECTORY }}
 
-    - name: Build
-      run: go build -v ./...
-      working-directory: ./reg-attendee-service
+      - name: Checkout eurofurence/reg-attendee-transferclient for contract tests
+        uses: actions/checkout@v3
+        with:
+          repository: eurofurence/reg-attendee-transferclient
+          path: reg-attendee-transferclient
 
-    - name: Checkout eurofurence/reg-attendee-transferclient for contract tests
-      uses: actions/checkout@v2
-      with:
-        repository: eurofurence/reg-attendee-transferclient
-        path: reg-attendee-transferclient
+      - name: Build eurofurence/reg-attendee-transferclient
+        run: go build -v ./...
+        working-directory: ./reg-attendee-transferclient
 
-    - name: Build eurofurence/reg-attendee-transferclient
-      run: go build -v ./...
-      working-directory: ./reg-attendee-transferclient
+      - name: Test eurofurence/reg-attendee-transferclient
+        run: go test -v ./...
+        working-directory: ./reg-attendee-transferclient
 
-    - name: Test eurofurence/reg-attendee-transferclient
-      run: go test -v ./...
-      working-directory: ./reg-attendee-transferclient
-
-    - name: Test
-      run: go test -v ./...
-      working-directory: ./reg-attendee-service
+      - name: Test
+        run: go test -v ./...
+        working-directory: ${{ env.BASE_DIRECTORY }}
