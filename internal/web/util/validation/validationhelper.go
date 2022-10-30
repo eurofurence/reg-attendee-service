@@ -43,12 +43,7 @@ func DateNotInRangeInclusive(value string, earliest string, latest string) bool 
 }
 
 func NotInAllowedValues(allowed []string, value string) bool {
-	for _, v := range allowed {
-		if v == value {
-			return false
-		}
-	}
-	return true
+	return !SliceContains(allowed, value)
 }
 
 func CheckCombinationOfAllowedValues(errs *url.Values, allowed []string, key string, commaSeparatedValue string) {
@@ -68,4 +63,13 @@ func CheckCombinationOfAllowedValues(errs *url.Values, allowed []string, key str
 		allowedCommaSeparated := strings.Join(allowed, ",")
 		errs.Add(key, fmt.Sprintf("%s field must be a comma separated combination of any of %s", key, allowedCommaSeparated))
 	}
+}
+
+func SliceContains[T comparable](s []T, e T) bool {
+	for _, v := range s {
+		if v == e {
+			return true
+		}
+	}
+	return false
 }

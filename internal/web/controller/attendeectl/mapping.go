@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
+	"strings"
 )
 
 func mapDtoToAttendee(dto *attendee.AttendeeDto, a *entity.Attendee) {
@@ -25,9 +26,9 @@ func mapDtoToAttendee(dto *attendee.AttendeeDto, a *entity.Attendee) {
 	a.Gender = dto.Gender
 	a.Pronouns = dto.Pronouns
 	a.TshirtSize = dto.TshirtSize
-	a.Flags = dto.Flags
-	a.Packages = dto.Packages
-	a.Options = dto.Options
+	a.Flags = addWrappingCommas(dto.Flags)
+	a.Packages = addWrappingCommas(dto.Packages)
+	a.Options = addWrappingCommas(dto.Options)
 	a.UserComments = dto.UserComments
 }
 
@@ -51,8 +52,24 @@ func mapAttendeeToDto(a *entity.Attendee, dto *attendee.AttendeeDto) {
 	dto.Gender = a.Gender
 	dto.Pronouns = a.Pronouns
 	dto.TshirtSize = a.TshirtSize
-	dto.Flags = a.Flags
-	dto.Packages = a.Packages
-	dto.Options = a.Options
+	dto.Flags = removeWrappingCommas(a.Flags)
+	dto.Packages = removeWrappingCommas(a.Packages)
+	dto.Options = removeWrappingCommas(a.Options)
 	dto.UserComments = a.UserComments
+}
+
+func removeWrappingCommas(v string) string {
+	v = strings.TrimPrefix(v, ",")
+	v = strings.TrimSuffix(v, ",")
+	return v
+}
+
+func addWrappingCommas(v string) string {
+	if !strings.HasPrefix(v, ",") {
+		v = "," + v
+	}
+	if !strings.HasSuffix(v, ",") {
+		v = v + ","
+	}
+	return v
 }
