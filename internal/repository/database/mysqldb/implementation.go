@@ -263,29 +263,83 @@ func (r *MysqlRepository) FindByIdentity(ctx context.Context, identity string) (
 // --- bans ---
 
 func (r *MysqlRepository) GetAllBans(ctx context.Context) ([]*entity.Ban, error) {
-	return make([]*entity.Ban, 0), errors.New("TODO - not implemented")
+	result := make([]*entity.Ban, 0)
+	banBuffer := entity.Ban{}
+
+	rows, err := r.db.Find(&banBuffer).Rows()
+	if err != nil {
+		aulogging.Logger.Ctx(ctx).Error().WithErr(err).Printf("error reading bans: %s", err.Error())
+		return result, err
+	}
+	defer func() {
+		err2 := rows.Close()
+		if err2 != nil {
+			aulogging.Logger.Ctx(ctx).Warn().WithErr(err2).Printf("secondary error closing recordset during find: %s", err2.Error())
+		}
+	}()
+
+	for rows.Next() {
+		err = rows.Scan(&banBuffer)
+		if err != nil {
+			aulogging.Logger.Ctx(ctx).Error().WithErr(err).Printf("error reading attendeeBuffer during find: %s", err.Error())
+			return result, err
+		}
+		copiedBan := banBuffer
+		result = append(result, &copiedBan)
+	}
+
+	return result, nil
 }
 
 func (r *MysqlRepository) GetBanById(ctx context.Context, id uint) (*entity.Ban, error) {
-	return &entity.Ban{}, errors.New("TODO - not implemented")
+	var b entity.Ban
+	err := r.db.First(&b, id).Error
+	if err != nil {
+		aulogging.Logger.Ctx(ctx).Info().WithErr(err).Printf("mysql error during ban select - might be ok: %s", err.Error())
+	}
+	return &b, err
 }
 
 func (r *MysqlRepository) AddBan(ctx context.Context, b *entity.Ban) (uint, error) {
-	return 0, errors.New("TODO - not implemented")
+	err := r.db.Create(b).Error
+	if err != nil {
+		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("mysql error during ban insert: %s", err.Error())
+	}
+	return b.ID, err
 }
 
 func (r *MysqlRepository) UpdateBan(ctx context.Context, b *entity.Ban) error {
-	return errors.New("TODO - not implemented")
+	err := r.db.Save(b).Error
+	if err != nil {
+		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("mysql error during ban update: %s", err.Error())
+	}
+	return err
 }
 
 // --- additional info ---
 
 func (r *MysqlRepository) GetAdditionalInfoFor(ctx context.Context, attendeeId uint, area string) (*entity.AdditionalInfo, error) {
-	return &entity.AdditionalInfo{}, errors.New("TODO - not implemented")
+	var ai entity.AdditionalInfo
+	err := r.db.Model(&entity.AdditionalInfo{}).Where(&entity.AdditionalInfo{AttendeeId: attendeeId, Area: area}).Last(&ai).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// return a new entry suitable for saving
+			ai = entity.AdditionalInfo{
+				AttendeeId: attendeeId,
+				Area:       area,
+			}
+			err = nil
+		}
+	}
+	return &ai, err
 }
 
 func (r *MysqlRepository) WriteAdditionalInfo(ctx context.Context, ad *entity.AdditionalInfo) error {
-	return errors.New("TODO - not implemented")
+	err := r.db.Save(ad).Error
+	if err != nil {
+		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("mysql error during additional info insert or update: %s", err.Error())
+	}
+	return err
 }
 
 // --- history ---

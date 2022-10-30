@@ -12,8 +12,10 @@ import (
 )
 
 type InMemoryRepository struct {
-	attendees     map[uint]*entity.Attendee
+	addInfo       map[uint]map[string]*entity.AdditionalInfo
 	adminInfo     map[uint]*entity.AdminInfo
+	attendees     map[uint]*entity.Attendee
+	bans          map[uint]*entity.Ban
 	statusChanges map[uint][]entity.StatusChange
 	history       map[uint]*entity.History
 	idSequence    uint32
@@ -239,7 +241,8 @@ func (r *InMemoryRepository) FindByIdentity(ctx context.Context, identity string
 	result := make([]*entity.Attendee, 0)
 	for _, a := range r.attendees {
 		if a.Identity == identity {
-			result = append(result, a)
+			copiedAttendee := *a
+			result = append(result, &copiedAttendee)
 		}
 	}
 	return result, nil
@@ -248,29 +251,86 @@ func (r *InMemoryRepository) FindByIdentity(ctx context.Context, identity string
 // --- bans ---
 
 func (r *InMemoryRepository) GetAllBans(ctx context.Context) ([]*entity.Ban, error) {
-	return make([]*entity.Ban, 0), errors.New("TODO - not implemented")
+	result := make([]*entity.Ban, 0)
+	for _, b := range r.bans {
+		copiedBan := *b
+		result = append(result, &copiedBan)
+	}
+	return result, nil
 }
 
 func (r *InMemoryRepository) GetBanById(ctx context.Context, id uint) (*entity.Ban, error) {
-	return &entity.Ban{}, errors.New("TODO - not implemented")
+	b, ok := r.bans[id]
+	if !ok {
+		return &entity.Ban{}, fmt.Errorf("ban with id %d not found", id)
+	}
+	copiedBan := *b
+	return &copiedBan, nil
 }
 
 func (r *InMemoryRepository) AddBan(ctx context.Context, b *entity.Ban) (uint, error) {
-	return 0, errors.New("TODO - not implemented")
+	newId := uint(atomic.AddUint32(&r.idSequence, 1))
+	b.ID = newId
+
+	// copy the ban, so later modifications won't also modify it in the simulated db
+	copiedBan := *b
+	r.bans[newId] = &copiedBan
+	return newId, nil
 }
 
 func (r *InMemoryRepository) UpdateBan(ctx context.Context, b *entity.Ban) error {
-	return errors.New("TODO - not implemented")
+	if _, ok := r.bans[b.ID]; ok {
+		// copy the ban, so later modifications won't also modify it in the simulated db
+		copiedBan := *b
+		r.bans[b.ID] = &copiedBan
+		return nil
+	} else {
+		return fmt.Errorf("cannot update ban %d - not present", b.ID)
+	}
 }
 
 // --- additional info ---
 
 func (r *InMemoryRepository) GetAdditionalInfoFor(ctx context.Context, attendeeId uint, area string) (*entity.AdditionalInfo, error) {
-	return &entity.AdditionalInfo{}, errors.New("TODO - not implemented")
+	byAttendeeId, ok := r.addInfo[attendeeId]
+	if !ok {
+		return &entity.AdditionalInfo{}, fmt.Errorf("additional info for attendee id %d and area %s not found", attendeeId, area)
+	}
+	ai, ok := byAttendeeId[area]
+	if !ok {
+		return &entity.AdditionalInfo{}, fmt.Errorf("additional info for attendee id %d and area %s not found", attendeeId, area)
+	}
+	copiedAi := *ai
+	return &copiedAi, nil
 }
 
 func (r *InMemoryRepository) WriteAdditionalInfo(ctx context.Context, ad *entity.AdditionalInfo) error {
-	return errors.New("TODO - not implemented")
+	if ad.AttendeeId == 0 {
+		return errors.New("invalid attendee id for additional info")
+	}
+	if ad.Area == "" {
+		return errors.New("invalid empty area for additional info")
+	}
+
+	byAttendeeId, ok := r.addInfo[ad.AttendeeId]
+	if !ok {
+		r.addInfo[ad.AttendeeId] = make(map[string]*entity.AdditionalInfo)
+		byAttendeeId = r.addInfo[ad.AttendeeId]
+	}
+
+	origAd, ok := byAttendeeId[ad.Area]
+	if !ok {
+		// new
+		ad.ID = uint(atomic.AddUint32(&r.idSequence, 1))
+	} else {
+		// existing
+		if origAd.ID != ad.ID {
+			return errors.New("unique constraint violated, please update the existing entry instead")
+		}
+	}
+	copiedAi := *ad
+	byAttendeeId[ad.Area] = &copiedAi
+	return nil
 }
 
 // --- history ---
