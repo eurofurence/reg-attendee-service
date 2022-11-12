@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/bans"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/mailservice"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/paymentservice"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/media"
@@ -121,6 +122,15 @@ func tstBuildValidAttendee(testcase string) attendee.AttendeeDto {
 		Packages:     "room-none,attendance,stage,sponsor2",
 		Options:      "music,suit",
 		TshirtSize:   "XXL",
+	}
+}
+
+func tstBuildValidBanRule(testcase string) bans.BanRule {
+	return bans.BanRule{
+		Reason:          testcase,
+		NamePattern:     "^name.*" + testcase,
+		NicknamePattern: "^nickname.*" + testcase,
+		EmailPattern:    "^email.*" + testcase,
 	}
 }
 

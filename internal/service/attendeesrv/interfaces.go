@@ -44,6 +44,13 @@ type AttendeeService interface {
 	// Unless an admin has made changes to the database, this essentially means their registration was made
 	// using this account.
 	IsOwnerFor(ctx context.Context) ([]*entity.Attendee, error)
+
+	// NewBan creates an empty (unsaved) ban.
+	NewBan(ctx context.Context) *entity.Ban
+	CreateBan(ctx context.Context, ban *entity.Ban) (uint, error)
+	UpdateBan(ctx context.Context, ban *entity.Ban) error
+	GetBan(ctx context.Context, id uint) (*entity.Ban, error)
+	GetAllBans(ctx context.Context) ([]*entity.Ban, error)
 }
 
 var (

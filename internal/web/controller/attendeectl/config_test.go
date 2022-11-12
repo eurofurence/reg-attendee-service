@@ -95,6 +95,26 @@ func (s *MockAttendeeService) IsOwnerFor(ctx context.Context) ([]*entity.Attende
 	return make([]*entity.Attendee, 0), nil
 }
 
+func (s *MockAttendeeService) NewBan(ctx context.Context) *entity.Ban {
+	return &entity.Ban{}
+}
+
+func (s *MockAttendeeService) CreateBan(ctx context.Context, ban *entity.Ban) (uint, error) {
+	return 1, nil
+}
+
+func (s *MockAttendeeService) UpdateBan(ctx context.Context, ban *entity.Ban) error {
+	return nil
+}
+
+func (s *MockAttendeeService) GetBan(ctx context.Context, id uint) (*entity.Ban, error) {
+	return &entity.Ban{}, nil
+}
+
+func (s *MockAttendeeService) GetAllBans(ctx context.Context) ([]*entity.Ban, error) {
+	return make([]*entity.Ban, 0), nil
+}
+
 func tstSetupServiceMocks() {
 	attendeeService = &MockAttendeeService{}
 }

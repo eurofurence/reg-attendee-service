@@ -28,6 +28,15 @@ func CheckIntValueRange(errs *url.Values, min int, max int, key string, value in
 	}
 }
 
+func CheckValidRegexOrEmpty(errs *url.Values, key string, value string) {
+	if value != "" {
+		_, err := regexp.Compile(value)
+		if err != nil {
+			errs.Add(key, fmt.Sprintf("%s field must be empty or contain a valid regular expression: %s", key, err.Error()))
+		}
+	}
+}
+
 const isoDateFormat = "2006-01-02"
 
 func InvalidISODate(value string) bool {
