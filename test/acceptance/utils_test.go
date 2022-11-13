@@ -53,13 +53,15 @@ func tstWebResponseFromResponse(response *http.Response) tstWebResponse {
 	}
 }
 
-func tstPerformGet(relativeUrlWithLeadingSlash string, bearerToken string) tstWebResponse {
+func tstPerformGet(relativeUrlWithLeadingSlash string, token string) tstWebResponse {
 	request, err := http.NewRequest(http.MethodGet, ts.URL+relativeUrlWithLeadingSlash, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if bearerToken != "" {
-		request.Header.Set(headers.Authorization, "Bearer "+bearerToken)
+	if token == tstValidApiToken() || token == tstInvalidApiToken() {
+		request.Header.Set(media.HeaderXApiKey, token)
+	} else if token != "" {
+		request.Header.Set(headers.Authorization, "Bearer "+token)
 	}
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
@@ -68,13 +70,15 @@ func tstPerformGet(relativeUrlWithLeadingSlash string, bearerToken string) tstWe
 	return tstWebResponseFromResponse(response)
 }
 
-func tstPerformPut(relativeUrlWithLeadingSlash string, requestBody string, bearerToken string) tstWebResponse {
+func tstPerformPut(relativeUrlWithLeadingSlash string, requestBody string, token string) tstWebResponse {
 	request, err := http.NewRequest(http.MethodPut, ts.URL+relativeUrlWithLeadingSlash, strings.NewReader(requestBody))
 	if err != nil {
 		log.Fatal(err)
 	}
-	if bearerToken != "" {
-		request.Header.Set(headers.Authorization, "Bearer "+bearerToken)
+	if token == tstValidApiToken() || token == tstInvalidApiToken() {
+		request.Header.Set(media.HeaderXApiKey, token)
+	} else if token != "" {
+		request.Header.Set(headers.Authorization, "Bearer "+token)
 	}
 	request.Header.Set(headers.ContentType, media.ContentTypeApplicationJson)
 	response, err := http.DefaultClient.Do(request)
@@ -84,13 +88,15 @@ func tstPerformPut(relativeUrlWithLeadingSlash string, requestBody string, beare
 	return tstWebResponseFromResponse(response)
 }
 
-func tstPerformPost(relativeUrlWithLeadingSlash string, requestBody string, bearerToken string) tstWebResponse {
+func tstPerformPost(relativeUrlWithLeadingSlash string, requestBody string, token string) tstWebResponse {
 	request, err := http.NewRequest(http.MethodPost, ts.URL+relativeUrlWithLeadingSlash, strings.NewReader(requestBody))
 	if err != nil {
 		log.Fatal(err)
 	}
-	if bearerToken != "" {
-		request.Header.Set(headers.Authorization, "Bearer "+bearerToken)
+	if token == tstValidApiToken() || token == tstInvalidApiToken() {
+		request.Header.Set(media.HeaderXApiKey, token)
+	} else if token != "" {
+		request.Header.Set(headers.Authorization, "Bearer "+token)
 	}
 	request.Header.Set(headers.ContentType, media.ContentTypeApplicationJson)
 	response, err := http.DefaultClient.Do(request)

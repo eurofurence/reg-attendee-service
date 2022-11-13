@@ -520,6 +520,8 @@ paths:
             minimum: 1
             format: int64
       responses:
+        '202':
+          description: successful operation, but current attendee status prevented a status re-evaluation (new, checked in, cancelled, deleted), so processing was intentionally skipped
         '204':
           description: successful operation
         '400':
@@ -542,6 +544,12 @@ paths:
                 $ref: '#/components/schemas/Error'
         '500':
           description: An unexpected error occurred. This includes database errors. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '502':
+          description: The update leads to an update in the payment service which failed, or the mail service failed to send an email as part of the update.
           content:
             application/json:
               schema:

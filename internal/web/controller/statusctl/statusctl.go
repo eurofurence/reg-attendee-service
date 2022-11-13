@@ -16,6 +16,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctlutil"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/media"
+	"github.com/eurofurence/reg-attendee-service/internal/web/util/validation"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-http-utils/headers"
 	"net/http"
@@ -39,6 +40,7 @@ func Create(server chi.Router) {
 	server.Get("/api/rest/v1/attendees/{id}/status", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, getStatusHandler)))
 	server.Post("/api/rest/v1/attendees/{id}/status", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, postStatusHandler)))
 	server.Get("/api/rest/v1/attendees/{id}/status-history", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(3*time.Second, getStatusHistoryHandler)))
+	server.Post("/api/rest/v1/attendees/{id}/payments-changed", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(10*time.Second, paymentsChangedHandler)))
 }
 
 // --- handlers ---
@@ -146,6 +148,40 @@ func getStatusHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Add(headers.ContentType, media.ContentTypeApplicationJson)
 	ctlutil.WriteJson(ctx, w, dto)
+}
+
+func paymentsChangedHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	att, err := attendeeByIdMustReturnOnError(ctx, w, r)
+	if err != nil {
+		return
+	}
+	latestStatusChange, err := obtainAttendeeLatestStatusMustReturnOnError(ctx, w, r, att)
+	if err != nil {
+		return
+	}
+
+	processForStatus := []string{"approved", "partially paid", "paid"}
+	if validation.NotInAllowedValues(processForStatus, latestStatusChange.Status) {
+		aulogging.Logger.Ctx(ctx).Warn().Printf("received payment change webhook for attendee id %d, who is in status %s - ignoring", att.ID, latestStatusChange.Status)
+		w.WriteHeader(http.StatusAccepted)
+		return
+	}
+
+	err = attendeeService.UpdateDuesAndDoStatusChangeIfNeeded(ctx, att,
+		latestStatusChange.Status,
+		latestStatusChange.Status,
+		"transactions changed")
+	if err != nil {
+		if errors.Is(err, paymentservice.DownstreamError) || errors.Is(err, mailservice.DownstreamError) {
+			statusChangeDownstreamError(ctx, w, r, err)
+		} else {
+			statusWriteErrorHandler(ctx, w, r, err)
+		}
+	} else {
+		w.WriteHeader(http.StatusNoContent)
+	}
 }
 
 // --- error handlers ---
