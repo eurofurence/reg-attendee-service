@@ -91,14 +91,14 @@ Limitations:
  - 🚧 talks to mail service as appropriate (with contract tests)
  - ✅ obtains IDP tokens from the cookies set by the auth service, as well as fixed token security for backend requests
  - ✅ auth header and tokens are honored for all requests, even the ones that do not require authorization
- - 🚧 fields for MMC have been added as well (partner, ...) 
+ - ✅ fields for MMC have been added as well (partner, ...) 
  - ✅ day guests are supported simply via the package subsystem 
  - 🚧 guests are supported as an admin only flag which will cause the system to assign 0 dues
  - ✅ implements a general request timeout and panic handling
- - 🚧 no search functionality implemented yet
- - 🚧 no bans support implemented at this point
- - 🚧 no manual dues support implemented yet
- - 🚧 key_deposit/key_received/sponsor_items flag are supported as additional-info not implement yet
+ - 🚧 basic search functionality implemented
+ - 🚧 bans support implemented
+ - 🚧 manual dues support implemented
+ - 🚧 key_deposit/key_received/sponsor_items flag are supported as additional-info
  - ✅ track who (subject, if set) performed a database change (recorded in history table)
 
 ### for later

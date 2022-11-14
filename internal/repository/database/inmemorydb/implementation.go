@@ -26,16 +26,20 @@ func Create() dbrepo.Repository {
 }
 
 func (r *InMemoryRepository) Open() error {
-	r.attendees = make(map[uint]*entity.Attendee)
+	r.addInfo = make(map[uint]map[string]*entity.AdditionalInfo)
 	r.adminInfo = make(map[uint]*entity.AdminInfo)
+	r.attendees = make(map[uint]*entity.Attendee)
+	r.bans = make(map[uint]*entity.Ban)
 	r.statusChanges = make(map[uint][]entity.StatusChange)
 	r.history = make(map[uint]*entity.History)
 	return nil
 }
 
 func (r *InMemoryRepository) Close() {
-	r.attendees = nil
+	r.addInfo = nil
 	r.adminInfo = nil
+	r.attendees = nil
+	r.bans = nil
 	r.statusChanges = nil
 	r.history = nil
 }
@@ -256,6 +260,10 @@ func (r *InMemoryRepository) GetAllBans(ctx context.Context) ([]*entity.Ban, err
 		copiedBan := *b
 		result = append(result, &copiedBan)
 	}
+	sort.Slice(result, func(i int, j int) bool {
+		return result[i].ID < result[j].ID
+	})
+
 	return result, nil
 }
 

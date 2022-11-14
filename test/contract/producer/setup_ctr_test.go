@@ -3,12 +3,14 @@ package producer
 import (
 	"context"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/service/attendeesrv"
 	"github.com/eurofurence/reg-attendee-service/internal/web/app"
 	"github.com/eurofurence/reg-attendee-service/internal/web/controller/adminctl"
 	"github.com/eurofurence/reg-attendee-service/internal/web/controller/attendeectl"
+	"github.com/eurofurence/reg-attendee-service/internal/web/controller/banctl"
 	"github.com/eurofurence/reg-attendee-service/internal/web/controller/statusctl"
 	"github.com/stretchr/testify/mock"
 	"net/http/httptest"
@@ -111,9 +113,36 @@ func (s *MockAttendeeService) IsOwnerFor(ctx context.Context) ([]*entity.Attende
 	return make([]*entity.Attendee, 0), nil
 }
 
+func (s *MockAttendeeService) FindAttendees(ctx context.Context, criteria *attendee.AttendeeSearchCriteria) (*attendee.AttendeeSearchResultList, error) {
+	return &attendee.AttendeeSearchResultList{
+		Attendees: make([]attendee.AttendeeSearchResult, 0),
+	}, nil
+}
+
+func (s *MockAttendeeService) NewBan(ctx context.Context) *entity.Ban {
+	return &entity.Ban{}
+}
+
+func (s *MockAttendeeService) CreateBan(ctx context.Context, ban *entity.Ban) (uint, error) {
+	return 1, nil
+}
+
+func (s *MockAttendeeService) UpdateBan(ctx context.Context, ban *entity.Ban) error {
+	return nil
+}
+
+func (s *MockAttendeeService) GetBan(ctx context.Context, id uint) (*entity.Ban, error) {
+	return &entity.Ban{}, nil
+}
+
+func (s *MockAttendeeService) GetAllBans(ctx context.Context) ([]*entity.Ban, error) {
+	return make([]*entity.Ban, 0), nil
+}
+
 func tstSetupServiceMocks() {
 	attendeeServiceMock := MockAttendeeService{}
 	attendeectl.OverrideAttendeeService(&attendeeServiceMock)
 	adminctl.OverrideAttendeeService(&attendeeServiceMock)
 	statusctl.OverrideAttendeeService(&attendeeServiceMock)
+	banctl.OverrideAttendeeService(&attendeeServiceMock)
 }

@@ -3,6 +3,7 @@ package attendeesrv
 import (
 	"context"
 	"errors"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 )
@@ -44,6 +45,16 @@ type AttendeeService interface {
 	// Unless an admin has made changes to the database, this essentially means their registration was made
 	// using this account.
 	IsOwnerFor(ctx context.Context) ([]*entity.Attendee, error)
+
+	// FindAttendees runs the search by criteria in the database, then filters and converts the result.
+	FindAttendees(ctx context.Context, criteria *attendee.AttendeeSearchCriteria) (*attendee.AttendeeSearchResultList, error)
+
+	// NewBan creates an empty (unsaved) ban.
+	NewBan(ctx context.Context) *entity.Ban
+	CreateBan(ctx context.Context, ban *entity.Ban) (uint, error)
+	UpdateBan(ctx context.Context, ban *entity.Ban) error
+	GetBan(ctx context.Context, id uint) (*entity.Ban, error)
+	GetAllBans(ctx context.Context) ([]*entity.Ban, error)
 }
 
 var (

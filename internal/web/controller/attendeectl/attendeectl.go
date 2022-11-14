@@ -16,6 +16,7 @@ import (
 	"github.com/go-http-utils/headers"
 	"net/http"
 	"net/url"
+	"sort"
 	"strconv"
 	"time"
 )
@@ -37,6 +38,7 @@ func Create(server chi.Router) {
 	} else {
 		server.Post("/api/rest/v1/attendees", filter.WithTimeout(3*time.Second, newAttendeeHandler))
 	}
+	server.Get("/api/rest/v1/attendees", filter.LoggedIn(filter.WithTimeout(3*time.Second, myRegsHandler)))
 	server.Get("/api/rest/v1/attendees/max-id", filter.WithTimeout(3*time.Second, getAttendeeMaxIdHandler))
 	server.Get("/api/rest/v1/attendees/{id}", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, getAttendeeHandler)))
 	server.Put("/api/rest/v1/attendees/{id}", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, updateAttendeeHandler)))
@@ -139,6 +141,31 @@ func getAttendeeMaxIdHandler(w http.ResponseWriter, r *http.Request) {
 	ctlutil.WriteJson(ctx, w, dto)
 }
 
+func myRegsHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	atts, err := attendeeService.IsOwnerFor(ctx)
+	if err != nil {
+		myRegsErrorHandler(ctx, w, r, err)
+		return
+	}
+	if len(atts) == 0 {
+		myRegsNotFoundErrorHandler(ctx, w, r)
+		return
+	}
+
+	dto := attendee.AttendeeIdList{
+		Ids: make([]uint, len(atts)),
+	}
+	for i, _ := range atts {
+		dto.Ids[i] = atts[i].ID
+	}
+	sort.Slice(dto.Ids, func(i, j int) bool { return dto.Ids[i] < dto.Ids[j] })
+
+	w.Header().Add(headers.ContentType, media.ContentTypeApplicationJson)
+	ctlutil.WriteJson(ctx, w, dto)
+}
+
 func idFromVars(ctx context.Context, w http.ResponseWriter, r *http.Request) (uint, error) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
@@ -181,4 +208,14 @@ func attendeeWriteErrorHandler(ctx context.Context, w http.ResponseWriter, r *ht
 func attendeeMaxIdErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
 	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("could not determine max id: %s", err.Error())
 	ctlutil.ErrorHandler(ctx, w, r, "attendee.max_id.error", http.StatusInternalServerError, url.Values{})
+}
+
+func myRegsErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
+	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("could not read registrations for logged in subject: %s", err.Error())
+	ctlutil.ErrorHandler(ctx, w, r, "attendee.owned.error", http.StatusInternalServerError, url.Values{})
+}
+
+func myRegsNotFoundErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	aulogging.Logger.Ctx(ctx).Info().Printf("found no registrations owned by logged in subject")
+	ctlutil.ErrorHandler(ctx, w, r, "attendee.owned.notfound", http.StatusNotFound, url.Values{})
 }

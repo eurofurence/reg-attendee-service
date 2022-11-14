@@ -40,7 +40,7 @@ type AttendeeMaxIdDto struct {
 }
 
 type AttendeeIdList struct {
-	Ids []int64 `json:"ids"`
+	Ids []uint `json:"ids"`
 }
 
 // --- search criteria ---
@@ -77,7 +77,7 @@ type AttendeeSearchResultList struct {
 }
 
 type AttendeeSearchResult struct {
-	Id             int64   `json:"id"`
+	Id             uint    `json:"id"`
 	BadgeId        *string `json:"badge_id,omitempty"`
 	Nickname       *string `json:"nickname,omitempty"`
 	FirstName      *string `json:"first_name,omitempty"`

@@ -520,6 +520,8 @@ paths:
             minimum: 1
             format: int64
       responses:
+        '202':
+          description: successful operation, but current attendee status prevented a status re-evaluation (new, checked in, cancelled, deleted), so processing was intentionally skipped
         '204':
           description: successful operation
         '400':
@@ -542,6 +544,12 @@ paths:
                 $ref: '#/components/schemas/Error'
         '500':
           description: An unexpected error occurred. This includes database errors. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '502':
+          description: The update leads to an update in the payment service which failed, or the mail service failed to send an email as part of the update.
           content:
             application/json:
               schema:
@@ -793,12 +801,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '404':
-          description: No attendees matched your criteria.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
         '500':
           description: An unexpected error occurred. This includes database errors. A best effort attempt is made to return details in the body.
           content:
@@ -974,13 +976,8 @@ paths:
               $ref: '#/components/schemas/BanRule'
         required: true
       responses:
-        '200':
+        '204':
           description: Successful operation
-          headers:
-            Location:
-              schema:
-                type: string
-              description: URL of the resource, ending in the assigned id.
         '400':
           description: Invalid ID supplied or invalid data in request body
           content:
@@ -1547,6 +1544,12 @@ components:
       required:
         - reason
       properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+          description: This numerical id is automatically assigned when the ban rule is first saved. Optional for request bodies, but if specified it must match. It is not possible to change this.
+          example: 10
         reason:
           type: string
           minLength: 1
@@ -1704,6 +1707,8 @@ components:
             
             At this time, there are these values:
             - attendee.max_id.error (database error or overload)
+            - attendee.owned.error (database error or overload)
+            - attendee.owned.notfound (no registrations owned by current user)
             - attendee.parse.error (json body parse error)
             - attendee.data.invalid (field data failed to validate, see details for more information)
             - attendee.data.duplicate (duplicate registration - nickname + email + zip)
@@ -1717,6 +1722,16 @@ components:
             - admin.data.invalid (field data failed to validate, see details for more information)
             - auth.unauthorized (token missing completely or invalid)
             - auth.forbidden (permissions missing)
+            - ban.parse.error (json body parse error)
+            - ban.data.invalid (field data failed to validate, see details for more information)
+            - ban.data.duplicate (duplicate ban rule with all regexes identical)
+            - ban.read.error (database error)
+            - ban.write.error (database error)
+            - ban.id.invalid (syntactically invalid ban rule id, must be positive integer)
+            - ban.id.notfound (no such ban rule id in the database)
+            - search.parse.error (json body parse error)
+            - search.read.error (database error)
+            - 
             - status.read.error (database error)
             - status.write.error (database error)
             - status.mail.error (mail service failure while doing status change)

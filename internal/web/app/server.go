@@ -8,6 +8,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/web/controller/adminctl"
 	"github.com/eurofurence/reg-attendee-service/internal/web/controller/attendeectl"
+	"github.com/eurofurence/reg-attendee-service/internal/web/controller/banctl"
 	"github.com/eurofurence/reg-attendee-service/internal/web/controller/countdownctl"
 	"github.com/eurofurence/reg-attendee-service/internal/web/controller/fallbackctl"
 	"github.com/eurofurence/reg-attendee-service/internal/web/controller/infoctl"
@@ -37,6 +38,7 @@ func CreateRouter(ctx context.Context) chi.Router {
 	attendeectl.Create(server)
 	adminctl.Create(server)
 	statusctl.Create(server)
+	banctl.Create(server)
 	infoctl.Create(server)
 
 	fallbackctl.Create(server)

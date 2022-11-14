@@ -21,6 +21,10 @@ var (
 
 const tstDefaultConfigFileBeforeTarget = "../../test/testconfig-before-target.yaml"
 
+func tstConfigFileIrrelevant() string {
+	return tstConfigFile(true, false, true)
+}
+
 func tstConfigFile(needLogin bool, staffReg bool, afterTarget bool) string {
 	path := "../../test/testconfig-"
 	if needLogin {

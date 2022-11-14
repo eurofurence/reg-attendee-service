@@ -3,6 +3,7 @@ package attendeectl
 import (
 	"context"
 	"errors"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/service/attendeesrv"
@@ -93,6 +94,32 @@ func (s *MockAttendeeService) StatusChangePossible(ctx context.Context, attendee
 
 func (s *MockAttendeeService) IsOwnerFor(ctx context.Context) ([]*entity.Attendee, error) {
 	return make([]*entity.Attendee, 0), nil
+}
+
+func (s *MockAttendeeService) FindAttendees(ctx context.Context, criteria *attendee.AttendeeSearchCriteria) (*attendee.AttendeeSearchResultList, error) {
+	return &attendee.AttendeeSearchResultList{
+		Attendees: make([]attendee.AttendeeSearchResult, 0),
+	}, nil
+}
+
+func (s *MockAttendeeService) NewBan(ctx context.Context) *entity.Ban {
+	return &entity.Ban{}
+}
+
+func (s *MockAttendeeService) CreateBan(ctx context.Context, ban *entity.Ban) (uint, error) {
+	return 1, nil
+}
+
+func (s *MockAttendeeService) UpdateBan(ctx context.Context, ban *entity.Ban) error {
+	return nil
+}
+
+func (s *MockAttendeeService) GetBan(ctx context.Context, id uint) (*entity.Ban, error) {
+	return &entity.Ban{}, nil
+}
+
+func (s *MockAttendeeService) GetAllBans(ctx context.Context) ([]*entity.Ban, error) {
+	return make([]*entity.Ban, 0), nil
 }
 
 func tstSetupServiceMocks() {

@@ -39,3 +39,13 @@ func tstValidStaffToken(t *testing.T, id string) string {
 func tstValidStaffOrEmptyToken(t *testing.T) string {
 	return ""
 }
+
+const valid_Api_Token_Matches_Test_Configuration_Files = "api-token-for-testing-must-be-pretty-long"
+
+func tstValidApiToken() string {
+	return valid_Api_Token_Matches_Test_Configuration_Files
+}
+
+func tstInvalidApiToken() string {
+	return "wrong_api_token"
+}

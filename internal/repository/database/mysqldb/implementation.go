@@ -266,7 +266,7 @@ func (r *MysqlRepository) GetAllBans(ctx context.Context) ([]*entity.Ban, error)
 	result := make([]*entity.Ban, 0)
 	banBuffer := entity.Ban{}
 
-	rows, err := r.db.Find(&banBuffer).Rows()
+	rows, err := r.db.Order("id").Find(&banBuffer).Rows()
 	if err != nil {
 		aulogging.Logger.Ctx(ctx).Error().WithErr(err).Printf("error reading bans: %s", err.Error())
 		return result, err
