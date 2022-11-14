@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/admin"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/service/attendeesrv"
@@ -33,6 +34,7 @@ func OverrideAttendeeService(overrideAttendeeServiceForTesting attendeesrv.Atten
 func Create(server chi.Router) {
 	server.Get("/api/rest/v1/attendees/{id}/admin", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(3*time.Second, getAdminInfoHandler)))
 	server.Put("/api/rest/v1/attendees/{id}/admin", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(3*time.Second, writeAdminInfoHandler)))
+	server.Post("/api/rest/v1/attendees/find", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(60*time.Second, findAttendeesHandler)))
 }
 
 // --- handlers ---
@@ -94,6 +96,24 @@ func writeAdminInfoHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func findAttendeesHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	criteria, err := parseBodyToAttendeeSearchCriteria(ctx, w, r)
+	if err != nil {
+		return
+	}
+
+	results, err := attendeeService.FindAttendees(ctx, criteria)
+	if err != nil {
+		searchReadErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	w.Header().Add(headers.ContentType, media.ContentTypeApplicationJson)
+	ctlutil.WriteJson(ctx, w, results)
+}
+
 // --- helpers ---
 
 func attendeeByIdMustReturnOnError(ctx context.Context, w http.ResponseWriter, r *http.Request) (*entity.Attendee, error) {
@@ -119,6 +139,16 @@ func parseBodyToAdminInfoDto(ctx context.Context, w http.ResponseWriter, r *http
 	return dto, err
 }
 
+func parseBodyToAttendeeSearchCriteria(ctx context.Context, w http.ResponseWriter, r *http.Request) (*attendee.AttendeeSearchCriteria, error) {
+	decoder := json.NewDecoder(r.Body)
+	dto := &attendee.AttendeeSearchCriteria{}
+	err := decoder.Decode(dto)
+	if err != nil {
+		searchCriteriaParseErrorHandler(ctx, w, r, err)
+	}
+	return dto, err
+}
+
 // --- error handlers ---
 
 func adminInfoReadErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
@@ -139,4 +169,14 @@ func adminInfoParseErrorHandler(ctx context.Context, w http.ResponseWriter, r *h
 func adminInfoValidationErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, errs url.Values) {
 	aulogging.Logger.Ctx(ctx).Warn().Printf("received adminInfo data with validation errors: %v", errs)
 	ctlutil.ErrorHandler(ctx, w, r, "admin.data.invalid", http.StatusBadRequest, errs)
+}
+
+func searchCriteriaParseErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
+	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("attendee search criteria body could not be parsed: %s", err.Error())
+	ctlutil.ErrorHandler(ctx, w, r, "search.parse.error", http.StatusBadRequest, url.Values{})
+}
+
+func searchReadErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
+	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("attendee search failed: %s", err.Error())
+	ctlutil.ErrorHandler(ctx, w, r, "search.read.error", http.StatusInternalServerError, url.Values{})
 }

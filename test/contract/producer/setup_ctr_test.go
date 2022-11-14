@@ -3,6 +3,7 @@ package producer
 import (
 	"context"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/service/attendeesrv"
@@ -110,6 +111,12 @@ func (s *MockAttendeeService) StatusChangePossible(ctx context.Context, attendee
 
 func (s *MockAttendeeService) IsOwnerFor(ctx context.Context) ([]*entity.Attendee, error) {
 	return make([]*entity.Attendee, 0), nil
+}
+
+func (s *MockAttendeeService) FindAttendees(ctx context.Context, criteria *attendee.AttendeeSearchCriteria) (*attendee.AttendeeSearchResultList, error) {
+	return &attendee.AttendeeSearchResultList{
+		Attendees: make([]attendee.AttendeeSearchResult, 0),
+	}, nil
 }
 
 func (s *MockAttendeeService) NewBan(ctx context.Context) *entity.Ban {

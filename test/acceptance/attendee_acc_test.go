@@ -1,6 +1,7 @@
 package acceptance
 
 import (
+	"fmt"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"net/http"
 	"net/url"
@@ -983,6 +984,125 @@ func TestAttendeeMaxIdAvailable(t *testing.T) {
 	responseDto := attendee.AttendeeMaxIdDto{}
 	tstParseJson(maxIdResponse.body, &responseDto)
 	require.True(t, responseDto.MaxId > 0, "expected a positive number as maximum attendee id")
+}
+
+// --- my registrations ---
+
+func TestMyRegistrations_Anon(t *testing.T) {
+	tstSetup(tstConfigFile(true, false, true))
+	defer tstShutdown()
+
+	docs.Given("given there are registrations")
+	token1 := tstValidUserToken(t, "1")
+	reg1 := tstBuildValidAttendee("my1a-")
+	reg1response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(reg1), token1)
+	require.Equal(t, http.StatusCreated, reg1response.status, "unexpected http response status")
+
+	docs.Given("given an anonymous user")
+
+	docs.When("when they request the list of registrations they own")
+	response := tstPerformGet("/api/rest/v1/attendees", tstNoToken())
+
+	docs.Then("then the request fails (401) and the error is as expected")
+	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "you must be logged in for this operation")
+}
+
+func TestMyRegistrations_User_None(t *testing.T) {
+	tstSetup(tstConfigFile(true, false, true))
+	defer tstShutdown()
+
+	docs.Given("given there are registrations")
+	token1 := tstValidUserToken(t, "1")
+	reg1 := tstBuildValidAttendee("my10a-")
+	reg1response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(reg1), token1)
+	require.Equal(t, http.StatusCreated, reg1response.status, "unexpected http response status")
+
+	docs.Given("given a different user, who has made no registrations")
+	token101 := tstValidUserToken(t, "101")
+
+	docs.When("when they request the list of registrations they own")
+	response := tstPerformGet("/api/rest/v1/attendees", token101)
+
+	docs.Then("then the request fails (404) and the error is as expected")
+	tstRequireErrorResponse(t, response, http.StatusNotFound, "attendee.owned.notfound", "")
+}
+
+func TestMyRegistrations_User_One(t *testing.T) {
+	tstSetup(tstConfigFile(true, false, true))
+	defer tstShutdown()
+
+	docs.Given("given there are registrations")
+	token1 := tstValidUserToken(t, "1")
+	reg1 := tstBuildValidAttendee("my11a-")
+	reg1response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(reg1), token1)
+	require.Equal(t, http.StatusCreated, reg1response.status, "unexpected http response status")
+
+	docs.Given("given a different user, who has made a single registration")
+	token101 := tstValidUserToken(t, "101")
+	reg2 := tstBuildValidAttendee("my11b-")
+	reg2response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(reg2), token101)
+	require.Equal(t, http.StatusCreated, reg2response.status, "unexpected http response status")
+
+	docs.When("when they request the list of registrations they own")
+	response := tstPerformGet("/api/rest/v1/attendees", token101)
+
+	docs.Then("then the request is successful and returns only their registration number")
+	require.Equal(t, http.StatusOK, response.status, "unexpected http response status")
+	actualResult := attendee.AttendeeIdList{}
+	tstParseJson(response.body, &actualResult)
+	require.Equal(t, 1, len(actualResult.Ids))
+	actualLocation := fmt.Sprintf("/api/rest/v1/attendees/%d", actualResult.Ids[0])
+	require.Equal(t, reg2response.location, actualLocation, "unexpected id returned")
+}
+
+func TestMyRegistrations_Admin_Two(t *testing.T) {
+	tstSetup(tstConfigFile(true, false, true))
+	defer tstShutdown()
+
+	docs.Given("given there are registrations")
+	token101 := tstValidUserToken(t, "101")
+	reg1 := tstBuildValidAttendee("my12a-")
+	reg1response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(reg1), token101)
+	require.Equal(t, http.StatusCreated, reg1response.status, "unexpected http response status")
+
+	docs.Given("given an admin, who has made two registrations")
+	admToken := tstValidAdminToken(t)
+	reg2 := tstBuildValidAttendee("my12b-")
+	reg2response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(reg2), admToken)
+	require.Equal(t, http.StatusCreated, reg2response.status, "unexpected http response status")
+	reg3 := tstBuildValidAttendee("my12c-")
+	reg3response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(reg3), admToken)
+	require.Equal(t, http.StatusCreated, reg3response.status, "unexpected http response status")
+
+	docs.When("when they request the list of registrations they own")
+	response := tstPerformGet("/api/rest/v1/attendees", admToken)
+
+	docs.Then("then the request is successful and returns only their registration numbers, even for an admin")
+	require.Equal(t, http.StatusOK, response.status, "unexpected http response status")
+	actualResult := attendee.AttendeeIdList{}
+	tstParseJson(response.body, &actualResult)
+	require.Equal(t, 2, len(actualResult.Ids))
+	actualLocation2 := fmt.Sprintf("/api/rest/v1/attendees/%d", actualResult.Ids[0])
+	actualLocation3 := fmt.Sprintf("/api/rest/v1/attendees/%d", actualResult.Ids[1])
+	require.Equal(t, reg2response.location, actualLocation2, "unexpected id returned")
+	require.Equal(t, reg3response.location, actualLocation3, "unexpected id returned")
+}
+
+func TestMyRegistrations_ApiToken(t *testing.T) {
+	tstSetup(tstConfigFile(true, false, true))
+	defer tstShutdown()
+
+	docs.Given("given there are registrations")
+	token1 := tstValidUserToken(t, "1")
+	reg1 := tstBuildValidAttendee("my20a-")
+	reg1response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(reg1), token1)
+	require.Equal(t, http.StatusCreated, reg1response.status, "unexpected http response status")
+
+	docs.When("when an api requests the list of registrations they own")
+	response := tstPerformGet("/api/rest/v1/attendees", tstValidApiToken())
+
+	docs.Then("then the request fails (401) and the error is as expected")
+	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "you must be logged in for this operation")
 }
 
 // helper functions

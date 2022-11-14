@@ -801,12 +801,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '404':
-          description: No attendees matched your criteria.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
         '500':
           description: An unexpected error occurred. This includes database errors. A best effort attempt is made to return details in the body.
           content:
@@ -1713,6 +1707,8 @@ components:
             
             At this time, there are these values:
             - attendee.max_id.error (database error or overload)
+            - attendee.owned.error (database error or overload)
+            - attendee.owned.notfound (no registrations owned by current user)
             - attendee.parse.error (json body parse error)
             - attendee.data.invalid (field data failed to validate, see details for more information)
             - attendee.data.duplicate (duplicate registration - nickname + email + zip)
@@ -1733,6 +1729,9 @@ components:
             - ban.write.error (database error)
             - ban.id.invalid (syntactically invalid ban rule id, must be positive integer)
             - ban.id.notfound (no such ban rule id in the database)
+            - search.parse.error (json body parse error)
+            - search.read.error (database error)
+            - 
             - status.read.error (database error)
             - status.write.error (database error)
             - status.mail.error (mail service failure while doing status change)

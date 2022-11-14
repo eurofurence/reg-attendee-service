@@ -3,6 +3,7 @@ package acceptance
 import (
 	"github.com/eurofurence/reg-attendee-service/docs"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/admin"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/url"
@@ -329,10 +330,193 @@ func TestAdminWrite_WrongFlagType(t *testing.T) {
 
 // TODO test dues changes caused by setting and removing guest status and corresponding status change logic
 
+// --- search ---
+
+func TestSearch_AnonDeny(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstConfigFile(false, false, true))
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee")
+	_, _ = tstRegisterAttendee(t, "search1-")
+
+	docs.Given("given an unauthenticated user")
+	token := tstNoToken()
+
+	docs.When("when they attempt to search for attendees")
+	searchAll := attendee.AttendeeSearchCriteria{
+		MatchAny: []attendee.AttendeeSearchSingleCriterion{
+			{},
+		},
+	}
+	response := tstPerformPost("/api/rest/v1/attendees/find", tstRenderJson(searchAll), token)
+
+	docs.Then("then the request is denied as unauthenticated (401) and the correct error is returned")
+	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "you must be logged in for this operation")
+}
+
+func TestSearch_UserDeny(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstConfigFile(false, false, true))
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee")
+	_, attendee1 := tstRegisterAttendee(t, "search2-")
+
+	docs.Given("given the same regular authenticated attendee")
+	token := tstValidUserToken(t, attendee1.Id)
+
+	docs.When("when they attempt to search for attendees")
+	searchAll := attendee.AttendeeSearchCriteria{
+		MatchAny: []attendee.AttendeeSearchSingleCriterion{
+			{},
+		},
+	}
+	response := tstPerformPost("/api/rest/v1/attendees/find", tstRenderJson(searchAll), token)
+
+	docs.Then("then the request is denied as unauthorized (403) and the correct error is returned")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this operation - the attempt has been logged")
+}
+
+func TestSearch_StaffDeny(t *testing.T) {
+	docs.Given("given the configuration for staff registration")
+	tstSetup(tstConfigFile(false, true, true))
+	defer tstShutdown()
+
+	docs.Given("given an authenticated staffer who has registered")
+	_, attendee1 := tstRegisterAttendee(t, "search3-")
+	token := tstValidStaffToken(t, attendee1.Id)
+
+	docs.When("when they attempt to search for attendees")
+	searchAll := attendee.AttendeeSearchCriteria{
+		MatchAny: []attendee.AttendeeSearchSingleCriterion{
+			{},
+		},
+	}
+	response := tstPerformPost("/api/rest/v1/attendees/find", tstRenderJson(searchAll), token)
+
+	docs.Then("then the request is denied as unauthorized (403) and the correct error is returned")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this operation - the attempt has been logged")
+}
+
+func TestSearch_AdminOk(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstConfigFile(false, false, true))
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee right after registration")
+	_, _ = tstRegisterAttendee(t, "search4-")
+
+	docs.Given("given a logged in admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they search for attendees")
+	searchAll := attendee.AttendeeSearchCriteria{
+		MatchAny: []attendee.AttendeeSearchSingleCriterion{
+			{},
+		},
+	}
+	response := tstPerformPost("/api/rest/v1/attendees/find", tstRenderJson(searchAll), token)
+
+	docs.Then("then the request is successful and the list of attendees is returned")
+	require.Equal(t, http.StatusOK, response.status, "unexpected http response status")
+	expected := `{
+  "attendees": [
+    {
+      "id": 1,
+      "badge_id": "1Y",
+      "nickname": "BlackCheetah",
+      "first_name": "Hans",
+      "last_name": "Mustermann",
+      "street": "Teststraße 24",
+      "zip": "12345",
+      "city": "Berlin",
+      "country": "DE",
+      "country_badge": "DE",
+      "state": "Sachsen",
+      "phone": "+49-30-123",
+      "telegram": "@ihopethisuserdoesnotexist",
+      "partner": "",
+      "birthday": "1998-11-23",
+      "gender": "other",
+      "pronouns": "he/him",
+      "tshirt_size": "XXL",
+      "flags": "anon,hc",
+      "options": "music,suit",
+      "packages": "room-none,attendance,stage,sponsor2",
+      "user_comments": ""
+    }
+  ]
+}`
+	tstRequireSearchResultMatches(t, expected, response.body)
+}
+
+func TestSearch_NonexistentAttendee(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstConfigFile(false, false, true))
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee right after registration")
+	_, _ = tstRegisterAttendee(t, "search5-")
+
+	docs.Given("given a logged in admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they search for attendees, but specify non-matching criteria")
+	searchNon := attendee.AttendeeSearchCriteria{
+		MatchAny: []attendee.AttendeeSearchSingleCriterion{
+			{
+				Address: "Not something that matches",
+			},
+		},
+	}
+	response := tstPerformPost("/api/rest/v1/attendees/find", tstRenderJson(searchNon), token)
+
+	docs.Then("then the request is successful and an empty list of attendees is returned")
+	require.Equal(t, http.StatusOK, response.status, "unexpected http response status")
+	expected := `{
+  "attendees": []
+}`
+	tstRequireSearchResultMatches(t, expected, response.body)
+}
+
+func TestSearch_InvalidJson(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstConfigFile(false, false, true))
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee right after registration")
+	_, _ = tstRegisterAttendee(t, "search5-")
+
+	docs.Given("given a logged in admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they search for attendees, but send an invalid json body")
+	response := tstPerformPost("/api/rest/v1/attendees/find", "{{{{", token)
+
+	docs.Then("then the request fails with the appropriate error")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "search.parse.error", url.Values{})
+}
+
 // helper functions
 
 func tstRequireAdminInfoMatches(t *testing.T, expected admin.AdminInfoDto, body string) {
 	adminInfo := admin.AdminInfoDto{}
 	tstParseJson(body, &adminInfo)
 	require.EqualValues(t, expected, adminInfo, "admin data did not match expected values")
+}
+
+func tstRequireSearchResultMatches(t *testing.T, expectedBody string, body string) {
+	expected := attendee.AttendeeSearchResultList{}
+	tstParseJson(expectedBody, &expected)
+
+	actual := attendee.AttendeeSearchResultList{}
+	tstParseJson(body, &actual)
+
+	// ignore emails because they contain a timer
+	for i := range actual.Attendees {
+		actual.Attendees[i].Email = nil
+	}
+
+	require.EqualValues(t, expected, actual, "search result did not match expected values")
 }
