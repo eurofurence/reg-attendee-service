@@ -141,7 +141,7 @@ func tstBuildValidBanRule(testcase string) bans.BanRule {
 }
 
 func tstRegisterAttendee(t *testing.T, testcase string) (location string, dtoWithId attendee.AttendeeDto) {
-	return tstRegisterAttendeeWithToken(t, testcase, tstValidStaffToken(t, "1"))
+	return tstRegisterAttendeeWithToken(t, testcase, tstValidStaffToken(t, 1))
 }
 
 func tstRegisterAttendeeWithToken(t *testing.T, testcase string, token string) (location string, dtoWithId attendee.AttendeeDto) {

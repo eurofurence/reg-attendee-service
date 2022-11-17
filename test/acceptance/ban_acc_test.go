@@ -61,7 +61,7 @@ func TestCreateNewBanRule_Unauthorized_User(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given a regular user")
-	token := tstValidUserToken(t, "22")
+	token := tstValidUserToken(t, 22)
 
 	docs.When("when they attempt to create a new ban rule with valid data")
 	banSent := tstBuildValidBanRule("ban13-")
@@ -79,7 +79,7 @@ func TestCreateNewBanRule_Unauthorized_Staff(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given a staffer")
-	token := tstValidStaffToken(t, "42")
+	token := tstValidStaffToken(t, 42)
 
 	docs.When("when they attempt to create a new ban rule with valid data")
 	banSent := tstBuildValidBanRule("ban14-")
@@ -231,7 +231,7 @@ func TestReadBanRules_Unauthorized_User(t *testing.T) {
 	_, _, _, _ = tstCreatePreexistingBans(t, "ban23-")
 
 	docs.Given("given a regular user")
-	token := tstValidUserToken(t, "22")
+	token := tstValidUserToken(t, 22)
 
 	docs.When("when they attempt to list the ban rules")
 	response := tstPerformGet("/api/rest/v1/bans", token)
@@ -248,7 +248,7 @@ func TestReadBanRules_Unauthorized_Staff(t *testing.T) {
 	_, _, _, _ = tstCreatePreexistingBans(t, "ban24-")
 
 	docs.Given("given a staffer")
-	token := tstValidStaffToken(t, "42")
+	token := tstValidStaffToken(t, 42)
 
 	docs.When("when they attempt to list the ban rules")
 	response := tstPerformGet("/api/rest/v1/bans", token)
@@ -303,7 +303,7 @@ func TestReadBanRule_Unauthorized_User(t *testing.T) {
 	_, _, _, loc2 := tstCreatePreexistingBans(t, "ban33-")
 
 	docs.Given("given a regular user")
-	token := tstValidUserToken(t, "22")
+	token := tstValidUserToken(t, 22)
 
 	docs.When("when they attempt to read an existing ban rule")
 	response := tstPerformGet(loc2, token)
@@ -320,7 +320,7 @@ func TestReadBanRule_Unauthorized_Staff(t *testing.T) {
 	_, _, _, loc2 := tstCreatePreexistingBans(t, "ban34-")
 
 	docs.Given("given a staffer")
-	token := tstValidStaffToken(t, "42")
+	token := tstValidStaffToken(t, 42)
 
 	docs.When("when they attempt to read an existing ban rule")
 	response := tstPerformGet(loc2, token)
@@ -411,7 +411,7 @@ func TestUpdateBanRule_Unauthorized_User(t *testing.T) {
 	_, _, ban2, loc2 := tstCreatePreexistingBans(t, "ban43-")
 
 	docs.Given("given a regular user")
-	token := tstValidUserToken(t, "22")
+	token := tstValidUserToken(t, 22)
 
 	docs.When("when they attempt to update an existing ban rule")
 	banUpdated := ban2
@@ -434,7 +434,7 @@ func TestUpdateBanRule_Unauthorized_Staff(t *testing.T) {
 	_, _, ban2, loc2 := tstCreatePreexistingBans(t, "ban44-")
 
 	docs.Given("given a staffer")
-	token := tstValidStaffToken(t, "42")
+	token := tstValidStaffToken(t, 42)
 
 	docs.When("when they attempt to update an existing ban rule")
 	banUpdated := ban2

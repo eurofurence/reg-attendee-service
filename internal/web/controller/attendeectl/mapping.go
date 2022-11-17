@@ -1,7 +1,6 @@
 package attendeectl
 
 import (
-	"fmt"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"strings"
@@ -34,7 +33,7 @@ func mapDtoToAttendee(dto *attendee.AttendeeDto, a *entity.Attendee) {
 
 func mapAttendeeToDto(a *entity.Attendee, dto *attendee.AttendeeDto) {
 	// this cannot fail
-	dto.Id = fmt.Sprint(a.ID)
+	dto.Id = a.ID
 	dto.Nickname = a.Nickname
 	dto.FirstName = a.FirstName
 	dto.LastName = a.LastName

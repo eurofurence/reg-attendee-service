@@ -16,8 +16,8 @@ const valid_JWT_is_staff_sub202 = `eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIi
 
 const valid_JWT_is_admin = `eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwiZ2xvYmFsIjp7Im5hbWUiOiJKb2huIERvZSIsInJvbGVzIjpbImFkbWluIl19LCJpYXQiOjE1MTYyMzkwMjJ9.sriAGCekreVU3nlQHc8Di7BqqI4Tut7tVNMWYa3kEpRi39Em5lOQ0b7w69idZEKT-MJfBGLVicnkw7Q4l8pUpJuHZMnja5YBIp7FDTg-KKbX__oOSSOnLhjaIGNFR_Xk_DanGrolQMKSYIfQs8MSgRO1bq-ZccCp1iJ4sdOOS4PenXj9h6xSe_lidGp8Wk47qwzRAFHYURaHFl_TCPMNDrYbM5MMIv8Lkye_duLxLo3zc9bnwWinhyD00p7ASwKgMc6vtWeTu_h000OOuviKoc2XKzOjUurqtm9Cird5rDAgAYtT_nTI_N4IzWFiRRPqX1IODe2zlqvKucv_FjzE8g`
 
-func tstValidUserToken(t *testing.T, id string) string {
-	if id == "101" {
+func tstValidUserToken(t *testing.T, id uint) string {
+	if id == 101 {
 		return valid_JWT_is_not_staff_sub101
 	} else {
 		return valid_JWT_is_not_staff
@@ -28,8 +28,8 @@ func tstValidAdminToken(t *testing.T) string {
 	return valid_JWT_is_admin
 }
 
-func tstValidStaffToken(t *testing.T, id string) string {
-	if id == "202" {
+func tstValidStaffToken(t *testing.T, id uint) string {
+	if id == 202 {
 		return valid_JWT_is_staff_sub202
 	} else {
 		return valid_JWT_is_staff

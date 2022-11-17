@@ -185,7 +185,7 @@ func performBirthdayValidationTest(t *testing.T, wrongDate string) {
 func TestValidateChoiceFieldsAndId(t *testing.T) {
 	docs.Description("an attendee with invalid values for the choice fields reports the expected validation errors")
 	a := tstCreateValidAttendee()
-	a.Id = "16"
+	a.Id = 16
 	a.Gender = "348trhkuth4uihgkj4h89"
 	a.Options = "music,awoo"
 	a.Flags = "hc,noflag"
@@ -211,7 +211,7 @@ func TestValidateChoiceFieldsAndId(t *testing.T) {
 func TestValidatePreventSettingIdField(t *testing.T) {
 	docs.Description("an attendee must not attempt to set its id in the request body")
 	a := tstCreateValidAttendee()
-	a.Id = "4"
+	a.Id = 4
 
 	expected := url.Values{
 		"id": []string{"id field must be empty or correctly assigned for incoming requests"},
@@ -222,7 +222,7 @@ func TestValidatePreventSettingIdField(t *testing.T) {
 func TestValidatePreventSettingIdFieldWrongValue(t *testing.T) {
 	docs.Description("an attendee must not attempt to set its id in the request body")
 	a := tstCreateValidAttendee()
-	a.Id = "4"
+	a.Id = 4
 
 	expected := url.Values{
 		"id": []string{"id field must be empty or correctly assigned for incoming requests"},

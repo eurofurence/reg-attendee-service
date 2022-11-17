@@ -1731,7 +1731,6 @@ components:
             - ban.id.notfound (no such ban rule id in the database)
             - search.parse.error (json body parse error)
             - search.read.error (database error)
-            - 
             - status.read.error (database error)
             - status.write.error (database error)
             - status.mail.error (mail service failure while doing status change)

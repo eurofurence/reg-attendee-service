@@ -1,7 +1,7 @@
 package attendee
 
 type AttendeeDto struct {
-	Id       string `json:"id"`       // badge number
+	Id       uint   `json:"id"`       // badge number
 	Nickname string `json:"nickname"` // fan name
 
 	// name and address

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
@@ -143,7 +142,7 @@ func getStatusHistoryHandler(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 	dto := status.StatusHistoryDto{
-		Id:            fmt.Sprintf("%d", att.ID),
+		Id:            att.ID,
 		StatusHistory: mappedHistory,
 	}
 	w.Header().Add(headers.ContentType, media.ContentTypeApplicationJson)

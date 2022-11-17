@@ -101,6 +101,11 @@ Limitations:
  - 🚧 key_deposit/key_received/sponsor_items flag are supported as additional-info
  - ✅ track who (subject, if set) performed a database change (recorded in history table)
 
+### open
+
+  - check that at least one attendance option is set
+  - admin only flag skipBanCheck
+
 ### for later
 
 - ❌ more fine-grained permissions using JWT

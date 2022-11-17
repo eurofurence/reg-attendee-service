@@ -118,7 +118,7 @@ func TestCreateNewAttendeeDefaultReadOnlyPackage(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given a staffer")
-	staffToken := tstValidStaffToken(t, "1")
+	staffToken := tstValidStaffToken(t, 1)
 
 	docs.When("when they send a new attendee and attempt to leave out a read only default package (room-none)")
 	attendeeSent := tstBuildValidAttendee("nav6-")
@@ -182,7 +182,7 @@ func TestCreateNewAttendee_NoLoginRequired_TooEarly_User(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given a logged in user")
-	token := tstValidUserToken(t, "101")
+	token := tstValidUserToken(t, 101)
 
 	docs.When("when they attempt to create a new attendee with valid data before registration has begun")
 	attendeeSent := tstBuildValidAttendee("na2-")
@@ -200,7 +200,7 @@ func TestCreateNewAttendee_NoLoginRequired_TooEarly_Staff(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given a logged in user who is staff")
-	token := tstValidStaffToken(t, "202")
+	token := tstValidStaffToken(t, 202)
 
 	docs.When("when they attempt to create a new attendee with valid data before even staff registration has begun")
 	attendeeSent := tstBuildValidAttendee("na3-")
@@ -256,7 +256,7 @@ func TestCreateNewAttendee_NoLoginRequired_Between_User(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given an authenticated regular user")
-	userToken := tstValidUserToken(t, "1")
+	userToken := tstValidUserToken(t, 1)
 
 	docs.When("when they attempt to create a new attendee with valid data")
 	attendeeSent := tstBuildValidAttendee("na11-")
@@ -275,7 +275,7 @@ func TestCreateNewAttendee_NoLoginRequired_Between_Staff(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given a staffer")
-	staffToken := tstValidStaffToken(t, "1")
+	staffToken := tstValidStaffToken(t, 1)
 
 	docs.When("when they attempt to create a new attendee with valid data")
 	attendeeSent := tstBuildValidAttendee("na12-")
@@ -333,7 +333,7 @@ func TestCreateNewAttendee_NoLoginRequired_After_User(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given a logged in user")
-	token := tstValidUserToken(t, "101")
+	token := tstValidUserToken(t, 101)
 
 	docs.When("when they attempt to create a new attendee with valid data after public registration has begun")
 	attendeeSent := tstBuildValidAttendee("na21-")
@@ -358,7 +358,7 @@ func TestCreateNewAttendee_NoLoginRequired_After_Staff(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given a logged in staffer")
-	token := tstValidStaffToken(t, "202")
+	token := tstValidStaffToken(t, 202)
 
 	docs.When("when they attempt to create a new attendee with valid data after public registration has begun")
 	attendeeSent := tstBuildValidAttendee("na22-")
@@ -413,7 +413,7 @@ func TestCreateNewAttendee_LoginRequired_TooEarly_User(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given a logged in user")
-	token := tstValidUserToken(t, "1")
+	token := tstValidUserToken(t, 1)
 
 	docs.When("when they attempt to create a new attendee with valid data before public registration has begun")
 	attendeeSent := tstBuildValidAttendee("na31-")
@@ -431,7 +431,7 @@ func TestCreateNewAttendee_LoginRequired_TooEarly_Staff(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given a logged in staffer")
-	token := tstValidStaffToken(t, "1")
+	token := tstValidStaffToken(t, 1)
 
 	docs.When("when they attempt to create a new attendee with valid data before public registration has begun")
 	attendeeSent := tstBuildValidAttendee("na32-")
@@ -484,7 +484,7 @@ func TestCreateNewAttendee_LoginRequired_Between_User(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given a logged in user")
-	token := tstValidUserToken(t, "1")
+	token := tstValidUserToken(t, 1)
 
 	docs.When("when they attempt to create a new attendee with valid data before public registration has begun")
 	attendeeSent := tstBuildValidAttendee("na41-")
@@ -502,7 +502,7 @@ func TestCreateNewAttendee_LoginRequired_Between_Staff(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given a logged in staffer")
-	token := tstValidStaffToken(t, "1")
+	token := tstValidStaffToken(t, 1)
 
 	docs.When("when they attempt to create a new attendee with valid data after staff registration has begun")
 	attendeeSent := tstBuildValidAttendee("na42-")
@@ -553,7 +553,7 @@ func TestCreateNewAttendee_LoginRequired_After_User(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given a logged in user")
-	token := tstValidUserToken(t, "1")
+	token := tstValidUserToken(t, 1)
 
 	docs.When("when they attempt to create a new attendee with valid data after public registration has begun")
 	attendeeSent := tstBuildValidAttendee("na51-")
@@ -570,7 +570,7 @@ func TestCreateNewAttendee_LoginRequired_After_Staff(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given a logged in staffer")
-	token := tstValidStaffToken(t, "1")
+	token := tstValidStaffToken(t, 1)
 
 	docs.When("when they attempt to create a new attendee with valid data after public registration has begun")
 	attendeeSent := tstBuildValidAttendee("na52-")
@@ -606,7 +606,7 @@ func TestUpdateExistingAttendee_Self(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
-	token := tstValidUserToken(t, "101")
+	token := tstValidUserToken(t, 101)
 	location1, attendee1 := tstRegisterAttendeeWithToken(t, "ua1-", token)
 
 	docs.When("when they send updated attendee info while logged in")
@@ -629,7 +629,7 @@ func TestUpdateExistingAttendee_Other(t *testing.T) {
 
 	docs.Given("given two existing users, the second of which has registered")
 	location2, attendee2 := tstRegisterAttendee(t, "ua2b-")
-	token := tstValidUserToken(t, "101")
+	token := tstValidUserToken(t, 101)
 
 	docs.When("when the first user sends updated attendee info for the second user, i.e. for someone else")
 	changedAttendee := attendee2
@@ -756,7 +756,7 @@ func TestDenyUpdateExistingOtherAttendeeWithStaffToken(t *testing.T) {
 	docs.When("when a logged in staffer, who is not that attendee, sends updated attendee info for them, i.e. for someone else")
 	changedAttendee := attendeeReadAfterCreation
 	changedAttendee.FirstName = "Eva"
-	token := tstValidStaffToken(t, "202")
+	token := tstValidStaffToken(t, 202)
 	updateResponse := tstPerformPut(creationResponse.location, tstRenderJson(changedAttendee), token)
 
 	docs.Then("then the request is denied as unauthorized (403) and the data remains unchanged")
@@ -821,7 +821,7 @@ func TestUpdateExistingAttendeeReadOnlyFlag(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee who is logged in")
-	token := tstValidUserToken(t, "101")
+	token := tstValidUserToken(t, 101)
 	location1, attendee1 := tstRegisterAttendeeWithToken(t, "ua11-", token)
 
 	docs.When("when they send updated attendee info and attempt to add a read-only flag (ev)")
@@ -890,7 +890,7 @@ func TestDenyReadExistingAttendee_Other(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given two users, the second of which has registered")
-	token1 := tstValidUserToken(t, "101")
+	token1 := tstValidUserToken(t, 101)
 	location2, _ := tstRegisterAttendee(t, "ga2b-")
 
 	docs.When("when the first one attempts to read the attendee info of the second one, i.e. of someone else")
@@ -906,7 +906,7 @@ func TestAllowReadExistingAttendee_Self(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee who is logged in")
-	token := tstValidUserToken(t, "101")
+	token := tstValidUserToken(t, 101)
 	location1, attendee1 := tstRegisterAttendeeWithToken(t, "ga3-", token)
 
 	docs.When("when the first one attempts to read the attendee info of the second one")
@@ -925,7 +925,7 @@ func TestDenyReadExistingAttendeeWithStaffToken(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given two existing users, the first of which is staff, and the second of which has registered")
-	token := tstValidStaffToken(t, "202")
+	token := tstValidStaffToken(t, 202)
 	location2, _ := tstRegisterAttendee(t, "ga4b-")
 
 	docs.When("when the staffer attempts to read the attendee info of another user")
@@ -993,7 +993,7 @@ func TestMyRegistrations_Anon(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given there are registrations")
-	token1 := tstValidUserToken(t, "1")
+	token1 := tstValidUserToken(t, 1)
 	reg1 := tstBuildValidAttendee("my1a-")
 	reg1response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(reg1), token1)
 	require.Equal(t, http.StatusCreated, reg1response.status, "unexpected http response status")
@@ -1012,13 +1012,13 @@ func TestMyRegistrations_User_None(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given there are registrations")
-	token1 := tstValidUserToken(t, "1")
+	token1 := tstValidUserToken(t, 1)
 	reg1 := tstBuildValidAttendee("my10a-")
 	reg1response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(reg1), token1)
 	require.Equal(t, http.StatusCreated, reg1response.status, "unexpected http response status")
 
 	docs.Given("given a different user, who has made no registrations")
-	token101 := tstValidUserToken(t, "101")
+	token101 := tstValidUserToken(t, 101)
 
 	docs.When("when they request the list of registrations they own")
 	response := tstPerformGet("/api/rest/v1/attendees", token101)
@@ -1032,13 +1032,13 @@ func TestMyRegistrations_User_One(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given there are registrations")
-	token1 := tstValidUserToken(t, "1")
+	token1 := tstValidUserToken(t, 1)
 	reg1 := tstBuildValidAttendee("my11a-")
 	reg1response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(reg1), token1)
 	require.Equal(t, http.StatusCreated, reg1response.status, "unexpected http response status")
 
 	docs.Given("given a different user, who has made a single registration")
-	token101 := tstValidUserToken(t, "101")
+	token101 := tstValidUserToken(t, 101)
 	reg2 := tstBuildValidAttendee("my11b-")
 	reg2response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(reg2), token101)
 	require.Equal(t, http.StatusCreated, reg2response.status, "unexpected http response status")
@@ -1060,7 +1060,7 @@ func TestMyRegistrations_Admin_Two(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given there are registrations")
-	token101 := tstValidUserToken(t, "101")
+	token101 := tstValidUserToken(t, 101)
 	reg1 := tstBuildValidAttendee("my12a-")
 	reg1response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(reg1), token101)
 	require.Equal(t, http.StatusCreated, reg1response.status, "unexpected http response status")
@@ -1093,7 +1093,7 @@ func TestMyRegistrations_ApiToken(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given there are registrations")
-	token1 := tstValidUserToken(t, "1")
+	token1 := tstValidUserToken(t, 1)
 	reg1 := tstBuildValidAttendee("my20a-")
 	reg1response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(reg1), token1)
 	require.Equal(t, http.StatusCreated, reg1response.status, "unexpected http response status")

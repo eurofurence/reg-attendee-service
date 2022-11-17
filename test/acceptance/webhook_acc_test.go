@@ -52,7 +52,7 @@ func TestPaymentsChangedWebhook_Anonymous_Declined(t *testing.T) {
 func TestPaymentsChangedWebhook_User_Declined(t *testing.T) {
 	testcase := "pc1user2-"
 	tstStatusChange_Webhook_Decline(t, testcase,
-		tstValidUserToken(t, "101"),
+		tstValidUserToken(t, 101),
 		"approved",
 		[]paymentservice.Transaction{
 			tstCreateTransaction(1, paymentservice.Payment, 2040),
@@ -64,7 +64,7 @@ func TestPaymentsChangedWebhook_User_Declined(t *testing.T) {
 func TestPaymentsChangedWebhook_Staff_Declined(t *testing.T) {
 	testcase := "pc1staff2-"
 	tstStatusChange_Webhook_Decline(t, testcase,
-		tstValidStaffToken(t, "202"),
+		tstValidStaffToken(t, 202),
 		"approved",
 		[]paymentservice.Transaction{
 			tstCreateTransaction(1, paymentservice.Payment, 2040),
