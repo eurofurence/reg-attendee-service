@@ -147,6 +147,7 @@ func idFromVars(ctx context.Context, w http.ResponseWriter, r *http.Request) (ui
 
 func parseBodyToBanDto(ctx context.Context, w http.ResponseWriter, r *http.Request) (*bans.BanRule, error) {
 	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
 	dto := &bans.BanRule{}
 	err := decoder.Decode(dto)
 	if err != nil {

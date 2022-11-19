@@ -177,6 +177,7 @@ func idFromVars(ctx context.Context, w http.ResponseWriter, r *http.Request) (ui
 
 func parseBodyToAttendeeDto(ctx context.Context, w http.ResponseWriter, r *http.Request) (*attendee.AttendeeDto, error) {
 	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
 	dto := &attendee.AttendeeDto{}
 	err := decoder.Decode(dto)
 	if err != nil {

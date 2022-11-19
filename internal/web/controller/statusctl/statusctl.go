@@ -271,6 +271,7 @@ func obtainAttendeeLatestStatusMustReturnOnError(ctx context.Context, w http.Res
 
 func parseBodyToStatusChangeDto(ctx context.Context, w http.ResponseWriter, r *http.Request) (*status.StatusChangeDto, error) {
 	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
 	dto := &status.StatusChangeDto{}
 	err := decoder.Decode(dto)
 	if err != nil {
