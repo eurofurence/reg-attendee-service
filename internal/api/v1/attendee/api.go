@@ -56,18 +56,22 @@ type AttendeeSearchCriteria struct {
 }
 
 type AttendeeSearchSingleCriterion struct {
-	Ids          []uint          `json:"ids,omitempty"`
-	Nickname     string          `json:"nickname"`
-	Name         string          `json:"name"`
-	Address      string          `json:"address"`
-	Country      string          `json:"country"`
-	CountryBadge string          `json:"country_badge"`
-	Email        string          `json:"email"`
-	Telegram     string          `json:"telegram"`
-	Flags        map[string]int8 `json:"flags"`
-	Options      map[string]int8 `json:"options"`
-	Packages     map[string]int8 `json:"packages"`
-	UserComments string          `json:"user_comments"`
+	Ids           []uint          `json:"ids,omitempty"`
+	Nickname      string          `json:"nickname"`
+	Name          string          `json:"name"`
+	Address       string          `json:"address"`
+	Country       string          `json:"country"`
+	CountryBadge  string          `json:"country_badge"`
+	Email         string          `json:"email"`
+	Telegram      string          `json:"telegram"`
+	Flags         map[string]int8 `json:"flags"` // TODO include admin only flags (guest, skip_ban_check) (if admin)
+	Options       map[string]int8 `json:"options"`
+	Packages      map[string]int8 `json:"packages"`
+	UserComments  string          `json:"user_comments"`
+	Status        []string        `json:"status"`         // TODO implement
+	Permissions   map[string]int8 `json:"permissions"`    // TODO implement
+	AdminComments string          `json:"admin_comments"` // TODO implement
+	AddInfo       map[string]int8 `json:"add_info"`       // TODO implement
 }
 
 // --- search result ---
@@ -96,13 +100,14 @@ type AttendeeSearchResult struct {
 	Gender         *string `json:"gender,omitempty"`
 	Pronouns       *string `json:"pronouns,omitempty"`
 	TshirtSize     *string `json:"tshirt_size,omitempty"`
-	Flags          *string `json:"flags,omitempty"`
+	Flags          *string `json:"flags,omitempty"` // TODO include admin only flags (if admin)
 	Options        *string `json:"options,omitempty"`
 	Packages       *string `json:"packages,omitempty"`
 	UserComments   *string `json:"user_comments,omitempty"`
-	Status         *string `json:"status,omitempty"`
-	TotalDues      *int64  `json:"total_dues,omitempty"`
-	PaymentBalance *int64  `json:"payment_balance,omitempty"`
-	CurrentDues    *int64  `json:"current_dues,omitempty"`
-	DueDate        *string `json:"due_date,omitempty"`
+	Status         *string `json:"status,omitempty"`          // TODO include
+	TotalDues      *int64  `json:"total_dues,omitempty"`      // TODO cache in addInfo:dues from payments changed hook
+	PaymentBalance *int64  `json:"payment_balance,omitempty"` // TODO cache in addInfo:dues from payments changed hook
+	CurrentDues    *int64  `json:"current_dues,omitempty"`    // TODO cache in addInfo:dues from payments changed hook
+	DueDate        *string `json:"due_date,omitempty"`        // TODO cache in addInfo:overdue from payments changed hook ONLY IF OUTSTANDING
+	Registered     *string `json:"registered,omitempty"`      // TODO the ISO date we registered
 }

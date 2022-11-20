@@ -22,7 +22,7 @@ tags:
   - name: registration
     description: Register and change attendees
   - name: additional
-    description: Additional info (for use by external systems such as sponsordesk, regdesk, ...)
+    description: Additional info (for use by external systems such as sponsordesk, regdesk, ...) and for remembering internal state.
   - name: status
     description: Status progression
   - name: privileged
@@ -267,7 +267,7 @@ paths:
       tags:
         - additional
       summary: obtain the current additional info for an area
-      description: Returns the current additional info for an area (e.g. regdesk, sponsordesk, ...). User will need to have permission called {area} to access it.
+      description: Returns the current additional info for an area (e.g. regdesk, sponsordesk, overdue, ...). User will need to have permission called {area} to access it.
       operationId: getAdditionalInfo
       parameters:
         - name: id
@@ -330,7 +330,7 @@ paths:
         - additional
       summary: set the current additional info for an area
       description: |
-        Set the current additional info for an area (e.g. regdesk, sponsordesk, ...). User will need to have permission "area" to access it.
+        Set the current additional info for an area (e.g. regdesk, sponsordesk, overdue, ...). User will need to have permission "area" to access it.
         
         You can store an arbitrary json object here, but the length is limited to 1024 characters.
       operationId: setAdditionalInfo
@@ -383,6 +383,67 @@ paths:
                 $ref: '#/components/schemas/Error'
         '404':
           description: Attendee not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: An unexpected error occurred. This includes database errors. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+    delete:
+      tags:
+        - additional
+      summary: remove the current additional info for an area
+      description: |
+        Remove the current additional info for an area (e.g. regdesk, sponsordesk, overdue, ...). User will need to have permission "area" to do this.
+      operationId: deleteAdditionalInfo
+      parameters:
+        - name: id
+          in: path
+          description: Badge number of attendee
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            format: int64
+        - name: area
+          in: path
+          description: Area (must match [a-z]+)
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 32
+            example: sponsordesk
+      responses:
+        '204':
+          description: successful operation
+        '400':
+          description: Invalid ID or area supplied (area must match [a-z]+)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: You do not have permission to see this attendee or area.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Attendee or area not found
           content:
             application/json:
               schema:
@@ -1302,6 +1363,11 @@ components:
           format: date
           example: '2022-06-18'
           description: the date at which dues become/became overdue.
+        registered:
+          type: string
+          format: date
+          example: '2022-01-22'
+          description: the date at which the registration was created.
     AttendeeSearchCriteria:
       type: object
       required:
@@ -1403,7 +1469,7 @@ components:
           type: string
           description: full match on telegram handle, case insensitive, use * as a wildcard for substring matches
         flags:
-          description: desired state of flags as declared in configuration. If specified at all, flag must be present the given number of times (0 or 1).
+          description: desired state of flags as declared in configuration. If specified at all, flag must be present the given number of times (0 or 1). Admin flags are available to users for whom they are visible.
           type: object
           additionalProperties:
             $ref: '#/components/schemas/ChoiceStateCondition'
@@ -1430,6 +1496,36 @@ components:
           type: string
           description: substring match on the user comments, case insensitive, use * as a wildcard for substring matches, no need to supply surrounding *
           example: 'euro*rence'
+        status:
+          description: what status values to include in the result. If set at all, you must include all status values that you wish to search for. Or you can leave this unset to pose no status condition.
+          type: array
+          items:
+            $ref: '#/components/schemas/Status'
+          example:
+            - approved
+            - partially paid
+            - paid
+        permissions:
+          description: desired state of permissions. If specified at all, permission must be present the given number of times (0 or 1).
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ChoiceStateCondition'
+          example:
+            regdesk: 1
+            sponsordesk: 0
+        admin_comments:
+          type: string
+          description: substring match on the admin comments, case insensitive, use * as a wildcard for substring matches, no need to supply surrounding *. Only used if field visible to you.
+          example: 'wheelchair'
+        add_info:
+          description: presence of additional info area. If specified at all, a value for the area must be present the given number of times (0 or 1). Note you can only search for whether a key is present for an attendee, not for contents of the value.
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ChoiceStateCondition'
+          example:
+            sponsor-items: 1
+            key-hand-out: 0
+            overdue: 1
     ChoiceStateCondition:
       type: integer
       format: int64
@@ -1641,10 +1737,7 @@ components:
         status_history:
           type: array
           items:
-            type: object
-            properties:
-              schema:
-                $ref: '#/components/schemas/StatusChange'
+            $ref: '#/components/schemas/StatusChange'
     Status:
       type: string
       enum:

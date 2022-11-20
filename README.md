@@ -105,6 +105,7 @@ Limitations:
 
   - check that at least one attendance option is set
   - admin only flag skipBanCheck
+  - support status in find
 
 ### for later
 
