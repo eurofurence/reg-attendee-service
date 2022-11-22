@@ -4,6 +4,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/bans"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -116,7 +117,7 @@ func TestCreateNewBanRule_InvalidValues(t *testing.T) {
 	docs.When("when they attempt to create a new ban rule with invalid data")
 	banSent := tstBuildValidBanRule("ban16-")
 	banSent.EmailPattern = "(unmatched|parens\\)"
-	banSent.Id = "57"
+	banSent.Id = 57
 	banSent.NamePattern = "****"
 	banSent.NicknamePattern = "unclosed[group"
 	banSent.Reason = ""
@@ -473,7 +474,7 @@ func TestUpdateBanRule_NotFound(t *testing.T) {
 
 	docs.When("when they attempt to update a ban rule, but supply an id that does not exist")
 	ban := tstBuildValidBanRule("ban46-")
-	ban.Id = "46"
+	ban.Id = 46
 	response := tstPerformPut("/api/rest/v1/bans/46", tstRenderJson(ban), token)
 
 	docs.Then("then the request fails with the appropriate error")
@@ -584,7 +585,9 @@ func tstCreatePreexistingBans(t *testing.T, testcase string) (bans.BanRule, stri
 	return ban1, response1.location, ban2, response2.location
 }
 
-func tstIdFromLoc(loc string) string {
+func tstIdFromLoc(loc string) uint {
 	sections := strings.Split(loc, "/")
-	return sections[len(sections)-1]
+	idStr := sections[len(sections)-1]
+	intval, _ := strconv.Atoi(idStr)
+	return uint(intval)
 }

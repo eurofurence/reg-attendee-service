@@ -131,6 +131,10 @@ func (s *MockAttendeeService) UpdateBan(ctx context.Context, ban *entity.Ban) er
 	return nil
 }
 
+func (s *MockAttendeeService) DeleteBan(ctx context.Context, ban *entity.Ban) error {
+	return nil
+}
+
 func (s *MockAttendeeService) GetBan(ctx context.Context, id uint) (*entity.Ban, error) {
 	return &entity.Ban{}, nil
 }

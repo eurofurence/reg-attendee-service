@@ -14,7 +14,7 @@ info:
     url: https://github.com/eurofurence/reg-attendee-service/blob/main/LICENSE
   version: 0.1.0
 servers:
-  - url: /api/rest/v1
+  - url: http://localhost:9091/api/rest/v1
     description: localhost
   - url: /attsrv/api/rest/v1
     description: server
@@ -1065,6 +1065,57 @@ paths:
                 $ref: '#/components/schemas/Error'
         '409':
           description: your changes would turn this ban rule into a duplicate (all three patterns identical)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: An unexpected error occurred. This includes database errors. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+    delete:
+      tags:
+        - privileged
+      summary: Delete ban rule by id
+      description: Deletes a single ban rule
+      operationId: deleteBanRuleById
+      parameters:
+        - name: id
+          in: path
+          description: id to return
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            format: int64
+      responses:
+        '204':
+          description: successful operation
+        '400':
+          description: Invalid ID supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: You do not have permission to alter ban rules
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Ban rule not found
           content:
             application/json:
               schema:

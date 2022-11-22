@@ -1,7 +1,6 @@
 package banctl
 
 import (
-	"fmt"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/bans"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 )
@@ -15,7 +14,7 @@ func mapDtoToBan(dto *bans.BanRule, b *entity.Ban) {
 }
 
 func mapBanToDto(b *entity.Ban, dto *bans.BanRule) {
-	dto.Id = fmt.Sprint(b.ID)
+	dto.Id = b.ID
 	dto.Reason = b.Reason
 	dto.NamePattern = b.NamePattern
 	dto.NicknamePattern = b.NicknamePattern

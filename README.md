@@ -106,6 +106,8 @@ Limitations:
   - check that at least one attendance option is set
   - admin only flag skipBanCheck
   - support status in find
+  - new endpoint for "resend last status change notification email"
+  - delete ban rule tests
 
 ### for later
 

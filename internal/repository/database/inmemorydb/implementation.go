@@ -9,6 +9,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database/dbrepo"
 	"sort"
 	"sync/atomic"
+	"time"
 )
 
 type InMemoryRepository struct {
@@ -57,6 +58,7 @@ func (r *InMemoryRepository) AddAttendee(ctx context.Context, a *entity.Attendee
 
 	// copy the attendee, so later modifications won't also modify it in the simulated db
 	copiedAttendee := *a
+	copiedAttendee.CreatedAt = time.Now()
 	r.attendees[newId] = &copiedAttendee
 	return newId, nil
 }
@@ -65,6 +67,7 @@ func (r *InMemoryRepository) UpdateAttendee(ctx context.Context, a *entity.Atten
 	if _, ok := r.attendees[a.ID]; ok {
 		// copy the attendee, so later modifications won't also modify it in the simulated db
 		copiedAttendee := *a
+		copiedAttendee.UpdatedAt = time.Now()
 		r.attendees[a.ID] = &copiedAttendee
 		return nil
 	} else {
@@ -233,9 +236,11 @@ func (r *InMemoryRepository) GetStatusChangesByAttendeeId(ctx context.Context, a
 func (r *InMemoryRepository) AddStatusChange(ctx context.Context, sc *entity.StatusChange) error {
 	if scList, ok := r.statusChanges[sc.AttendeeId]; ok {
 		scCopy := *sc
+		scCopy.CreatedAt = time.Now()
 		r.statusChanges[sc.AttendeeId] = append(scList, scCopy)
 	} else {
 		scCopy := *sc
+		scCopy.CreatedAt = time.Now()
 		r.statusChanges[sc.AttendeeId] = []entity.StatusChange{scCopy}
 	}
 	return nil
@@ -294,6 +299,15 @@ func (r *InMemoryRepository) UpdateBan(ctx context.Context, b *entity.Ban) error
 		return nil
 	} else {
 		return fmt.Errorf("cannot update ban %d - not present", b.ID)
+	}
+}
+
+func (r *InMemoryRepository) DeleteBan(ctx context.Context, b *entity.Ban) error {
+	if _, ok := r.bans[b.ID]; ok {
+		delete(r.bans, b.ID)
+		return nil
+	} else {
+		return fmt.Errorf("cannot delete ban %d - not present", b.ID)
 	}
 }
 

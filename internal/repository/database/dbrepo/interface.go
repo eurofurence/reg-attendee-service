@@ -34,6 +34,7 @@ type Repository interface {
 	GetBanById(ctx context.Context, id uint) (*entity.Ban, error)
 	AddBan(ctx context.Context, b *entity.Ban) (uint, error)
 	UpdateBan(ctx context.Context, b *entity.Ban) error
+	DeleteBan(ctx context.Context, b *entity.Ban) error
 
 	GetAdditionalInfoFor(ctx context.Context, attendeeId uint, area string) (*entity.AdditionalInfo, error)
 	WriteAdditionalInfo(ctx context.Context, ad *entity.AdditionalInfo) error

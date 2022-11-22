@@ -316,6 +316,14 @@ func (r *MysqlRepository) UpdateBan(ctx context.Context, b *entity.Ban) error {
 	return err
 }
 
+func (r *MysqlRepository) DeleteBan(ctx context.Context, b *entity.Ban) error {
+	err := r.db.Delete(b).Error
+	if err != nil {
+		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("mysql error during ban delete: %s", err.Error())
+	}
+	return err
+}
+
 // --- additional info ---
 
 func (r *MysqlRepository) GetAdditionalInfoFor(ctx context.Context, attendeeId uint, area string) (*entity.AdditionalInfo, error) {

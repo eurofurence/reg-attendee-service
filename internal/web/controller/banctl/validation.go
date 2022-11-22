@@ -2,7 +2,6 @@ package banctl
 
 import (
 	"context"
-	"fmt"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/bans"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
@@ -13,7 +12,7 @@ import (
 func validate(ctx context.Context, b *bans.BanRule, allowedId uint) url.Values {
 	errs := url.Values{}
 
-	if b.Id != "" && b.Id != fmt.Sprint(allowedId) {
+	if b.Id != 0 && b.Id != allowedId {
 		errs.Add("id", "id field must be empty or correctly assigned for incoming requests")
 	}
 
