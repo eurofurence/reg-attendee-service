@@ -28,7 +28,7 @@ func matchesCriteria(conds *attendee.AttendeeSearchCriteria, a *entity.Attendee)
 func matches(cond *attendee.AttendeeSearchSingleCriterion, a *entity.Attendee) bool {
 	return matchesUintSliceOrEmpty(cond.Ids, a.ID) &&
 		matchesFullstringGlobOrEmpty(cond.Nickname, a.Nickname) &&
-		matchesFullstringGlobOrEmpty(cond.Nickname, a.FirstName+" "+a.LastName) &&
+		matchesFullstringGlobOrEmpty(cond.Name, a.FirstName+" "+a.LastName) &&
 		matchesSubstringGlobOrEmpty(cond.Address, a.Street+" "+a.Zip+" "+a.City+" "+a.State) &&
 		matchesExactOrEmpty(cond.Country, a.Country) &&
 		matchesExactOrEmpty(cond.CountryBadge, a.CountryBadge) &&

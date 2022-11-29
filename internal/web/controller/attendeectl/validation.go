@@ -2,7 +2,6 @@ package attendeectl
 
 import (
 	"context"
-	"fmt"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/validation"
@@ -57,7 +56,7 @@ func validateNickname(errs *url.Values, nickname string) {
 func validate(ctx context.Context, a *attendee.AttendeeDto, trustedOriginalState *entity.Attendee) url.Values {
 	errs := url.Values{}
 
-	if a.Id != "" && a.Id != fmt.Sprint(trustedOriginalState.ID) {
+	if a.Id != 0 && a.Id != trustedOriginalState.ID {
 		errs.Add("id", "id field must be empty or correctly assigned for incoming requests")
 	}
 	validateNickname(&errs, a.Nickname)

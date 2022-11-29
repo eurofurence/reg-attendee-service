@@ -6,7 +6,7 @@ import (
 
 func tstCreateValidAdminInfo() admin.AdminInfoDto {
 	return admin.AdminInfoDto{
-		Id:            "42",
+		Id:            42,
 		Flags:         "staff,banned",
 		Permissions:   "regdesk,readonly",
 		AdminComments: "some admin comment",

@@ -44,6 +44,10 @@ func (r *HistorizingRepository) UpdateAttendee(ctx context.Context, a *entity.At
 		return err
 	}
 
+	// hide always present diff in times
+	oldVersion.CreatedAt = a.CreatedAt
+	oldVersion.UpdatedAt = a.UpdatedAt
+
 	histEntry := diffReverse(ctx, oldVersion, a, "Attendee", a.ID)
 
 	err = r.wrappedRepository.RecordHistory(ctx, histEntry)
@@ -83,6 +87,10 @@ func (r *HistorizingRepository) WriteAdminInfo(ctx context.Context, ai *entity.A
 	if err != nil {
 		return err
 	}
+
+	// hide always present diff in times
+	oldVersion.CreatedAt = ai.CreatedAt
+	oldVersion.UpdatedAt = ai.UpdatedAt
 
 	histEntry := diffReverse(ctx, oldVersion, ai, "AdminInfo", ai.ID)
 
@@ -133,6 +141,10 @@ func (r *HistorizingRepository) UpdateBan(ctx context.Context, b *entity.Ban) er
 		return err
 	}
 
+	// hide always present diff in times
+	oldVersion.CreatedAt = b.CreatedAt
+	oldVersion.UpdatedAt = b.UpdatedAt
+
 	histEntry := diffReverse(ctx, oldVersion, b, "Ban", b.ID)
 
 	err = r.wrappedRepository.RecordHistory(ctx, histEntry)
@@ -141,6 +153,28 @@ func (r *HistorizingRepository) UpdateBan(ctx context.Context, b *entity.Ban) er
 	}
 
 	return r.wrappedRepository.UpdateBan(ctx, b)
+}
+
+func (r *HistorizingRepository) DeleteBan(ctx context.Context, b *entity.Ban) error {
+	_, err := r.wrappedRepository.GetBanById(ctx, b.ID)
+	if err != nil {
+		return err
+	}
+
+	histEntry := &entity.History{
+		Entity:    "Ban",
+		EntityId:  b.ID,
+		RequestId: ctxvalues.RequestId(ctx),
+		UserId:    ctxvalues.Subject(ctx),
+		Diff:      "<deleted>",
+	}
+
+	err = r.wrappedRepository.RecordHistory(ctx, histEntry)
+	if err != nil {
+		return err
+	}
+
+	return r.wrappedRepository.DeleteBan(ctx, b)
 }
 
 // --- additional info ---

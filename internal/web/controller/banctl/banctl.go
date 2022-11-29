@@ -36,6 +36,7 @@ func Create(server chi.Router) {
 	server.Post("/api/rest/v1/bans", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(3*time.Second, newBanHandler)))
 	server.Get("/api/rest/v1/bans/{id}", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(3*time.Second, getBanHandler)))
 	server.Put("/api/rest/v1/bans/{id}", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(3*time.Second, updateBanHandler)))
+	server.Delete("/api/rest/v1/bans/{id}", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(3*time.Second, deleteBanHandler)))
 }
 
 func allBansHandler(w http.ResponseWriter, r *http.Request) {
@@ -136,6 +137,28 @@ func updateBanHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func deleteBanHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	id, err := idFromVars(ctx, w, r)
+	if err != nil {
+		return
+	}
+
+	existingBan, err := attendeeService.GetBan(ctx, id)
+	if err != nil {
+		banNotFoundErrorHandler(ctx, w, r, id)
+		return
+	}
+
+	err = attendeeService.DeleteBan(ctx, existingBan)
+	if err != nil {
+		banWriteErrorHandler(ctx, w, r, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func idFromVars(ctx context.Context, w http.ResponseWriter, r *http.Request) (uint, error) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
@@ -147,6 +170,7 @@ func idFromVars(ctx context.Context, w http.ResponseWriter, r *http.Request) (ui
 
 func parseBodyToBanDto(ctx context.Context, w http.ResponseWriter, r *http.Request) (*bans.BanRule, error) {
 	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
 	dto := &bans.BanRule{}
 	err := decoder.Decode(dto)
 	if err != nil {

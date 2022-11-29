@@ -53,7 +53,7 @@ func TestCountdownBeforeTarget_LoggedIn(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given a logged in user who is not staff")
-	token := tstValidUserToken(t, "1")
+	token := tstValidUserToken(t, 1)
 
 	docs.When("when they request the countdown resource before the target time has been reached")
 	response := tstPerformGet("/api/rest/v1/countdown", token)
@@ -71,7 +71,7 @@ func TestCountdownBeforeTarget_LoggedInStaff(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given a logged in staffer")
-	token := tstValidStaffToken(t, "1")
+	token := tstValidStaffToken(t, 1)
 
 	docs.When("when they request the countdown resource before the target time has been reached")
 	response := tstPerformGet("/api/rest/v1/countdown", token)
@@ -127,7 +127,7 @@ func TestCountdownStaffregBetweenTargets_PublicLoggedInStaff(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given a logged in staffer")
-	token := tstValidStaffToken(t, "1")
+	token := tstValidStaffToken(t, 1)
 
 	docs.When("when they request the countdown resource after the staff target time, but before the public target time")
 	response := tstPerformGet("/api/rest/v1/countdown", token)
@@ -160,7 +160,7 @@ func TestCountdownStaffregBetweenTargets_LoggedIn(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given a logged in user who is not staff")
-	token := tstValidUserToken(t, "1")
+	token := tstValidUserToken(t, 1)
 
 	docs.When("when they request the countdown resource after the staff target time, but before the public target time")
 	response := tstPerformGet("/api/rest/v1/countdown", token)
@@ -178,7 +178,7 @@ func TestCountdownStaffregBetweenTargets_LoggedInStaff(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given a logged in staffer")
-	token := tstValidStaffToken(t, "1")
+	token := tstValidStaffToken(t, 1)
 
 	docs.When("when they request the countdown resource after the staff target time, but before the public target time")
 	response := tstPerformGet("/api/rest/v1/countdown", token)
@@ -249,7 +249,7 @@ func TestCountdownAfterTarget_LoggedIn(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given a logged in user")
-	token := tstValidUserToken(t, "1")
+	token := tstValidUserToken(t, 1)
 
 	docs.When("when they request the countdown resource after the target time has been reached")
 	response := tstPerformGet("/api/rest/v1/countdown", token)
@@ -287,7 +287,7 @@ func TestMockedCountdownAfterTarget_LoggedIn(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given a logged in user")
-	token := tstValidUserToken(t, "1")
+	token := tstValidUserToken(t, 1)
 
 	docs.When("when they request the mocked countdown resource before the target time has been reached, but pass a mock time after the target")
 	response := tstPerformGet("/api/rest/v1/countdown?currentTime=2030-12-22T14:33:20-01:00", token)

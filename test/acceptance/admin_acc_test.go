@@ -292,7 +292,7 @@ func TestAdminWrite_CannotChangeId(t *testing.T) {
 
 	docs.When("when they attempt to change the id")
 	body := admin.AdminInfoDto{
-		Id: "9999",
+		Id: 9999,
 	}
 	response := tstPerformPut(location1+"/admin", tstRenderJson(body), token)
 

@@ -52,6 +52,16 @@ func (s *AttendeeServiceImplData) UpdateBan(ctx context.Context, ban *entity.Ban
 	return err
 }
 
+func (s *AttendeeServiceImplData) DeleteBan(ctx context.Context, ban *entity.Ban) error {
+	if ban.ID == 0 {
+		aulogging.Logger.Ctx(ctx).Error().Print("cannot delete ban rule without assigned id - this is a program error")
+		return errors.New("cannot delete ban rule without assigned id - this is a program error")
+	}
+
+	err := database.GetRepository().DeleteBan(ctx, ban)
+	return err
+}
+
 func (s *AttendeeServiceImplData) GetBan(ctx context.Context, id uint) (*entity.Ban, error) {
 	return database.GetRepository().GetBanById(ctx, id)
 }

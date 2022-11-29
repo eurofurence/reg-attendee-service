@@ -4,6 +4,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/bans"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -61,7 +62,7 @@ func TestCreateNewBanRule_Unauthorized_User(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given a regular user")
-	token := tstValidUserToken(t, "22")
+	token := tstValidUserToken(t, 22)
 
 	docs.When("when they attempt to create a new ban rule with valid data")
 	banSent := tstBuildValidBanRule("ban13-")
@@ -79,7 +80,7 @@ func TestCreateNewBanRule_Unauthorized_Staff(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given a staffer")
-	token := tstValidStaffToken(t, "42")
+	token := tstValidStaffToken(t, 42)
 
 	docs.When("when they attempt to create a new ban rule with valid data")
 	banSent := tstBuildValidBanRule("ban14-")
@@ -116,7 +117,7 @@ func TestCreateNewBanRule_InvalidValues(t *testing.T) {
 	docs.When("when they attempt to create a new ban rule with invalid data")
 	banSent := tstBuildValidBanRule("ban16-")
 	banSent.EmailPattern = "(unmatched|parens\\)"
-	banSent.Id = "57"
+	banSent.Id = 57
 	banSent.NamePattern = "****"
 	banSent.NicknamePattern = "unclosed[group"
 	banSent.Reason = ""
@@ -231,7 +232,7 @@ func TestReadBanRules_Unauthorized_User(t *testing.T) {
 	_, _, _, _ = tstCreatePreexistingBans(t, "ban23-")
 
 	docs.Given("given a regular user")
-	token := tstValidUserToken(t, "22")
+	token := tstValidUserToken(t, 22)
 
 	docs.When("when they attempt to list the ban rules")
 	response := tstPerformGet("/api/rest/v1/bans", token)
@@ -248,7 +249,7 @@ func TestReadBanRules_Unauthorized_Staff(t *testing.T) {
 	_, _, _, _ = tstCreatePreexistingBans(t, "ban24-")
 
 	docs.Given("given a staffer")
-	token := tstValidStaffToken(t, "42")
+	token := tstValidStaffToken(t, 42)
 
 	docs.When("when they attempt to list the ban rules")
 	response := tstPerformGet("/api/rest/v1/bans", token)
@@ -303,7 +304,7 @@ func TestReadBanRule_Unauthorized_User(t *testing.T) {
 	_, _, _, loc2 := tstCreatePreexistingBans(t, "ban33-")
 
 	docs.Given("given a regular user")
-	token := tstValidUserToken(t, "22")
+	token := tstValidUserToken(t, 22)
 
 	docs.When("when they attempt to read an existing ban rule")
 	response := tstPerformGet(loc2, token)
@@ -320,7 +321,7 @@ func TestReadBanRule_Unauthorized_Staff(t *testing.T) {
 	_, _, _, loc2 := tstCreatePreexistingBans(t, "ban34-")
 
 	docs.Given("given a staffer")
-	token := tstValidStaffToken(t, "42")
+	token := tstValidStaffToken(t, 42)
 
 	docs.When("when they attempt to read an existing ban rule")
 	response := tstPerformGet(loc2, token)
@@ -411,7 +412,7 @@ func TestUpdateBanRule_Unauthorized_User(t *testing.T) {
 	_, _, ban2, loc2 := tstCreatePreexistingBans(t, "ban43-")
 
 	docs.Given("given a regular user")
-	token := tstValidUserToken(t, "22")
+	token := tstValidUserToken(t, 22)
 
 	docs.When("when they attempt to update an existing ban rule")
 	banUpdated := ban2
@@ -434,7 +435,7 @@ func TestUpdateBanRule_Unauthorized_Staff(t *testing.T) {
 	_, _, ban2, loc2 := tstCreatePreexistingBans(t, "ban44-")
 
 	docs.Given("given a staffer")
-	token := tstValidStaffToken(t, "42")
+	token := tstValidStaffToken(t, 42)
 
 	docs.When("when they attempt to update an existing ban rule")
 	banUpdated := ban2
@@ -473,7 +474,7 @@ func TestUpdateBanRule_NotFound(t *testing.T) {
 
 	docs.When("when they attempt to update a ban rule, but supply an id that does not exist")
 	ban := tstBuildValidBanRule("ban46-")
-	ban.Id = "46"
+	ban.Id = 46
 	response := tstPerformPut("/api/rest/v1/bans/46", tstRenderJson(ban), token)
 
 	docs.Then("then the request fails with the appropriate error")
@@ -584,7 +585,9 @@ func tstCreatePreexistingBans(t *testing.T, testcase string) (bans.BanRule, stri
 	return ban1, response1.location, ban2, response2.location
 }
 
-func tstIdFromLoc(loc string) string {
+func tstIdFromLoc(loc string) uint {
 	sections := strings.Split(loc, "/")
-	return sections[len(sections)-1]
+	idStr := sections[len(sections)-1]
+	intval, _ := strconv.Atoi(idStr)
+	return uint(intval)
 }

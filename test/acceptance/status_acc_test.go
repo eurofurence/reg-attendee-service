@@ -15,7 +15,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/url"
-	"strconv"
 	"testing"
 	"time"
 )
@@ -50,7 +49,7 @@ func TestStatus_UserDenyOther(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given two existing regular users, the second of which has registered")
-	token := tstValidUserToken(t, "101")
+	token := tstValidUserToken(t, 101)
 	location2, _ := tstRegisterAttendee(t, "stat2b-")
 
 	docs.When("when the first user attempts to access somebody else's status")
@@ -66,7 +65,7 @@ func TestStatus_UserAllowSelf(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
-	token := tstValidUserToken(t, "101")
+	token := tstValidUserToken(t, 101)
 	location1, _ := tstRegisterAttendeeWithToken(t, "stat3-", token)
 
 	docs.When("when they access their own status")
@@ -87,7 +86,7 @@ func TestStatus_StaffDenyOther(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given two existing users, the first of which is staff")
-	token1 := tstValidStaffToken(t, "202")
+	token1 := tstValidStaffToken(t, 202)
 	location2, _ := tstRegisterAttendee(t, "stat4b-")
 
 	docs.When("when the staffer attempts to access somebody else's status")
@@ -103,7 +102,7 @@ func TestStatus_StaffAllowSelf(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee who is staff")
-	token := tstValidStaffToken(t, "202")
+	token := tstValidStaffToken(t, 202)
 	location1, _ := tstRegisterAttendeeWithToken(t, "stat5-", token)
 
 	docs.When("when they access their own status")
@@ -193,7 +192,7 @@ func TestStatusHistory_SelfDeny(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
-	token := tstValidUserToken(t, "101")
+	token := tstValidUserToken(t, 101)
 	location1, _ := tstRegisterAttendeeWithToken(t, "stat21-", token)
 
 	docs.When("when they attempt to access their own status history")
@@ -227,7 +226,7 @@ func TestStatusHistory_StaffDeny(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given an authenticated staffer who has made a valid registration")
-	token := tstValidStaffToken(t, "202")
+	token := tstValidStaffToken(t, 202)
 	location1, _ := tstRegisterAttendeeWithToken(t, "stat22-", token)
 
 	docs.When("when they attempt to access their own (or somebody else's) status history")
@@ -1075,7 +1074,7 @@ func tstStatusChange_Self_Allow(t *testing.T, testcase string,
 	defer tstShutdown()
 
 	docs.Given("given an attendee in status " + oldStatus)
-	token := tstValidStaffToken(t, "1")
+	token := tstValidStaffToken(t, 1)
 	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
 
 	docs.When("when they change their own status to " + newStatus)
@@ -1113,7 +1112,7 @@ func tstStatusChange_Other_Deny(t *testing.T, testcase string, oldStatus string,
 
 	docs.Given("given an attendee in status " + oldStatus + " and a second user")
 	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
-	token2 := tstValidUserToken(t, "101")
+	token2 := tstValidUserToken(t, 101)
 
 	docs.When("when the second user tries to change the first attendee's status to " + newStatus)
 	body := status.StatusChangeDto{
@@ -1245,7 +1244,7 @@ func tstStatusChange_Staff_Other_Deny(t *testing.T, testcase string, oldStatus s
 
 	docs.Given("given an attendee in status " + oldStatus + " and a second user who is staff")
 	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
-	token := tstValidStaffToken(t, "202")
+	token := tstValidStaffToken(t, 202)
 
 	docs.When("when the staffer tries to change the first attendee's status to " + newStatus)
 	body := status.StatusChangeDto{
@@ -1363,7 +1362,7 @@ func tstRequireAttendeeStatus(t *testing.T, expected string, responseBody string
 }
 
 func tstRegisterRegdeskAttendee(t *testing.T, testcase string) string {
-	token := tstValidUserToken(t, "101")
+	token := tstValidUserToken(t, 101)
 
 	loc2, _ := tstRegisterAttendeeWithToken(t, testcase+"second", token)
 	permBody := admin.AdminInfoDto{
@@ -1377,7 +1376,7 @@ func tstRegisterRegdeskAttendee(t *testing.T, testcase string) string {
 
 func tstRegisterAttendeeAndTransitionToStatus(t *testing.T, testcase string, status string) (location string, att attendee.AttendeeDto) {
 	// this works in all configurations, and for status changes, it makes no difference if a user is staff
-	token := tstValidStaffToken(t, "1")
+	token := tstValidStaffToken(t, 1)
 
 	location, att = tstRegisterAttendeeWithToken(t, testcase, token)
 	if status == "new" {
@@ -1385,7 +1384,7 @@ func tstRegisterAttendeeAndTransitionToStatus(t *testing.T, testcase string, sta
 	}
 
 	ctx := context.Background()
-	attid, _ := strconv.Atoi(att.Id)
+	attid := att.Id
 
 	// approved
 	_ = database.GetRepository().AddStatusChange(ctx, tstCreateStatusChange(attid, "approved"))
@@ -1431,21 +1430,21 @@ func tstRegisterAttendeeAndTransitionToStatus(t *testing.T, testcase string, sta
 	return
 }
 
-func tstCreateStatusChange(attid int, status string) *entity.StatusChange {
+func tstCreateStatusChange(attid uint, status string) *entity.StatusChange {
 	return &entity.StatusChange{
-		AttendeeId: uint(attid),
+		AttendeeId: attid,
 		Status:     status,
 	}
 }
 
-func tstCreateTransaction(attid int, ty paymentservice.TransactionType, amount int64) paymentservice.Transaction {
+func tstCreateTransaction(attid uint, ty paymentservice.TransactionType, amount int64) paymentservice.Transaction {
 	method := paymentservice.Internal
 	if ty == paymentservice.Payment {
 		method = paymentservice.Credit
 	}
 	return paymentservice.Transaction{
 		ID:        "1234-1234abc",
-		DebitorID: uint(attid),
+		DebitorID: attid,
 		Type:      ty,
 		Method:    method,
 		Amount: paymentservice.Amount{
@@ -1460,14 +1459,14 @@ func tstCreateTransaction(attid int, ty paymentservice.TransactionType, amount i
 	}
 }
 
-func tstCreateMatcherTransaction(attid int, ty paymentservice.TransactionType, amount int64, comment string) paymentservice.Transaction {
+func tstCreateMatcherTransaction(attid uint, ty paymentservice.TransactionType, amount int64, comment string) paymentservice.Transaction {
 	method := paymentservice.Internal
 	if ty == paymentservice.Payment {
 		method = paymentservice.Credit
 	}
 	return paymentservice.Transaction{
 		ID:        "",
-		DebitorID: uint(attid),
+		DebitorID: attid,
 		Type:      ty,
 		Method:    method,
 		Amount: paymentservice.Amount{

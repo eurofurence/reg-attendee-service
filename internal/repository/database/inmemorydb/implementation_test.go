@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"os"
 	"testing"
+	"time"
 )
 
 var (
@@ -37,6 +38,8 @@ func TestAddAttendee(t *testing.T) {
 	require.Nil(t, err, "unexpected error during add")
 
 	att2, err := cut.GetAttendeeById(context.TODO(), newId)
+	att2.CreatedAt = time.Time{}
+	att2.UpdatedAt = time.Time{}
 	require.Nil(t, err, "unexpected error during get")
 	require.EqualValues(t, *att, *att2, "comparison failure")
 }

@@ -1,7 +1,6 @@
 package adminctl
 
 import (
-	"fmt"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/admin"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"strings"
@@ -16,7 +15,7 @@ func mapDtoToAdminInfo(dto *admin.AdminInfoDto, a *entity.AdminInfo) {
 
 func mapAdminInfoToDto(a *entity.AdminInfo, dto *admin.AdminInfoDto) {
 	// this cannot fail
-	dto.Id = fmt.Sprint(a.ID)
+	dto.Id = a.ID
 	dto.Flags = removeWrappingCommas(a.Flags)
 	dto.Permissions = removeWrappingCommas(a.Permissions)
 	dto.AdminComments = a.AdminComments

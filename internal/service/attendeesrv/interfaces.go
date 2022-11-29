@@ -53,6 +53,7 @@ type AttendeeService interface {
 	NewBan(ctx context.Context) *entity.Ban
 	CreateBan(ctx context.Context, ban *entity.Ban) (uint, error)
 	UpdateBan(ctx context.Context, ban *entity.Ban) error
+	DeleteBan(ctx context.Context, ban *entity.Ban) error
 	GetBan(ctx context.Context, id uint) (*entity.Ban, error)
 	GetAllBans(ctx context.Context) ([]*entity.Ban, error)
 }

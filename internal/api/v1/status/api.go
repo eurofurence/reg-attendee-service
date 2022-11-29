@@ -5,7 +5,7 @@ type StatusDto struct {
 }
 
 type StatusHistoryDto struct {
-	Id string `json:"id"` // badge number - informational only, never read
+	Id uint `json:"id"` // badge number - informational only, never read
 
 	// status history
 	StatusHistory []StatusChangeDto `json:"status_history"`

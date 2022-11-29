@@ -101,6 +101,17 @@ Limitations:
  - 🚧 key_deposit/key_received/sponsor_items flag are supported as additional-info
  - ✅ track who (subject, if set) performed a database change (recorded in history table)
 
+### open
+
+  - check that at least one attendance option is set
+  - admin only flag skipBanCheck
+  - support status in find
+  - new endpoint for "resend last status change notification email"
+  - delete ban rule tests
+  - return admin_comments from search
+  - status WAITING
+  - allow listing ids of deleted, but omit data (needed by security api so it can mark them deleted too)
+
 ### for later
 
 - ❌ more fine-grained permissions using JWT

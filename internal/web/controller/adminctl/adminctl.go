@@ -32,12 +32,19 @@ func OverrideAttendeeService(overrideAttendeeServiceForTesting attendeesrv.Atten
 }
 
 func Create(server chi.Router) {
+	// TODO better role check in auth service
+	server.Get("/api/rest/v1/roles/admin", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(3*time.Second, pingResponse)))
+
 	server.Get("/api/rest/v1/attendees/{id}/admin", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(3*time.Second, getAdminInfoHandler)))
 	server.Put("/api/rest/v1/attendees/{id}/admin", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(3*time.Second, writeAdminInfoHandler)))
 	server.Post("/api/rest/v1/attendees/find", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(60*time.Second, findAttendeesHandler)))
 }
 
 // --- handlers ---
+
+func pingResponse(w http.ResponseWriter, r *http.Request) {
+	// TODO easy admin check
+}
 
 func getAdminInfoHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -131,6 +138,7 @@ func attendeeByIdMustReturnOnError(ctx context.Context, w http.ResponseWriter, r
 
 func parseBodyToAdminInfoDto(ctx context.Context, w http.ResponseWriter, r *http.Request) (*admin.AdminInfoDto, error) {
 	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
 	dto := &admin.AdminInfoDto{}
 	err := decoder.Decode(dto)
 	if err != nil {
@@ -141,6 +149,7 @@ func parseBodyToAdminInfoDto(ctx context.Context, w http.ResponseWriter, r *http
 
 func parseBodyToAttendeeSearchCriteria(ctx context.Context, w http.ResponseWriter, r *http.Request) (*attendee.AttendeeSearchCriteria, error) {
 	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
 	dto := &attendee.AttendeeSearchCriteria{}
 	err := decoder.Decode(dto)
 	if err != nil {

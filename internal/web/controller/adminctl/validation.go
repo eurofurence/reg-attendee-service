@@ -2,7 +2,6 @@ package adminctl
 
 import (
 	"context"
-	"fmt"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/admin"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
@@ -14,7 +13,7 @@ import (
 func validate(ctx context.Context, a *admin.AdminInfoDto, trustedOriginalState *entity.AdminInfo) url.Values {
 	errs := url.Values{}
 
-	if a.Id != "" && a.Id != fmt.Sprint(trustedOriginalState.ID) {
+	if a.Id != 0 && a.Id != trustedOriginalState.ID {
 		errs.Add("id", "id field must be empty or correctly assigned for incoming requests")
 	}
 
