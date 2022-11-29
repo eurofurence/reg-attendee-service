@@ -108,6 +108,9 @@ Limitations:
   - support status in find
   - new endpoint for "resend last status change notification email"
   - delete ban rule tests
+  - return admin_comments from search
+  - status WAITING
+  - allow listing ids of deleted, but omit data (needed by security api so it can mark them deleted too)
 
 ### for later
 

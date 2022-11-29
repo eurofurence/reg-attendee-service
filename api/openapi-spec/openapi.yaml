@@ -1419,6 +1419,9 @@ components:
           format: date
           example: '2022-01-22'
           description: the date at which the registration was created.
+        admin_comments:
+          type: string
+          description: Optional comments only visible to admins. Not processed in any way.
     AttendeeSearchCriteria:
       type: object
       required:
