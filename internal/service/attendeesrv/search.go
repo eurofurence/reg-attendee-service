@@ -11,53 +11,63 @@ import (
 
 func (s *AttendeeServiceImplData) FindAttendees(ctx context.Context, criteria *attendee.AttendeeSearchCriteria) (*attendee.AttendeeSearchResultList, error) {
 	atts, err := database.GetRepository().FindAttendees(ctx, criteria)
-	return s.mapToAttendeeSearchResults(atts), err
+	return s.mapToAttendeeSearchResults(atts, criteria.FillFields), err
 }
 
-func (s *AttendeeServiceImplData) mapToAttendeeSearchResults(atts []*entity.Attendee) *attendee.AttendeeSearchResultList {
+func (s *AttendeeServiceImplData) mapToAttendeeSearchResults(atts []*entity.AttendeeQueryResult, fillFields []string) *attendee.AttendeeSearchResultList {
 	result := attendee.AttendeeSearchResultList{
 		Attendees: make([]attendee.AttendeeSearchResult, len(atts)),
 	}
 	for i, att := range atts {
-		result.Attendees[i] = s.mapToAttendeeSearchResult(att)
+		result.Attendees[i] = s.mapToAttendeeSearchResult(att, fillFields)
 	}
 
 	return &result
 }
 
-func (s *AttendeeServiceImplData) mapToAttendeeSearchResult(att *entity.Attendee) attendee.AttendeeSearchResult {
-	// TODO field visibilities
-	// TODO missing information - status
-	// TODO missing information - dues
+func (s *AttendeeServiceImplData) mapToAttendeeSearchResult(att *entity.AttendeeQueryResult, fillFields []string) attendee.AttendeeSearchResult {
+	if len(fillFields) == 0 {
+		fillFields = []string{"nickname", "name", "country", "country_badge", "email", "telegram", "birthday", "pronouns",
+			"tshirt_size", "flags", "options", "packages", "user_comments", "status",
+			"total_dues", "payment_balance", "current_dues", "registered", "admin_comments"}
+	}
+
+	// TODO missing information - dues calculation
+	// TODO format registered (time.Time) as ISO date
+	var totalDues int64 = 0
+	var currentDues int64 = 0
+	var registered = ""
 	return attendee.AttendeeSearchResult{
 		Id:             att.ID,
 		BadgeId:        s.badgeId(att.ID),
-		Nickname:       &att.Nickname,
-		FirstName:      &att.FirstName,
-		LastName:       &att.LastName,
-		Street:         &att.Street,
-		Zip:            &att.Zip,
-		City:           &att.City,
-		Country:        &att.Country,
-		CountryBadge:   &att.CountryBadge,
-		State:          &att.State,
-		Email:          &att.Email,
-		Phone:          &att.Phone,
-		Telegram:       &att.Telegram,
-		Partner:        &att.Partner,
-		Birthday:       &att.Birthday,
-		Gender:         &att.Gender,
-		Pronouns:       &att.Pronouns,
-		TshirtSize:     &att.TshirtSize,
-		Flags:          s.removeWrappingCommas(att.Flags),
-		Options:        s.removeWrappingCommas(att.Options),
-		Packages:       s.removeWrappingCommas(att.Packages),
-		UserComments:   &att.UserComments,
-		Status:         nil,
-		TotalDues:      nil,
-		PaymentBalance: nil,
-		CurrentDues:    nil,
-		DueDate:        nil,
+		Nickname:       contains(p(att.Nickname), fillFields, "all", "nickname"),
+		FirstName:      contains(p(att.FirstName), fillFields, "all", "name", "first_name"),
+		LastName:       contains(p(att.LastName), fillFields, "all", "name", "last_name"),
+		Street:         contains(p(att.Street), fillFields, "all", "address", "street"),
+		Zip:            contains(p(att.Zip), fillFields, "all", "address", "zip"),
+		City:           contains(p(att.City), fillFields, "all", "address", "city"),
+		Country:        contains(p(att.Country), fillFields, "all", "address", "country"),
+		CountryBadge:   contains(p(att.CountryBadge), fillFields, "all", "contact", "country_badge"),
+		State:          contains(p(att.State), fillFields, "all", "address", "state"),
+		Email:          contains(p(att.Email), fillFields, "all", "contact", "email"),
+		Phone:          contains(p(att.Phone), fillFields, "all", "contact", "phone"),
+		Telegram:       contains(p(att.Telegram), fillFields, "all", "contact", "telegram"),
+		Partner:        contains(n(att.Partner), fillFields, "all", "partner"),
+		Birthday:       contains(p(att.Birthday), fillFields, "all", "birthday"),
+		Gender:         contains(n(att.Gender), fillFields, "all", "gender"),
+		Pronouns:       contains(n(att.Pronouns), fillFields, "all", "pronouns"),
+		TshirtSize:     contains(n(att.TshirtSize), fillFields, "all", "tshirt_size"),
+		Flags:          contains(p(removeWrappingCommasJoin(att.Flags, att.AdminFlags)), fillFields, "all", "configuration", "flags"),
+		Options:        contains(p(removeWrappingCommas(att.Options)), fillFields, "all", "configuration", "options"),
+		Packages:       contains(p(removeWrappingCommas(att.Packages)), fillFields, "all", "configuration", "packages"),
+		UserComments:   contains(n(att.UserComments), fillFields, "all", "user_comments"),
+		Status:         contains(&att.Status, fillFields, "all", "status"),
+		TotalDues:      contains(&totalDues, fillFields, "all", "balances", "total_dues"),
+		PaymentBalance: contains(&att.CachePaymentBalance, fillFields, "all", "balances", "payment_balance"),
+		CurrentDues:    contains(&currentDues, fillFields, "all", "balances", "current_dues"),
+		DueDate:        contains(n(att.CacheDueDate), fillFields, "all", "due_date"),
+		Registered:     contains(n(registered), fillFields, "all", "registered"),
+		AdminComments:  contains(n(att.AdminComments), fillFields, "all", "admin_comments"),
 	}
 }
 
@@ -68,8 +78,40 @@ func (s *AttendeeServiceImplData) badgeId(id uint) *string {
 	return &result
 }
 
-func (s *AttendeeServiceImplData) removeWrappingCommas(v string) *string {
+func removeWrappingCommas(v string) string {
 	v = strings.TrimPrefix(v, ",")
 	v = strings.TrimSuffix(v, ",")
+	return v
+}
+
+func removeWrappingCommasJoin(v1 string, v2 string) string {
+	v1 = removeWrappingCommas(v1)
+	v2 = removeWrappingCommas(v2)
+	v := v1 + "," + v2
+	return removeWrappingCommas(v)
+}
+
+// n formats an optional field (rendered as missing if unset)
+func n(v string) *string {
+	if v == "" {
+		return nil
+	} else {
+		return &v
+	}
+}
+
+// p formats a mandatory field (rendered as an empty string if unset, which should never happen anyway)
+func p(v string) *string {
 	return &v
+}
+
+func contains[T any](v *T, selected []string, matches ...string) *T {
+	for _, m := range matches {
+		for _, s := range selected {
+			if m == s {
+				return v
+			}
+		}
+	}
+	return nil
 }

@@ -1,5 +1,7 @@
 package attendee
 
+import "github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
+
 type AttendeeDto struct {
 	Id       uint   `json:"id"`       // badge number
 	Nickname string `json:"nickname"` // fan name
@@ -64,14 +66,14 @@ type AttendeeSearchSingleCriterion struct {
 	CountryBadge  string          `json:"country_badge"`
 	Email         string          `json:"email"`
 	Telegram      string          `json:"telegram"`
-	Flags         map[string]int8 `json:"flags"` // TODO include admin only flags (guest, skip_ban_check) (if admin)
+	Flags         map[string]int8 `json:"flags"`
 	Options       map[string]int8 `json:"options"`
 	Packages      map[string]int8 `json:"packages"`
 	UserComments  string          `json:"user_comments"`
-	Status        []string        `json:"status"`         // TODO implement
-	Permissions   map[string]int8 `json:"permissions"`    // TODO implement
-	AdminComments string          `json:"admin_comments"` // TODO implement
-	AddInfo       map[string]int8 `json:"add_info"`       // TODO implement
+	Status        []status.Status `json:"status"`
+	Permissions   map[string]int8 `json:"permissions"`
+	AdminComments string          `json:"admin_comments"`
+	AddInfo       map[string]int8 `json:"add_info"` // TODO implement
 }
 
 // --- search result ---
@@ -81,34 +83,34 @@ type AttendeeSearchResultList struct {
 }
 
 type AttendeeSearchResult struct {
-	Id             uint    `json:"id"`
-	BadgeId        *string `json:"badge_id,omitempty"`
-	Nickname       *string `json:"nickname,omitempty"`
-	FirstName      *string `json:"first_name,omitempty"`
-	LastName       *string `json:"last_name,omitempty"`
-	Street         *string `json:"street,omitempty"`
-	Zip            *string `json:"zip,omitempty"`
-	City           *string `json:"city,omitempty"`
-	Country        *string `json:"country,omitempty"`
-	CountryBadge   *string `json:"country_badge,omitempty"`
-	State          *string `json:"state,omitempty"`
-	Email          *string `json:"email,omitempty"`
-	Phone          *string `json:"phone,omitempty"`
-	Telegram       *string `json:"telegram,omitempty"`
-	Partner        *string `json:"partner,omitempty"`
-	Birthday       *string `json:"birthday,omitempty"`
-	Gender         *string `json:"gender,omitempty"`
-	Pronouns       *string `json:"pronouns,omitempty"`
-	TshirtSize     *string `json:"tshirt_size,omitempty"`
-	Flags          *string `json:"flags,omitempty"` // TODO include admin only flags (if admin)
-	Options        *string `json:"options,omitempty"`
-	Packages       *string `json:"packages,omitempty"`
-	UserComments   *string `json:"user_comments,omitempty"`
-	Status         *string `json:"status,omitempty"`          // TODO include
-	TotalDues      *int64  `json:"total_dues,omitempty"`      // TODO cache in addInfo:dues from payments changed hook
-	PaymentBalance *int64  `json:"payment_balance,omitempty"` // TODO cache in addInfo:dues from payments changed hook
-	CurrentDues    *int64  `json:"current_dues,omitempty"`    // TODO cache in addInfo:dues from payments changed hook
-	DueDate        *string `json:"due_date,omitempty"`        // TODO cache in addInfo:overdue from payments changed hook ONLY IF OUTSTANDING
-	Registered     *string `json:"registered,omitempty"`      // TODO the ISO date we registered
-	AdminComments  *string `json:"admin_comments,omitempty"`  // TODO include
+	Id             uint           `json:"id"`
+	BadgeId        *string        `json:"badge_id,omitempty"`
+	Nickname       *string        `json:"nickname,omitempty"`
+	FirstName      *string        `json:"first_name,omitempty"`
+	LastName       *string        `json:"last_name,omitempty"`
+	Street         *string        `json:"street,omitempty"`
+	Zip            *string        `json:"zip,omitempty"`
+	City           *string        `json:"city,omitempty"`
+	Country        *string        `json:"country,omitempty"`
+	CountryBadge   *string        `json:"country_badge,omitempty"`
+	State          *string        `json:"state,omitempty"`
+	Email          *string        `json:"email,omitempty"`
+	Phone          *string        `json:"phone,omitempty"`
+	Telegram       *string        `json:"telegram,omitempty"`
+	Partner        *string        `json:"partner,omitempty"`
+	Birthday       *string        `json:"birthday,omitempty"`
+	Gender         *string        `json:"gender,omitempty"`
+	Pronouns       *string        `json:"pronouns,omitempty"`
+	TshirtSize     *string        `json:"tshirt_size,omitempty"`
+	Flags          *string        `json:"flags,omitempty"`
+	Options        *string        `json:"options,omitempty"`
+	Packages       *string        `json:"packages,omitempty"`
+	UserComments   *string        `json:"user_comments,omitempty"`
+	Status         *status.Status `json:"status,omitempty"`
+	TotalDues      *int64         `json:"total_dues,omitempty"`      // TODO cache in addInfo:dues from payments changed hook
+	PaymentBalance *int64         `json:"payment_balance,omitempty"` // TODO cache in addInfo:dues from payments changed hook
+	CurrentDues    *int64         `json:"current_dues,omitempty"`    // TODO cache in addInfo:dues from payments changed hook
+	DueDate        *string        `json:"due_date,omitempty"`        // TODO cache in addInfo:overdue from payments changed hook ONLY IF OUTSTANDING
+	Registered     *string        `json:"registered,omitempty"`      // TODO the ISO date we registered
+	AdminComments  *string        `json:"admin_comments,omitempty"`  // TODO include
 }

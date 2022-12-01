@@ -5,11 +5,13 @@ import (
 	"errors"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database/dbrepo"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/schema"
 	"time"
 )
 
@@ -22,7 +24,11 @@ func Create() dbrepo.Repository {
 }
 
 func (r *MysqlRepository) Open() error {
-	gormConfig := gorm.Config{}
+	gormConfig := gorm.Config{
+		NamingStrategy: schema.NamingStrategy{
+			TablePrefix: "att_",
+		},
+	}
 	connectString := config.DatabaseMysqlConnectString()
 
 	db, err := gorm.Open(mysql.Open(connectString), &gormConfig)
@@ -125,14 +131,13 @@ func (r *MysqlRepository) MaxAttendeeId(ctx context.Context) (uint, error) {
 
 // --- attendee search ---
 
-func (r *MysqlRepository) FindAttendees(ctx context.Context, criteria *attendee.AttendeeSearchCriteria) ([]*entity.Attendee, error) {
+func (r *MysqlRepository) FindAttendees(ctx context.Context, criteria *attendee.AttendeeSearchCriteria) ([]*entity.AttendeeQueryResult, error) {
 	params := make(map[string]interface{})
 	query := constructAttendeeSearchQuery(criteria, params)
 
-	result := make([]*entity.Attendee, 0)
-	attendeeBuffer := entity.Attendee{}
+	result := make([]*entity.AttendeeQueryResult, 0)
 
-	rows, err := r.db.Raw(query, params).Find(&attendeeBuffer).Rows()
+	rows, err := r.db.Raw(query, params).Rows()
 	if err != nil {
 		aulogging.Logger.Ctx(ctx).Error().WithErr(err).Printf("error finding attendees: %s", err.Error())
 		return result, err
@@ -145,7 +150,8 @@ func (r *MysqlRepository) FindAttendees(ctx context.Context, criteria *attendee.
 	}()
 
 	for rows.Next() {
-		err = rows.Scan(&attendeeBuffer)
+		attendeeBuffer := entity.AttendeeQueryResult{}
+		err = r.db.ScanRows(rows, &attendeeBuffer)
 		if err != nil {
 			aulogging.Logger.Ctx(ctx).Error().WithErr(err).Printf("error reading attendeeBuffer during find: %s", err.Error())
 			return result, err
@@ -191,7 +197,7 @@ func (r *MysqlRepository) GetLatestStatusChangeByAttendeeId(ctx context.Context,
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			sc = entity.StatusChange{
 				AttendeeId: attendeeId,
-				Status:     "new",
+				Status:     status.New,
 				Comments:   "",
 			}
 			err = nil
@@ -208,7 +214,9 @@ func (r *MysqlRepository) GetStatusChangesByAttendeeId(ctx context.Context, atte
 	}
 	defer func() {
 		err := rows.Close()
-		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("mysql error during status change result set close: %s", err.Error())
+		if err != nil {
+			aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("mysql error during status change result set close: %s", err.Error())
+		}
 	}()
 
 	result := make([]entity.StatusChange, 0)
@@ -243,7 +251,9 @@ func (r *MysqlRepository) FindByIdentity(ctx context.Context, identity string) (
 	}
 	defer func() {
 		err := rows.Close()
-		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("mysql error during attendee by identity result set close: %s", err.Error())
+		if err != nil {
+			aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("mysql error during attendee by identity result set close: %s", err.Error())
+		}
 	}()
 
 	for rows.Next() {
@@ -281,7 +291,7 @@ func (r *MysqlRepository) GetAllBans(ctx context.Context) ([]*entity.Ban, error)
 	for rows.Next() {
 		err = rows.Scan(&banBuffer)
 		if err != nil {
-			aulogging.Logger.Ctx(ctx).Error().WithErr(err).Printf("error reading attendeeBuffer during find: %s", err.Error())
+			aulogging.Logger.Ctx(ctx).Error().WithErr(err).Printf("error reading ban during find: %s", err.Error())
 			return result, err
 		}
 		copiedBan := banBuffer

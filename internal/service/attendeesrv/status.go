@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
@@ -32,7 +33,7 @@ func (s *AttendeeServiceImplData) GetFullStatusHistory(ctx context.Context, atte
 			CreatedAt: attendee.CreatedAt,
 		},
 		AttendeeId: attendee.ID,
-		Status:     "new",
+		Status:     status.New,
 		Comments:   "registration",
 	})
 
@@ -43,7 +44,7 @@ func (s *AttendeeServiceImplData) GetFullStatusHistory(ctx context.Context, atte
 	return result, nil
 }
 
-func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx context.Context, attendee *entity.Attendee, oldStatus string, newStatus string, comments string) error {
+func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status, comments string) error {
 	var err error
 	// controller checks value validity
 	// controller checks permission via StatusChangeAllowed
@@ -67,7 +68,7 @@ func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx contex
 		}
 
 		err = mailservice.Get().SendEmail(ctx, mailservice.TemplateRequestDto{
-			Name: "new-status-" + newStatus,
+			Name: "new-status-" + string(newStatus),
 			Variables: map[string]string{
 				"nickname": attendee.Nickname,
 			},
@@ -81,7 +82,7 @@ func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx contex
 	return nil
 }
 
-func (s *AttendeeServiceImplData) StatusChangeAllowed(ctx context.Context, attendee *entity.Attendee, oldStatus string, newStatus string) error {
+func (s *AttendeeServiceImplData) StatusChangeAllowed(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status) error {
 	if ctxvalues.HasApiToken(ctx) || ctxvalues.IsAuthorizedAsRole(ctx, config.OidcAdminRole()) {
 		// api or admin
 		return nil
@@ -94,10 +95,12 @@ func (s *AttendeeServiceImplData) StatusChangeAllowed(ctx context.Context, atten
 	}
 
 	if subject == attendee.Identity {
-		// self
-		if oldStatus == "new" && newStatus == "cancelled" || oldStatus == "approved" && newStatus == "cancelled" {
-			aulogging.Logger.Ctx(ctx).Info().Printf("self cancellation for attendee %d by %s", attendee.ID, subject)
-			return nil
+		// self cancellation
+		if newStatus == status.Cancelled {
+			if oldStatus == status.New || oldStatus == status.Approved || oldStatus == status.Waiting {
+				aulogging.Logger.Ctx(ctx).Info().Printf("self cancellation for attendee %d by %s", attendee.ID, subject)
+				return nil
+			}
 		}
 
 		aulogging.Logger.Ctx(ctx).Warn().Printf("forbidden self status change attempt %s -> %s for attendee %d by %s", oldStatus, newStatus, attendee.ID, subject)
@@ -106,7 +109,7 @@ func (s *AttendeeServiceImplData) StatusChangeAllowed(ctx context.Context, atten
 
 	// others
 
-	if oldStatus == "paid" && newStatus == "checked in" {
+	if oldStatus == status.Paid && newStatus == status.CheckedIn {
 		// TODO - this is kind of ugly
 
 		// check that any of the registrations owned by subject have the regdesk permission
@@ -132,7 +135,7 @@ func (s *AttendeeServiceImplData) StatusChangeAllowed(ctx context.Context, atten
 	return errors.New("you are not allowed to make this status transition - the attempt has been logged")
 }
 
-func (s *AttendeeServiceImplData) StatusChangePossible(ctx context.Context, attendee *entity.Attendee, oldStatus string, newStatus string) error {
+func (s *AttendeeServiceImplData) StatusChangePossible(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status) error {
 	if oldStatus == newStatus {
 		return SameStatusError
 	}
@@ -143,28 +146,30 @@ func (s *AttendeeServiceImplData) StatusChangePossible(ctx context.Context, atte
 	}
 
 	switch newStatus {
-	case "new":
+	case status.New:
 		return s.checkZeroOrNegativePaymentBalance(ctx, attendee, transactionHistory)
-	case "approved":
+	case status.Waiting:
 		return s.checkZeroOrNegativePaymentBalance(ctx, attendee, transactionHistory)
-	case "partially paid":
-		if oldStatus == "new" || oldStatus == "cancelled" || oldStatus == "deleted" {
+	case status.Approved:
+		return s.checkZeroOrNegativePaymentBalance(ctx, attendee, transactionHistory)
+	case status.PartiallyPaid:
+		if oldStatus == status.New || oldStatus == status.Waiting || oldStatus == status.Cancelled || oldStatus == status.Deleted {
 			return GoToApprovedFirst
 		}
 		return s.checkPositivePaymentBalanceButNotFullPayment(ctx, attendee, transactionHistory)
-	case "paid":
-		if oldStatus == "new" || oldStatus == "cancelled" || oldStatus == "deleted" {
+	case status.Paid:
+		if oldStatus == status.New || oldStatus == status.Waiting || oldStatus == status.Cancelled || oldStatus == status.Deleted {
 			return GoToApprovedFirst
 		}
 		return s.checkPaidInFullWithGraceAmount(ctx, attendee, transactionHistory)
-	case "checked in":
-		if oldStatus == "new" || oldStatus == "cancelled" || oldStatus == "deleted" {
+	case status.CheckedIn:
+		if oldStatus == status.New || oldStatus == status.Waiting || oldStatus == status.Cancelled || oldStatus == status.Deleted {
 			return GoToApprovedFirst
 		}
 		return s.checkPaidInFull(ctx, attendee, transactionHistory)
-	case "cancelled":
+	case status.Cancelled:
 		return nil
-	case "deleted":
+	case status.Deleted:
 		return s.checkNoPaymentsExist(ctx, attendee, transactionHistory)
 	default:
 		return UnknownStatusError

@@ -1598,9 +1598,10 @@ components:
       
         - name: first_name, last_name
         - address: street, zip, city, state, country
-        - contact: email, phone, telegram
+        - contact: email, phone, telegram, country_badge
         - configuration: flags, options, packages
         - balances: total_dues, payment_balance, current_dues
+        - all: (all available fields)
       
         For a detailed description of the fields, please see the AttendeeSearchResult schema.
       
@@ -1641,6 +1642,9 @@ components:
           - total_dues
           - payment_balance
           - current_dues
+          - due_date
+          - registered
+          - admin_comments
           # and the field sets
           - name
           - address

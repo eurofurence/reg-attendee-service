@@ -16,30 +16,30 @@ var (
 	DownstreamError       = errors.New("downstream unavailable - see log for details")
 )
 
-type TransactionType int
+type TransactionType string
 
 const (
-	Due TransactionType = iota
-	Payment
+	Due     TransactionType = "due"
+	Payment TransactionType = "payment"
 )
 
-type PaymentMethod int
+type PaymentMethod string
 
 const (
-	Credit PaymentMethod = iota
-	Paypal
-	Transfer
-	Internal
-	Gift
+	Credit   PaymentMethod = "credit"
+	Paypal   PaymentMethod = "paypal"
+	Transfer PaymentMethod = "transfer"
+	Internal PaymentMethod = "internal"
+	Gift     PaymentMethod = "gift"
 )
 
-type TransactionStatus int
+type TransactionStatus string
 
 const (
-	Pending TransactionStatus = iota
-	Tentative
-	Valid
-	Deleted
+	Tentative TransactionStatus = "tentative"
+	Pending   TransactionStatus = "pending"
+	Valid     TransactionStatus = "valid"
+	Deleted   TransactionStatus = "deleted"
 )
 
 type Deletion struct {
@@ -57,7 +57,7 @@ type Amount struct {
 
 type Transaction struct {
 	ID            string
-	DebitorID     uint // TODO either this is a string everywhere or a uint everywhere
+	DebitorID     uint
 	Type          TransactionType
 	Method        PaymentMethod
 	Amount        Amount

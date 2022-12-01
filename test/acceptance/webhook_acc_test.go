@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/eurofurence/reg-attendee-service/docs"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/mailservice"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/paymentservice"
 	"github.com/stretchr/testify/require"
@@ -41,7 +42,7 @@ func TestPaymentsChangedWebhook_Anonymous_Declined(t *testing.T) {
 	testcase := "pc1anon2-"
 	tstStatusChange_Webhook_Decline(t, testcase,
 		tstNoToken(),
-		"approved",
+		status.Approved,
 		[]paymentservice.Transaction{
 			tstCreateTransaction(1, paymentservice.Payment, 2040),
 		},
@@ -53,7 +54,7 @@ func TestPaymentsChangedWebhook_User_Declined(t *testing.T) {
 	testcase := "pc1user2-"
 	tstStatusChange_Webhook_Decline(t, testcase,
 		tstValidUserToken(t, 101),
-		"approved",
+		status.Approved,
 		[]paymentservice.Transaction{
 			tstCreateTransaction(1, paymentservice.Payment, 2040),
 		},
@@ -65,7 +66,7 @@ func TestPaymentsChangedWebhook_Staff_Declined(t *testing.T) {
 	testcase := "pc1staff2-"
 	tstStatusChange_Webhook_Decline(t, testcase,
 		tstValidStaffToken(t, 202),
-		"approved",
+		status.Approved,
 		[]paymentservice.Transaction{
 			tstCreateTransaction(1, paymentservice.Payment, 2040),
 		},
@@ -89,7 +90,7 @@ func TestPaymentsChangedWebhook_New_NoNewPayments(t *testing.T) {
 	tstStatusChange_Webhook_Ignored(t, testcase,
 		subcaseAdmOrApi,
 		subcaseAdmOrApiTokens,
-		"new",
+		status.New,
 		nil,
 	)
 }
@@ -99,7 +100,7 @@ func TestPaymentsChangedWebhook_New_WithPayments(t *testing.T) {
 	tstStatusChange_Webhook_Ignored(t, testcase,
 		subcaseAdmOrApi,
 		subcaseAdmOrApiTokens,
-		"new",
+		status.New,
 		[]paymentservice.Transaction{
 			tstCreateTransaction(1, paymentservice.Payment, 10000),
 		},
@@ -111,9 +112,9 @@ func TestPaymentsChangedWebhook_Approved_NoNewPayments(t *testing.T) {
 	tstStatusChange_Webhook_Success(t, testcase,
 		subcaseAdmOrApi,
 		subcaseAdmOrApiTokens,
-		"approved",
+		status.Approved,
 		nil,
-		"approved",
+		status.Approved,
 		nil,
 	)
 }
@@ -123,12 +124,12 @@ func TestPaymentsChangedWebhook_Approved_PartiallyPaid(t *testing.T) {
 	tstStatusChange_Webhook_Success(t, testcase,
 		subcaseAdmOrApi,
 		subcaseAdmOrApiTokens,
-		"approved",
+		status.Approved,
 		[]paymentservice.Transaction{
 			tstCreateTransaction(1, paymentservice.Payment, 2040),
 		},
-		"partially paid",
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "partially paid")},
+		status.PartiallyPaid,
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.PartiallyPaid)},
 	)
 }
 
@@ -137,12 +138,12 @@ func TestPaymentsChangedWebhook_Approved_Paid_WithGraceAmount(t *testing.T) {
 	tstStatusChange_Webhook_Success(t, testcase,
 		subcaseAdmOrApi,
 		subcaseAdmOrApiTokens,
-		"approved",
+		status.Approved,
 		[]paymentservice.Transaction{
 			tstCreateTransaction(1, paymentservice.Payment, 25400),
 		},
-		"paid",
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "paid")},
+		status.Paid,
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Paid)},
 	)
 }
 
@@ -151,12 +152,12 @@ func TestPaymentsChangedWebhook_Approved_Paid_Overpaid(t *testing.T) {
 	tstStatusChange_Webhook_Success(t, testcase,
 		subcaseAdmOrApi,
 		subcaseAdmOrApiTokens,
-		"approved",
+		status.Approved,
 		[]paymentservice.Transaction{
 			tstCreateTransaction(1, paymentservice.Payment, 27000),
 		},
-		"paid",
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "paid")},
+		status.Paid,
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Paid)},
 	)
 }
 
@@ -165,9 +166,9 @@ func TestPaymentsChangedWebhook_PartiallyPaid_NoNewPayments(t *testing.T) {
 	tstStatusChange_Webhook_Success(t, testcase,
 		subcaseAdmOrApi,
 		subcaseAdmOrApiTokens,
-		"partially paid",
+		status.PartiallyPaid,
 		nil,
-		"partially paid",
+		status.PartiallyPaid,
 		nil,
 	)
 }
@@ -177,12 +178,12 @@ func TestPaymentsChangedWebhook_PartiallyPaid_Approved(t *testing.T) {
 	tstStatusChange_Webhook_Success(t, testcase,
 		subcaseAdmOrApi,
 		subcaseAdmOrApiTokens,
-		"partially paid",
+		status.PartiallyPaid,
 		[]paymentservice.Transaction{
 			tstCreateTransaction(1, paymentservice.Payment, -15500),
 		},
-		"approved",
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "approved")},
+		status.Approved,
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Approved)},
 	)
 }
 
@@ -191,11 +192,11 @@ func TestPaymentsChangedWebhook_PartiallyPaid_PartialRefund(t *testing.T) {
 	tstStatusChange_Webhook_Success(t, testcase,
 		subcaseAdmOrApi,
 		subcaseAdmOrApiTokens,
-		"partially paid",
+		status.PartiallyPaid,
 		[]paymentservice.Transaction{
 			tstCreateTransaction(1, paymentservice.Payment, -5500),
 		},
-		"partially paid",
+		status.PartiallyPaid,
 		nil,
 	)
 }
@@ -205,12 +206,12 @@ func TestPaymentsChangedWebhook_PartiallyPaid_Paid(t *testing.T) {
 	tstStatusChange_Webhook_Success(t, testcase,
 		subcaseAdmOrApi,
 		subcaseAdmOrApiTokens,
-		"partially paid",
+		status.PartiallyPaid,
 		[]paymentservice.Transaction{
 			tstCreateTransaction(1, paymentservice.Payment, 10000),
 		},
-		"paid",
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "paid")},
+		status.Paid,
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Paid)},
 	)
 }
 
@@ -219,9 +220,9 @@ func TestPaymentsChangedWebhook_Paid_NoNewPayments(t *testing.T) {
 	tstStatusChange_Webhook_Success(t, testcase,
 		subcaseAdmOrApi,
 		subcaseAdmOrApiTokens,
-		"paid",
+		status.Paid,
 		nil,
-		"paid",
+		status.Paid,
 		nil,
 	)
 }
@@ -231,12 +232,12 @@ func TestPaymentsChangedWebhook_Paid_Approved(t *testing.T) {
 	tstStatusChange_Webhook_Success(t, testcase,
 		subcaseAdmOrApi,
 		subcaseAdmOrApiTokens,
-		"paid",
+		status.Paid,
 		[]paymentservice.Transaction{
 			tstCreateTransaction(1, paymentservice.Payment, -25500),
 		},
-		"approved",
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "approved")},
+		status.Approved,
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Approved)},
 	)
 }
 
@@ -245,12 +246,12 @@ func TestPaymentsChangedWebhook_Paid_PartiallyPaid(t *testing.T) {
 	tstStatusChange_Webhook_Success(t, testcase,
 		subcaseAdmOrApi,
 		subcaseAdmOrApiTokens,
-		"paid",
+		status.Paid,
 		[]paymentservice.Transaction{
 			tstCreateTransaction(1, paymentservice.Payment, -15500),
 		},
-		"partially paid",
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "partially paid")},
+		status.PartiallyPaid,
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.PartiallyPaid)},
 	)
 }
 
@@ -259,7 +260,7 @@ func TestPaymentsChangedWebhook_CheckedIn_NoNewPayments(t *testing.T) {
 	tstStatusChange_Webhook_Ignored(t, testcase,
 		subcaseAdmOrApi,
 		subcaseAdmOrApiTokens,
-		"checked in",
+		status.CheckedIn,
 		nil,
 	)
 }
@@ -269,7 +270,7 @@ func TestPaymentsChangedWebhook_CheckedIn_EvenWithRefundsIgnored(t *testing.T) {
 	tstStatusChange_Webhook_Ignored(t, testcase,
 		subcaseAdmOrApi,
 		subcaseAdmOrApiTokens,
-		"checked in",
+		status.CheckedIn,
 		[]paymentservice.Transaction{
 			tstCreateTransaction(1, paymentservice.Payment, -10000),
 		},
@@ -281,7 +282,7 @@ func TestPaymentsChangedWebhook_Cancelled_NoNewPayments(t *testing.T) {
 	tstStatusChange_Webhook_Ignored(t, testcase,
 		subcaseAdmOrApi,
 		subcaseAdmOrApiTokens,
-		"cancelled",
+		status.Cancelled,
 		nil,
 	)
 }
@@ -291,7 +292,7 @@ func TestPaymentsChangedWebhook_Cancelled_WithPayments(t *testing.T) {
 	tstStatusChange_Webhook_Ignored(t, testcase,
 		subcaseAdmOrApi,
 		subcaseAdmOrApiTokens,
-		"cancelled",
+		status.Cancelled,
 		[]paymentservice.Transaction{
 			tstCreateTransaction(1, paymentservice.Payment, 10000),
 		},
@@ -303,7 +304,7 @@ func TestPaymentsChangedWebhook_Deleted_NoNewPayments(t *testing.T) {
 	tstStatusChange_Webhook_Ignored(t, testcase,
 		subcaseAdmOrApi,
 		subcaseAdmOrApiTokens,
-		"deleted",
+		status.Deleted,
 		nil,
 	)
 }
@@ -313,7 +314,7 @@ func TestPaymentsChangedWebhook_Deleted_WithPayments(t *testing.T) {
 	tstStatusChange_Webhook_Ignored(t, testcase,
 		subcaseAdmOrApi,
 		subcaseAdmOrApiTokens,
-		"deleted",
+		status.Deleted,
 		[]paymentservice.Transaction{
 			tstCreateTransaction(1, paymentservice.Payment, 10000),
 		},
@@ -328,9 +329,9 @@ var subcaseNameMap = map[string]string{
 }
 
 func tstStatusChange_Webhook_Success(t *testing.T, testcase string, subcases []string, tokens []string,
-	oldStatus string,
+	oldStatus status.Status,
 	injectExtraTransactions []paymentservice.Transaction,
-	expectedNewStatus string,
+	expectedNewStatus status.Status,
 	expectedMailRequests []mailservice.TemplateRequestDto,
 ) {
 	for i, subcase := range subcases {
@@ -343,15 +344,15 @@ func tstStatusChange_Webhook_Success(t *testing.T, testcase string, subcases []s
 
 func tstStatusChange_Webhook_Success_WithToken(t *testing.T, testcase string,
 	token string,
-	oldStatus string,
+	oldStatus status.Status,
 	injectExtraTransactions []paymentservice.Transaction,
-	expectedNewStatus string,
+	expectedNewStatus status.Status,
 	expectedMailRequests []mailservice.TemplateRequestDto,
 ) {
 	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
-	docs.Given("given an attendee in status " + oldStatus)
+	docs.Given("given an attendee in status " + string(oldStatus))
 	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
 
 	sum := 0.0
@@ -369,7 +370,7 @@ func tstStatusChange_Webhook_Success_WithToken(t *testing.T, testcase string,
 	docs.Then("then the request is successfully processed (204)")
 	require.Equal(t, http.StatusNoContent, response.status)
 
-	docs.Then("and the resulting attendee status is " + expectedNewStatus + " as expected")
+	docs.Then("and the resulting attendee status is " + string(expectedNewStatus) + " as expected")
 	tstVerifyStatus(t, loc, expectedNewStatus)
 
 	docs.Then("and no additional transactions were booked in the payment service")
@@ -386,7 +387,7 @@ func tstStatusChange_Webhook_Success_WithToken(t *testing.T, testcase string,
 }
 
 func tstStatusChange_Webhook_Ignored(t *testing.T, testcase string, subcases []string, tokens []string,
-	oldStatus string,
+	oldStatus status.Status,
 	injectExtraTransactions []paymentservice.Transaction,
 ) {
 	for i, subcase := range subcases {
@@ -399,13 +400,13 @@ func tstStatusChange_Webhook_Ignored(t *testing.T, testcase string, subcases []s
 
 func tstStatusChange_Webhook_Ignored_WithToken(t *testing.T, testcase string,
 	token string,
-	oldStatus string,
+	oldStatus status.Status,
 	injectExtraTransactions []paymentservice.Transaction,
 ) {
 	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
-	docs.Given("given an attendee in status " + oldStatus)
+	docs.Given("given an attendee in status " + string(oldStatus))
 	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
 
 	sum := 0.0
@@ -435,14 +436,14 @@ func tstStatusChange_Webhook_Ignored_WithToken(t *testing.T, testcase string,
 
 func tstStatusChange_Webhook_Decline(t *testing.T, testcase string,
 	token string,
-	oldStatus string,
+	oldStatus status.Status,
 	injectExtraTransactions []paymentservice.Transaction,
 	expectedHttpStatus int,
 ) {
 	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
-	docs.Given("given an attendee in status " + oldStatus)
+	docs.Given("given an attendee in status " + string(oldStatus))
 	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
 
 	sum := 0.0

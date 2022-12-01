@@ -5,6 +5,7 @@ package config
 import (
 	"crypto/rsa"
 	"fmt"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"strings"
 	"time"
 )
@@ -107,8 +108,8 @@ func AllowedCountries() []string {
 	return Configuration().Countries
 }
 
-func AllowedStatusValues() []string {
-	return []string{"new", "approved", "partially paid", "paid", "checked in", "cancelled", "deleted"}
+func AllowedStatusValues() []status.Status {
+	return []status.Status{status.New, status.Approved, status.PartiallyPaid, status.Paid, status.CheckedIn, status.Waiting, status.Cancelled, status.Deleted}
 }
 
 func DefaultFlags() string {

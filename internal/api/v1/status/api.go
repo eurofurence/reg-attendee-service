@@ -1,7 +1,20 @@
 package status
 
+type Status string
+
+var (
+	New           Status = "new"
+	Approved      Status = "approved"
+	PartiallyPaid Status = "partially paid"
+	Paid          Status = "paid"
+	CheckedIn     Status = "checked in"
+	Cancelled     Status = "cancelled"
+	Waiting       Status = "waiting"
+	Deleted       Status = "deleted"
+)
+
 type StatusDto struct {
-	Status string `json:"status"` // new / approved / partially paid / paid / checked in / cancelled
+	Status Status `json:"status"`
 }
 
 type StatusHistoryDto struct {
@@ -13,6 +26,6 @@ type StatusHistoryDto struct {
 
 type StatusChangeDto struct {
 	Timestamp string `json:"timestamp"` // also gives registration date, and allows due date calculation
-	Status    string `json:"status"`    // new / approved / partially paid / paid / checked in / cancelled
-	Comment   string `json:"comment"`   // e.g. cancel reason
+	Status    Status `json:"status"`
+	Comment   string `json:"comment"` // e.g. cancel reason
 }
