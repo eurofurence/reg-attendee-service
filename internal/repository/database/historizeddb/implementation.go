@@ -72,7 +72,7 @@ func (r *HistorizingRepository) MaxAttendeeId(ctx context.Context) (uint, error)
 
 // --- attendee search ---
 
-func (r *HistorizingRepository) FindAttendees(ctx context.Context, criteria *attendee.AttendeeSearchCriteria) ([]*entity.Attendee, error) {
+func (r *HistorizingRepository) FindAttendees(ctx context.Context, criteria *attendee.AttendeeSearchCriteria) ([]*entity.AttendeeQueryResult, error) {
 	return r.wrappedRepository.FindAttendees(ctx, criteria)
 }
 

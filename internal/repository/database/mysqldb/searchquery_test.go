@@ -14,7 +14,11 @@ func TestEmptySearchQuery(t *testing.T) {
 	actualQuery := constructAttendeeSearchQuery(spec, actualParams)
 
 	expectedParams := map[string]interface{}{}
-	expectedQuery := `SELECT * FROM attendees a WHERE (
+	expectedQuery := `SELECT IFNULL(ad.admin_comments, '') as admin_comments, IFNULL(ad.flags, '') as admin_flags, IFNULL(st.status, 'new') as status, a.birthday as birthday, a.cache_payment_balance as cache_payment_balance, a.country as country, a.country_badge as country_badge, a.created_at as created_at, a.email as email, a.first_name as first_name, a.flags as flags, a.id as id, a.last_name as last_name, a.nickname as nickname, a.options as options, a.packages as packages, a.pronouns as pronouns, a.telegram as telegram, a.tshirt_size as tshirt_size, a.user_comments as user_comments 
+FROM att_attendees AS a 
+  LEFT JOIN att_admin_info AS ad ON ad.id = a.id 
+  LEFT JOIN (  SELECT sc.attendee_id AS attendee_id,         ( SELECT sc2.status FROM att_status_change AS sc2 WHERE sc2.id = max(sc.id) ) AS status  FROM att_status_change AS sc  GROUP BY sc.attendee_id  ) AS st ON st.attendee_id = a.id 
+WHERE (
   (0 = 1)
 ) ORDER BY a.id `
 
@@ -72,10 +76,11 @@ func TestTwoFullSearchQueries(t *testing.T) {
 				UserComments: "more user comments",
 			},
 		},
-		MinId:     1,
-		MaxId:     400,
-		SortBy:    "name",
-		SortOrder: "descending",
+		MinId:      1,
+		MaxId:      400,
+		SortBy:     "name",
+		SortOrder:  "descending",
+		FillFields: []string{"configuration", "balances", "pronouns"},
 	}
 
 	actualParams := make(map[string]interface{})
@@ -119,7 +124,11 @@ func TestTwoFullSearchQueries(t *testing.T) {
 		"param_2_13": "%,pzero,%",
 		"param_2_14": "%more user comments%",
 	}
-	expectedQuery := `SELECT * FROM attendees a WHERE (
+	expectedQuery := `SELECT IFNULL(ad.flags, '') as admin_flags, IFNULL(st.status, 'new') as status, a.cache_payment_balance as cache_payment_balance, a.flags as flags, a.id as id, a.options as options, a.packages as packages, a.pronouns as pronouns 
+FROM att_attendees AS a 
+  LEFT JOIN att_admin_info AS ad ON ad.id = a.id 
+  LEFT JOIN (  SELECT sc.attendee_id AS attendee_id,         ( SELECT sc2.status FROM att_status_change AS sc2 WHERE sc2.id = max(sc.id) ) AS status  FROM att_status_change AS sc  GROUP BY sc.attendee_id  ) AS st ON st.attendee_id = a.id 
+WHERE (
   (0 = 1)
   OR
   (

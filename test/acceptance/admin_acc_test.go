@@ -415,6 +415,7 @@ func TestSearch_AdminOk(t *testing.T) {
 		MatchAny: []attendee.AttendeeSearchSingleCriterion{
 			{},
 		},
+		FillFields: []string{"all"},
 	}
 	response := tstPerformPost("/api/rest/v1/attendees/find", tstRenderJson(searchAll), token)
 
@@ -436,7 +437,6 @@ func TestSearch_AdminOk(t *testing.T) {
       "state": "Sachsen",
       "phone": "+49-30-123",
       "telegram": "@ihopethisuserdoesnotexist",
-      "partner": "",
       "birthday": "1998-11-23",
       "gender": "other",
       "pronouns": "he/him",
@@ -444,7 +444,10 @@ func TestSearch_AdminOk(t *testing.T) {
       "flags": "anon,hc",
       "options": "music,suit",
       "packages": "room-none,attendance,stage,sponsor2",
-      "user_comments": ""
+      "status": "new",
+      "total_dues": 0,
+      "payment_balance": 0,
+      "current_dues": 0
     }
   ]
 }`

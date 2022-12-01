@@ -8,8 +8,20 @@ import (
 )
 
 func constructAttendeeSearchQuery(conds *attendee.AttendeeSearchCriteria, params map[string]interface{}) string {
+	newestStatusSubQuery := strings.Builder{}
+	newestStatusSubQuery.WriteString(" SELECT sc.attendee_id AS attendee_id, ")
+	newestStatusSubQuery.WriteString("        ( SELECT sc2.status FROM att_status_change AS sc2 WHERE sc2.id = max(sc.id) ) AS status ")
+	newestStatusSubQuery.WriteString(" FROM att_status_change AS sc ")
+	newestStatusSubQuery.WriteString(" GROUP BY sc.attendee_id ")
+
 	query := strings.Builder{}
-	query.WriteString("SELECT * FROM attendees a WHERE (\n  (0 = 1)\n")
+	query.WriteString("SELECT ")
+	fields := constructFieldList(conds.FillFields)
+	query.WriteString(strings.Join(fields, ", ") + " \n")
+	query.WriteString("FROM att_attendees AS a \n")
+	query.WriteString("  LEFT JOIN att_admin_info AS ad ON ad.id = a.id \n")
+	query.WriteString("  LEFT JOIN ( " + newestStatusSubQuery.String() + " ) AS st ON st.attendee_id = a.id \n")
+	query.WriteString("WHERE (\n  (0 = 1)\n")
 	if conds != nil {
 		for i, cond := range conds.MatchAny {
 			query.WriteString("  OR\n  (\n" + addSingleCondition(&cond, params, i+1) + "  )\n")
@@ -28,6 +40,126 @@ func constructAttendeeSearchQuery(conds *attendee.AttendeeSearchCriteria, params
 		query.WriteString(orderBy(conds.SortBy, conds.SortOrder))
 	}
 	return query.String()
+}
+
+func constructFieldList(spec []string) []string {
+	selected := make(map[string]bool)
+	if len(spec) == 0 {
+		// default selection
+		selected["a.id as id"] = true
+		selected["a.nickname as nickname"] = true
+		selected["a.first_name as first_name"] = true
+		selected["a.last_name as last_name"] = true
+		selected["a.country as country"] = true
+		selected["a.country_badge as country_badge"] = true
+		selected["a.email as email"] = true
+		selected["a.telegram as telegram"] = true
+		selected["a.birthday as birthday"] = true
+		selected["a.pronouns as pronouns"] = true
+		selected["a.tshirt_size as tshirt_size"] = true
+		selected["a.flags as flags"] = true
+		selected["IFNULL(ad.flags, '') as admin_flags"] = true
+		selected["a.options as options"] = true
+		selected["a.packages as packages"] = true
+		selected["a.user_comments as user_comments"] = true
+		selected["IFNULL(st.status, 'new') as status"] = true
+		selected["a.cache_payment_balance as cache_payment_balance"] = true
+		selected["a.created_at as created_at"] = true
+		selected["IFNULL(ad.admin_comments, '') as admin_comments"] = true
+	} else {
+		selected["a.id as id"] = true // always show badge number
+		for _, s := range spec {
+			defKey := fmt.Sprintf("a.%s as %s", s, s)
+			switch s {
+			case "id", "nickname", "first_name", "last_name", "street", "zip", "city":
+				selected[defKey] = true
+			case "country", "country_badge", "state", "email", "phone", "telegram", "partner":
+				selected[defKey] = true
+			case "birthday", "gender", "pronouns", "tshirt_size":
+				selected[defKey] = true
+			case "flags":
+				selected["a.flags as flags"] = true
+				selected["IFNULL(ad.flags, '') as admin_flags"] = true // from search viewpoint, these are just more flags
+			case "options", "packages", "user_comments":
+				selected[defKey] = true
+			case "status":
+				selected["IFNULL(st.status, 'new') as status"] = true
+			case "total_dues", "payment_balance", "current_dues":
+				selected["a.cache_payment_balance as cache_payment_balance"] = true
+				selected["IFNULL(ad.flags, '') as admin_flags"] = true // needed for dues calc (guest!)
+				selected["IFNULL(st.status, 'new') as status"] = true  // needed for dues calc
+			case "due_date":
+				selected["a.cache_due_date as cache_due_date"] = true
+			case "registered":
+				selected["a.created_at as created_at"] = true
+			case "admin_comments":
+				selected["IFNULL(ad.admin_comments, '') as admin_comments"] = true
+			// custom field names
+			case "name":
+				selected["a.first_name as first_name"] = true
+				selected["a.last_name as last_name"] = true
+			case "address":
+				selected["a.street as street"] = true
+				selected["a.zip as zip"] = true
+				selected["a.city as city"] = true
+				selected["a.state as state"] = true
+				selected["a.country as country"] = true
+			case "contact":
+				selected["a.email as email"] = true
+				selected["a.phone as phone"] = true
+				selected["a.telegram as telegram"] = true
+				selected["a.country_badge as country_badge"] = true
+			case "configuration":
+				selected["a.flags as flags"] = true
+				selected["a.options as options"] = true
+				selected["a.packages as packages"] = true
+			case "balances":
+				selected["a.cache_payment_balance as cache_payment_balance"] = true
+				selected["IFNULL(ad.flags, '') as admin_flags"] = true // needed for dues calc (guest!)
+				selected["IFNULL(st.status, 'new') as status"] = true  // needed for dues calc
+			case "all":
+				selected["a.nickname as nickname"] = true
+				selected["a.first_name as first_name"] = true
+				selected["a.last_name as last_name"] = true
+				selected["a.street as street"] = true
+				selected["a.zip as zip"] = true
+				selected["a.city as city"] = true
+				selected["a.country as country"] = true
+				selected["a.country_badge as country_badge"] = true
+				selected["a.state as state"] = true
+				selected["a.email as email"] = true
+				selected["a.phone as phone"] = true
+				selected["a.telegram as telegram"] = true
+				selected["a.partner as partner"] = true
+				selected["a.birthday as birthday"] = true
+				selected["a.gender as gender"] = true
+				selected["a.pronouns as pronouns"] = true
+				selected["a.tshirt_size as tshirt_size"] = true
+				selected["a.flags as flags"] = true
+				selected["IFNULL(ad.flags, '') as admin_flags"] = true
+				selected["a.options as options"] = true
+				selected["a.packages as packages"] = true
+				selected["a.user_comments as user_comments"] = true
+				selected["IFNULL(st.status, 'new') as status"] = true
+				selected["a.cache_payment_balance as cache_payment_balance"] = true
+				selected["a.cache_due_date as cache_due_date"] = true
+				selected["a.created_at as created_at"] = true
+				selected["IFNULL(ad.admin_comments, '') as admin_comments"] = true
+			default:
+				// ignore
+			}
+		}
+	}
+
+	result := make([]string, len(selected))
+	i := 0
+	for k := range selected {
+		result[i] = k
+		i++
+	}
+
+	sort.Strings(result)
+	return result
 }
 
 func orderBy(field string, direction string) string {

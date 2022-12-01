@@ -108,7 +108,7 @@ func (r *InMemoryRepository) MaxAttendeeId(ctx context.Context) (uint, error) {
 
 // --- attendee search ---
 
-func (r *InMemoryRepository) FindAttendees(ctx context.Context, criteria *attendee.AttendeeSearchCriteria) ([]*entity.Attendee, error) {
+func (r *InMemoryRepository) FindAttendees(ctx context.Context, criteria *attendee.AttendeeSearchCriteria) ([]*entity.AttendeeQueryResult, error) {
 	resultIds := make([]uint, 0)
 	for id, a := range r.attendees {
 		if matchesCriteria(criteria, a) {
@@ -123,11 +123,20 @@ func (r *InMemoryRepository) FindAttendees(ctx context.Context, criteria *attend
 		resultLen = int(criteria.NumResults)
 	}
 
-	result := make([]*entity.Attendee, resultLen)
+	result := make([]*entity.AttendeeQueryResult, resultLen)
 	for i, aid := range resultIds {
 		if i < resultLen {
 			copiedAttendee := *(r.attendees[aid])
-			result[i] = &copiedAttendee
+			adminInfo, _ := r.GetAdminInfoByAttendeeId(ctx, aid)
+			latestStatus, _ := r.GetLatestStatusChangeByAttendeeId(ctx, aid)
+			// TODO only fill needed fields
+			copiedResult := entity.AttendeeQueryResult{
+				Attendee:      copiedAttendee,
+				Status:        latestStatus.Status,
+				AdminComments: adminInfo.AdminComments,
+				AdminFlags:    adminInfo.Flags,
+			}
+			result[i] = &copiedResult
 		}
 	}
 

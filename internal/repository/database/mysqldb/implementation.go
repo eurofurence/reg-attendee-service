@@ -11,6 +11,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database/dbrepo"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/schema"
 	"time"
 )
 
@@ -23,7 +24,11 @@ func Create() dbrepo.Repository {
 }
 
 func (r *MysqlRepository) Open() error {
-	gormConfig := gorm.Config{}
+	gormConfig := gorm.Config{
+		NamingStrategy: schema.NamingStrategy{
+			TablePrefix: "att_",
+		},
+	}
 	connectString := config.DatabaseMysqlConnectString()
 
 	db, err := gorm.Open(mysql.Open(connectString), &gormConfig)
@@ -126,12 +131,12 @@ func (r *MysqlRepository) MaxAttendeeId(ctx context.Context) (uint, error) {
 
 // --- attendee search ---
 
-func (r *MysqlRepository) FindAttendees(ctx context.Context, criteria *attendee.AttendeeSearchCriteria) ([]*entity.Attendee, error) {
+func (r *MysqlRepository) FindAttendees(ctx context.Context, criteria *attendee.AttendeeSearchCriteria) ([]*entity.AttendeeQueryResult, error) {
 	params := make(map[string]interface{})
 	query := constructAttendeeSearchQuery(criteria, params)
 
-	result := make([]*entity.Attendee, 0)
-	attendeeBuffer := entity.Attendee{}
+	result := make([]*entity.AttendeeQueryResult, 0)
+	attendeeBuffer := entity.AttendeeQueryResult{}
 
 	rows, err := r.db.Raw(query, params).Find(&attendeeBuffer).Rows()
 	if err != nil {

@@ -27,7 +27,7 @@ type Repository interface {
 	GetStatusChangesByAttendeeId(ctx context.Context, attendeeId uint) ([]entity.StatusChange, error)
 	AddStatusChange(ctx context.Context, sc *entity.StatusChange) error
 
-	FindAttendees(ctx context.Context, criteria *attendee.AttendeeSearchCriteria) ([]*entity.Attendee, error)
+	FindAttendees(ctx context.Context, criteria *attendee.AttendeeSearchCriteria) ([]*entity.AttendeeQueryResult, error)
 	FindByIdentity(ctx context.Context, identity string) ([]*entity.Attendee, error)
 
 	GetAllBans(ctx context.Context) ([]*entity.Ban, error)

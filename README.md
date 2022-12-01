@@ -103,18 +103,19 @@ Limitations:
 
 ### open
 
+  - 🚧 support status in find
+  - 🚧 allow listing ids of deleted, but omit data (needed by security api so it can mark them deleted too)
+
+
   - check that at least one attendance option is set
   - admin only flag skipBanCheck
-  - support status in find
   - new endpoint for "resend last status change notification email"
   - delete ban rule tests
   - return admin_comments from search
-  - status WAITING; transitions: new->, ->new, ->approved, ->cancelled, ->deleted(unless payments)
-  - allow listing ids of deleted, but omit data (needed by security api so it can mark them deleted too)
+  - test dues changes caused by setting and removing guest status and corresponding status change logic
 
 ### for later
 
 - ❌ more fine-grained permissions using JWT
   - viewAttendees, changeAttendees, viewAttendeeAdmininfo, changeAttendeeAdmininfo rights
 - ❌ container build and associated changes
-
