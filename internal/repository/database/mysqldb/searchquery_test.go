@@ -141,13 +141,14 @@ WHERE (
     AND ( LOWER(a.country_badge) = LOWER( @param_1_5 ) )
     AND ( LOWER(a.email) LIKE LOWER( @param_1_6 ) )
     AND ( LOWER(a.telegram) LIKE LOWER( @param_1_7 ) )
-    AND ( a.flags LIKE @param_1_8 )
-    AND ( a.flags NOT LIKE @param_1_9 )
+    AND ( CONCAT(a.flags,IFNULL(ad.flags, '')) LIKE @param_1_8 )
+    AND ( CONCAT(a.flags,IFNULL(ad.flags, '')) NOT LIKE @param_1_9 )
     AND ( a.options LIKE @param_1_10 )
     AND ( a.options NOT LIKE @param_1_11 )
     AND ( a.packages LIKE @param_1_12 )
     AND ( a.packages NOT LIKE @param_1_13 )
     AND ( LOWER(a.user_comments) LIKE LOWER( @param_1_14 ) )
+    AND ( IFNULL(st.status, 'new') <> 'deleted' )
   )
   OR
   (
@@ -160,13 +161,14 @@ WHERE (
     AND ( LOWER(a.country_badge) = LOWER( @param_2_5 ) )
     AND ( LOWER(a.email) LIKE LOWER( @param_2_6 ) )
     AND ( LOWER(a.telegram) LIKE LOWER( @param_2_7 ) )
-    AND ( a.flags LIKE @param_2_8 )
-    AND ( a.flags NOT LIKE @param_2_9 )
+    AND ( CONCAT(a.flags,IFNULL(ad.flags, '')) LIKE @param_2_8 )
+    AND ( CONCAT(a.flags,IFNULL(ad.flags, '')) NOT LIKE @param_2_9 )
     AND ( a.options LIKE @param_2_10 )
     AND ( a.options NOT LIKE @param_2_11 )
     AND ( a.packages LIKE @param_2_12 )
     AND ( a.packages NOT LIKE @param_2_13 )
     AND ( LOWER(a.user_comments) LIKE LOWER( @param_2_14 ) )
+    AND ( IFNULL(st.status, 'new') <> 'deleted' )
   )
 ) AND a.id >= @param_0_1 AND a.id <= @param_0_2 ORDER BY CONCAT(a.first_name, ' ', a.last_name) DESC`
 

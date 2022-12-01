@@ -111,7 +111,9 @@ func (r *InMemoryRepository) MaxAttendeeId(ctx context.Context) (uint, error) {
 func (r *InMemoryRepository) FindAttendees(ctx context.Context, criteria *attendee.AttendeeSearchCriteria) ([]*entity.AttendeeQueryResult, error) {
 	resultIds := make([]uint, 0)
 	for id, a := range r.attendees {
-		if matchesCriteria(criteria, a) {
+		adm, _ := r.GetAdminInfoByAttendeeId(ctx, a.ID)
+		sc, _ := r.GetLatestStatusChangeByAttendeeId(ctx, a.ID)
+		if matchesCriteria(criteria, a, adm, sc) {
 			resultIds = append(resultIds, id)
 		}
 	}

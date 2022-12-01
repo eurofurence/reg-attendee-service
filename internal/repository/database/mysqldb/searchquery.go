@@ -3,6 +3,8 @@ package mysqldb
 import (
 	"fmt"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"sort"
 	"strings"
 )
@@ -220,12 +222,22 @@ func addSingleCondition(cond *attendee.AttendeeSearchSingleCriterion, params map
 	if cond.Telegram != "" {
 		query.WriteString(substringMatch("a.telegram", cond.Telegram, params, paramBaseName, &paramNo))
 	}
-	query.WriteString(choiceMatch("a.flags", cond.Flags, params, paramBaseName, &paramNo))
+	query.WriteString(choiceMatch("CONCAT(a.flags,IFNULL(ad.flags, ''))", cond.Flags, params, paramBaseName, &paramNo))
 	query.WriteString(choiceMatch("a.options", cond.Options, params, paramBaseName, &paramNo))
 	query.WriteString(choiceMatch("a.packages", cond.Packages, params, paramBaseName, &paramNo))
 	if cond.UserComments != "" {
 		query.WriteString(substringMatch("a.user_comments", cond.UserComments, params, paramBaseName, &paramNo))
 	}
+	if len(cond.Status) == 0 {
+		query.WriteString("    AND ( IFNULL(st.status, 'new') <> 'deleted' )\n")
+	} else {
+		query.WriteString(safeStatusSliceMatch("IFNULL(st.status, 'new')", cond.Status))
+	}
+	query.WriteString(choiceMatch("IFNULL(ad.permissions, '')", cond.Permissions, params, paramBaseName, &paramNo))
+	if cond.AdminComments != "" {
+		query.WriteString(substringMatch("IFNULL(ad.admin_comments, '')", cond.AdminComments, params, paramBaseName, &paramNo))
+	}
+
 	return query.String()
 }
 
@@ -233,6 +245,20 @@ func uintSliceMatch(field string, values []uint) string {
 	mappedValues := make([]string, len(values))
 	for i, v := range values {
 		mappedValues[i] = fmt.Sprintf("%d", v)
+	}
+	return fmt.Sprintf("    AND ( %s IN (%s))\n", field, strings.Join(mappedValues, ","))
+}
+
+func safeStatusSliceMatch(field string, values []status.Status) string {
+	allowedValues := config.AllowedStatusValues()
+	mappedValues := make([]string, 0)
+	for _, v := range values {
+		for _, a := range allowedValues {
+			// ensure no special characters
+			if a == v {
+				mappedValues = append(mappedValues, fmt.Sprintf("'%s'", v))
+			}
+		}
 	}
 	return fmt.Sprintf("    AND ( %s IN (%s))\n", field, strings.Join(mappedValues, ","))
 }

@@ -66,14 +66,14 @@ type AttendeeSearchSingleCriterion struct {
 	CountryBadge  string          `json:"country_badge"`
 	Email         string          `json:"email"`
 	Telegram      string          `json:"telegram"`
-	Flags         map[string]int8 `json:"flags"` // TODO include admin only flags (guest, skip_ban_check) (if admin)
+	Flags         map[string]int8 `json:"flags"`
 	Options       map[string]int8 `json:"options"`
 	Packages      map[string]int8 `json:"packages"`
 	UserComments  string          `json:"user_comments"`
-	Status        []string        `json:"status"`         // TODO implement
-	Permissions   map[string]int8 `json:"permissions"`    // TODO implement
-	AdminComments string          `json:"admin_comments"` // TODO implement
-	AddInfo       map[string]int8 `json:"add_info"`       // TODO implement
+	Status        []status.Status `json:"status"`
+	Permissions   map[string]int8 `json:"permissions"`
+	AdminComments string          `json:"admin_comments"`
+	AddInfo       map[string]int8 `json:"add_info"` // TODO implement
 }
 
 // --- search result ---
