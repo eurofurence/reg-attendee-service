@@ -136,9 +136,8 @@ func (r *MysqlRepository) FindAttendees(ctx context.Context, criteria *attendee.
 	query := constructAttendeeSearchQuery(criteria, params)
 
 	result := make([]*entity.AttendeeQueryResult, 0)
-	attendeeBuffer := entity.AttendeeQueryResult{}
 
-	rows, err := r.db.Raw(query, params).Find(&attendeeBuffer).Rows()
+	rows, err := r.db.Raw(query, params).Rows()
 	if err != nil {
 		aulogging.Logger.Ctx(ctx).Error().WithErr(err).Printf("error finding attendees: %s", err.Error())
 		return result, err
@@ -151,7 +150,8 @@ func (r *MysqlRepository) FindAttendees(ctx context.Context, criteria *attendee.
 	}()
 
 	for rows.Next() {
-		err = rows.Scan(&attendeeBuffer)
+		attendeeBuffer := entity.AttendeeQueryResult{}
+		err = r.db.ScanRows(rows, &attendeeBuffer)
 		if err != nil {
 			aulogging.Logger.Ctx(ctx).Error().WithErr(err).Printf("error reading attendeeBuffer during find: %s", err.Error())
 			return result, err
@@ -214,7 +214,9 @@ func (r *MysqlRepository) GetStatusChangesByAttendeeId(ctx context.Context, atte
 	}
 	defer func() {
 		err := rows.Close()
-		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("mysql error during status change result set close: %s", err.Error())
+		if err != nil {
+			aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("mysql error during status change result set close: %s", err.Error())
+		}
 	}()
 
 	result := make([]entity.StatusChange, 0)
@@ -249,7 +251,9 @@ func (r *MysqlRepository) FindByIdentity(ctx context.Context, identity string) (
 	}
 	defer func() {
 		err := rows.Close()
-		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("mysql error during attendee by identity result set close: %s", err.Error())
+		if err != nil {
+			aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("mysql error during attendee by identity result set close: %s", err.Error())
+		}
 	}()
 
 	for rows.Next() {

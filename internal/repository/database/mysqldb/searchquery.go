@@ -12,8 +12,8 @@ import (
 func constructAttendeeSearchQuery(conds *attendee.AttendeeSearchCriteria, params map[string]interface{}) string {
 	newestStatusSubQuery := strings.Builder{}
 	newestStatusSubQuery.WriteString(" SELECT sc.attendee_id AS attendee_id, ")
-	newestStatusSubQuery.WriteString("        ( SELECT sc2.status FROM att_status_change AS sc2 WHERE sc2.id = max(sc.id) ) AS status ")
-	newestStatusSubQuery.WriteString(" FROM att_status_change AS sc ")
+	newestStatusSubQuery.WriteString("        ( SELECT sc2.status FROM att_status_changes AS sc2 WHERE sc2.id = max(sc.id) ) AS status ")
+	newestStatusSubQuery.WriteString(" FROM att_status_changes AS sc ")
 	newestStatusSubQuery.WriteString(" GROUP BY sc.attendee_id ")
 
 	query := strings.Builder{}
@@ -21,9 +21,10 @@ func constructAttendeeSearchQuery(conds *attendee.AttendeeSearchCriteria, params
 	fields := constructFieldList(conds.FillFields)
 	query.WriteString(strings.Join(fields, ", ") + " \n")
 	query.WriteString("FROM att_attendees AS a \n")
-	query.WriteString("  LEFT JOIN att_admin_info AS ad ON ad.id = a.id \n")
+	query.WriteString("  LEFT JOIN att_admin_infos AS ad ON ad.id = a.id \n")
 	query.WriteString("  LEFT JOIN ( " + newestStatusSubQuery.String() + " ) AS st ON st.attendee_id = a.id \n")
-	query.WriteString("WHERE (\n  (0 = 1)\n")
+	query.WriteString("WHERE (\n  (0 = @param_force_named_query_detection)\n")
+	params["param_force_named_query_detection"] = 1 // if we do not have at least one @-param, GORM doesn't do named query mode, and then it fails with a type error
 	if conds != nil {
 		for i, cond := range conds.MatchAny {
 			query.WriteString("  OR\n  (\n" + addSingleCondition(&cond, params, i+1) + "  )\n")

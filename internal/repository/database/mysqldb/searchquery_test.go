@@ -13,13 +13,15 @@ func TestEmptySearchQuery(t *testing.T) {
 	actualParams := make(map[string]interface{})
 	actualQuery := constructAttendeeSearchQuery(spec, actualParams)
 
-	expectedParams := map[string]interface{}{}
+	expectedParams := map[string]interface{}{
+		"param_force_named_query_detection": 1,
+	}
 	expectedQuery := `SELECT IFNULL(ad.admin_comments, '') as admin_comments, IFNULL(ad.flags, '') as admin_flags, IFNULL(st.status, 'new') as status, a.birthday as birthday, a.cache_payment_balance as cache_payment_balance, a.country as country, a.country_badge as country_badge, a.created_at as created_at, a.email as email, a.first_name as first_name, a.flags as flags, a.id as id, a.last_name as last_name, a.nickname as nickname, a.options as options, a.packages as packages, a.pronouns as pronouns, a.telegram as telegram, a.tshirt_size as tshirt_size, a.user_comments as user_comments 
 FROM att_attendees AS a 
-  LEFT JOIN att_admin_info AS ad ON ad.id = a.id 
-  LEFT JOIN (  SELECT sc.attendee_id AS attendee_id,         ( SELECT sc2.status FROM att_status_change AS sc2 WHERE sc2.id = max(sc.id) ) AS status  FROM att_status_change AS sc  GROUP BY sc.attendee_id  ) AS st ON st.attendee_id = a.id 
+  LEFT JOIN att_admin_infos AS ad ON ad.id = a.id 
+  LEFT JOIN (  SELECT sc.attendee_id AS attendee_id,         ( SELECT sc2.status FROM att_status_changes AS sc2 WHERE sc2.id = max(sc.id) ) AS status  FROM att_status_changes AS sc  GROUP BY sc.attendee_id  ) AS st ON st.attendee_id = a.id 
 WHERE (
-  (0 = 1)
+  (0 = @param_force_named_query_detection)
 ) ORDER BY a.id `
 
 	require.Equal(t, expectedQuery, actualQuery)
@@ -93,43 +95,44 @@ func TestTwoFullSearchQueries(t *testing.T) {
 	}
 
 	expectedParams := map[string]interface{}{
-		"param_0_1":  uint(1),
-		"param_0_2":  uint(400),
-		"param_1_1":  "%chee%",
-		"param_1_2":  "John D%e",
-		"param_1_3":  "%Berlin%",
-		"param_1_4":  "DE",
-		"param_1_5":  "UK",
-		"param_1_6":  "%ee%ee@ff%ff%",
-		"param_1_7":  "%@abc%",
-		"param_1_8":  "%,flagone,%",
-		"param_1_9":  "%,flagzero,%",
-		"param_1_10": "%,optone,%",
-		"param_1_11": "%,optzero,%",
-		"param_1_12": "%,pkgone,%",
-		"param_1_13": "%,pkgzero,%",
-		"param_1_14": "%user%comments%",
-		"param_2_1":  "small%bird",
-		"param_2_2":  "Johnny",
-		"param_2_3":  "%Berlin%",
-		"param_2_4":  "CH",
-		"param_2_5":  "IT",
-		"param_2_6":  "%gg@hh%",
-		"param_2_7":  "%@def%",
-		"param_2_8":  "%,fone,%",
-		"param_2_9":  "%,fzero,%",
-		"param_2_10": "%,oone,%",
-		"param_2_11": "%,ozero,%",
-		"param_2_12": "%,pone,%",
-		"param_2_13": "%,pzero,%",
-		"param_2_14": "%more user comments%",
+		"param_force_named_query_detection": 1,
+		"param_0_1":                         uint(1),
+		"param_0_2":                         uint(400),
+		"param_1_1":                         "%chee%",
+		"param_1_2":                         "John D%e",
+		"param_1_3":                         "%Berlin%",
+		"param_1_4":                         "DE",
+		"param_1_5":                         "UK",
+		"param_1_6":                         "%ee%ee@ff%ff%",
+		"param_1_7":                         "%@abc%",
+		"param_1_8":                         "%,flagone,%",
+		"param_1_9":                         "%,flagzero,%",
+		"param_1_10":                        "%,optone,%",
+		"param_1_11":                        "%,optzero,%",
+		"param_1_12":                        "%,pkgone,%",
+		"param_1_13":                        "%,pkgzero,%",
+		"param_1_14":                        "%user%comments%",
+		"param_2_1":                         "small%bird",
+		"param_2_2":                         "Johnny",
+		"param_2_3":                         "%Berlin%",
+		"param_2_4":                         "CH",
+		"param_2_5":                         "IT",
+		"param_2_6":                         "%gg@hh%",
+		"param_2_7":                         "%@def%",
+		"param_2_8":                         "%,fone,%",
+		"param_2_9":                         "%,fzero,%",
+		"param_2_10":                        "%,oone,%",
+		"param_2_11":                        "%,ozero,%",
+		"param_2_12":                        "%,pone,%",
+		"param_2_13":                        "%,pzero,%",
+		"param_2_14":                        "%more user comments%",
 	}
 	expectedQuery := `SELECT IFNULL(ad.flags, '') as admin_flags, IFNULL(st.status, 'new') as status, a.cache_payment_balance as cache_payment_balance, a.flags as flags, a.id as id, a.options as options, a.packages as packages, a.pronouns as pronouns 
 FROM att_attendees AS a 
-  LEFT JOIN att_admin_info AS ad ON ad.id = a.id 
-  LEFT JOIN (  SELECT sc.attendee_id AS attendee_id,         ( SELECT sc2.status FROM att_status_change AS sc2 WHERE sc2.id = max(sc.id) ) AS status  FROM att_status_change AS sc  GROUP BY sc.attendee_id  ) AS st ON st.attendee_id = a.id 
+  LEFT JOIN att_admin_infos AS ad ON ad.id = a.id 
+  LEFT JOIN (  SELECT sc.attendee_id AS attendee_id,         ( SELECT sc2.status FROM att_status_changes AS sc2 WHERE sc2.id = max(sc.id) ) AS status  FROM att_status_changes AS sc  GROUP BY sc.attendee_id  ) AS st ON st.attendee_id = a.id 
 WHERE (
-  (0 = 1)
+  (0 = @param_force_named_query_detection)
   OR
   (
     (1 = 1)
