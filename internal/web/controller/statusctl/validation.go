@@ -11,11 +11,11 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 )
 
-func validate(ctx context.Context, trustedOriginalStatus string, s *status.StatusChangeDto) url.Values {
+func validate(ctx context.Context, trustedOriginalStatus status.Status, s *status.StatusChangeDto) url.Values {
 	errs := url.Values{}
 
 	if validation.NotInAllowedValues(config.AllowedStatusValues(), s.Status) {
-		errs.Add("status", "status must be one of "+strings.Join(config.AllowedStatusValues(), ","))
+		errs.Add("status", "status must be one of "+strings.Join(convertStatusValuesSlice(config.AllowedStatusValues()), ","))
 	}
 	validation.CheckLength(&errs, 1, 256, "comment", s.Comment)
 
@@ -28,4 +28,12 @@ func validate(ctx context.Context, trustedOriginalStatus string, s *status.Statu
 		}
 	}
 	return errs
+}
+
+func convertStatusValuesSlice(input []status.Status) []string {
+	result := make([]string, len(input))
+	for i, v := range input {
+		result[i] = string(v)
+	}
+	return result
 }

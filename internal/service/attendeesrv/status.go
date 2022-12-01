@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
@@ -43,7 +44,7 @@ func (s *AttendeeServiceImplData) GetFullStatusHistory(ctx context.Context, atte
 	return result, nil
 }
 
-func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx context.Context, attendee *entity.Attendee, oldStatus string, newStatus string, comments string) error {
+func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status, comments string) error {
 	var err error
 	// controller checks value validity
 	// controller checks permission via StatusChangeAllowed
@@ -67,7 +68,7 @@ func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx contex
 		}
 
 		err = mailservice.Get().SendEmail(ctx, mailservice.TemplateRequestDto{
-			Name: "new-status-" + newStatus,
+			Name: "new-status-" + string(newStatus),
 			Variables: map[string]string{
 				"nickname": attendee.Nickname,
 			},
@@ -81,7 +82,7 @@ func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx contex
 	return nil
 }
 
-func (s *AttendeeServiceImplData) StatusChangeAllowed(ctx context.Context, attendee *entity.Attendee, oldStatus string, newStatus string) error {
+func (s *AttendeeServiceImplData) StatusChangeAllowed(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status) error {
 	if ctxvalues.HasApiToken(ctx) || ctxvalues.IsAuthorizedAsRole(ctx, config.OidcAdminRole()) {
 		// api or admin
 		return nil
@@ -132,7 +133,7 @@ func (s *AttendeeServiceImplData) StatusChangeAllowed(ctx context.Context, atten
 	return errors.New("you are not allowed to make this status transition - the attempt has been logged")
 }
 
-func (s *AttendeeServiceImplData) StatusChangePossible(ctx context.Context, attendee *entity.Attendee, oldStatus string, newStatus string) error {
+func (s *AttendeeServiceImplData) StatusChangePossible(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status) error {
 	if oldStatus == newStatus {
 		return SameStatusError
 	}

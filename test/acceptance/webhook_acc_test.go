@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/eurofurence/reg-attendee-service/docs"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/mailservice"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/paymentservice"
 	"github.com/stretchr/testify/require"
@@ -328,9 +329,9 @@ var subcaseNameMap = map[string]string{
 }
 
 func tstStatusChange_Webhook_Success(t *testing.T, testcase string, subcases []string, tokens []string,
-	oldStatus string,
+	oldStatus status.Status,
 	injectExtraTransactions []paymentservice.Transaction,
-	expectedNewStatus string,
+	expectedNewStatus status.Status,
 	expectedMailRequests []mailservice.TemplateRequestDto,
 ) {
 	for i, subcase := range subcases {
@@ -343,15 +344,15 @@ func tstStatusChange_Webhook_Success(t *testing.T, testcase string, subcases []s
 
 func tstStatusChange_Webhook_Success_WithToken(t *testing.T, testcase string,
 	token string,
-	oldStatus string,
+	oldStatus status.Status,
 	injectExtraTransactions []paymentservice.Transaction,
-	expectedNewStatus string,
+	expectedNewStatus status.Status,
 	expectedMailRequests []mailservice.TemplateRequestDto,
 ) {
 	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
-	docs.Given("given an attendee in status " + oldStatus)
+	docs.Given("given an attendee in status " + string(oldStatus))
 	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
 
 	sum := 0.0
@@ -369,7 +370,7 @@ func tstStatusChange_Webhook_Success_WithToken(t *testing.T, testcase string,
 	docs.Then("then the request is successfully processed (204)")
 	require.Equal(t, http.StatusNoContent, response.status)
 
-	docs.Then("and the resulting attendee status is " + expectedNewStatus + " as expected")
+	docs.Then("and the resulting attendee status is " + string(expectedNewStatus) + " as expected")
 	tstVerifyStatus(t, loc, expectedNewStatus)
 
 	docs.Then("and no additional transactions were booked in the payment service")
@@ -386,7 +387,7 @@ func tstStatusChange_Webhook_Success_WithToken(t *testing.T, testcase string,
 }
 
 func tstStatusChange_Webhook_Ignored(t *testing.T, testcase string, subcases []string, tokens []string,
-	oldStatus string,
+	oldStatus status.Status,
 	injectExtraTransactions []paymentservice.Transaction,
 ) {
 	for i, subcase := range subcases {
@@ -399,13 +400,13 @@ func tstStatusChange_Webhook_Ignored(t *testing.T, testcase string, subcases []s
 
 func tstStatusChange_Webhook_Ignored_WithToken(t *testing.T, testcase string,
 	token string,
-	oldStatus string,
+	oldStatus status.Status,
 	injectExtraTransactions []paymentservice.Transaction,
 ) {
 	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
-	docs.Given("given an attendee in status " + oldStatus)
+	docs.Given("given an attendee in status " + string(oldStatus))
 	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
 
 	sum := 0.0
@@ -435,14 +436,14 @@ func tstStatusChange_Webhook_Ignored_WithToken(t *testing.T, testcase string,
 
 func tstStatusChange_Webhook_Decline(t *testing.T, testcase string,
 	token string,
-	oldStatus string,
+	oldStatus status.Status,
 	injectExtraTransactions []paymentservice.Transaction,
 	expectedHttpStatus int,
 ) {
 	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
-	docs.Given("given an attendee in status " + oldStatus)
+	docs.Given("given an attendee in status " + string(oldStatus))
 	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
 
 	sum := 0.0

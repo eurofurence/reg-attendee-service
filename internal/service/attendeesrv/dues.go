@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/paymentservice"
@@ -11,7 +12,7 @@ import (
 	"time"
 )
 
-func (s *AttendeeServiceImplData) UpdateDues(ctx context.Context, attendee *entity.Attendee, oldStatus string, newStatus string) (string, error) {
+func (s *AttendeeServiceImplData) UpdateDues(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status) (status.Status, error) {
 	transactionHistory, err := paymentservice.Get().GetTransactions(ctx, attendee.ID)
 	if err != nil && !errors.Is(err, paymentservice.NoSuchDebitor404Error) {
 		return newStatus, err
@@ -112,7 +113,7 @@ func (s *AttendeeServiceImplData) packageDuesByVAT(attendee *entity.Attendee) ma
 	return result
 }
 
-func (s *AttendeeServiceImplData) compensateAllDues(ctx context.Context, attendee *entity.Attendee, newStatus string, transactionHistory []paymentservice.Transaction) error {
+func (s *AttendeeServiceImplData) compensateAllDues(ctx context.Context, attendee *entity.Attendee, newStatus status.Status, transactionHistory []paymentservice.Transaction) error {
 	oldDuesByVAT := s.oldDuesByVAT(transactionHistory)
 
 	// we want all dues wiped, so book negative balance for each tax rate

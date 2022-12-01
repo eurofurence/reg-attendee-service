@@ -984,14 +984,14 @@ func TestStatusChange_Admin_Deleted_Cancelled(t *testing.T) {
 
 // --- detail implementations for the status change tests ---
 
-func tstStatusChange_Anonymous_Deny(t *testing.T, testcase string, oldStatus string, newStatus string) {
+func tstStatusChange_Anonymous_Deny(t *testing.T, testcase string, oldStatus status.Status, newStatus status.Status) {
 	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
-	docs.Given("given an attendee in status " + oldStatus)
+	docs.Given("given an attendee in status " + string(oldStatus))
 	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
 
-	docs.When("when an anonymous user tries to change the status to " + newStatus)
+	docs.When("when an anonymous user tries to change the status to " + string(newStatus))
 	body := status.StatusChangeDto{
 		Status:  newStatus,
 		Comment: testcase,
@@ -1011,14 +1011,14 @@ func tstStatusChange_Anonymous_Deny(t *testing.T, testcase string, oldStatus str
 	require.Empty(t, mailMock.Recording())
 }
 
-func tstStatusChange_Self_Deny(t *testing.T, testcase string, oldStatus string, newStatus string) {
+func tstStatusChange_Self_Deny(t *testing.T, testcase string, oldStatus status.Status, newStatus status.Status) {
 	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
-	docs.Given("given an attendee in status " + oldStatus)
+	docs.Given("given an attendee in status " + string(oldStatus))
 	loc, att := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
 
-	docs.When("when they try to change the status to " + newStatus)
+	docs.When("when they try to change the status to " + string(newStatus))
 	body := status.StatusChangeDto{
 		Status:  newStatus,
 		Comment: testcase,
@@ -1038,14 +1038,14 @@ func tstStatusChange_Self_Deny(t *testing.T, testcase string, oldStatus string, 
 	require.Empty(t, mailMock.Recording())
 }
 
-func tstStatusChange_Self_Unavailable(t *testing.T, testcase string, oldStatus string, newStatus string) {
+func tstStatusChange_Self_Unavailable(t *testing.T, testcase string, oldStatus status.Status, newStatus status.Status) {
 	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
-	docs.Given("given an attendee in status " + oldStatus)
+	docs.Given("given an attendee in status " + string(oldStatus))
 	loc, att := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
 
-	docs.When("when they prematurely try to change their own status to " + newStatus)
+	docs.When("when they prematurely try to change their own status to " + string(newStatus))
 	body := status.StatusChangeDto{
 		Status:  newStatus,
 		Comment: testcase,
@@ -1066,18 +1066,18 @@ func tstStatusChange_Self_Unavailable(t *testing.T, testcase string, oldStatus s
 }
 
 func tstStatusChange_Self_Allow(t *testing.T, testcase string,
-	oldStatus string, newStatus string,
+	oldStatus status.Status, newStatus status.Status,
 	expectedTransactions []paymentservice.Transaction,
 	expectedMailRequests []mailservice.TemplateRequestDto,
 ) {
 	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
-	docs.Given("given an attendee in status " + oldStatus)
+	docs.Given("given an attendee in status " + string(oldStatus))
 	token := tstValidStaffToken(t, 1)
 	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
 
-	docs.When("when they change their own status to " + newStatus)
+	docs.When("when they change their own status to " + string(newStatus))
 	body := status.StatusChangeDto{
 		Status:  newStatus,
 		Comment: testcase,
@@ -1106,15 +1106,15 @@ func tstStatusChange_Self_Allow(t *testing.T, testcase string,
 	}
 }
 
-func tstStatusChange_Other_Deny(t *testing.T, testcase string, oldStatus string, newStatus string) {
+func tstStatusChange_Other_Deny(t *testing.T, testcase string, oldStatus status.Status, newStatus status.Status) {
 	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
-	docs.Given("given an attendee in status " + oldStatus + " and a second user")
+	docs.Given("given an attendee in status " + string(oldStatus) + " and a second user")
 	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
 	token2 := tstValidUserToken(t, 101)
 
-	docs.When("when the second user tries to change the first attendee's status to " + newStatus)
+	docs.When("when the second user tries to change the first attendee's status to " + string(newStatus))
 	body := status.StatusChangeDto{
 		Status:  newStatus,
 		Comment: testcase,
@@ -1134,15 +1134,15 @@ func tstStatusChange_Other_Deny(t *testing.T, testcase string, oldStatus string,
 	require.Empty(t, mailMock.Recording())
 }
 
-func tstStatusChange_Regdesk_Deny(t *testing.T, testcase string, oldStatus string, newStatus string) {
+func tstStatusChange_Regdesk_Deny(t *testing.T, testcase string, oldStatus status.Status, newStatus status.Status) {
 	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
-	docs.Given("given an attendee in status " + oldStatus + " and a second attendee with the regdesk permission")
+	docs.Given("given an attendee in status " + string(oldStatus) + " and a second attendee with the regdesk permission")
 	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
 	regdeskUserToken := tstRegisterRegdeskAttendee(t, testcase)
 
-	docs.When("when the regdesk attendee tries to change the first attendee's status to " + newStatus)
+	docs.When("when the regdesk attendee tries to change the first attendee's status to " + string(newStatus))
 	body := status.StatusChangeDto{
 		Status:  newStatus,
 		Comment: testcase,
@@ -1163,21 +1163,21 @@ func tstStatusChange_Regdesk_Deny(t *testing.T, testcase string, oldStatus strin
 }
 
 func tstStatusChange_Regdesk_Unavailable(t *testing.T, testcase string,
-	oldStatus string, newStatus string,
+	oldStatus status.Status, newStatus status.Status,
 	injectExtraTransactions []paymentservice.Transaction,
 	message string, details string,
 ) {
 	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
-	docs.Given("given an attendee in status " + oldStatus + " and a second attendee with the regdesk permission")
+	docs.Given("given an attendee in status " + string(oldStatus) + " and a second attendee with the regdesk permission")
 	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
 	for _, tx := range injectExtraTransactions {
 		_ = paymentMock.InjectTransaction(context.Background(), tx)
 	}
 	regdeskUserToken := tstRegisterRegdeskAttendee(t, testcase)
 
-	docs.When("when the regdesk attendee prematurely tries to change the first attendee's status to " + newStatus)
+	docs.When("when the regdesk attendee prematurely tries to change the first attendee's status to " + string(newStatus))
 	body := status.StatusChangeDto{
 		Status:  newStatus,
 		Comment: testcase,
@@ -1198,18 +1198,18 @@ func tstStatusChange_Regdesk_Unavailable(t *testing.T, testcase string,
 }
 
 func tstStatusChange_Regdesk_Allow(t *testing.T, testcase string,
-	oldStatus string, newStatus string,
+	oldStatus status.Status, newStatus status.Status,
 	expectedTransactions []paymentservice.Transaction,
 	expectedMailRequests []mailservice.TemplateRequestDto,
 ) {
 	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
-	docs.Given("given an attendee in status " + oldStatus + " and a second attendee with the regdesk permission")
+	docs.Given("given an attendee in status " + string(oldStatus) + " and a second attendee with the regdesk permission")
 	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
 	regdeskUserToken := tstRegisterRegdeskAttendee(t, testcase)
 
-	docs.When("when the regdesk attendee changes the first attendee's status to " + newStatus)
+	docs.When("when the regdesk attendee changes the first attendee's status to " + string(newStatus))
 	body := status.StatusChangeDto{
 		Status:  newStatus,
 		Comment: testcase,
@@ -1238,15 +1238,15 @@ func tstStatusChange_Regdesk_Allow(t *testing.T, testcase string,
 	}
 }
 
-func tstStatusChange_Staff_Other_Deny(t *testing.T, testcase string, oldStatus string, newStatus string) {
+func tstStatusChange_Staff_Other_Deny(t *testing.T, testcase string, oldStatus status.Status, newStatus status.Status) {
 	tstSetup(tstConfigFile(false, true, true))
 	defer tstShutdown()
 
-	docs.Given("given an attendee in status " + oldStatus + " and a second user who is staff")
+	docs.Given("given an attendee in status " + string(oldStatus) + " and a second user who is staff")
 	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
 	token := tstValidStaffToken(t, 202)
 
-	docs.When("when the staffer tries to change the first attendee's status to " + newStatus)
+	docs.When("when the staffer tries to change the first attendee's status to " + string(newStatus))
 	body := status.StatusChangeDto{
 		Status:  newStatus,
 		Comment: testcase,
@@ -1269,19 +1269,19 @@ func tstStatusChange_Staff_Other_Deny(t *testing.T, testcase string, oldStatus s
 // admins never get deny (403), but they can get "not possible right now" (409)
 
 func tstStatusChange_Admin_Unavailable(t *testing.T, testcase string,
-	oldStatus string, newStatus string,
+	oldStatus status.Status, newStatus status.Status,
 	injectExtraTransactions []paymentservice.Transaction,
 	message string, details string) {
 	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
-	docs.Given("given an attendee in status " + oldStatus)
+	docs.Given("given an attendee in status " + string(oldStatus))
 	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
 	for _, tx := range injectExtraTransactions {
 		_ = paymentMock.InjectTransaction(context.Background(), tx)
 	}
 
-	docs.When("when an admin prematurely tries to change the status to " + newStatus)
+	docs.When("when an admin prematurely tries to change the status to " + string(newStatus))
 	body := status.StatusChangeDto{
 		Status:  newStatus,
 		Comment: testcase,
@@ -1302,7 +1302,7 @@ func tstStatusChange_Admin_Unavailable(t *testing.T, testcase string,
 }
 
 func tstStatusChange_Admin_Allow(t *testing.T, testcase string,
-	oldStatus string, newStatus string,
+	oldStatus status.Status, newStatus status.Status,
 	injectExtraTransactions []paymentservice.Transaction,
 	expectedTransactions []paymentservice.Transaction,
 	expectedMailRequests []mailservice.TemplateRequestDto,
@@ -1310,13 +1310,13 @@ func tstStatusChange_Admin_Allow(t *testing.T, testcase string,
 	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
 
-	docs.Given("given an attendee in status " + oldStatus)
+	docs.Given("given an attendee in status " + string(oldStatus))
 	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
 	for _, tx := range injectExtraTransactions {
 		_ = paymentMock.InjectTransaction(context.Background(), tx)
 	}
 
-	docs.When("when an admin changes their status to " + newStatus)
+	docs.When("when an admin changes their status to " + string(newStatus))
 	body := status.StatusChangeDto{
 		Status:  newStatus,
 		Comment: testcase,
@@ -1351,7 +1351,7 @@ func tstStatusChange_Admin_Allow(t *testing.T, testcase string,
 
 // helper functions
 
-func tstRequireAttendeeStatus(t *testing.T, expected string, responseBody string) {
+func tstRequireAttendeeStatus(t *testing.T, expected status.Status, responseBody string) {
 	statusDto := status.StatusDto{}
 	tstParseJson(responseBody, &statusDto)
 
@@ -1374,7 +1374,7 @@ func tstRegisterRegdeskAttendee(t *testing.T, testcase string) string {
 	return token
 }
 
-func tstRegisterAttendeeAndTransitionToStatus(t *testing.T, testcase string, status string) (location string, att attendee.AttendeeDto) {
+func tstRegisterAttendeeAndTransitionToStatus(t *testing.T, testcase string, status status.Status) (location string, att attendee.AttendeeDto) {
 	// this works in all configurations, and for status changes, it makes no difference if a user is staff
 	token := tstValidStaffToken(t, 1)
 
@@ -1430,7 +1430,7 @@ func tstRegisterAttendeeAndTransitionToStatus(t *testing.T, testcase string, sta
 	return
 }
 
-func tstCreateStatusChange(attid uint, status string) *entity.StatusChange {
+func tstCreateStatusChange(attid uint, status status.Status) *entity.StatusChange {
 	return &entity.StatusChange{
 		AttendeeId: attid,
 		Status:     status,
@@ -1482,7 +1482,7 @@ func tstCreateMatcherTransaction(attid uint, ty paymentservice.TransactionType, 
 	}
 }
 
-func tstVerifyStatus(t *testing.T, loc string, expectedStatus string) {
+func tstVerifyStatus(t *testing.T, loc string, expectedStatus status.Status) {
 	response := tstPerformGet(loc+"/status", tstValidAdminToken(t))
 	require.Equal(t, http.StatusOK, response.status)
 	statusDto := status.StatusDto{}

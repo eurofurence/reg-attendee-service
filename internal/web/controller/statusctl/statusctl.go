@@ -161,7 +161,7 @@ func paymentsChangedHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	processForStatus := []string{"approved", "partially paid", "paid"}
+	processForStatus := []status.Status{status.Approved, status.PartiallyPaid, status.Paid}
 	if validation.NotInAllowedValues(processForStatus, latestStatusChange.Status) {
 		aulogging.Logger.Ctx(ctx).Warn().Printf("received payment change webhook for attendee id %d, who is in status %s - ignoring", att.ID, latestStatusChange.Status)
 		w.WriteHeader(http.StatusAccepted)
