@@ -18,12 +18,12 @@ func (s *AttendeeServiceImplData) UpdateDues(ctx context.Context, attendee *enti
 		return newStatus, err
 	}
 
-	if newStatus == "new" || newStatus == "deleted" {
+	if newStatus == status.New || newStatus == status.Deleted || newStatus == status.Waiting {
 		err = s.compensateAllDues(ctx, attendee, newStatus, transactionHistory)
 		if err != nil {
 			return newStatus, err
 		}
-	} else if newStatus == "cancelled" {
+	} else if newStatus == status.Cancelled {
 		err = s.compensateUnpaidDuesOnCancel(ctx, attendee, transactionHistory)
 		if err != nil {
 			return newStatus, err
@@ -34,7 +34,7 @@ func (s *AttendeeServiceImplData) UpdateDues(ctx context.Context, attendee *enti
 			return newStatus, err
 		}
 
-		if newStatus == "approved" || newStatus == "partially paid" || newStatus == "paid" {
+		if newStatus == status.Approved || newStatus == status.PartiallyPaid || newStatus == status.Paid {
 			// we do not adjust status back once checked in
 
 			updatedTransactionHistory, err := paymentservice.Get().GetTransactions(ctx, attendee.ID)
@@ -42,21 +42,20 @@ func (s *AttendeeServiceImplData) UpdateDues(ctx context.Context, attendee *enti
 				return newStatus, err
 			}
 
-			// TODO status may have changed between approved <-> partially paid <-> paid
 			dues, payments := s.balances(updatedTransactionHistory)
 
 			if payments <= 0 {
 				if dues > 0 {
-					newStatus = "approved"
+					newStatus = status.Approved
 				} else {
 					// guests, or has credit :)
-					newStatus = "paid"
+					newStatus = status.Paid
 				}
 			} else {
 				if payments < dues-graceAmountCents {
-					newStatus = "partially paid"
+					newStatus = status.PartiallyPaid
 				} else {
-					newStatus = "paid"
+					newStatus = status.Paid
 				}
 			}
 		}

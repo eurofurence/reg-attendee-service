@@ -5,6 +5,7 @@ import (
 	"errors"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database/dbrepo"
@@ -191,7 +192,7 @@ func (r *MysqlRepository) GetLatestStatusChangeByAttendeeId(ctx context.Context,
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			sc = entity.StatusChange{
 				AttendeeId: attendeeId,
-				Status:     "new",
+				Status:     status.New,
 				Comments:   "",
 			}
 			err = nil

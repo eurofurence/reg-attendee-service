@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database/dbrepo"
 	"sort"
@@ -206,7 +207,7 @@ func (r *InMemoryRepository) WriteAdminInfo(ctx context.Context, ai *entity.Admi
 func (r *InMemoryRepository) GetLatestStatusChangeByAttendeeId(ctx context.Context, attendeeId uint) (*entity.StatusChange, error) {
 	scEmpty := entity.StatusChange{
 		AttendeeId: attendeeId,
-		Status:     "new",
+		Status:     status.New,
 		Comments:   "",
 	}
 	if scList, ok := r.statusChanges[attendeeId]; ok {

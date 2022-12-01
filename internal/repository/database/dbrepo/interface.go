@@ -22,7 +22,7 @@ type Repository interface {
 
 	// GetLatestStatusChangeByAttendeeId returns the latest status change entry for the given attendee id.
 	//
-	// If none is in the database, returns a blank (unsaved) change with status "new".
+	// If none is in the database, returns a blank (unsaved) change with status new.
 	GetLatestStatusChangeByAttendeeId(ctx context.Context, attendeeId uint) (*entity.StatusChange, error)
 	GetStatusChangesByAttendeeId(ctx context.Context, attendeeId uint) ([]entity.StatusChange, error)
 	AddStatusChange(ctx context.Context, sc *entity.StatusChange) error

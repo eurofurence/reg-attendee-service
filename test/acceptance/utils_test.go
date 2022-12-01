@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/bans"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/mailservice"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/paymentservice"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/media"
@@ -191,9 +192,9 @@ func tstValidAttendeeDues(amount int64, comment string) paymentservice.Transacti
 	}
 }
 
-func tstNewStatusMail(testcase string, newStatus string) mailservice.TemplateRequestDto {
+func tstNewStatusMail(testcase string, newStatus status.Status) mailservice.TemplateRequestDto {
 	return mailservice.TemplateRequestDto{
-		Name: "new-status-" + newStatus,
+		Name: "new-status-" + string(newStatus),
 		Variables: map[string]string{
 			"nickname": "BlackCheetah",
 		},

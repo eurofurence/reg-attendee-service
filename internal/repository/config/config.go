@@ -109,8 +109,7 @@ func AllowedCountries() []string {
 }
 
 func AllowedStatusValues() []status.Status {
-	// TODO status.Waiting,
-	return []status.Status{status.New, status.Approved, status.PartiallyPaid, status.Paid, status.CheckedIn, status.Cancelled, status.Deleted}
+	return []status.Status{status.New, status.Approved, status.PartiallyPaid, status.Paid, status.CheckedIn, status.Waiting, status.Cancelled, status.Deleted}
 }
 
 func DefaultFlags() string {

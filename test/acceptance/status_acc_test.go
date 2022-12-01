@@ -75,7 +75,7 @@ func TestStatus_UserAllowSelf(t *testing.T) {
 	statusDto := status.StatusDto{}
 	tstParseJson(response.body, &statusDto)
 	expectedStatus := status.StatusDto{
-		Status: "new",
+		Status: status.New,
 	}
 	require.EqualValues(t, expectedStatus, statusDto, "status did not match expected value")
 }
@@ -112,7 +112,7 @@ func TestStatus_StaffAllowSelf(t *testing.T) {
 	statusDto := status.StatusDto{}
 	tstParseJson(response.body, &statusDto)
 	expectedStatus := status.StatusDto{
-		Status: "new",
+		Status: status.New,
 	}
 	require.EqualValues(t, expectedStatus, statusDto, "status did not match expected value")
 }
@@ -133,7 +133,7 @@ func TestStatus_AdminOk(t *testing.T) {
 
 	docs.Then("then the request is successful and the default status is returned")
 	require.Equal(t, http.StatusOK, response.status, "unexpected http response status")
-	tstRequireAttendeeStatus(t, "new", response.body)
+	tstRequireAttendeeStatus(t, status.New, response.body)
 }
 
 func TestStatus_InvalidId(t *testing.T) {
@@ -260,7 +260,7 @@ func TestStatusHistory_AdminOk(t *testing.T) {
 		Id: attendee1.Id,
 		StatusHistory: []status.StatusChangeDto{{
 			Timestamp: statusHistoryDto.StatusHistory[0].Timestamp,
-			Status:    "new",
+			Status:    status.New,
 			Comment:   "registration",
 		}},
 	}
@@ -306,7 +306,7 @@ func TestStatusChange_InvalidId(t *testing.T) {
 
 	docs.When("when an admin attempts a status change for an invalid attendee id")
 	body := status.StatusChangeDto{
-		Status:  "approved",
+		Status:  status.Approved,
 		Comment: "stat40",
 	}
 	response := tstPerformPost("/api/rest/v1/attendees/tigress/status", tstRenderJson(body), tstValidAdminToken(t))
@@ -322,7 +322,7 @@ func TestStatusChange_Nonexistant(t *testing.T) {
 
 	docs.When("when an admin attempts a status change for an attendee that does not exist")
 	body := status.StatusChangeDto{
-		Status:  "approved",
+		Status:  status.Approved,
 		Comment: "stat41",
 	}
 	response := tstPerformPost("/api/rest/v1/attendees/444/status", tstRenderJson(body), tstValidAdminToken(t))
@@ -342,7 +342,7 @@ func TestStatusChange_InvalidBodySyntax(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given an attendee in status approved")
-	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, "stat42", "approved")
+	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, "stat42", status.Approved)
 
 	docs.When("when an admin prematurely tries to change their status but sends a syntactically invalid request body")
 	response := tstPerformPost(loc+"/status", "{{-}}}}", tstValidAdminToken(t))
@@ -351,7 +351,7 @@ func TestStatusChange_InvalidBodySyntax(t *testing.T) {
 	tstRequireErrorResponse(t, response, http.StatusBadRequest, "status.parse.error", url.Values{})
 
 	docs.Then("and the status is unchanged")
-	tstVerifyStatus(t, loc, "approved")
+	tstVerifyStatus(t, loc, status.Approved)
 
 	docs.Then("and no dues or payment changes have been recorded")
 	require.Empty(t, paymentMock.Recording())
@@ -365,7 +365,7 @@ func TestStatusChange_InvalidBodyValues(t *testing.T) {
 	defer tstShutdown()
 
 	docs.Given("given an attendee in status approved")
-	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, "stat43", "approved")
+	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, "stat43", status.Approved)
 
 	docs.When("when an admin tries to change the status to an invalid value")
 	body := status.StatusChangeDto{
@@ -376,11 +376,11 @@ func TestStatusChange_InvalidBodyValues(t *testing.T) {
 
 	docs.Then("then the request fails and the appropriate error is returned")
 	tstRequireErrorResponse(t, response, http.StatusBadRequest, "status.data.invalid", url.Values{
-		"status": []string{"status must be one of new,approved,partially paid,paid,checked in,cancelled,deleted"},
+		"status": []string{"status must be one of new,approved,partially paid,paid,checked in,waiting,cancelled,deleted"},
 	})
 
 	docs.Then("and the status is unchanged")
-	tstVerifyStatus(t, loc, "approved")
+	tstVerifyStatus(t, loc, status.Approved)
 
 	docs.Then("and no dues or payment changes have been recorded")
 	require.Empty(t, paymentMock.Recording())
@@ -434,18 +434,27 @@ func TestStatusChange_Staff_Other_Any_Any(t *testing.T) {
 func TestStatusChange_Self_New_Cancelled(t *testing.T) {
 	testcase := "st0self6-"
 	tstStatusChange_Self_Allow(t, testcase,
-		"new", "cancelled",
+		status.New, status.Cancelled,
 		[]paymentservice.Transaction{},
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "cancelled")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Cancelled)},
 	)
 }
 
 func TestStatusChange_Self_Approved_Cancelled(t *testing.T) {
 	testcase := "st1self6-"
 	tstStatusChange_Self_Allow(t, testcase,
-		"approved", "cancelled",
+		status.Approved, status.Cancelled,
 		[]paymentservice.Transaction{tstValidAttendeeDues(-25500, "void unpaid dues on cancel")},
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "cancelled")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Cancelled)},
+	)
+}
+
+func TestStatusChange_Self_Waiting_Cancelled(t *testing.T) {
+	testcase := "st5self6-"
+	tstStatusChange_Self_Allow(t, testcase,
+		status.Approved, status.Cancelled,
+		[]paymentservice.Transaction{tstValidAttendeeDues(-25500, "void unpaid dues on cancel")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Cancelled)},
 	)
 }
 
@@ -454,7 +463,7 @@ func TestStatusChange_Self_Approved_Cancelled(t *testing.T) {
 func TestStatusChange_Self_Any_Any(t *testing.T) {
 	for o, oldStatus := range config.AllowedStatusValues() {
 		for n, newStatus := range config.AllowedStatusValues() {
-			if (oldStatus == "new" || oldStatus == "approved") && newStatus == "cancelled" {
+			if (oldStatus == status.New || oldStatus == status.Approved || oldStatus == status.Waiting) && newStatus == status.Cancelled {
 				// see individual test cases above
 			} else {
 				testname := fmt.Sprintf("TestStatusChange_Self_%s_%s", oldStatus, newStatus)
@@ -473,15 +482,15 @@ func TestStatusChange_Self_Any_Any(t *testing.T) {
 func TestStatusChange_Regdesk_Paid_CheckedIn(t *testing.T) {
 	testcase := "st3regdsk4-"
 	tstStatusChange_Regdesk_Allow(t, testcase,
-		"paid", "checked in",
+		status.Paid, status.CheckedIn,
 		[]paymentservice.Transaction{},
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "checked in")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.CheckedIn)},
 	)
 }
 
 func TestStatusChange_Regdesk_NotCompletelyPaid_CheckedIn(t *testing.T) {
 	tstStatusChange_Regdesk_Unavailable(t, "st3regdsk4a-",
-		"paid", "checked in",
+		status.Paid, status.CheckedIn,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -42)}, // slight underpayment
 		"status.unpaid.dues", "payment amount not sufficient",
 	)
@@ -490,9 +499,9 @@ func TestStatusChange_Regdesk_NotCompletelyPaid_CheckedIn(t *testing.T) {
 func TestStatusChange_Regdesk_Any_Any(t *testing.T) {
 	for o, oldStatus := range config.AllowedStatusValues() {
 		for n, newStatus := range config.AllowedStatusValues() {
-			if (oldStatus == "new" || oldStatus == "approved") && newStatus == "cancelled" {
+			if (oldStatus == status.New || oldStatus == status.Approved) && newStatus == status.Cancelled {
 				// see normal user test cases above - everyone may self-cancel here
-			} else if oldStatus == "paid" && newStatus == "checked in" {
+			} else if oldStatus == status.Paid && newStatus == status.CheckedIn {
 				// see individual test case above
 			} else {
 				testname := fmt.Sprintf("TestStatusChange_Regdesk_%s_%s", oldStatus, newStatus)
@@ -522,40 +531,50 @@ func TestStatusChange_Admin_Same_Same(t *testing.T) {
 func TestStatusChange_Admin_New_Approved(t *testing.T) {
 	testcase := "st0adm1-"
 	tstStatusChange_Admin_Allow(t, testcase,
-		"new", "approved",
+		status.New, status.Approved,
 		nil,
 		[]paymentservice.Transaction{tstValidAttendeeDues(25500, "dues adjustment due to change in status or selected packages")},
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "approved")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Approved)},
+	)
+}
+
+func TestStatusChange_Admin_New_Waiting(t *testing.T) {
+	testcase := "st0adm5-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		status.New, status.Waiting,
+		nil,
+		[]paymentservice.Transaction{},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Waiting)},
 	)
 }
 
 func TestStatusChange_Admin_New_Cancelled(t *testing.T) {
-	testcase := "st0adm5-"
+	testcase := "st0adm6-"
 	tstStatusChange_Admin_Allow(t, testcase,
-		"new", "cancelled",
+		status.New, status.Cancelled,
 		nil,
 		[]paymentservice.Transaction{},
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "cancelled")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Cancelled)},
 	)
 }
 
 func TestStatusChange_Admin_New_Deleted(t *testing.T) {
-	testcase := "st0adm6-"
+	testcase := "st0adm7-"
 	tstStatusChange_Admin_Allow(t, testcase,
-		"new", "deleted",
+		status.New, status.Deleted,
 		nil,
 		[]paymentservice.Transaction{},
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "deleted")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Deleted)},
 	)
 }
 
 func TestStatusChange_Admin_New_Any(t *testing.T) {
 	for n, targetStatus := range config.AllowedStatusValues() {
-		if targetStatus == "partially paid" || targetStatus == "paid" || targetStatus == "checked in" {
-			testname := fmt.Sprintf("TestStatusChange_Admin_%s_%s", "new", targetStatus)
+		if targetStatus == status.PartiallyPaid || targetStatus == status.Paid || targetStatus == status.CheckedIn {
+			testname := fmt.Sprintf("TestStatusChange_Admin_%s_%s", status.New, targetStatus)
 			t.Run(testname, func(t *testing.T) {
 				tstStatusChange_Admin_Unavailable(t, fmt.Sprintf("st%dadm%d-", 0, n),
-					"new", targetStatus,
+					status.New, targetStatus,
 					nil,
 					"status.use.approved", "please change status to approved, this will automatically advance to (partially) paid as appropriate")
 			})
@@ -567,67 +586,77 @@ func TestStatusChange_Admin_New_Any(t *testing.T) {
 func TestStatusChange_Admin_Approved_New(t *testing.T) {
 	testcase := "st1adm0-"
 	tstStatusChange_Admin_Allow(t, testcase,
-		"approved", "new",
+		status.Approved, status.New,
 		nil,
 		[]paymentservice.Transaction{tstValidAttendeeDues(-25500, "remove dues balance - status changed to new")},
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "new")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.New)},
 	)
 }
 
 func TestStatusChange_Admin_Approved_PartiallyPaid(t *testing.T) {
 	testcase := "st1adm2-"
 	tstStatusChange_Admin_Allow(t, testcase,
-		"approved", "partially paid",
+		status.Approved, status.PartiallyPaid,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, 2040)},
 		[]paymentservice.Transaction{},
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "partially paid")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.PartiallyPaid)},
 	)
 }
 
 func TestStatusChange_Admin_Approved_Paid_WithGraceAmount(t *testing.T) {
 	testcase := "st1adm3-"
 	tstStatusChange_Admin_Allow(t, testcase,
-		"approved", "paid",
+		status.Approved, status.Paid,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, 25400)},
 		[]paymentservice.Transaction{},
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "paid")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Paid)},
 	)
 }
 
 func TestStatusChange_Admin_Approved_CheckedIn(t *testing.T) {
 	testcase := "st1adm4-"
 	tstStatusChange_Admin_Allow(t, testcase,
-		"approved", "checked in",
+		status.Approved, status.CheckedIn,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, 25500)},
 		[]paymentservice.Transaction{},
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "checked in")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.CheckedIn)},
+	)
+}
+
+func TestStatusChange_Admin_Approved_Waiting(t *testing.T) {
+	testcase := "st1adm5-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		status.Approved, status.Waiting,
+		nil,
+		[]paymentservice.Transaction{tstValidAttendeeDues(-25500, "remove dues balance - status changed to waiting")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Waiting)},
 	)
 }
 
 func TestStatusChange_Admin_Approved_Cancelled(t *testing.T) {
-	testcase := "st1adm5-"
+	testcase := "st1adm6-"
 	tstStatusChange_Admin_Allow(t, testcase,
-		"approved", "cancelled",
+		status.Approved, status.Cancelled,
 		nil,
 		[]paymentservice.Transaction{tstValidAttendeeDues(-25500, "void unpaid dues on cancel")},
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "cancelled")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Cancelled)},
 	)
 }
 
 func TestStatusChange_Admin_Approved_Deleted(t *testing.T) {
-	testcase := "st1adm6-"
+	testcase := "st1adm7-"
 	tstStatusChange_Admin_Allow(t, testcase,
-		"approved", "deleted",
+		status.Approved, status.Deleted,
 		nil,
 		[]paymentservice.Transaction{tstValidAttendeeDues(-25500, "remove dues balance - status changed to deleted")},
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "deleted")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Deleted)},
 	)
 }
 
 func TestStatusChange_Admin_PartiallyPaid_New(t *testing.T) {
 	testcase := "st2adm0-"
 	tstStatusChange_Admin_Unavailable(t, testcase,
-		"partially paid", "new",
+		status.PartiallyPaid, status.New,
 		nil,
 		"status.has.paid", "there is a non-zero payment balance, please use partially paid, or refund")
 }
@@ -635,7 +664,7 @@ func TestStatusChange_Admin_PartiallyPaid_New(t *testing.T) {
 func TestStatusChange_Admin_PartiallyPaid_Approved(t *testing.T) {
 	testcase := "st2adm1-"
 	tstStatusChange_Admin_Unavailable(t, testcase,
-		"partially paid", "approved",
+		status.PartiallyPaid, status.Approved,
 		nil,
 		"status.has.paid", "there is a non-zero payment balance, please use partially paid, or refund")
 }
@@ -643,47 +672,65 @@ func TestStatusChange_Admin_PartiallyPaid_Approved(t *testing.T) {
 func TestStatusChange_Admin_PartiallyPaid_Approved_OkAfterRefund(t *testing.T) {
 	testcase := "st2adm1r-"
 	tstStatusChange_Admin_Allow(t, testcase,
-		"partially paid", "approved",
+		status.PartiallyPaid, status.Approved,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -15500)},
 		[]paymentservice.Transaction{},
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "approved")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Approved)},
 	)
 }
 
 func TestStatusChange_Admin_PartiallyPaid_Paid(t *testing.T) {
 	testcase := "st2adm3-"
 	tstStatusChange_Admin_Allow(t, testcase,
-		"partially paid", "paid",
+		status.PartiallyPaid, status.Paid,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, 10000)},
 		[]paymentservice.Transaction{},
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "paid")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Paid)},
 	)
 }
 
 func TestStatusChange_Admin_PartiallyPaid_CheckedIn(t *testing.T) {
 	testcase := "st2adm4-"
 	tstStatusChange_Admin_Allow(t, testcase,
-		"partially paid", "checked in",
+		status.PartiallyPaid, status.CheckedIn,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, 10000)},
 		[]paymentservice.Transaction{},
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "checked in")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.CheckedIn)},
+	)
+}
+
+func TestStatusChange_Admin_PartiallyPaid_Waiting(t *testing.T) {
+	testcase := "st2adm5-"
+	tstStatusChange_Admin_Unavailable(t, testcase,
+		status.PartiallyPaid, status.Waiting,
+		nil,
+		"status.has.paid", "there is a non-zero payment balance, please use partially paid, or refund")
+}
+
+func TestStatusChange_Admin_PartiallyPaid_Waiting_OkAfterRefund(t *testing.T) {
+	testcase := "st2adm5r-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		status.PartiallyPaid, status.Waiting,
+		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -15500)},
+		[]paymentservice.Transaction{tstCreateMatcherTransaction(1, paymentservice.Due, -25500, "remove dues balance - status changed to waiting")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Waiting)},
 	)
 }
 
 func TestStatusChange_Admin_PartiallyPaid_Cancelled(t *testing.T) {
-	testcase := "st2adm5-"
+	testcase := "st2adm6-"
 	tstStatusChange_Admin_Allow(t, testcase,
-		"partially paid", "cancelled",
+		status.PartiallyPaid, status.Cancelled,
 		nil,
 		[]paymentservice.Transaction{tstValidAttendeeDues(-10000, "void unpaid dues on cancel")},
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "cancelled")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Cancelled)},
 	)
 }
 
 func TestStatusChange_Admin_PartiallyPaid_Deleted(t *testing.T) {
-	testcase := "st2adm6-"
+	testcase := "st2adm7-"
 	tstStatusChange_Admin_Unavailable(t, testcase,
-		"partially paid", "deleted",
+		status.PartiallyPaid, status.Deleted,
 		nil,
 		"status.cannot.delete", "cannot delete attendee for legal reasons (there were payments or invoices)")
 }
@@ -691,7 +738,7 @@ func TestStatusChange_Admin_PartiallyPaid_Deleted(t *testing.T) {
 func TestStatusChange_Admin_Paid_New(t *testing.T) {
 	testcase := "st3adm0-"
 	tstStatusChange_Admin_Unavailable(t, testcase,
-		"paid", "new",
+		status.Paid, status.New,
 		nil,
 		"status.has.paid", "there is a non-zero payment balance, please use partially paid, or refund")
 }
@@ -699,17 +746,17 @@ func TestStatusChange_Admin_Paid_New(t *testing.T) {
 func TestStatusChange_Admin_Paid_New_OkAfterRefund(t *testing.T) {
 	testcase := "st3adm0r-"
 	tstStatusChange_Admin_Allow(t, testcase,
-		"paid", "new",
+		status.Paid, status.New,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -25500)},
 		[]paymentservice.Transaction{tstCreateMatcherTransaction(1, paymentservice.Due, -25500, "remove dues balance - status changed to new")},
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "new")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.New)},
 	)
 }
 
 func TestStatusChange_Admin_Paid_Approved(t *testing.T) {
 	testcase := "st3adm1-"
 	tstStatusChange_Admin_Unavailable(t, testcase,
-		"paid", "approved",
+		status.Paid, status.Approved,
 		nil,
 		"status.has.paid", "there is a non-zero payment balance, please use partially paid, or refund")
 }
@@ -717,27 +764,27 @@ func TestStatusChange_Admin_Paid_Approved(t *testing.T) {
 func TestStatusChange_Admin_Paid_Approved_OkAfterRefund(t *testing.T) {
 	testcase := "st3adm1r-"
 	tstStatusChange_Admin_Allow(t, testcase,
-		"paid", "approved",
+		status.Paid, status.Approved,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -25500)},
 		[]paymentservice.Transaction{},
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "approved")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Approved)},
 	)
 }
 
 func TestStatusChange_Admin_Paid_PartiallyPaid(t *testing.T) {
 	testcase := "st3adm2-"
 	tstStatusChange_Admin_Allow(t, testcase,
-		"paid", "partially paid",
+		status.Paid, status.PartiallyPaid,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -10000)},
 		[]paymentservice.Transaction{},
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "partially paid")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.PartiallyPaid)},
 	)
 }
 
 func TestStatusChange_Admin_Paid_CheckedIn_HasNoGraceAmount(t *testing.T) {
 	testcase := "st3adm4u-"
 	tstStatusChange_Admin_Unavailable(t, testcase,
-		"paid", "checked in",
+		status.Paid, status.CheckedIn,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -30)},
 		"status.unpaid.dues", "payment amount not sufficient")
 }
@@ -745,27 +792,45 @@ func TestStatusChange_Admin_Paid_CheckedIn_HasNoGraceAmount(t *testing.T) {
 func TestStatusChange_Admin_Paid_CheckedIn(t *testing.T) {
 	testcase := "st3adm4-"
 	tstStatusChange_Admin_Allow(t, testcase,
-		"paid", "checked in",
+		status.Paid, status.CheckedIn,
 		[]paymentservice.Transaction{},
 		[]paymentservice.Transaction{},
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "checked in")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.CheckedIn)},
+	)
+}
+
+func TestStatusChange_Admin_Paid_Waiting(t *testing.T) {
+	testcase := "st3adm5-"
+	tstStatusChange_Admin_Unavailable(t, testcase,
+		status.Paid, status.Approved,
+		nil,
+		"status.has.paid", "there is a non-zero payment balance, please use partially paid, or refund")
+}
+
+func TestStatusChange_Admin_Paid_Waiting_OkAfterRefund(t *testing.T) {
+	testcase := "st3adm5r-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		status.Paid, status.Approved,
+		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -25500)},
+		[]paymentservice.Transaction{},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Approved)},
 	)
 }
 
 func TestStatusChange_Admin_Paid_Cancelled(t *testing.T) {
-	testcase := "st3adm5-"
+	testcase := "st3adm6-"
 	tstStatusChange_Admin_Allow(t, testcase,
-		"paid", "cancelled",
+		status.Paid, status.Cancelled,
 		nil,
 		[]paymentservice.Transaction{},
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "cancelled")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Cancelled)},
 	)
 }
 
 func TestStatusChange_Admin_Paid_Deleted(t *testing.T) {
-	testcase := "st3adm6-"
+	testcase := "st3adm7-"
 	tstStatusChange_Admin_Unavailable(t, testcase,
-		"paid", "deleted",
+		status.Paid, status.Deleted,
 		nil,
 		"status.cannot.delete", "cannot delete attendee for legal reasons (there were payments or invoices)")
 }
@@ -773,7 +838,7 @@ func TestStatusChange_Admin_Paid_Deleted(t *testing.T) {
 func TestStatusChange_Admin_CheckedIn_New(t *testing.T) {
 	testcase := "st4adm0-"
 	tstStatusChange_Admin_Unavailable(t, testcase,
-		"checked in", "new",
+		status.CheckedIn, status.New,
 		nil,
 		"status.has.paid", "there is a non-zero payment balance, please use partially paid, or refund")
 }
@@ -781,17 +846,17 @@ func TestStatusChange_Admin_CheckedIn_New(t *testing.T) {
 func TestStatusChange_Admin_CheckedIn_New_OkAfterRefund(t *testing.T) {
 	testcase := "st4adm0r-"
 	tstStatusChange_Admin_Allow(t, testcase,
-		"checked in", "new",
+		status.CheckedIn, status.New,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -25500)},
 		[]paymentservice.Transaction{tstCreateMatcherTransaction(1, paymentservice.Due, -25500, "remove dues balance - status changed to new")},
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "new")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.New)},
 	)
 }
 
 func TestStatusChange_Admin_CheckedIn_Approved(t *testing.T) {
 	testcase := "st4adm1-"
 	tstStatusChange_Admin_Unavailable(t, testcase,
-		"checked in", "approved",
+		status.CheckedIn, status.Approved,
 		nil,
 		"status.has.paid", "there is a non-zero payment balance, please use partially paid, or refund")
 }
@@ -799,176 +864,286 @@ func TestStatusChange_Admin_CheckedIn_Approved(t *testing.T) {
 func TestStatusChange_Admin_CheckedIn_Approved_OkAfterRefund(t *testing.T) {
 	testcase := "st4adm1r-"
 	tstStatusChange_Admin_Allow(t, testcase,
-		"checked in", "approved",
+		status.CheckedIn, status.Approved,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -25500)},
 		[]paymentservice.Transaction{},
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "approved")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Approved)},
 	)
 }
 
 func TestStatusChange_Admin_CheckedIn_PartiallyPaid(t *testing.T) {
 	testcase := "st4adm2-"
 	tstStatusChange_Admin_Allow(t, testcase,
-		"checked in", "partially paid",
+		status.CheckedIn, status.PartiallyPaid,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -10000)},
 		[]paymentservice.Transaction{},
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "partially paid")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.PartiallyPaid)},
 	)
 }
 
 func TestStatusChange_Admin_CheckedIn_Paid(t *testing.T) {
 	testcase := "st4adm3-"
 	tstStatusChange_Admin_Allow(t, testcase,
-		"checked in", "paid",
+		status.CheckedIn, status.Paid,
 		[]paymentservice.Transaction{},
 		[]paymentservice.Transaction{},
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "paid")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Paid)},
+	)
+}
+
+func TestStatusChange_Admin_CheckedIn_Waiting(t *testing.T) {
+	testcase := "st4adm5-"
+	tstStatusChange_Admin_Unavailable(t, testcase,
+		status.CheckedIn, status.Waiting,
+		nil,
+		"status.has.paid", "there is a non-zero payment balance, please use partially paid, or refund")
+}
+
+func TestStatusChange_Admin_CheckedIn_Waiting_OkAfterRefund(t *testing.T) {
+	testcase := "st4adm5r-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		status.CheckedIn, status.Waiting,
+		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -25500)},
+		[]paymentservice.Transaction{tstCreateMatcherTransaction(1, paymentservice.Due, -25500, "remove dues balance - status changed to waiting")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Waiting)},
 	)
 }
 
 func TestStatusChange_Admin_CheckedIn_Cancelled(t *testing.T) {
-	testcase := "st4adm5-"
+	testcase := "st4adm6-"
 	tstStatusChange_Admin_Allow(t, testcase,
-		"checked in", "cancelled",
+		status.CheckedIn, status.Cancelled,
 		nil,
 		[]paymentservice.Transaction{},
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "cancelled")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Cancelled)},
 	)
 }
 
 func TestStatusChange_Admin_CheckedIn_Deleted(t *testing.T) {
-	testcase := "st4adm6-"
+	testcase := "st4adm7-"
 	tstStatusChange_Admin_Unavailable(t, testcase,
-		"checked in", "deleted",
+		status.CheckedIn, status.Deleted,
 		nil,
 		"status.cannot.delete", "cannot delete attendee for legal reasons (there were payments or invoices)")
 }
 
-func TestStatusChange_Admin_Cancelled_New(t *testing.T) {
+func TestStatusChange_Admin_Waiting_New(t *testing.T) {
 	testcase := "st5adm0-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		status.Waiting, status.New,
+		nil,
+		[]paymentservice.Transaction{},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.New)},
+	)
+}
+
+func TestStatusChange_Admin_Waiting_Approved(t *testing.T) {
+	testcase := "st5adm1-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		status.Waiting, status.Approved,
+		nil,
+		[]paymentservice.Transaction{tstValidAttendeeDues(25500, "dues adjustment due to change in status or selected packages")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Approved)},
+	)
+}
+
+func TestStatusChange_Admin_Waiting_PartiallyPaid(t *testing.T) {
+	testcase := "st5adm2-"
 	tstStatusChange_Admin_Unavailable(t, testcase,
-		"cancelled", "new",
+		status.Waiting, status.PartiallyPaid,
+		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -10000)},
+		"status.use.approved", "please change status to approved, this will automatically advance to (partially) paid as appropriate")
+}
+
+func TestStatusChange_Admin_Waiting_Paid(t *testing.T) {
+	testcase := "st5adm3-"
+	tstStatusChange_Admin_Unavailable(t, testcase,
+		status.Waiting, status.Paid,
+		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, 25400)},
+		"status.use.approved", "please change status to approved, this will automatically advance to (partially) paid as appropriate")
+}
+
+func TestStatusChange_Admin_Waiting_CheckedIn(t *testing.T) {
+	testcase := "st5adm4-"
+	tstStatusChange_Admin_Unavailable(t, testcase,
+		status.Waiting, status.CheckedIn,
+		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, 25500)},
+		"status.use.approved", "please change status to approved, this will automatically advance to (partially) paid as appropriate")
+}
+
+func TestStatusChange_Admin_Waiting_Cancelled(t *testing.T) {
+	testcase := "st5adm6-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		status.Waiting, status.Cancelled,
+		nil,
+		[]paymentservice.Transaction{},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Cancelled)},
+	)
+}
+
+func TestStatusChange_Admin_Waiting_Deleted(t *testing.T) {
+	testcase := "st5adm7-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		status.Waiting, status.Deleted,
+		nil,
+		[]paymentservice.Transaction{},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Deleted)},
+	)
+}
+
+func TestStatusChange_Admin_Cancelled_New(t *testing.T) {
+	testcase := "st6adm0-"
+	tstStatusChange_Admin_Unavailable(t, testcase,
+		status.Cancelled, status.New,
 		nil,
 		"status.has.paid", "there is a non-zero payment balance, please use partially paid, or refund")
 }
 
 func TestStatusChange_Admin_Cancelled_New_OkAfterRefund(t *testing.T) {
-	testcase := "st5adm0r-"
+	testcase := "st6adm0r-"
 	tstStatusChange_Admin_Allow(t, testcase,
-		"cancelled", "new",
+		status.Cancelled, status.New,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -25500)},
 		[]paymentservice.Transaction{tstCreateMatcherTransaction(1, paymentservice.Due, -25500, "remove dues balance - status changed to new")},
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "new")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.New)},
 	)
 }
 
 func TestStatusChange_Admin_Cancelled_Approved(t *testing.T) {
-	testcase := "st5adm1-"
+	testcase := "st6adm1-"
 	tstStatusChange_Admin_Unavailable(t, testcase,
-		"cancelled", "approved",
+		status.Cancelled, status.Approved,
 		nil,
 		"status.has.paid", "there is a non-zero payment balance, please use partially paid, or refund")
 }
 
 func TestStatusChange_Admin_Cancelled_Approved_OkAfterRefund(t *testing.T) {
-	testcase := "st5adm1r-"
+	testcase := "st6adm1r-"
 	tstStatusChange_Admin_Allow(t, testcase,
-		"cancelled", "approved",
+		status.Cancelled, status.Approved,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -25500)},
 		[]paymentservice.Transaction{},
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "approved")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Approved)},
 	)
 }
 
 func TestStatusChange_Admin_Cancelled_PartiallyPaid(t *testing.T) {
 	// you cannot directly go back, since there may have been flag, package changes while cancelled which are not reflected in dues
-	testcase := "st5adm2-"
+	testcase := "st6adm2-"
 	tstStatusChange_Admin_Unavailable(t, testcase,
-		"cancelled", "partially paid",
+		status.Cancelled, status.PartiallyPaid,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -10000)},
 		"status.use.approved", "please change status to approved, this will automatically advance to (partially) paid as appropriate")
 }
 
 func TestStatusChange_Admin_Cancelled_Paid(t *testing.T) {
 	// you cannot directly go back, since there may have been flag, package changes while cancelled which are not reflected in dues
-	testcase := "st5adm3-"
+	testcase := "st6adm3-"
 	tstStatusChange_Admin_Unavailable(t, testcase,
-		"cancelled", "paid",
+		status.Cancelled, status.Paid,
 		nil,
 		"status.use.approved", "please change status to approved, this will automatically advance to (partially) paid as appropriate")
 }
 
 func TestStatusChange_Admin_Cancelled_CheckedIn(t *testing.T) {
 	// you cannot directly go back, since there may have been flag, package changes while cancelled which are not reflected in dues
-	testcase := "st5adm4-"
+	testcase := "st6adm4-"
 	tstStatusChange_Admin_Unavailable(t, testcase,
-		"cancelled", "checked in",
+		status.Cancelled, status.CheckedIn,
 		nil,
 		"status.use.approved", "please change status to approved, this will automatically advance to (partially) paid as appropriate")
 }
 
-func TestStatusChange_Admin_Cancelled_Deleted(t *testing.T) {
-	testcase := "st5adm6-"
+func TestStatusChange_Admin_Cancelled_Waiting(t *testing.T) {
+	testcase := "st6adm5-"
 	tstStatusChange_Admin_Unavailable(t, testcase,
-		"cancelled", "deleted",
+		status.Cancelled, status.Waiting,
+		nil,
+		"status.has.paid", "there is a non-zero payment balance, please use partially paid, or refund")
+}
+
+func TestStatusChange_Admin_Cancelled_Waiting_OkAfterRefund(t *testing.T) {
+	testcase := "st6adm5r-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		status.Cancelled, status.Waiting,
+		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -25500)},
+		[]paymentservice.Transaction{tstCreateMatcherTransaction(1, paymentservice.Due, -25500, "remove dues balance - status changed to waiting")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Waiting)},
+	)
+}
+
+func TestStatusChange_Admin_Cancelled_Deleted(t *testing.T) {
+	testcase := "st6adm7-"
+	tstStatusChange_Admin_Unavailable(t, testcase,
+		status.Cancelled, status.Deleted,
 		nil,
 		"status.cannot.delete", "cannot delete attendee for legal reasons (there were payments or invoices)")
 }
 
 func TestStatusChange_Admin_Deleted_New(t *testing.T) {
-	testcase := "st6adm0-"
+	testcase := "st7adm0-"
 	tstStatusChange_Admin_Allow(t, testcase,
-		"deleted", "new",
+		status.Deleted, status.New,
 		nil,
 		[]paymentservice.Transaction{},
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "new")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.New)},
 	)
 }
 
 func TestStatusChange_Admin_Deleted_Approved(t *testing.T) {
-	testcase := "st6adm1-"
+	testcase := "st7adm1-"
 	tstStatusChange_Admin_Allow(t, testcase,
-		"deleted", "approved",
+		status.Deleted, status.Approved,
 		nil,
 		[]paymentservice.Transaction{tstValidAttendeeDues(25500, "dues adjustment due to change in status or selected packages")},
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "approved")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Approved)},
 	)
 }
 
 func TestStatusChange_Admin_Deleted_PartiallyPaid(t *testing.T) {
 	// you cannot directly go back, since there may have been flag, package changes while cancelled which are not reflected in dues
-	testcase := "st6adm2-"
+	testcase := "st7adm2-"
 	tstStatusChange_Admin_Unavailable(t, testcase,
-		"deleted", "partially paid",
+		status.Deleted, status.PartiallyPaid,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -10000)},
 		"status.use.approved", "please change status to approved, this will automatically advance to (partially) paid as appropriate")
 }
 
 func TestStatusChange_Admin_Deleted_Paid(t *testing.T) {
 	// you cannot directly go back, since there may have been flag, package changes while cancelled which are not reflected in dues
-	testcase := "st6adm3-"
+	testcase := "st7adm3-"
 	tstStatusChange_Admin_Unavailable(t, testcase,
-		"deleted", "paid",
+		status.Deleted, status.Paid,
 		nil,
 		"status.use.approved", "please change status to approved, this will automatically advance to (partially) paid as appropriate")
 }
 
 func TestStatusChange_Admin_Deleted_CheckedIn(t *testing.T) {
 	// you cannot directly go back, since there may have been flag, package changes while cancelled which are not reflected in dues
-	testcase := "st6adm4-"
+	testcase := "st7adm4-"
 	tstStatusChange_Admin_Unavailable(t, testcase,
-		"deleted", "checked in",
+		status.Deleted, status.CheckedIn,
 		nil,
 		"status.use.approved", "please change status to approved, this will automatically advance to (partially) paid as appropriate")
 }
 
-func TestStatusChange_Admin_Deleted_Cancelled(t *testing.T) {
-	testcase := "st6adm5-"
+func TestStatusChange_Admin_Deleted_Waiting(t *testing.T) {
+	testcase := "st7adm5-"
 	tstStatusChange_Admin_Allow(t, testcase,
-		"deleted", "cancelled",
+		status.Deleted, status.Waiting,
 		nil,
 		[]paymentservice.Transaction{},
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, "cancelled")},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Waiting)},
+	)
+}
+
+func TestStatusChange_Admin_Deleted_Cancelled(t *testing.T) {
+	testcase := "st7adm6-"
+	tstStatusChange_Admin_Allow(t, testcase,
+		status.Deleted, status.Cancelled,
+		nil,
+		[]paymentservice.Transaction{},
+		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Cancelled)},
 	)
 }
 
@@ -1374,54 +1549,60 @@ func tstRegisterRegdeskAttendee(t *testing.T, testcase string) string {
 	return token
 }
 
-func tstRegisterAttendeeAndTransitionToStatus(t *testing.T, testcase string, status status.Status) (location string, att attendee.AttendeeDto) {
+func tstRegisterAttendeeAndTransitionToStatus(t *testing.T, testcase string, targetStatus status.Status) (location string, att attendee.AttendeeDto) {
 	// this works in all configurations, and for status changes, it makes no difference if a user is staff
 	token := tstValidStaffToken(t, 1)
 
 	location, att = tstRegisterAttendeeWithToken(t, testcase, token)
-	if status == "new" {
+	if targetStatus == status.New {
 		return
 	}
 
 	ctx := context.Background()
 	attid := att.Id
 
-	// approved
-	_ = database.GetRepository().AddStatusChange(ctx, tstCreateStatusChange(attid, "approved"))
-	_ = paymentMock.InjectTransaction(ctx, tstCreateTransaction(attid, paymentservice.Due, 25500))
-	if status == "approved" {
+	// waiting
+	if targetStatus == status.Waiting {
+		_ = database.GetRepository().AddStatusChange(ctx, tstCreateStatusChange(attid, status.Waiting))
 		return
 	}
 
-	if status == "deleted" {
-		_ = database.GetRepository().AddStatusChange(ctx, tstCreateStatusChange(attid, "deleted"))
+	// approved
+	_ = database.GetRepository().AddStatusChange(ctx, tstCreateStatusChange(attid, status.Approved))
+	_ = paymentMock.InjectTransaction(ctx, tstCreateTransaction(attid, paymentservice.Due, 25500))
+	if targetStatus == status.Approved {
+		return
+	}
+
+	if targetStatus == status.Deleted {
+		_ = database.GetRepository().AddStatusChange(ctx, tstCreateStatusChange(attid, status.Deleted))
 		_ = paymentMock.InjectTransaction(ctx, tstCreateTransaction(attid, paymentservice.Due, -25500))
 		return
 	}
 
 	// partially paid
-	_ = database.GetRepository().AddStatusChange(ctx, tstCreateStatusChange(attid, "partially paid"))
+	_ = database.GetRepository().AddStatusChange(ctx, tstCreateStatusChange(attid, status.PartiallyPaid))
 	_ = paymentMock.InjectTransaction(ctx, tstCreateTransaction(attid, paymentservice.Payment, 15500))
-	if status == "partially paid" {
+	if targetStatus == status.PartiallyPaid {
 		return
 	}
 
 	// paid
-	_ = database.GetRepository().AddStatusChange(ctx, tstCreateStatusChange(attid, "paid"))
+	_ = database.GetRepository().AddStatusChange(ctx, tstCreateStatusChange(attid, status.Paid))
 	_ = paymentMock.InjectTransaction(ctx, tstCreateTransaction(attid, paymentservice.Payment, 10000))
-	if status == "paid" {
+	if targetStatus == status.Paid {
 		return
 	}
 
 	// checked in
-	_ = database.GetRepository().AddStatusChange(ctx, tstCreateStatusChange(attid, "checked in"))
-	if status == "checked in" {
+	_ = database.GetRepository().AddStatusChange(ctx, tstCreateStatusChange(attid, status.CheckedIn))
+	if targetStatus == status.CheckedIn {
 		return
 	}
 
 	// cancelled
-	_ = database.GetRepository().AddStatusChange(ctx, tstCreateStatusChange(attid, "cancelled"))
-	if status == "cancelled" {
+	_ = database.GetRepository().AddStatusChange(ctx, tstCreateStatusChange(attid, status.Cancelled))
+	if targetStatus == status.Cancelled {
 		return
 	}
 
