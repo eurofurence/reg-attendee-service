@@ -109,7 +109,7 @@ Limitations:
   - new endpoint for "resend last status change notification email"
   - delete ban rule tests
   - return admin_comments from search
-  - status WAITING
+  - status WAITING; transitions: new->, ->new, ->approved, ->cancelled, ->deleted(unless payments)
   - allow listing ids of deleted, but omit data (needed by security api so it can mark them deleted too)
 
 ### for later
