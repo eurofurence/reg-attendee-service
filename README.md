@@ -95,24 +95,23 @@ Limitations:
  - ✅ day guests are supported simply via the package subsystem 
  - 🚧 guests are supported as an admin only flag which will cause the system to assign 0 dues
  - ✅ implements a general request timeout and panic handling
- - 🚧 basic search functionality implemented
+ - ✅ basic search functionality implemented
  - 🚧 bans support implemented
  - 🚧 manual dues support implemented
  - 🚧 key_deposit/key_received/sponsor_items flag are supported as additional-info
  - ✅ track who (subject, if set) performed a database change (recorded in history table)
 
-### open
+### open issues
 
-  - 🚧 support status in find
+  - ✅ support status in find
   - 🚧 allow listing ids of deleted, but omit data (needed by security api so it can mark them deleted too)
-
 
   - check that at least one attendance option is set
   - admin only flag skipBanCheck
   - new endpoint for "resend last status change notification email"
   - delete ban rule tests
-  - return admin_comments from search
   - test dues changes caused by setting and removing guest status and corresponding status change logic
+  - test with real DB
 
 ### for later
 
