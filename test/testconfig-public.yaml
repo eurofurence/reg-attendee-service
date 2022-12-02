@@ -51,43 +51,43 @@ choices:
     attendance:
       description: 'Entrance Fee (Convention Ticket)'
       help_url: 'help/fee_basic.html'
-      price_early: 90.00
-      price_late: 100.00
-      price_atcon: 125.00
+      price_early: 9000
+      price_late: 10000
+      price_atcon: 12500
       vat_percent: 19
       default: true
       read_only: true
     stage:
       description: 'Entrance Fee (Stage Ticket)'
       help_url: 'help/fee_stage.html'
-      price_early: 5.00
-      price_late: 5.00
-      price_atcon: 5.00
+      price_early: 500
+      price_late: 500
+      price_atcon: 500
       vat_percent: 19
       default: true
       read_only: true
     sponsor:
       description: 'Sponsor Upgrade'
       help_url: 'help/fee_sponsor.html'
-      price_early: 65.00
-      price_late: 65.00
-      price_atcon: 65.00
+      price_early: 6500
+      price_late: 6500
+      price_atcon: 6500
       vat_percent: 19
     sponsor2:
       description: 'Supersponsor Upgrade'
       help_url: 'help/fee_sponsor2.html'
-      price_early: 160.00
-      price_late: 160.00
-      price_atcon: 160.00
+      price_early: 16000
+      price_late: 16000
+      price_atcon: 16000
       vat_percent: 19
       constraint: '!sponsor'
       constraint_msg: 'Please choose only one of Sponsor or Supersponsor.'
     day-thu:
       description: 'Day Guest (Thursday)'
       help_url: 'help/fee_day_thu.html'
-      price_early: 60.00
-      price_late: 60.00
-      price_atcon: 60.00
+      price_early: 6000
+      price_late: 6000
+      price_atcon: 6000
       vat_percent: 19
       read_only: true
       constraint: '!attendance,!stage'
@@ -95,9 +95,9 @@ choices:
     day-fri:
       description: 'Day Guest (Friday)'
       help_url: 'help/fee_day_fri.html'
-      price_early: 60.00
-      price_late: 60.00
-      price_atcon: 60.00
+      price_early: 6000
+      price_late: 6000
+      price_atcon: 6000
       vat_percent: 19
       read_only: true
       constraint: '!attendance,!stage'
@@ -105,9 +105,9 @@ choices:
     day-sat:
       description: 'Day Guest (Saturday)'
       help_url: 'help/fee_day_sat.html'
-      price_early: 60.00
-      price_late: 60.00
-      price_atcon: 60.00
+      price_early: 6000
+      price_late: 6000
+      price_atcon: 6000
       vat_percent: 19
       read_only: true
       constraint: '!attendance,!stage'

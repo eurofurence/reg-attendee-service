@@ -107,9 +107,9 @@ type (
 	ChoiceConfig struct {
 		Description   string  `yaml:"description"`
 		HelpUrl       string  `yaml:"help_url"`
-		PriceEarly    float64 `yaml:"price_early"`
-		PriceLate     float64 `yaml:"price_late"`
-		PriceAtCon    float64 `yaml:"price_atcon"`
+		PriceEarly    int64   `yaml:"price_early"`
+		PriceLate     int64   `yaml:"price_late"`
+		PriceAtCon    int64   `yaml:"price_atcon"`
 		VatPercent    float64 `yaml:"vat_percent"`
 		Default       bool    `yaml:"default"`    // if set to true, is added to flags by default. Not available for admin only flags!
 		AdminOnly     bool    `yaml:"admin_only"` // this flag is kept under the adminInfo structure, so it is not visible to users

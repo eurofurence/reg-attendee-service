@@ -102,7 +102,7 @@ func (s *AttendeeServiceImplData) packageDuesByVAT(attendee *entity.Attendee) ma
 				vatStr := fmt.Sprintf("%.6f", packageConfig.VatPercent)
 
 				// TODO IMPORTANT determine whether to use early, late, or atcon dues rate, based on time constraints in config
-				price := int64(packageConfig.PriceEarly * 100)
+				price := packageConfig.PriceEarly
 
 				previous, _ := result[vatStr]
 				result[vatStr] = previous + price
