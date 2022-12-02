@@ -10,7 +10,10 @@ import (
 	"time"
 )
 
-func setConfigurationDefaults(c *conf) {
+func setConfigurationDefaults(c *Application) {
+	if c.Service.Name == "" {
+		c.Service.Name = "Registration Attendee Service"
+	}
 	if c.Server.Port == "" {
 		c.Server.Port = "8080"
 	}
@@ -26,17 +29,20 @@ func setConfigurationDefaults(c *conf) {
 	if c.Logging.Severity == "" {
 		c.Logging.Severity = "INFO"
 	}
+	if c.Logging.Style == "" {
+		c.Logging.Style = ECS
+	}
 	if c.Database.Use == "" {
 		c.Database.Use = "inmemory"
 	}
-	if c.Security.CorsAllowOrigin == "" {
-		c.Security.CorsAllowOrigin = "*"
+	if c.Security.Cors.AllowOrigin == "" {
+		c.Security.Cors.AllowOrigin = "*"
 	}
 }
 
 const portPattern = "^[1-9][0-9]{0,4}$"
 
-func validateServerConfiguration(errs url.Values, c serverConfig) {
+func validateServerConfiguration(errs url.Values, c ServerConfig) {
 	if validation.ViolatesPattern(portPattern, c.Port) {
 		errs.Add("server.port", "must be a number between 1 and 65535")
 	}
@@ -47,13 +53,13 @@ func validateServerConfiguration(errs url.Values, c serverConfig) {
 
 var allowedSeverities = []string{"DEBUG", "INFO", "WARN", "ERROR"}
 
-func validateLoggingConfiguration(errs url.Values, c loggingConfig) {
+func validateLoggingConfiguration(errs url.Values, c LoggingConfig) {
 	if validation.NotInAllowedValues(allowedSeverities[:], c.Severity) {
 		errs.Add("logging.severity", "must be one of DEBUG, INFO, WARN, ERROR")
 	}
 }
 
-func validateSecurityConfiguration(errs url.Values, c securityConfig) {
+func validateSecurityConfiguration(errs url.Values, c SecurityConfig) {
 	validation.CheckLength(&errs, 16, 256, "security.fixed.api", c.Fixed.Api)
 	validation.CheckLength(&errs, 1, 256, "security.oidc.admin_role", c.Oidc.AdminRole)
 
@@ -68,20 +74,20 @@ func validateSecurityConfiguration(errs url.Values, c securityConfig) {
 	}
 }
 
-var allowedDatabases = []string{"mysql", "inmemory"}
+var allowedDatabases = []DatabaseType{Mysql, Inmemory}
 
-func validateDatabaseConfiguration(errs url.Values, c databaseConfig) {
+func validateDatabaseConfiguration(errs url.Values, c DatabaseConfig) {
 	if validation.NotInAllowedValues(allowedDatabases[:], c.Use) {
 		errs.Add("database.use", "must be one of mysql, inmemory")
 	}
-	if c.Use == "mysql" {
-		validation.CheckLength(&errs, 1, 256, "database.mysql.username", c.Mysql.Username)
-		validation.CheckLength(&errs, 1, 256, "database.mysql.password", c.Mysql.Password)
-		validation.CheckLength(&errs, 1, 256, "database.mysql.database", c.Mysql.Database)
+	if c.Use == Mysql {
+		validation.CheckLength(&errs, 1, 256, "database.username", c.Username)
+		validation.CheckLength(&errs, 1, 256, "database.password", c.Password)
+		validation.CheckLength(&errs, 1, 256, "database.database", c.Database)
 	}
 }
 
-func validateBirthdayConfiguration(errs url.Values, c birthdayConfig) {
+func validateBirthdayConfiguration(errs url.Values, c BirthdayConfig) {
 	if validation.InvalidISODate(c.Earliest) {
 		errs.Add("birthday.earliest", "invalid earliest birthday, must be specified as an ISO Date, as in 1901-01-01")
 	}
@@ -163,7 +169,7 @@ func checkConstraints(errs url.Values, c map[string]ChoiceConfig, keyPrefix stri
 	}
 }
 
-func validateRegistrationStartTime(errs url.Values, c goLiveConfig, s securityConfig) {
+func validateRegistrationStartTime(errs url.Values, c GoLiveConfig, s SecurityConfig) {
 	normal, err := time.Parse(StartTimeFormat, c.StartIsoDatetime)
 	if err != nil {
 		errs.Add("go_live.start_iso_datetime", "invalid date/time format, use ISO with numeric timezone as in "+StartTimeFormat)
@@ -187,7 +193,7 @@ func validateRegistrationStartTime(errs url.Values, c goLiveConfig, s securityCo
 
 const downstreamPattern = "^(|https?://.*[^/])$"
 
-func validateDownstreamConfiguration(errs url.Values, c downstreamConfig) {
+func validateServiceConfiguration(errs url.Values, c ServiceConfig) {
 	if validation.ViolatesPattern(downstreamPattern, c.PaymentService) {
 		errs.Add("downstream.payment_service", "base url must be empty (enables in-memory simulator) or start with http:// or https:// and may not end in a /")
 	}

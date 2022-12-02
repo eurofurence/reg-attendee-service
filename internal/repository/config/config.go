@@ -31,12 +31,12 @@ func ServerIdleTimeout() time.Duration {
 	return time.Second * time.Duration(Configuration().Server.IdleTimeout)
 }
 
-func DatabaseUse() string {
+func DatabaseUse() DatabaseType {
 	return Configuration().Database.Use
 }
 
 func DatabaseMysqlConnectString() string {
-	c := Configuration().Database.Mysql
+	c := Configuration().Database
 	return c.Username + ":" + c.Password + "@" +
 		c.Database + "?" + strings.Join(c.Parameters, "&")
 }
@@ -58,7 +58,6 @@ func OidcTokenCookieName() string {
 }
 
 func OidcKeySet() []*rsa.PublicKey {
-	// TODO implement parsing during validation
 	return parsedKeySet
 }
 
@@ -189,11 +188,11 @@ func EarlyRegistrationStartTime() time.Time {
 }
 
 func IsCorsDisabled() bool {
-	return Configuration().Security.DisableCors
+	return Configuration().Security.Cors.DisableCors
 }
 
 func CorsAllowOrigin() string {
-	return Configuration().Security.CorsAllowOrigin
+	return Configuration().Security.Cors.AllowOrigin
 }
 
 func RequireLoginForReg() bool {
@@ -201,9 +200,9 @@ func RequireLoginForReg() bool {
 }
 
 func PaymentServiceBaseUrl() string {
-	return Configuration().Downstream.PaymentService
+	return Configuration().Service.PaymentService
 }
 
 func MailServiceBaseUrl() string {
-	return Configuration().Downstream.MailService
+	return Configuration().Service.MailService
 }

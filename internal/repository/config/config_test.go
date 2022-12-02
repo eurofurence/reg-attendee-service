@@ -9,7 +9,7 @@ import (
 
 func TestServerAddrWithAddressAndPort(t *testing.T) {
 	docs.Description("ensure ServerAddr() returns the correct server address string, with address specified")
-	configurationData = &conf{Logging: loggingConfig{Severity: "DEBUG"}, Server: serverConfig{
+	configurationData = &Application{Logging: LoggingConfig{Severity: "DEBUG"}, Server: ServerConfig{
 		Address: "localhost",
 		Port:    "1234",
 	}}
@@ -18,7 +18,7 @@ func TestServerAddrWithAddressAndPort(t *testing.T) {
 
 func TestServerAddrWithOnlyPort(t *testing.T) {
 	docs.Description("ensure ServerAddr() returns the correct server address string, with no address specified")
-	configurationData = &conf{Logging: loggingConfig{Severity: "DEBUG"}, Server: serverConfig{
+	configurationData = &Application{Logging: LoggingConfig{Severity: "DEBUG"}, Server: ServerConfig{
 		Port: "1234",
 	}}
 	require.Equal(t, ":1234", ServerAddr(), "unexpected server address string")
@@ -26,7 +26,7 @@ func TestServerAddrWithOnlyPort(t *testing.T) {
 
 func TestServerTimeouts(t *testing.T) {
 	docs.Description("ensure ServerRead/Write/IdleTimout() return the correct timeouts")
-	configurationData = &conf{Logging: loggingConfig{Severity: "DEBUG"}, Server: serverConfig{
+	configurationData = &Application{Logging: LoggingConfig{Severity: "DEBUG"}, Server: ServerConfig{
 		Address:      "localhost",
 		Port:         "1234",
 		ReadTimeout:  13,
@@ -40,18 +40,16 @@ func TestServerTimeouts(t *testing.T) {
 
 func TestDatabaseMysqlConnectString(t *testing.T) {
 	docs.Description("ensure DatabaseMysqlConnectString() returns the correct mysql connect string")
-	configurationData = &conf{
-		Logging: loggingConfig{Severity: "DEBUG"},
-		Database: databaseConfig{
-			Use: "mysql",
-			Mysql: mysqlConfig{
-				Username: "demouser",
-				Password: "demopw",
-				Database: "tcp(localhost:3306)/dbname",
-				Parameters: []string{
-					"charset=utf8mb4",
-					"timeout=30s"},
-			},
+	configurationData = &Application{
+		Logging: LoggingConfig{Severity: "DEBUG"},
+		Database: DatabaseConfig{
+			Use:      "mysql",
+			Username: "demouser",
+			Password: "demopw",
+			Database: "tcp(localhost:3306)/dbname",
+			Parameters: []string{
+				"charset=utf8mb4",
+				"timeout=30s"},
 		}}
 	require.Equal(t, "demouser:demopw@tcp(localhost:3306)/dbname?charset=utf8mb4&timeout=30s", DatabaseMysqlConnectString(), "unexpected mysql db connection string")
 }

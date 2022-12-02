@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	configurationData     *conf
+	configurationData     *Application
 	configurationLock     *sync.RWMutex
 	configurationFilename string
 	dbMigrate             bool
@@ -29,7 +29,7 @@ var (
 )
 
 func init() {
-	configurationData = &conf{Logging: loggingConfig{Severity: "DEBUG"}}
+	configurationData = &Application{Logging: LoggingConfig{Severity: "DEBUG"}}
 	configurationLock = &sync.RWMutex{}
 
 	flag.StringVar(&configurationFilename, "config", "", "config file path")
@@ -43,7 +43,7 @@ func ParseCommandLineFlags() {
 }
 
 func parseAndOverwriteConfig(yamlFile []byte) error {
-	newConfigurationData := &conf{}
+	newConfigurationData := &Application{}
 	err := yaml.UnmarshalStrict(yamlFile, newConfigurationData)
 	if err != nil {
 		// cannot use logging package here as this would create a circular dependency (logging needs config)
@@ -55,6 +55,7 @@ func parseAndOverwriteConfig(yamlFile []byte) error {
 
 	errs := url.Values{}
 	validateServerConfiguration(errs, newConfigurationData.Server)
+	validateServiceConfiguration(errs, newConfigurationData.Service)
 	validateLoggingConfiguration(errs, newConfigurationData.Logging)
 	validateSecurityConfiguration(errs, newConfigurationData.Security)
 	validateDatabaseConfiguration(errs, newConfigurationData.Database)
@@ -63,7 +64,6 @@ func parseAndOverwriteConfig(yamlFile []byte) error {
 	validateOptionsConfiguration(errs, newConfigurationData.Choices.Options)
 	validateBirthdayConfiguration(errs, newConfigurationData.Birthday)
 	validateRegistrationStartTime(errs, newConfigurationData.GoLive, newConfigurationData.Security)
-	validateDownstreamConfiguration(errs, newConfigurationData.Downstream)
 
 	if len(errs) != 0 {
 		var keys []string
@@ -127,7 +127,7 @@ func StartupLoadConfiguration() error {
 	return nil
 }
 
-func Configuration() *conf {
+func Configuration() *Application {
 	configurationLock.RLock()
 	defer configurationLock.RUnlock()
 	return configurationData
