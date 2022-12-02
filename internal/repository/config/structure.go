@@ -28,6 +28,7 @@ type (
 		Birthday    BirthdayConfig    `yaml:"birthday"`
 		GoLive      GoLiveConfig      `yaml:"go_live"`
 		Countries   []string          `yaml:"countries"`
+		Currency    string            `yaml:"currency"`
 	}
 
 	// ServiceConfig contains configuration values
@@ -72,6 +73,7 @@ type (
 	OpenIdConnectConfig struct {
 		TokenCookieName    string   `yaml:"token_cookie_name"`     // optional, if set, the jwt token is also read from this cookie (useful for mixed web application setups, see reg-auth-service)
 		TokenPublicKeysPEM []string `yaml:"token_public_keys_PEM"` // a list of public RSA keys in PEM format, see https://github.com/Jumpy-Squirrel/jwks2pem for obtaining PEM from openid keyset endpoint
+		UserInfoURL        string   `yaml:"user_info_url"`         // validation of admin accesses uses this endpoint to verify the token is still current and access has not been recently revoked
 		AdminRole          string   `yaml:"admin_role"`            // the role/group claim that supplies admin rights
 		EarlyReg           string   `yaml:"early_reg_role"`        // optional, the role/group claim that turns on early staff registration
 	}
@@ -105,9 +107,9 @@ type (
 	ChoiceConfig struct {
 		Description   string  `yaml:"description"`
 		HelpUrl       string  `yaml:"help_url"`
-		PriceEarly    float64 `yaml:"price_early"`
-		PriceLate     float64 `yaml:"price_late"`
-		PriceAtCon    float64 `yaml:"price_atcon"`
+		PriceEarly    int64   `yaml:"price_early"`
+		PriceLate     int64   `yaml:"price_late"`
+		PriceAtCon    int64   `yaml:"price_atcon"`
 		VatPercent    float64 `yaml:"vat_percent"`
 		Default       bool    `yaml:"default"`    // if set to true, is added to flags by default. Not available for admin only flags!
 		AdminOnly     bool    `yaml:"admin_only"` // this flag is kept under the adminInfo structure, so it is not visible to users
