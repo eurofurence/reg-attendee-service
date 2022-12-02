@@ -1,5 +1,5 @@
-logging:
-  severity: DEBUG
+service:
+  name: 'Registration Attendee Service Testconfig With Login After Public Target No Early Reg'
 security:
   fixed_token:
     api: 'api-token-for-testing-must-be-pretty-long'
@@ -18,10 +18,17 @@ security:
         -----END PUBLIC KEY-----
     admin_role: 'admin'
     early_reg_role: ''
-  disable_cors: true
+  cors:
+    disable: true
+    allow_origin: '*'
   require_login_for_reg: true
+logging:
+  severity: DEBUG
 go_live:
   start_iso_datetime: '2019-10-31T20:00:00+01:00'
+birthday:
+  earliest: '1901-01-01'
+  latest: '2001-08-14'
 choices:
   flags:
     hc:
@@ -139,9 +146,6 @@ tshirtsizes:
   - 'w3XL'
   - '4XL'
   - 'w4XL'
-birthday:
-  earliest: '1901-01-01'
-  latest: '2001-08-14'
 countries:
   - 'AF'
   - 'AX'

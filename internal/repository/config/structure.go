@@ -1,94 +1,132 @@
 package config
 
-type mysqlConfig struct {
-	Username   string   `yaml:"username"`
-	Password   string   `yaml:"password"`
-	Database   string   `yaml:"database"`
-	Parameters []string `yaml:"parameters"`
-}
+type (
+	DatabaseType string
+	LogStyle     string
+)
 
-type databaseConfig struct {
-	Use   string      `yaml:"use"` // mysql or inmemory
-	Mysql mysqlConfig `yaml:"mysql"`
-}
+const (
+	Inmemory DatabaseType = "inmemory"
+	Mysql    DatabaseType = "mysql"
 
-type serverConfig struct {
-	Address      string `yaml:"address"`
-	Port         string `yaml:"port"`
-	ReadTimeout  int    `yaml:"read_timeout_seconds"`
-	WriteTimeout int    `yaml:"write_timeout_seconds"`
-	IdleTimeout  int    `yaml:"idle_timeout_seconds"`
-}
-
-type downstreamConfig struct {
-	PaymentService string `yaml:"payment_service"` // base url, usually http://localhost:nnnn, will use in-memory-mock if unset
-	MailService    string `yaml:"mail_service"`    // base url, usually http://localhost:nnnn, will use in-memory-mock if unset
-}
-
-type loggingConfig struct {
-	Severity string `yaml:"severity"`
-}
-
-type fixedTokenConfig struct {
-	Api string `yaml:"api"` // shared-secret for server-to-server backend authentication
-}
-
-type openIdConnectConfig struct {
-	TokenCookieName    string   `yaml:"token_cookie_name"`     // optional, if set, the jwt token is also read from this cookie (useful for mixed web application setups, see reg-auth-service)
-	TokenPublicKeysPEM []string `yaml:"token_public_keys_PEM"` // a list of public RSA keys in PEM format, see https://github.com/Jumpy-Squirrel/jwks2pem for obtaining PEM from openid keyset endpoint
-	AdminRole          string   `yaml:"admin_role"`            // the role/group claim that supplies admin rights
-	EarlyReg           string   `yaml:"early_reg_role"`        // optional, the role/group claim that turns on early staff registration
-}
-
-type securityConfig struct {
-	Fixed           fixedTokenConfig    `yaml:"fixed_token"`
-	Oidc            openIdConnectConfig `yaml:"oidc"`
-	DisableCors     bool                `yaml:"disable_cors"`
-	CorsAllowOrigin string              `yaml:"cors_allow_origin"`
-	RequireLogin    bool                `yaml:"require_login_for_reg"`
-}
-
-type ChoiceConfig struct {
-	Description   string  `yaml:"description"`
-	HelpUrl       string  `yaml:"help_url"`
-	PriceEarly    float64 `yaml:"price_early"`
-	PriceLate     float64 `yaml:"price_late"`
-	PriceAtCon    float64 `yaml:"price_atcon"`
-	VatPercent    float64 `yaml:"vat_percent"`
-	Default       bool    `yaml:"default"`    // if set to true, is added to flags by default. Not available for admin only flags!
-	AdminOnly     bool    `yaml:"admin_only"` // this flag is kept under the adminInfo structure, so it is not visible to users
-	ReadOnly      bool    `yaml:"read_only"`  // this flag is kept under the normal flags, thus visible to end user, but only admin can change it
-	Constraint    string  `yaml:"constraint"`
-	ConstraintMsg string  `yaml:"constraint_msg"`
-}
-
-type flagsPkgOptConfig struct {
-	Flags    map[string]ChoiceConfig `yaml:"flags"`
-	Packages map[string]ChoiceConfig `yaml:"packages"`
-	Options  map[string]ChoiceConfig `yaml:"options"`
-}
-
-type birthdayConfig struct {
-	Earliest string `yaml:"earliest"`
-	Latest   string `yaml:"latest"`
-}
+	Plain LogStyle = "plain"
+	ECS   LogStyle = "ecs" // default
+)
 
 const StartTimeFormat = "2006-01-02T15:04:05-07:00"
 
-type goLiveConfig struct {
-	StartIsoDatetime         string `yaml:"start_iso_datetime"`
-	EarlyRegStartIsoDatetime string `yaml:"early_reg_start_iso_datetime"` // optional, only useful if you also set early_reg_role
-}
+type (
+	// Application is the root configuration type
+	Application struct {
+		Service     ServiceConfig     `yaml:"service"`
+		Server      ServerConfig      `yaml:"server"`
+		Database    DatabaseConfig    `yaml:"database"`
+		Security    SecurityConfig    `yaml:"security"`
+		Logging     LoggingConfig     `yaml:"logging"`
+		Choices     FlagsPkgOptConfig `yaml:"choices"`
+		TShirtSizes []string          `yaml:"tshirtsizes"`
+		Birthday    BirthdayConfig    `yaml:"birthday"`
+		GoLive      GoLiveConfig      `yaml:"go_live"`
+		Countries   []string          `yaml:"countries"`
+	}
 
-type conf struct {
-	Database    databaseConfig    `yaml:"database"`
-	Server      serverConfig      `yaml:"server"`
-	Choices     flagsPkgOptConfig `yaml:"choices"`
-	Logging     loggingConfig     `yaml:"logging"`
-	Security    securityConfig    `yaml:"security"`
-	TShirtSizes []string          `yaml:"tshirtsizes"`
-	Birthday    birthdayConfig    `yaml:"birthday"`
-	GoLive      goLiveConfig      `yaml:"go_live"`
-	Countries   []string          `yaml:"countries"`
-	Downstream  downstreamConfig  `yaml:"downstream"`
-}
+	// ServiceConfig contains configuration values
+	// for service related tasks. E.g. URLs to downstream services
+	ServiceConfig struct {
+		Name           string `yaml:"name"`
+		PaymentService string `yaml:"payment_service"` // base url, usually http://localhost:nnnn, will use in-memory-mock if unset
+		MailService    string `yaml:"mail_service"`    // base url, usually http://localhost:nnnn, will use in-memory-mock if unset
+	}
+
+	// ServerConfig contains all values for http configuration
+	ServerConfig struct {
+		Address      string `yaml:"address"`
+		Port         string `yaml:"port"`
+		ReadTimeout  int    `yaml:"read_timeout_seconds"`
+		WriteTimeout int    `yaml:"write_timeout_seconds"`
+		IdleTimeout  int    `yaml:"idle_timeout_seconds"`
+	}
+
+	// DatabaseConfig configures which db to use (mysql, inmemory)
+	// and how to connect to it (needed for mysql only)
+	DatabaseConfig struct {
+		Use        DatabaseType `yaml:"use"`
+		Username   string       `yaml:"username"`
+		Password   string       `yaml:"password"`
+		Database   string       `yaml:"database"`
+		Parameters []string     `yaml:"parameters"`
+	}
+
+	// SecurityConfig configures everything related to security
+	SecurityConfig struct {
+		Fixed        FixedTokenConfig    `yaml:"fixed_token"`
+		Oidc         OpenIdConnectConfig `yaml:"oidc"`
+		Cors         CorsConfig          `yaml:"cors"`
+		RequireLogin bool                `yaml:"require_login_for_reg"`
+	}
+
+	FixedTokenConfig struct {
+		Api string `yaml:"api"` // shared-secret for server-to-server backend authentication
+	}
+
+	OpenIdConnectConfig struct {
+		TokenCookieName    string   `yaml:"token_cookie_name"`     // optional, if set, the jwt token is also read from this cookie (useful for mixed web application setups, see reg-auth-service)
+		TokenPublicKeysPEM []string `yaml:"token_public_keys_PEM"` // a list of public RSA keys in PEM format, see https://github.com/Jumpy-Squirrel/jwks2pem for obtaining PEM from openid keyset endpoint
+		AdminRole          string   `yaml:"admin_role"`            // the role/group claim that supplies admin rights
+		EarlyReg           string   `yaml:"early_reg_role"`        // optional, the role/group claim that turns on early staff registration
+	}
+
+	CorsConfig struct {
+		DisableCors bool   `yaml:"disable"`
+		AllowOrigin string `yaml:"allow_origin"`
+	}
+
+	// LoggingConfig configures logging
+	LoggingConfig struct {
+		Style    LogStyle `yaml:"style"`
+		Severity string   `yaml:"severity"`
+	}
+
+	// FlagsPkgOptConfig configures the choices available to the attendees
+	//
+	// flags are choices that have some impact on how the registration is treated
+	// (guest, e.V. membership, staff, ...)
+	//
+	// packages are stuff that costs money, such as sponsorship or housing options
+	//
+	// options are personal preferences (interested in music, fursuiter, ...) that do not
+	// affect how the registration is treated.
+	FlagsPkgOptConfig struct {
+		Flags    map[string]ChoiceConfig `yaml:"flags"`
+		Packages map[string]ChoiceConfig `yaml:"packages"`
+		Options  map[string]ChoiceConfig `yaml:"options"`
+	}
+
+	ChoiceConfig struct {
+		Description   string  `yaml:"description"`
+		HelpUrl       string  `yaml:"help_url"`
+		PriceEarly    float64 `yaml:"price_early"`
+		PriceLate     float64 `yaml:"price_late"`
+		PriceAtCon    float64 `yaml:"price_atcon"`
+		VatPercent    float64 `yaml:"vat_percent"`
+		Default       bool    `yaml:"default"`    // if set to true, is added to flags by default. Not available for admin only flags!
+		AdminOnly     bool    `yaml:"admin_only"` // this flag is kept under the adminInfo structure, so it is not visible to users
+		ReadOnly      bool    `yaml:"read_only"`  // this flag is kept under the normal flags, thus visible to end user, but only admin can change it
+		Constraint    string  `yaml:"constraint"`
+		ConstraintMsg string  `yaml:"constraint_msg"`
+	}
+
+	// BirthdayConfig is used for validation of attendee supplied birthday
+	//
+	// use it to exclude nonsensical values, or to exclude participants under a minimum age
+	BirthdayConfig struct {
+		Earliest string `yaml:"earliest"`
+		Latest   string `yaml:"latest"`
+	}
+
+	// GoLiveConfig configures the time at which registration becomes available
+	GoLiveConfig struct {
+		StartIsoDatetime         string `yaml:"start_iso_datetime"`
+		EarlyRegStartIsoDatetime string `yaml:"early_reg_start_iso_datetime"` // optional, only useful if you also set early_reg_role
+	}
+)

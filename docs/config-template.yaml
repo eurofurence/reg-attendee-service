@@ -1,22 +1,21 @@
+service:
+  name: 'Registration Attendee Service'
+  # if you leave this blank, a local mock will be used
+  payment_service: 'http://localhost:9092' # no trailing slash
+  # if you leave this blank, a local mock will be used
+  mail_service: 'http://localhost:9093' # no trailing slash
 server:
   port: 9091
-logging:
-  severity: INFO
 database:
-  use: 'inmemory'
-  mysql:
-    username: 'demouser'
-    password: 'demopw'
-    database: 'tcp(localhost:3306)/dbname'
-    parameters:
-      - 'charset=utf8mb4'
-      - 'collation=utf8mb4_general_ci'
-      - 'parseTime=True'
-      - 'timeout=30s' # connection timeout
-go_live:
-  start_iso_datetime: '2022-01-29T20:00:00+01:00'
-  # optional, only useful if you also set early_reg_role, should be earlier than start_iso_datetime
-  early_reg_start_iso_datetime: ''
+  use: 'mysql' # or inmemory
+  username: 'demouser'
+  password: 'demopw'
+  database: 'tcp(localhost:3306)/dbname'
+  parameters:
+    - 'charset=utf8mb4'
+    - 'collation=utf8mb4_general_ci'
+    - 'parseTime=True'
+    - 'timeout=30s' # connection timeout
 security:
   fixed_token:
     api: 'put_secure_random_string_here_for_api_token'
@@ -38,12 +37,23 @@ security:
     admin_role: 'admin'
     # set this nonempty to allow early reg
     early_reg_role: ''
-  # set this to true to send disable cors headers - not for production - local/test instances only - will log lots of warnings
-  disable_cors: false
-  # if setting disable_cors, you should also specify this, as a comma separated list of allowed origins
-  # cors_allow_origin: 'http://localhost:8000,http://localhost:8001'
+  cors:
+    # set this to true to send disable cors headers - not for production - local/test instances only - will log lots of warnings
+    disable: false
+    # if setting disable_cors, you should also specify this, as a comma separated list of allowed origins
+    allow_origin: 'http://localhost:8000,http://localhost:8001'
   # set this to true to require a valid oidc token for initial reg. This allow the service to store the subject of the token and use it for authorization
-  require_login_for_reg: false
+  require_login_for_reg: true
+logging:
+  severity: INFO
+  style: plain # or ecs (elastic common schema), the default
+go_live:
+  start_iso_datetime: '2022-01-29T20:00:00+01:00'
+  # optional, only useful if you also set early_reg_role, should be earlier than start_iso_datetime
+  early_reg_start_iso_datetime: ''
+birthday:
+  earliest: '1901-01-01'
+  latest: '2004-08-24'
 choices:
   flags:
     hc:
@@ -160,9 +170,6 @@ tshirtsizes:
   - 'w3XL'
   - '4XL'
   - 'w4XL'
-birthday:
-  earliest: '1901-01-01'
-  latest: '2004-08-24'
 countries:
   - 'AF'
   - 'AN'
