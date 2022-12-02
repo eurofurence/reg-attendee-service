@@ -32,6 +32,9 @@ func setConfigurationDefaults(c *Application) {
 	if c.Logging.Style == "" {
 		c.Logging.Style = ECS
 	}
+	if c.Currency == "" {
+		c.Currency = "EUR"
+	}
 	if c.Database.Use == "" {
 		c.Database.Use = "inmemory"
 	}
