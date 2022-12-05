@@ -105,7 +105,7 @@ Limitations:
 
   - ✅ support status in find
   - 🚧 allow listing ids of deleted, but omit data (needed by security api so it can mark them deleted too)
-
+  - 🚧 set attendee to deleted in table on status change to deleted, and verify that these are excluded in all reads
   - check that at least one attendance option is set
   - admin only flag skipBanCheck
   - new endpoint for "resend last status change notification email"
