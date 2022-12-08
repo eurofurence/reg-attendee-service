@@ -69,6 +69,10 @@ choices:
       description: 'Guest of the Convention'
       help_url: 'help/guest.html'
       admin_only: true
+    skip_ban_check:
+      description: 'Bypass ban check for this attendee'
+      help_url: 'help/guest.html'
+      admin_only: true
   packages:
     room-none:
       description: 'No Room'

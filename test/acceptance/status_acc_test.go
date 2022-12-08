@@ -16,7 +16,6 @@ import (
 	"net/http"
 	"net/url"
 	"testing"
-	"time"
 )
 
 // -------------------------------------------
@@ -1267,7 +1266,8 @@ func tstStatusChange_Self_Allow(t *testing.T, testcase string,
 	require.Equal(t, len(expectedTransactions), len(paymentMock.Recording()))
 	for i, expected := range expectedTransactions {
 		actual := paymentMock.Recording()[i]
-		expected.DueDate = actual.DueDate // TODO remove when due date logic implemented
+		expected.DueDate = actual.DueDate             // TODO remove when due date logic implemented
+		expected.EffectiveDate = actual.EffectiveDate // TODO remove when effective date logic implemented
 		require.EqualValues(t, expected, actual)
 	}
 
@@ -1506,7 +1506,8 @@ func tstStatusChange_Admin_Allow(t *testing.T, testcase string,
 	require.Equal(t, len(expectedTransactions), len(paymentMock.Recording()))
 	for i, expected := range expectedTransactions {
 		actual := paymentMock.Recording()[i]
-		expected.DueDate = actual.DueDate // TODO remove when due date logic implemented
+		expected.DueDate = actual.DueDate             // TODO remove when due date logic implemented
+		expected.EffectiveDate = actual.EffectiveDate // TODO remove when effective date logic implemented
 		require.EqualValues(t, expected, actual)
 	}
 
@@ -1635,7 +1636,7 @@ func tstCreateTransaction(attid uint, ty paymentservice.TransactionType, amount 
 		},
 		Status:        paymentservice.Valid,
 		EffectiveDate: "1999-12-31",
-		DueDate:       time.Now(),
+		DueDate:       "1999-12-31",
 		Deletion:      nil,
 	}
 }
@@ -1656,9 +1657,9 @@ func tstCreateMatcherTransaction(attid uint, ty paymentservice.TransactionType, 
 			VatRate:   19,
 		},
 		Status:        paymentservice.Valid,
-		EffectiveDate: "",         // TODO
-		DueDate:       time.Now(), // TODO
-		Deletion:      nil,        // TODO
+		EffectiveDate: "",  // TODO
+		DueDate:       "",  // TODO
+		Deletion:      nil, // TODO
 		Comment:       comment,
 	}
 }

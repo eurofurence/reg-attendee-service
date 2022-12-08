@@ -9,7 +9,6 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/paymentservice"
 	"strconv"
-	"time"
 )
 
 func (s *AttendeeServiceImplData) UpdateDues(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status) (status.Status, error) {
@@ -218,7 +217,7 @@ func (s *AttendeeServiceImplData) duesTransactionForAttendee(attendee *entity.At
 		},
 		Comment:       comment,
 		Status:        paymentservice.Valid,
-		EffectiveDate: "",          // TODO - dues are effective immediately
-		DueDate:       time.Time{}, // TODO - implement weeks logic, except for negative amounts
+		EffectiveDate: "2022-12-09", // TODO - dues are effective immediately
+		DueDate:       "2022-12-18", // TODO - implement weeks logic, except for negative amounts
 	}
 }

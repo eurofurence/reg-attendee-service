@@ -59,7 +59,7 @@ func errByStatus(err error, status int) error {
 }
 
 func (i Impl) GetTransactions(ctx context.Context, debitorId uint) ([]Transaction, error) {
-	url := fmt.Sprintf("%s/v1/transactions/%d", i.baseUrl, debitorId)
+	url := fmt.Sprintf("%s/api/rest/v1/transactions?debitor_id=%d", i.baseUrl, debitorId)
 	bodyDto := TransactionResponse{}
 	response := aurestclientapi.ParsedResponse{
 		Body: &bodyDto,
@@ -69,7 +69,7 @@ func (i Impl) GetTransactions(ctx context.Context, debitorId uint) ([]Transactio
 }
 
 func (i Impl) AddTransaction(ctx context.Context, transaction Transaction) error {
-	url := fmt.Sprintf("%s/v1/transactions", i.baseUrl)
+	url := fmt.Sprintf("%s/api/rest/v1/transactions", i.baseUrl)
 	response := aurestclientapi.ParsedResponse{}
 	err := i.client.Perform(ctx, http.MethodPost, url, transaction, &response)
 	return errByStatus(err, response.Status)

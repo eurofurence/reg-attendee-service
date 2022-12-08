@@ -186,9 +186,9 @@ func tstValidAttendeeDues(amount int64, comment string) paymentservice.Transacti
 		},
 		Comment:       comment,
 		Status:        paymentservice.Valid,
-		EffectiveDate: "",          // TODO
-		DueDate:       time.Time{}, // TODO
-		Deletion:      nil,         // TODO
+		EffectiveDate: "",  // TODO
+		DueDate:       "",  // TODO
+		Deletion:      nil, // TODO
 	}
 }
 
