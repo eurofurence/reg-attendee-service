@@ -72,18 +72,11 @@ jobs:
   create_release:
     permissions:
       contents: write
-      pull-requests: read
-      issues: read
     needs: matrix_build_upload
     runs-on: ubuntu-latest
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
     steps:
-      - name: Release Changelog Builder
-        uses: mikepenz/release-changelog-builder-action@v3.4.0
-        id: build_changelog
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
       - name: Download Release Artifacts
         uses: actions/download-artifact@v3
         id: download
@@ -94,5 +87,6 @@ jobs:
         with:
           draft: false
           prerelease: false
+          generate_release_notes: true
           body: ${{ steps.build_changelog.outputs.changelog }}
           files: ${{steps.download.outputs.download-path}}/**
