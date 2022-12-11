@@ -3,6 +3,7 @@ package attendeesrv
 import (
 	"context"
 	"errors"
+	"fmt"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
@@ -67,12 +68,29 @@ func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx contex
 			return err
 		}
 
-		err = mailservice.Get().SendEmail(ctx, mailservice.TemplateRequestDto{
-			Name: "new-status-" + string(newStatus),
+		err = mailservice.Get().SendEmail(ctx, mailservice.MailSendDto{
+			CommonID: "change-status-" + string(newStatus),
 			Variables: map[string]string{
-				"nickname": attendee.Nickname,
+				"badge_number":               fmt.Sprintf("%d", attendee.ID),
+				"badge_number_with_checksum": "TODO",
+				"nickname":                   attendee.Nickname,
+				"email":                      attendee.Email,
+				"reason":                     "TODO cancel reason",
+				"remaining_dues":             "TODO remaining dues",
+				"total_dues":                 "TODO total dues",
+
+				// room group variables, just set so all the templates work
+				"room_group_name":         "TODO room group name",
+				"room_group_owner":        "TODO room group owner nickname",
+				"room_group_owner_email":  "TODO room group owner email",
+				"room_group_member":       "TODO room group member nickname",
+				"room_group_member_email": "TODO room group member email",
+
+				// other stuff that is no longer used
+				"link":      "TODO confirmation link",
+				"new_email": "TODO email change new email",
 			},
-			Email: attendee.Email,
+			To: []string{attendee.Email},
 		})
 		if err != nil {
 			return err

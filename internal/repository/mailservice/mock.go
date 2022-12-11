@@ -6,12 +6,12 @@ type Mock interface {
 	MailService
 
 	Reset()
-	Recording() []TemplateRequestDto
+	Recording() []MailSendDto
 	SimulateError(err error)
 }
 
 type MockImpl struct {
-	recording     []TemplateRequestDto
+	recording     []MailSendDto
 	simulateError error
 }
 
@@ -22,11 +22,11 @@ var (
 
 func newMock() Mock {
 	return &MockImpl{
-		recording: make([]TemplateRequestDto, 0),
+		recording: make([]MailSendDto, 0),
 	}
 }
 
-func (m *MockImpl) SendEmail(ctx context.Context, request TemplateRequestDto) error {
+func (m *MockImpl) SendEmail(ctx context.Context, request MailSendDto) error {
 	if m.simulateError != nil {
 		return m.simulateError
 	}
@@ -37,11 +37,11 @@ func (m *MockImpl) SendEmail(ctx context.Context, request TemplateRequestDto) er
 // only used in tests
 
 func (m *MockImpl) Reset() {
-	m.recording = make([]TemplateRequestDto, 0)
+	m.recording = make([]MailSendDto, 0)
 	m.simulateError = nil
 }
 
-func (m *MockImpl) Recording() []TemplateRequestDto {
+func (m *MockImpl) Recording() []MailSendDto {
 	return m.recording
 }
 
