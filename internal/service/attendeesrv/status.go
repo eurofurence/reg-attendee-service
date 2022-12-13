@@ -78,6 +78,8 @@ func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx contex
 				"reason":                     "TODO cancel reason",
 				"remaining_dues":             "TODO remaining dues",
 				"total_dues":                 "TODO total dues",
+				"due_date":                   "TODO due date (formatted)",
+				"regsys_url":                 "TODO https://reg.eurofurence.org/regsys/",
 
 				// room group variables, just set so all the templates work
 				"room_group_name":         "TODO room group name",
@@ -87,8 +89,8 @@ func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx contex
 				"room_group_member_email": "TODO room group member email",
 
 				// other stuff that is no longer used
-				"link":      "TODO confirmation link",
-				"new_email": "TODO email change new email",
+				"confirm_link": "TODO confirmation link",
+				"new_email":    "TODO email change new email",
 			},
 			To: []string{attendee.Email},
 		})

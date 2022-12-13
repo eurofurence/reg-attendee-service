@@ -200,18 +200,24 @@ func tstNewStatusMail(testcase string, newStatus status.Status) mailservice.Mail
 		Variables: map[string]string{
 			"badge_number":               "1",
 			"badge_number_with_checksum": "TODO",
-			"email":                      testcase,
-			"link":                       "TODO confirmation link",
-			"new_email":                  "TODO email change new email",
 			"nickname":                   "BlackCheetah",
+			"email":                      testcase,
 			"reason":                     "TODO cancel reason",
 			"remaining_dues":             "TODO remaining dues",
-			"room_group_member":          "TODO room group member nickname",
-			"room_group_member_email":    "TODO room group member email",
-			"room_group_name":            "TODO room group name",
-			"room_group_owner":           "TODO room group owner nickname",
-			"room_group_owner_email":     "TODO room group owner email",
 			"total_dues":                 "TODO total dues",
+			"due_date":                   "TODO due date (formatted)",
+			"regsys_url":                 "TODO https://reg.eurofurence.org/regsys/",
+
+			// room group variables
+			"room_group_member":       "TODO room group member nickname",
+			"room_group_member_email": "TODO room group member email",
+			"room_group_name":         "TODO room group name",
+			"room_group_owner":        "TODO room group owner nickname",
+			"room_group_owner_email":  "TODO room group owner email",
+
+			// other stuff
+			"confirm_link": "TODO confirmation link",
+			"new_email":    "TODO email change new email",
 		},
 	}
 }
