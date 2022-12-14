@@ -14,7 +14,7 @@ info:
     url: https://github.com/eurofurence/reg-attendee-service/blob/main/LICENSE
   version: 0.1.0
 servers:
-  - url: http://localhost:9091/api/rest/v1
+  - url: /api/rest/v1
     description: localhost
   - url: /attsrv/api/rest/v1
     description: server
@@ -1151,6 +1151,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Countdown'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   schemas:
     Attendee:

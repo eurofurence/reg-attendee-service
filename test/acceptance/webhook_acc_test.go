@@ -129,7 +129,7 @@ func TestPaymentsChangedWebhook_Approved_PartiallyPaid(t *testing.T) {
 			tstCreateTransaction(1, paymentservice.Payment, 2040),
 		},
 		status.PartiallyPaid,
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.PartiallyPaid)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.PartiallyPaid)},
 	)
 }
 
@@ -143,7 +143,7 @@ func TestPaymentsChangedWebhook_Approved_Paid_WithGraceAmount(t *testing.T) {
 			tstCreateTransaction(1, paymentservice.Payment, 25400),
 		},
 		status.Paid,
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Paid)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Paid)},
 	)
 }
 
@@ -157,7 +157,7 @@ func TestPaymentsChangedWebhook_Approved_Paid_Overpaid(t *testing.T) {
 			tstCreateTransaction(1, paymentservice.Payment, 27000),
 		},
 		status.Paid,
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Paid)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Paid)},
 	)
 }
 
@@ -183,7 +183,7 @@ func TestPaymentsChangedWebhook_PartiallyPaid_Approved(t *testing.T) {
 			tstCreateTransaction(1, paymentservice.Payment, -15500),
 		},
 		status.Approved,
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Approved)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Approved)},
 	)
 }
 
@@ -211,7 +211,7 @@ func TestPaymentsChangedWebhook_PartiallyPaid_Paid(t *testing.T) {
 			tstCreateTransaction(1, paymentservice.Payment, 10000),
 		},
 		status.Paid,
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Paid)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Paid)},
 	)
 }
 
@@ -237,7 +237,7 @@ func TestPaymentsChangedWebhook_Paid_Approved(t *testing.T) {
 			tstCreateTransaction(1, paymentservice.Payment, -25500),
 		},
 		status.Approved,
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.Approved)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Approved)},
 	)
 }
 
@@ -251,7 +251,7 @@ func TestPaymentsChangedWebhook_Paid_PartiallyPaid(t *testing.T) {
 			tstCreateTransaction(1, paymentservice.Payment, -15500),
 		},
 		status.PartiallyPaid,
-		[]mailservice.TemplateRequestDto{tstNewStatusMail(testcase, status.PartiallyPaid)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.PartiallyPaid)},
 	)
 }
 
@@ -332,7 +332,7 @@ func tstStatusChange_Webhook_Success(t *testing.T, testcase string, subcases []s
 	oldStatus status.Status,
 	injectExtraTransactions []paymentservice.Transaction,
 	expectedNewStatus status.Status,
-	expectedMailRequests []mailservice.TemplateRequestDto,
+	expectedMailRequests []mailservice.MailSendDto,
 ) {
 	for i, subcase := range subcases {
 		t.Run(subcaseNameMap[subcase], func(t2 *testing.T) {
@@ -347,7 +347,7 @@ func tstStatusChange_Webhook_Success_WithToken(t *testing.T, testcase string,
 	oldStatus status.Status,
 	injectExtraTransactions []paymentservice.Transaction,
 	expectedNewStatus status.Status,
-	expectedMailRequests []mailservice.TemplateRequestDto,
+	expectedMailRequests []mailservice.MailSendDto,
 ) {
 	tstSetup(tstConfigFile(false, false, true))
 	defer tstShutdown()
@@ -377,13 +377,7 @@ func tstStatusChange_Webhook_Success_WithToken(t *testing.T, testcase string,
 	require.Equal(t, 0, len(paymentMock.Recording()))
 
 	docs.Then("and the appropriate email messages were sent via the mail service")
-	require.Equal(t, len(expectedMailRequests), len(mailMock.Recording()))
-	for i, expected := range expectedMailRequests {
-		actual := mailMock.Recording()[i]
-		require.Contains(t, actual.Email, expected.Email)
-		actual.Email = expected.Email
-		require.EqualValues(t, expected, actual)
-	}
+	tstRequireMailRequests(t, expectedMailRequests)
 }
 
 func tstStatusChange_Webhook_Ignored(t *testing.T, testcase string, subcases []string, tokens []string,

@@ -192,12 +192,32 @@ func tstValidAttendeeDues(amount int64, comment string) paymentservice.Transacti
 	}
 }
 
-func tstNewStatusMail(testcase string, newStatus status.Status) mailservice.TemplateRequestDto {
-	return mailservice.TemplateRequestDto{
-		Name: "new-status-" + string(newStatus),
+func tstNewStatusMail(testcase string, newStatus status.Status) mailservice.MailSendDto {
+	return mailservice.MailSendDto{
+		CommonID: "change-status-" + string(newStatus),
+		Lang:     "",
+		To:       []string{testcase},
 		Variables: map[string]string{
-			"nickname": "BlackCheetah",
+			"badge_number":               "1",
+			"badge_number_with_checksum": "TODO",
+			"nickname":                   "BlackCheetah",
+			"email":                      testcase,
+			"reason":                     "TODO cancel reason",
+			"remaining_dues":             "TODO remaining dues",
+			"total_dues":                 "TODO total dues",
+			"due_date":                   "TODO due date (formatted)",
+			"regsys_url":                 "TODO https://reg.eurofurence.org/regsys/",
+
+			// room group variables
+			"room_group_member":       "TODO room group member nickname",
+			"room_group_member_email": "TODO room group member email",
+			"room_group_name":         "TODO room group name",
+			"room_group_owner":        "TODO room group owner nickname",
+			"room_group_owner_email":  "TODO room group owner email",
+
+			// other stuff
+			"confirm_link": "TODO confirmation link",
+			"new_email":    "TODO email change new email",
 		},
-		Email: testcase,
 	}
 }

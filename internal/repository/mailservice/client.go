@@ -19,7 +19,6 @@ type Impl struct {
 }
 
 func requestManipulator(ctx context.Context, r *http.Request) {
-	// TODO do we ever need to pass on the user token instead?
 	r.Header.Add(media.HeaderXApiKey, config.FixedApiToken())
 }
 
@@ -55,7 +54,7 @@ func errByStatus(err error, status int) error {
 	return nil
 }
 
-func (i Impl) SendEmail(ctx context.Context, request TemplateRequestDto) error {
+func (i Impl) SendEmail(ctx context.Context, request MailSendDto) error {
 	url := fmt.Sprintf("%s/api/v1/mail/send", i.baseUrl)
 	response := aurestclientapi.ParsedResponse{}
 	err := i.client.Perform(ctx, http.MethodPost, url, request, &response)
