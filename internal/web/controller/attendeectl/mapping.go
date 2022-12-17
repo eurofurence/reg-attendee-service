@@ -3,6 +3,7 @@ package attendeectl
 import (
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"strings"
 )
 
@@ -15,16 +16,25 @@ func mapDtoToAttendee(dto *attendee.AttendeeDto, a *entity.Attendee) {
 	a.Zip = dto.Zip
 	a.City = dto.City
 	a.Country = dto.Country
-	a.CountryBadge = dto.CountryBadge
 	a.State = dto.State
 	a.Email = dto.Email
 	a.Phone = dto.Phone
 	a.Telegram = dto.Telegram
 	a.Partner = dto.Partner
 	a.Birthday = dto.Birthday
-	a.Gender = dto.Gender
+	if dto.Gender != "" {
+		a.Gender = dto.Gender
+	} else {
+		a.Gender = "notprovided"
+	}
 	a.Pronouns = dto.Pronouns
 	a.TshirtSize = dto.TshirtSize
+	a.SpokenLanguages = addWrappingCommas(dto.SpokenLanguages)
+	if dto.RegistrationLanguage != "" {
+		a.RegistrationLanguage = addWrappingCommas(dto.RegistrationLanguage)
+	} else {
+		a.RegistrationLanguage = addWrappingCommas(config.DefaultRegistrationLanguage())
+	}
 	a.Flags = addWrappingCommas(dto.Flags)
 	a.Packages = addWrappingCommas(dto.Packages)
 	a.Options = addWrappingCommas(dto.Options)
@@ -41,7 +51,6 @@ func mapAttendeeToDto(a *entity.Attendee, dto *attendee.AttendeeDto) {
 	dto.Zip = a.Zip
 	dto.City = a.City
 	dto.Country = a.Country
-	dto.CountryBadge = a.CountryBadge
 	dto.State = a.State
 	dto.Email = a.Email
 	dto.Phone = a.Phone
@@ -51,6 +60,8 @@ func mapAttendeeToDto(a *entity.Attendee, dto *attendee.AttendeeDto) {
 	dto.Gender = a.Gender
 	dto.Pronouns = a.Pronouns
 	dto.TshirtSize = a.TshirtSize
+	dto.SpokenLanguages = removeWrappingCommas(a.SpokenLanguages)
+	dto.RegistrationLanguage = removeWrappingCommas(a.RegistrationLanguage)
 	dto.Flags = removeWrappingCommas(a.Flags)
 	dto.Packages = removeWrappingCommas(a.Packages)
 	dto.Options = removeWrappingCommas(a.Options)

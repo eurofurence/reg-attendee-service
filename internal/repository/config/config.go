@@ -107,6 +107,21 @@ func AllowedCountries() []string {
 	return Configuration().Countries
 }
 
+func AllowedSpokenLanguages() []string {
+	// TODO add to configuration
+	return []string{"de_DE", "en_US"}
+}
+
+func AllowedRegistrationLanguages() []string {
+	// TODO add to configuration
+	return []string{"en_US"}
+}
+
+func DefaultRegistrationLanguage() string {
+	// TODO add to configuration
+	return "en_US"
+}
+
 func AllowedStatusValues() []status.Status {
 	return []status.Status{status.New, status.Approved, status.PartiallyPaid, status.Paid, status.CheckedIn, status.Waiting, status.Cancelled, status.Deleted}
 }

@@ -32,9 +32,10 @@ func matches(cond *attendee.AttendeeSearchSingleCriterion, a *entity.Attendee, a
 		matchesFullstringGlobOrEmpty(cond.Name, a.FirstName+" "+a.LastName) &&
 		matchesSubstringGlobOrEmpty(cond.Address, a.Street+" "+a.Zip+" "+a.City+" "+a.State) &&
 		matchesExactOrEmpty(cond.Country, a.Country) &&
-		matchesExactOrEmpty(cond.CountryBadge, a.CountryBadge) &&
 		matchesSubstringGlobOrEmpty(cond.Email, a.Email) &&
 		matchesSubstringGlobOrEmpty(cond.Telegram, a.Telegram) &&
+		choiceMatch(cond.SpokenLanguages, a.SpokenLanguages) &&
+		choiceMatch(cond.RegistrationLanguage, a.RegistrationLanguage) &&
 		choiceMatch(cond.Flags, a.Flags, adm.Flags) &&
 		choiceMatch(cond.Options, a.Options) &&
 		choiceMatch(cond.Packages, a.Packages) &&

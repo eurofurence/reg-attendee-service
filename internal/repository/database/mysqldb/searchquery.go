@@ -214,15 +214,14 @@ func addSingleCondition(cond *attendee.AttendeeSearchSingleCriterion, params map
 	if cond.Country != "" {
 		query.WriteString(stringExact("a.country", cond.Country, params, paramBaseName, &paramNo))
 	}
-	if cond.CountryBadge != "" {
-		query.WriteString(stringExact("a.country_badge", cond.CountryBadge, params, paramBaseName, &paramNo))
-	}
 	if cond.Email != "" {
 		query.WriteString(substringMatch("a.email", cond.Email, params, paramBaseName, &paramNo))
 	}
 	if cond.Telegram != "" {
 		query.WriteString(substringMatch("a.telegram", cond.Telegram, params, paramBaseName, &paramNo))
 	}
+	query.WriteString(choiceMatch("a.spoken_languages", cond.SpokenLanguages, params, paramBaseName, &paramNo))
+	query.WriteString(choiceMatch("a.registration_language", cond.RegistrationLanguage, params, paramBaseName, &paramNo))
 	query.WriteString(choiceMatch("CONCAT(a.flags,IFNULL(ad.flags, ''))", cond.Flags, params, paramBaseName, &paramNo))
 	query.WriteString(choiceMatch("a.options", cond.Options, params, paramBaseName, &paramNo))
 	query.WriteString(choiceMatch("a.packages", cond.Packages, params, paramBaseName, &paramNo))
