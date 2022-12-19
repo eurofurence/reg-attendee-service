@@ -63,7 +63,7 @@ func TestValidateMissingInfo(t *testing.T) {
 			"nickname field must be at least 1 and at most 80 characters long"},
 		"phone":                 []string{"phone field must be at least 1 and at most 32 characters long"},
 		"registration_language": []string{"registration_language field must be one of en_US or it can be left blank, which counts as en_US"},
-		"spoken_languages":      []string{"spoken_languages field must be a comma separated combination of any of de_DE,en_US"},
+		"spoken_languages":      []string{"spoken_languages field must be a comma separated combination of any of en_US,de_DE"},
 		"street":                []string{"street field must be at least 1 and at most 120 characters long"},
 		"zip":                   []string{"zip field must be at least 1 and at most 20 characters long"},
 	}
@@ -205,7 +205,7 @@ func TestValidateChoiceFieldsAndId(t *testing.T) {
 		"flags":                 []string{"flags field must be a comma separated combination of any of anon,ev,hc"},
 		"packages":              []string{"packages field must be a comma separated combination of any of attendance,day-fri,day-sat,day-thu,room-none,sponsor,sponsor2,stage"},
 		"registration_language": []string{"registration_language field must be one of en_US or it can be left blank, which counts as en_US"},
-		"spoken_languages":      []string{"spoken_languages field must be a comma separated combination of any of de_DE,en_US"},
+		"spoken_languages":      []string{"spoken_languages field must be a comma separated combination of any of en_US,de_DE"},
 		"telegram":              []string{"optional telegram field must contain your @username from telegram, or it can be left blank"},
 		"tshirt_size":           []string{"optional tshirt_size field must be empty or one of XS,wXS,S,wS,M,wM,L,wL,XL,wXL,XXL,wXXL,3XL,w3XL,4XL,w4XL"},
 		"country":               []string{"country field must contain a 2 letter upper case ISO-3166-1 country code (Alpha-2 code, see https://en.wikipedia.org/wiki/ISO_3166-1)"},

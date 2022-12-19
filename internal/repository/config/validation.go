@@ -41,6 +41,12 @@ func setConfigurationDefaults(c *Application) {
 	if c.Security.Cors.AllowOrigin == "" {
 		c.Security.Cors.AllowOrigin = "*"
 	}
+	if len(c.SpokenLanguages) == 0 {
+		c.SpokenLanguages = []string{"en_US"}
+	}
+	if len(c.RegistrationLanguages) == 0 {
+		c.RegistrationLanguages = []string{"en_US"}
+	}
 }
 
 const portPattern = "^[1-9][0-9]{0,4}$"

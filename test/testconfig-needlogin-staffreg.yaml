@@ -148,6 +148,11 @@ tshirtsizes:
   - 'w3XL'
   - '4XL'
   - 'w4XL'
+spoken_languages:
+  - 'en_US'
+  - 'de_DE'
+registration_languages:
+  - 'en_US'
 countries:
   - 'AF'
   - 'AX'

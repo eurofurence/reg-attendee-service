@@ -108,18 +108,16 @@ func AllowedCountries() []string {
 }
 
 func AllowedSpokenLanguages() []string {
-	// TODO add to configuration
-	return []string{"de_DE", "en_US"}
+	return Configuration().SpokenLanguages
 }
 
 func AllowedRegistrationLanguages() []string {
-	// TODO add to configuration
-	return []string{"en_US"}
+	return Configuration().RegistrationLanguages
 }
 
 func DefaultRegistrationLanguage() string {
-	// TODO add to configuration
-	return "en_US"
+	// default set after load ensures always at least one entry
+	return Configuration().RegistrationLanguages[0]
 }
 
 func AllowedStatusValues() []status.Status {
