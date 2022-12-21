@@ -54,7 +54,7 @@ func constructFieldList(spec []string) []string {
 		selected["a.first_name as first_name"] = true
 		selected["a.last_name as last_name"] = true
 		selected["a.country as country"] = true
-		selected["a.country_badge as country_badge"] = true
+		selected["a.spoken_languages as spoken_languages"] = true
 		selected["a.email as email"] = true
 		selected["a.telegram as telegram"] = true
 		selected["a.birthday as birthday"] = true
@@ -76,7 +76,7 @@ func constructFieldList(spec []string) []string {
 			switch s {
 			case "id", "nickname", "first_name", "last_name", "street", "zip", "city":
 				selected[defKey] = true
-			case "country", "country_badge", "state", "email", "phone", "telegram", "partner":
+			case "country", "spoken_languages", "registration_language", "state", "email", "phone", "telegram", "partner":
 				selected[defKey] = true
 			case "birthday", "gender", "pronouns", "tshirt_size":
 				selected[defKey] = true
@@ -111,8 +111,9 @@ func constructFieldList(spec []string) []string {
 				selected["a.email as email"] = true
 				selected["a.phone as phone"] = true
 				selected["a.telegram as telegram"] = true
-				selected["a.country_badge as country_badge"] = true
+				selected["a.spoken_languages as spoken_languages"] = true
 			case "configuration":
+				selected["a.registration_language as registration_language"] = true
 				selected["a.flags as flags"] = true
 				selected["a.options as options"] = true
 				selected["a.packages as packages"] = true
@@ -128,7 +129,8 @@ func constructFieldList(spec []string) []string {
 				selected["a.zip as zip"] = true
 				selected["a.city as city"] = true
 				selected["a.country as country"] = true
-				selected["a.country_badge as country_badge"] = true
+				selected["a.spoken_languages as spoken_languages"] = true
+				selected["a.registration_language as registration_language"] = true
 				selected["a.state as state"] = true
 				selected["a.email as email"] = true
 				selected["a.phone as phone"] = true

@@ -27,7 +27,7 @@ func (s *AttendeeServiceImplData) mapToAttendeeSearchResults(atts []*entity.Atte
 
 func (s *AttendeeServiceImplData) mapToAttendeeSearchResult(att *entity.AttendeeQueryResult, fillFields []string) attendee.AttendeeSearchResult {
 	if len(fillFields) == 0 {
-		fillFields = []string{"nickname", "name", "country", "country_badge", "email", "telegram", "birthday", "pronouns",
+		fillFields = []string{"nickname", "name", "country", "spoken_languages", "email", "telegram", "birthday", "pronouns",
 			"tshirt_size", "flags", "options", "packages", "user_comments", "status",
 			"total_dues", "payment_balance", "current_dues", "registered", "admin_comments"}
 	}
