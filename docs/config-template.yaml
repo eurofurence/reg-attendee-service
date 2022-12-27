@@ -175,10 +175,10 @@ tshirtsizes:
   - '4XL'
   - 'w4XL'
 spoken_languages:
-  - 'en_US'
-  - 'de_DE'
+  - 'en-US'
+  - 'de-DE'
 registration_languages: # first value is default
-  - 'en_US'
+  - 'en-US'
 countries:
   - 'AF'
   - 'AN'

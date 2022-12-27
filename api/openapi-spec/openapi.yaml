@@ -1261,21 +1261,21 @@ components:
         spoken_languages:
           type: string
           description: |-
-            A comma separated list of a configurable subset of RFC 5646 locales (language_REGION) that specify the spoken languages, in order of preference, 
+            A comma separated list of a configurable subset of RFC 5646 locales (language-REGION) that specify the spoken languages, in order of preference,
             according to the IANA language registry (https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry).
             
             The list of allowed values is specified in the service configuration, and is used to select email language templates as well as represented on the badge.
-          example: 'de_DE,en_US'
+          example: 'de-DE,en-US'
         registration_language:
           type: string
           description: |-
-            A single entry out of a small configurable subset of RFC 5646 locales (language_REGION) that remember the ui language and number/date format used for this attendee in the registration system,
+            A single entry out of a small configurable subset of RFC 5646 locales (language-REGION) that remember the ui language and number/date format used for this attendee in the registration system,
             according to the IANA language registry (https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry).
             
-            If unset, defaults to a value that is configuration dependent, usually en_US (the primary language of the registration system for the given convention).           
+            If unset, defaults to a value that is configuration dependent, usually en-US (the primary language of the registration system for the given convention).
             
-            Currently the only supported value is en_US.
-          example: en_US
+            Currently the only supported value is en-US.
+          example: en-US
         flags:
           type: string
           description: A comma separated list of flags as declared in configuration. Flags are used to store yes/no-style information about an attendee, and displayed as checkboxes. Flags can be configured with respect to their visibility and who may change them (admin only, normal user). Flags are used to represent properties of the attendee, such as "is staff", "does not wish their name to appear in the convention booklet", etc.
@@ -1394,21 +1394,21 @@ components:
         spoken_languages:
           type: string
           description: |-
-            A comma separated list of a configurable subset of RFC 5646 locales (language_REGION) that specify the spoken languages, in order of preference, 
+            A comma separated list of a configurable subset of RFC 5646 locales (language-REGION) that specify the spoken languages, in order of preference,
             according to the IANA language registry (https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry).
             
             The list of allowed values is specified in the service configuration, and is used to select email language templates as well as represented on the badge.
-          example: 'de_DE,en_US'
+          example: 'de-DE,en-US'
         registration_language:
           type: string
           description: |-
-            A single entry out of a small configurable subset of RFC 5646 locales (language_REGION) that remember the ui language and number/date format used for this attendee in the registration system,
+            A single entry out of a small configurable subset of RFC 5646 locales (language-REGION) that remember the ui language and number/date format used for this attendee in the registration system,
             according to the IANA language registry (https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry).
             
-            If unset, defaults to a value that is configuration dependent, usually en_US (the primary language of the registration system for the given convention).           
+            If unset, defaults to a value that is configuration dependent, usually en-US (the primary language of the registration system for the given convention).
             
-            Currently the only supported value is en_US.
-          example: en_US
+            Currently the only supported value is en-US.
+          example: en-US
         flags:
           type: string
           description: A comma separated list of flags as declared in configuration. Flags are used to store yes/no-style information about an attendee, and displayed as checkboxes. Flags can be configured with respect to their visibility and who may change them (admin only, normal user). Flags are used to represent properties of the attendee, such as "is staff", "does not wish their name to appear in the convention booklet", etc.
@@ -1553,15 +1553,15 @@ components:
           additionalProperties:
             $ref: '#/components/schemas/ChoiceStateCondition'
           example:
-            de_DE: 1
-            en_US: 0
+            de-DE: 1
+            en-US: 0
         registration_language:
           description: desired state of registration language locales (as declared in configuration). If specified at all, locale must be present the given number of times (0 or 1). Example would select all attendees that use the non-English registration ui.
           type: object
           additionalProperties:
             $ref: '#/components/schemas/ChoiceStateCondition'
           example:
-            en_US: 0
+            en-US: 0
         flags:
           description: desired state of flags as declared in configuration. If specified at all, flag must be present the given number of times (0 or 1). Admin flags are available to users for whom they are visible.
           type: object
