@@ -55,7 +55,7 @@ func errByStatus(err error, status int) error {
 }
 
 func (i Impl) SendEmail(ctx context.Context, request MailSendDto) error {
-	url := fmt.Sprintf("%s/api/v1/mail/send", i.baseUrl)
+	url := fmt.Sprintf("%s/api/v1/mail", i.baseUrl)
 	response := aurestclientapi.ParsedResponse{}
 	err := i.client.Perform(ctx, http.MethodPost, url, request, &response)
 	return errByStatus(err, response.Status)

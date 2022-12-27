@@ -13,6 +13,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/paymentservice"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
 	"gorm.io/gorm"
+	"strings"
 )
 
 func (s *AttendeeServiceImplData) GetFullStatusHistory(ctx context.Context, attendee *entity.Attendee) ([]entity.StatusChange, error) {
@@ -68,8 +69,9 @@ func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx contex
 			return err
 		}
 
-		err = mailservice.Get().SendEmail(ctx, mailservice.MailSendDto{
+		mailDto := mailservice.MailSendDto{
 			CommonID: "change-status-" + string(newStatus),
+			Lang:     removeWrappingCommasWithDefault(attendee.RegistrationLanguage, "en-US"),
 			Variables: map[string]string{
 				"badge_number":               fmt.Sprintf("%d", attendee.ID),
 				"badge_number_with_checksum": "TODO",
@@ -93,13 +95,23 @@ func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx contex
 				"new_email":    "TODO email change new email",
 			},
 			To: []string{attendee.Email},
-		})
+		}
+		err = mailservice.Get().SendEmail(ctx, mailDto)
 		if err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func removeWrappingCommasWithDefault(v string, defaultValue string) string {
+	v = strings.TrimPrefix(v, ",")
+	v = strings.TrimSuffix(v, ",")
+	if v == "" {
+		return defaultValue
+	}
+	return v
 }
 
 func (s *AttendeeServiceImplData) StatusChangeAllowed(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status) error {

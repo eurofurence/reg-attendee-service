@@ -196,7 +196,7 @@ func tstValidAttendeeDues(amount int64, comment string) paymentservice.Transacti
 func tstNewStatusMail(testcase string, newStatus status.Status) mailservice.MailSendDto {
 	return mailservice.MailSendDto{
 		CommonID: "change-status-" + string(newStatus),
-		Lang:     "",
+		Lang:     "en-US",
 		To:       []string{testcase},
 		Variables: map[string]string{
 			"badge_number":               "1",
