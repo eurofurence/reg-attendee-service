@@ -7,14 +7,13 @@ type AttendeeDto struct {
 	Nickname string `json:"nickname"` // fan name
 
 	// name and address
-	FirstName    string `json:"first_name"`
-	LastName     string `json:"last_name"`
-	Street       string `json:"street"`
-	Zip          string `json:"zip"`
-	City         string `json:"city"`
-	Country      string `json:"country"`       // 2 letter ISO-3166-1 country code for the address (Alpha-2 code)
-	CountryBadge string `json:"country_badge"` // Alpha-2 code for the country to be shown on the badge
-	State        string `json:"state"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Street    string `json:"street"`
+	Zip       string `json:"zip"`
+	City      string `json:"city"`
+	Country   string `json:"country"` // 2 letter ISO-3166-1 country code for the address (Alpha-2 code)
+	State     string `json:"state"`
 
 	// contact info
 	Email    string `json:"email"`
@@ -23,10 +22,12 @@ type AttendeeDto struct {
 	Partner  string `json:"partner"`
 
 	// personal data
-	Birthday   string `json:"birthday"` // ISO date (format yyyy-MM-dd)
-	Gender     string `json:"gender"`   // optional, one of male,female,other,notprovided
-	Pronouns   string `json:"pronouns"` // optional
-	TshirtSize string `json:"tshirt_size"`
+	Birthday             string `json:"birthday"` // ISO date (format yyyy-MM-dd)
+	Gender               string `json:"gender"`   // optional, one of male,female,other,notprovided
+	Pronouns             string `json:"pronouns"` // optional
+	TshirtSize           string `json:"tshirt_size"`
+	SpokenLanguages      string `json:"spoken_languages"`      // configurable subset of RFC 5646 locales, comma separated (de_DE,en_US)
+	RegistrationLanguage string `json:"registration_language"` // one out of configurable subset of RFC 5646 locales (default en_US)
 
 	// comma separated lists, allowed choices are convention dependent
 	Flags    string `json:"flags"`    // hc,anon,ev
@@ -58,22 +59,23 @@ type AttendeeSearchCriteria struct {
 }
 
 type AttendeeSearchSingleCriterion struct {
-	Ids           []uint          `json:"ids,omitempty"`
-	Nickname      string          `json:"nickname"`
-	Name          string          `json:"name"`
-	Address       string          `json:"address"`
-	Country       string          `json:"country"`
-	CountryBadge  string          `json:"country_badge"`
-	Email         string          `json:"email"`
-	Telegram      string          `json:"telegram"`
-	Flags         map[string]int8 `json:"flags"`
-	Options       map[string]int8 `json:"options"`
-	Packages      map[string]int8 `json:"packages"`
-	UserComments  string          `json:"user_comments"`
-	Status        []status.Status `json:"status"`
-	Permissions   map[string]int8 `json:"permissions"`
-	AdminComments string          `json:"admin_comments"`
-	AddInfo       map[string]int8 `json:"add_info"` // TODO implement
+	Ids                  []uint          `json:"ids,omitempty"`
+	Nickname             string          `json:"nickname"`
+	Name                 string          `json:"name"`
+	Address              string          `json:"address"`
+	Country              string          `json:"country"`
+	Email                string          `json:"email"`
+	Telegram             string          `json:"telegram"`
+	SpokenLanguages      map[string]int8 `json:"spoken_languages"`
+	RegistrationLanguage map[string]int8 `json:"registration_language"`
+	Flags                map[string]int8 `json:"flags"`
+	Options              map[string]int8 `json:"options"`
+	Packages             map[string]int8 `json:"packages"`
+	UserComments         string          `json:"user_comments"`
+	Status               []status.Status `json:"status"`
+	Permissions          map[string]int8 `json:"permissions"`
+	AdminComments        string          `json:"admin_comments"`
+	AddInfo              map[string]int8 `json:"add_info"` // TODO implement
 }
 
 // --- search result ---
@@ -83,34 +85,35 @@ type AttendeeSearchResultList struct {
 }
 
 type AttendeeSearchResult struct {
-	Id             uint           `json:"id"`
-	BadgeId        *string        `json:"badge_id,omitempty"`
-	Nickname       *string        `json:"nickname,omitempty"`
-	FirstName      *string        `json:"first_name,omitempty"`
-	LastName       *string        `json:"last_name,omitempty"`
-	Street         *string        `json:"street,omitempty"`
-	Zip            *string        `json:"zip,omitempty"`
-	City           *string        `json:"city,omitempty"`
-	Country        *string        `json:"country,omitempty"`
-	CountryBadge   *string        `json:"country_badge,omitempty"`
-	State          *string        `json:"state,omitempty"`
-	Email          *string        `json:"email,omitempty"`
-	Phone          *string        `json:"phone,omitempty"`
-	Telegram       *string        `json:"telegram,omitempty"`
-	Partner        *string        `json:"partner,omitempty"`
-	Birthday       *string        `json:"birthday,omitempty"`
-	Gender         *string        `json:"gender,omitempty"`
-	Pronouns       *string        `json:"pronouns,omitempty"`
-	TshirtSize     *string        `json:"tshirt_size,omitempty"`
-	Flags          *string        `json:"flags,omitempty"`
-	Options        *string        `json:"options,omitempty"`
-	Packages       *string        `json:"packages,omitempty"`
-	UserComments   *string        `json:"user_comments,omitempty"`
-	Status         *status.Status `json:"status,omitempty"`
-	TotalDues      *int64         `json:"total_dues,omitempty"`      // TODO cache in addInfo:dues from payments changed hook
-	PaymentBalance *int64         `json:"payment_balance,omitempty"` // TODO cache in addInfo:dues from payments changed hook
-	CurrentDues    *int64         `json:"current_dues,omitempty"`    // TODO cache in addInfo:dues from payments changed hook
-	DueDate        *string        `json:"due_date,omitempty"`        // TODO cache in addInfo:overdue from payments changed hook ONLY IF OUTSTANDING
-	Registered     *string        `json:"registered,omitempty"`      // TODO the ISO date we registered
-	AdminComments  *string        `json:"admin_comments,omitempty"`  // TODO include
+	Id                   uint           `json:"id"`
+	BadgeId              *string        `json:"badge_id,omitempty"`
+	Nickname             *string        `json:"nickname,omitempty"`
+	FirstName            *string        `json:"first_name,omitempty"`
+	LastName             *string        `json:"last_name,omitempty"`
+	Street               *string        `json:"street,omitempty"`
+	Zip                  *string        `json:"zip,omitempty"`
+	City                 *string        `json:"city,omitempty"`
+	Country              *string        `json:"country,omitempty"`
+	State                *string        `json:"state,omitempty"`
+	Email                *string        `json:"email,omitempty"`
+	Phone                *string        `json:"phone,omitempty"`
+	Telegram             *string        `json:"telegram,omitempty"`
+	Partner              *string        `json:"partner,omitempty"`
+	Birthday             *string        `json:"birthday,omitempty"`
+	Gender               *string        `json:"gender,omitempty"`
+	Pronouns             *string        `json:"pronouns,omitempty"`
+	TshirtSize           *string        `json:"tshirt_size,omitempty"`
+	SpokenLanguages      *string        `json:"spoken_languages,omitempty"`
+	RegistrationLanguage *string        `json:"registration_language,omitempty"`
+	Flags                *string        `json:"flags,omitempty"`
+	Options              *string        `json:"options,omitempty"`
+	Packages             *string        `json:"packages,omitempty"`
+	UserComments         *string        `json:"user_comments,omitempty"`
+	Status               *status.Status `json:"status,omitempty"`
+	TotalDues            *int64         `json:"total_dues,omitempty"`      // TODO cache in addInfo:dues from payments changed hook
+	PaymentBalance       *int64         `json:"payment_balance,omitempty"` // TODO cache in addInfo:dues from payments changed hook
+	CurrentDues          *int64         `json:"current_dues,omitempty"`    // TODO cache in addInfo:dues from payments changed hook
+	DueDate              *string        `json:"due_date,omitempty"`        // TODO cache in addInfo:overdue from payments changed hook ONLY IF OUTSTANDING
+	Registered           *string        `json:"registered,omitempty"`      // TODO the ISO date we registered
+	AdminComments        *string        `json:"admin_comments,omitempty"`  // TODO include
 }

@@ -107,6 +107,19 @@ func AllowedCountries() []string {
 	return Configuration().Countries
 }
 
+func AllowedSpokenLanguages() []string {
+	return Configuration().SpokenLanguages
+}
+
+func AllowedRegistrationLanguages() []string {
+	return Configuration().RegistrationLanguages
+}
+
+func DefaultRegistrationLanguage() string {
+	// default set after load ensures always at least one entry
+	return Configuration().RegistrationLanguages[0]
+}
+
 func AllowedStatusValues() []status.Status {
 	return []status.Status{status.New, status.Approved, status.PartiallyPaid, status.Paid, status.CheckedIn, status.Waiting, status.Cancelled, status.Deleted}
 }

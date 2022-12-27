@@ -1169,7 +1169,6 @@ components:
         - zip
         - city
         - country
-        - country_badge
         - email
         - phone
         - birthday
@@ -1223,12 +1222,6 @@ components:
           maxLength: 2
           description: 2 letter ISO-3166-1 country code for the address (Alpha-2 code), for example DE for Germany. Internally validated against a list from configuration.
           example: DE
-        country_badge:
-          type: string
-          minLength: 2
-          maxLength: 2
-          description: 2 letter ISO-3166-1 country code for printing on Badge (Alpha-2 code). This allows non-German speaking attendees to select UK here and get a UK flag on their badge, even though they currently live in Germany. Essentially, prevents getting spoken to in a language you do not speak.
-          example: DE
         state:
           type: string
           maxLength: 80
@@ -1265,6 +1258,24 @@ components:
           type: string
           description: Your t-shirt size (optional). Validated against a list from configuration if specified.
           example: XXL
+        spoken_languages:
+          type: string
+          description: |-
+            A comma separated list of a configurable subset of RFC 5646 locales (language_REGION) that specify the spoken languages, in order of preference, 
+            according to the IANA language registry (https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry).
+            
+            The list of allowed values is specified in the service configuration, and is used to select email language templates as well as represented on the badge.
+          example: 'de_DE,en_US'
+        registration_language:
+          type: string
+          description: |-
+            A single entry out of a small configurable subset of RFC 5646 locales (language_REGION) that remember the ui language and number/date format used for this attendee in the registration system,
+            according to the IANA language registry (https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry).
+            
+            If unset, defaults to a value that is configuration dependent, usually en_US (the primary language of the registration system for the given convention).           
+            
+            Currently the only supported value is en_US.
+          example: en_US
         flags:
           type: string
           description: A comma separated list of flags as declared in configuration. Flags are used to store yes/no-style information about an attendee, and displayed as checkboxes. Flags can be configured with respect to their visibility and who may change them (admin only, normal user). Flags are used to represent properties of the attendee, such as "is staff", "does not wish their name to appear in the convention booklet", etc.
@@ -1350,11 +1361,6 @@ components:
           maxLength: 2
           description: 2 letter ISO-3166-1 country code for the address (Alpha-2 code), for example DE for Germany.
           example: DE
-        country_badge:
-          type: string
-          maxLength: 2
-          description: 2 letter ISO-3166-1 country code for printing on Badge (Alpha-2 code). This allows non-German speaking attendees to select UK here and get a UK flag on their badge, even though they currently live in Germany. Essentially, prevents getting spoken to in a language you do not speak.
-          example: DE
         state:
           type: string
           maxLength: 80
@@ -1385,6 +1391,24 @@ components:
         tshirt_size:
           type: string
           example: XXL
+        spoken_languages:
+          type: string
+          description: |-
+            A comma separated list of a configurable subset of RFC 5646 locales (language_REGION) that specify the spoken languages, in order of preference, 
+            according to the IANA language registry (https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry).
+            
+            The list of allowed values is specified in the service configuration, and is used to select email language templates as well as represented on the badge.
+          example: 'de_DE,en_US'
+        registration_language:
+          type: string
+          description: |-
+            A single entry out of a small configurable subset of RFC 5646 locales (language_REGION) that remember the ui language and number/date format used for this attendee in the registration system,
+            according to the IANA language registry (https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry).
+            
+            If unset, defaults to a value that is configuration dependent, usually en_US (the primary language of the registration system for the given convention).           
+            
+            Currently the only supported value is en_US.
+          example: en_US
         flags:
           type: string
           description: A comma separated list of flags as declared in configuration. Flags are used to store yes/no-style information about an attendee, and displayed as checkboxes. Flags can be configured with respect to their visibility and who may change them (admin only, normal user). Flags are used to represent properties of the attendee, such as "is staff", "does not wish their name to appear in the convention booklet", etc.
@@ -1516,11 +1540,6 @@ components:
           maxLength: 2
           description: 2 letter ISO-3166-1 country code for the address (Alpha-2 code), for example DE for Germany.
           example: DE
-        country_badge:
-          type: string
-          maxLength: 2
-          description: 2 letter ISO-3166-1 country code for printing on Badge (Alpha-2 code), for example DE for Germany.
-          example: DE
         email:
           type: string
           description: full match on email, case insensitive, use * as a wildcard for substring matches
@@ -1528,6 +1547,21 @@ components:
         telegram:
           type: string
           description: full match on telegram handle, case insensitive, use * as a wildcard for substring matches
+        spoken_languages:
+          description: desired state of spoken language locales (as declared in configuration). If specified at all, locale must be present the given number of times (0 or 1). Example selects all attendees that speak German, but not English.
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ChoiceStateCondition'
+          example:
+            de_DE: 1
+            en_US: 0
+        registration_language:
+          description: desired state of registration language locales (as declared in configuration). If specified at all, locale must be present the given number of times (0 or 1). Example would select all attendees that use the non-English registration ui.
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/ChoiceStateCondition'
+          example:
+            en_US: 0
         flags:
           description: desired state of flags as declared in configuration. If specified at all, flag must be present the given number of times (0 or 1). Admin flags are available to users for whom they are visible.
           type: object
@@ -1604,9 +1638,9 @@ components:
       
         - name: first_name, last_name
         - address: street, zip, city, state, country
-        - contact: email, phone, telegram, country_badge
-        - configuration: flags, options, packages
-        - balances: total_dues, payment_balance, current_dues
+        - contact: email, phone, telegram, spoken_languages
+        - configuration: registration_language, flags, options, packages
+        - balances: total_dues, payment_balance, current_dues, due_date
         - all: (all available fields)
       
         For a detailed description of the fields, please see the AttendeeSearchResult schema.
@@ -1630,7 +1664,6 @@ components:
           - zip
           - city
           - country
-          - country_badge
           - state
           - email
           - phone
@@ -1640,6 +1673,8 @@ components:
           - gender
           - pronouns
           - tshirt_size
+          - spoken_languages
+          - registration_language
           - flags
           - options
           - packages
@@ -1657,6 +1692,7 @@ components:
           - contact
           - configuration
           - balances
+          - all
     AdminInfo:
       type: object
       required:

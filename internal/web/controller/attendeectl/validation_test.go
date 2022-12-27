@@ -15,25 +15,26 @@ import (
 
 func tstCreateValidAttendee() attendee.AttendeeDto {
 	return attendee.AttendeeDto{
-		Nickname:     "BlackCheetah",
-		FirstName:    "Hans",
-		LastName:     "Mustermann",
-		Street:       "Teststraße 24",
-		Zip:          "12345",
-		City:         "Berlin",
-		Country:      "DE",
-		CountryBadge: "DE",
-		State:        "Sachsen",
-		Email:        "jsquirrel_github_9a6d@packetloss.de",
-		Phone:        "+49-30-123",
-		Telegram:     "@ihopethisuserdoesnotexist",
-		Partner:      "GuestWhiteFerret",
-		Birthday:     "1998-11-23",
-		Gender:       "other",
-		Flags:        "anon,ev",
-		Packages:     "room-none,attendance,stage,sponsor2",
-		Options:      "music,suit",
-		TshirtSize:   "XXL",
+		Nickname:             "BlackCheetah",
+		FirstName:            "Hans",
+		LastName:             "Mustermann",
+		Street:               "Teststraße 24",
+		Zip:                  "12345",
+		City:                 "Berlin",
+		Country:              "DE",
+		State:                "Sachsen",
+		Email:                "jsquirrel_github_9a6d@packetloss.de",
+		Phone:                "+49-30-123",
+		Telegram:             "@ihopethisuserdoesnotexist",
+		Partner:              "GuestWhiteFerret",
+		Birthday:             "1998-11-23",
+		Gender:               "other",
+		SpokenLanguages:      "de_DE,en_US",
+		RegistrationLanguage: "en_US",
+		Flags:                "anon,ev",
+		Packages:             "room-none,attendance,stage,sponsor2",
+		Options:              "music,suit",
+		TshirtSize:           "XXL",
 	}
 }
 
@@ -47,22 +48,24 @@ func TestValidateSuccess(t *testing.T) {
 func TestValidateMissingInfo(t *testing.T) {
 	docs.Description("an attendee with wrong and missing fields reports the expected validation errors")
 	a := attendee.AttendeeDto{
-		Country:      "meow",
-		CountryBadge: "bark",
+		Country:              "meow",
+		SpokenLanguages:      "bark",
+		RegistrationLanguage: "chirp",
 	}
 	expected := url.Values{
-		"birthday":      []string{"birthday field must be a valid ISO 8601 date (format yyyy-MM-dd)"},
-		"city":          []string{"city field must be at least 1 and at most 80 characters long"},
-		"country":       []string{"country field must contain a 2 letter upper case ISO-3166-1 country code (Alpha-2 code, see https://en.wikipedia.org/wiki/ISO_3166-1)"},
-		"country_badge": []string{"country_badge field must contain a 2 letter upper case ISO-3166-1 country code (Alpha-2 code, see https://en.wikipedia.org/wiki/ISO_3166-1)"},
-		"email":         []string{"email field must be at least 1 and at most 200 characters long", "email field is not plausible, must match " + emailPattern},
-		"first_name":    []string{"first_name field must be at least 1 and at most 80 characters long"},
-		"last_name":     []string{"last_name field must be at least 1 and at most 80 characters long"},
+		"birthday":   []string{"birthday field must be a valid ISO 8601 date (format yyyy-MM-dd)"},
+		"city":       []string{"city field must be at least 1 and at most 80 characters long"},
+		"country":    []string{"country field must contain a 2 letter upper case ISO-3166-1 country code (Alpha-2 code, see https://en.wikipedia.org/wiki/ISO_3166-1)"},
+		"email":      []string{"email field must be at least 1 and at most 200 characters long", "email field is not plausible, must match " + emailPattern},
+		"first_name": []string{"first_name field must be at least 1 and at most 80 characters long"},
+		"last_name":  []string{"last_name field must be at least 1 and at most 80 characters long"},
 		"nickname": []string{"nickname field must contain at least one alphanumeric character",
 			"nickname field must be at least 1 and at most 80 characters long"},
-		"phone":  []string{"phone field must be at least 1 and at most 32 characters long"},
-		"street": []string{"street field must be at least 1 and at most 120 characters long"},
-		"zip":    []string{"zip field must be at least 1 and at most 20 characters long"},
+		"phone":                 []string{"phone field must be at least 1 and at most 32 characters long"},
+		"registration_language": []string{"registration_language field must be one of en_US or it can be left blank, which counts as en_US"},
+		"spoken_languages":      []string{"spoken_languages field must be a comma separated combination of any of en_US,de_DE"},
+		"street":                []string{"street field must be at least 1 and at most 120 characters long"},
+		"zip":                   []string{"zip field must be at least 1 and at most 20 characters long"},
 	}
 	performValidationTest(t, &a, expected, 0)
 }
@@ -192,18 +195,20 @@ func TestValidateChoiceFieldsAndId(t *testing.T) {
 	a.Packages = "helicopterflight,boattour,room-none"
 	a.TshirtSize = "micro"
 	a.Telegram = "iforgotthe_at_atthebeginning"
-	a.Country = "XX"      // not in ISO-3166-1
-	a.CountryBadge = "XX" // not in ISO-3166-1
+	a.Country = "XX" // not in ISO-3166-1
+	a.SpokenLanguages = "some_LANG"
+	a.RegistrationLanguage = "not_a_LANG"
 
 	expected := url.Values{
-		"gender":        []string{"optional gender field must be one of male, female, other, notprovided, or it can be left blank, which counts as notprovided"},
-		"options":       []string{"options field must be a comma separated combination of any of anim,art,music,suit"},
-		"flags":         []string{"flags field must be a comma separated combination of any of anon,ev,hc"},
-		"packages":      []string{"packages field must be a comma separated combination of any of attendance,day-fri,day-sat,day-thu,room-none,sponsor,sponsor2,stage"},
-		"telegram":      []string{"optional telegram field must contain your @username from telegram, or it can be left blank"},
-		"tshirt_size":   []string{"optional tshirt_size field must be empty or one of XS,wXS,S,wS,M,wM,L,wL,XL,wXL,XXL,wXXL,3XL,w3XL,4XL,w4XL"},
-		"country":       []string{"country field must contain a 2 letter upper case ISO-3166-1 country code (Alpha-2 code, see https://en.wikipedia.org/wiki/ISO_3166-1)"},
-		"country_badge": []string{"country_badge field must contain a 2 letter upper case ISO-3166-1 country code (Alpha-2 code, see https://en.wikipedia.org/wiki/ISO_3166-1)"},
+		"gender":                []string{"optional gender field must be one of male, female, other, notprovided, or it can be left blank, which counts as notprovided"},
+		"options":               []string{"options field must be a comma separated combination of any of anim,art,music,suit"},
+		"flags":                 []string{"flags field must be a comma separated combination of any of anon,ev,hc"},
+		"packages":              []string{"packages field must be a comma separated combination of any of attendance,day-fri,day-sat,day-thu,room-none,sponsor,sponsor2,stage"},
+		"registration_language": []string{"registration_language field must be one of en_US or it can be left blank, which counts as en_US"},
+		"spoken_languages":      []string{"spoken_languages field must be a comma separated combination of any of en_US,de_DE"},
+		"telegram":              []string{"optional telegram field must contain your @username from telegram, or it can be left blank"},
+		"tshirt_size":           []string{"optional tshirt_size field must be empty or one of XS,wXS,S,wS,M,wM,L,wL,XL,wXL,XXL,wXXL,3XL,w3XL,4XL,w4XL"},
+		"country":               []string{"country field must contain a 2 letter upper case ISO-3166-1 country code (Alpha-2 code, see https://en.wikipedia.org/wiki/ISO_3166-1)"},
 	}
 	performValidationTest(t, &a, expected, 16)
 }

@@ -16,7 +16,7 @@ func TestEmptySearchQuery(t *testing.T) {
 	expectedParams := map[string]interface{}{
 		"param_force_named_query_detection": 1,
 	}
-	expectedQuery := `SELECT IFNULL(ad.admin_comments, '') as admin_comments, IFNULL(ad.flags, '') as admin_flags, IFNULL(st.status, 'new') as status, a.birthday as birthday, a.cache_payment_balance as cache_payment_balance, a.country as country, a.country_badge as country_badge, a.created_at as created_at, a.email as email, a.first_name as first_name, a.flags as flags, a.id as id, a.last_name as last_name, a.nickname as nickname, a.options as options, a.packages as packages, a.pronouns as pronouns, a.telegram as telegram, a.tshirt_size as tshirt_size, a.user_comments as user_comments 
+	expectedQuery := `SELECT IFNULL(ad.admin_comments, '') as admin_comments, IFNULL(ad.flags, '') as admin_flags, IFNULL(st.status, 'new') as status, a.birthday as birthday, a.cache_payment_balance as cache_payment_balance, a.country as country, a.created_at as created_at, a.email as email, a.first_name as first_name, a.flags as flags, a.id as id, a.last_name as last_name, a.nickname as nickname, a.options as options, a.packages as packages, a.pronouns as pronouns, a.spoken_languages as spoken_languages, a.telegram as telegram, a.tshirt_size as tshirt_size, a.user_comments as user_comments 
 FROM att_attendees AS a 
   LEFT JOIN att_admin_infos AS ad ON ad.id = a.id 
   LEFT JOIN (  SELECT sc.attendee_id AS attendee_id,         ( SELECT sc2.status FROM att_status_changes AS sc2 WHERE sc2.id = max(sc.id) ) AS status  FROM att_status_changes AS sc  GROUP BY sc.attendee_id  ) AS st ON st.attendee_id = a.id 
@@ -32,14 +32,21 @@ func TestTwoFullSearchQueries(t *testing.T) {
 	spec := &attendee.AttendeeSearchCriteria{
 		MatchAny: []attendee.AttendeeSearchSingleCriterion{
 			{
-				Ids:          []uint{22, 33, 44},
-				Nickname:     "*chee*",
-				Name:         "John D*e",
-				Address:      "Berlin",
-				Country:      "DE",
-				CountryBadge: "UK",
-				Email:        "ee*ee@ff*ff",
-				Telegram:     "@abc",
+				Ids:      []uint{22, 33, 44},
+				Nickname: "*chee*",
+				Name:     "John D*e",
+				Address:  "Berlin",
+				Country:  "DE",
+				Email:    "ee*ee@ff*ff",
+				Telegram: "@abc",
+				SpokenLanguages: map[string]int8{
+					"en_US": 0,
+					"de_DE": 1,
+				},
+				RegistrationLanguage: map[string]int8{
+					"en_US": 0,
+					"de_DE": 1,
+				},
 				Flags: map[string]int8{
 					"flagone":  1,
 					"flagzero": 0,
@@ -55,14 +62,21 @@ func TestTwoFullSearchQueries(t *testing.T) {
 				UserComments: "user*comments",
 			},
 			{
-				Ids:          []uint{23, 34, 45},
-				Nickname:     "small*bird",
-				Name:         "Johnny",
-				Address:      "Berlin",
-				Country:      "CH",
-				CountryBadge: "IT",
-				Email:        "gg@hh",
-				Telegram:     "@def",
+				Ids:      []uint{23, 34, 45},
+				Nickname: "small*bird",
+				Name:     "Johnny",
+				Address:  "Berlin",
+				Country:  "CH",
+				Email:    "gg@hh",
+				Telegram: "@def",
+				SpokenLanguages: map[string]int8{
+					"en_GB": 0,
+					"de_AT": 1,
+				},
+				RegistrationLanguage: map[string]int8{
+					"en_GB": 0,
+					"de_AT": 1,
+				},
 				Flags: map[string]int8{
 					"fone":  1,
 					"fzero": 0,
@@ -102,32 +116,38 @@ func TestTwoFullSearchQueries(t *testing.T) {
 		"param_1_2":                         "John D%e",
 		"param_1_3":                         "%Berlin%",
 		"param_1_4":                         "DE",
-		"param_1_5":                         "UK",
-		"param_1_6":                         "%ee%ee@ff%ff%",
-		"param_1_7":                         "%@abc%",
-		"param_1_8":                         "%,flagone,%",
-		"param_1_9":                         "%,flagzero,%",
-		"param_1_10":                        "%,optone,%",
-		"param_1_11":                        "%,optzero,%",
-		"param_1_12":                        "%,pkgone,%",
-		"param_1_13":                        "%,pkgzero,%",
-		"param_1_14":                        "%user%comments%",
+		"param_1_5":                         "%ee%ee@ff%ff%",
+		"param_1_6":                         "%@abc%",
+		"param_1_7":                         "%,de_DE,%",
+		"param_1_8":                         "%,en_US,%",
+		"param_1_9":                         "%,de_DE,%",
+		"param_1_10":                        "%,en_US,%",
+		"param_1_11":                        "%,flagone,%",
+		"param_1_12":                        "%,flagzero,%",
+		"param_1_13":                        "%,optone,%",
+		"param_1_14":                        "%,optzero,%",
+		"param_1_15":                        "%,pkgone,%",
+		"param_1_16":                        "%,pkgzero,%",
+		"param_1_17":                        "%user%comments%",
 		"param_2_1":                         "small%bird",
 		"param_2_2":                         "Johnny",
 		"param_2_3":                         "%Berlin%",
 		"param_2_4":                         "CH",
-		"param_2_5":                         "IT",
-		"param_2_6":                         "%gg@hh%",
-		"param_2_7":                         "%@def%",
-		"param_2_8":                         "%,fone,%",
-		"param_2_9":                         "%,fzero,%",
-		"param_2_10":                        "%,oone,%",
-		"param_2_11":                        "%,ozero,%",
-		"param_2_12":                        "%,pone,%",
-		"param_2_13":                        "%,pzero,%",
-		"param_2_14":                        "%more user comments%",
+		"param_2_5":                         "%gg@hh%",
+		"param_2_6":                         "%@def%",
+		"param_2_7":                         "%,de_AT,%",
+		"param_2_8":                         "%,en_GB,%",
+		"param_2_9":                         "%,de_AT,%",
+		"param_2_10":                        "%,en_GB,%",
+		"param_2_11":                        "%,fone,%",
+		"param_2_12":                        "%,fzero,%",
+		"param_2_13":                        "%,oone,%",
+		"param_2_14":                        "%,ozero,%",
+		"param_2_15":                        "%,pone,%",
+		"param_2_16":                        "%,pzero,%",
+		"param_2_17":                        "%more user comments%",
 	}
-	expectedQuery := `SELECT IFNULL(ad.flags, '') as admin_flags, IFNULL(st.status, 'new') as status, a.cache_payment_balance as cache_payment_balance, a.flags as flags, a.id as id, a.options as options, a.packages as packages, a.pronouns as pronouns 
+	expectedQuery := `SELECT IFNULL(ad.flags, '') as admin_flags, IFNULL(st.status, 'new') as status, a.cache_payment_balance as cache_payment_balance, a.flags as flags, a.id as id, a.options as options, a.packages as packages, a.pronouns as pronouns, a.registration_language as registration_language 
 FROM att_attendees AS a 
   LEFT JOIN att_admin_infos AS ad ON ad.id = a.id 
   LEFT JOIN (  SELECT sc.attendee_id AS attendee_id,         ( SELECT sc2.status FROM att_status_changes AS sc2 WHERE sc2.id = max(sc.id) ) AS status  FROM att_status_changes AS sc  GROUP BY sc.attendee_id  ) AS st ON st.attendee_id = a.id 
@@ -141,16 +161,19 @@ WHERE (
     AND ( LOWER(CONCAT(a.first_name, ' ', a.last_name)) LIKE LOWER( @param_1_2 ) )
     AND ( LOWER(CONCAT(a.street, ' ', a.zip, ' ', a.city, ' ', a.state)) LIKE LOWER( @param_1_3 ) )
     AND ( LOWER(a.country) = LOWER( @param_1_4 ) )
-    AND ( LOWER(a.country_badge) = LOWER( @param_1_5 ) )
-    AND ( LOWER(a.email) LIKE LOWER( @param_1_6 ) )
-    AND ( LOWER(a.telegram) LIKE LOWER( @param_1_7 ) )
-    AND ( CONCAT(a.flags,IFNULL(ad.flags, '')) LIKE @param_1_8 )
-    AND ( CONCAT(a.flags,IFNULL(ad.flags, '')) NOT LIKE @param_1_9 )
-    AND ( a.options LIKE @param_1_10 )
-    AND ( a.options NOT LIKE @param_1_11 )
-    AND ( a.packages LIKE @param_1_12 )
-    AND ( a.packages NOT LIKE @param_1_13 )
-    AND ( LOWER(a.user_comments) LIKE LOWER( @param_1_14 ) )
+    AND ( LOWER(a.email) LIKE LOWER( @param_1_5 ) )
+    AND ( LOWER(a.telegram) LIKE LOWER( @param_1_6 ) )
+    AND ( a.spoken_languages LIKE @param_1_7 )
+    AND ( a.spoken_languages NOT LIKE @param_1_8 )
+    AND ( a.registration_language LIKE @param_1_9 )
+    AND ( a.registration_language NOT LIKE @param_1_10 )
+    AND ( CONCAT(a.flags,IFNULL(ad.flags, '')) LIKE @param_1_11 )
+    AND ( CONCAT(a.flags,IFNULL(ad.flags, '')) NOT LIKE @param_1_12 )
+    AND ( a.options LIKE @param_1_13 )
+    AND ( a.options NOT LIKE @param_1_14 )
+    AND ( a.packages LIKE @param_1_15 )
+    AND ( a.packages NOT LIKE @param_1_16 )
+    AND ( LOWER(a.user_comments) LIKE LOWER( @param_1_17 ) )
     AND ( IFNULL(st.status, 'new') <> 'deleted' )
   )
   OR
@@ -161,16 +184,19 @@ WHERE (
     AND ( LOWER(CONCAT(a.first_name, ' ', a.last_name)) LIKE LOWER( @param_2_2 ) )
     AND ( LOWER(CONCAT(a.street, ' ', a.zip, ' ', a.city, ' ', a.state)) LIKE LOWER( @param_2_3 ) )
     AND ( LOWER(a.country) = LOWER( @param_2_4 ) )
-    AND ( LOWER(a.country_badge) = LOWER( @param_2_5 ) )
-    AND ( LOWER(a.email) LIKE LOWER( @param_2_6 ) )
-    AND ( LOWER(a.telegram) LIKE LOWER( @param_2_7 ) )
-    AND ( CONCAT(a.flags,IFNULL(ad.flags, '')) LIKE @param_2_8 )
-    AND ( CONCAT(a.flags,IFNULL(ad.flags, '')) NOT LIKE @param_2_9 )
-    AND ( a.options LIKE @param_2_10 )
-    AND ( a.options NOT LIKE @param_2_11 )
-    AND ( a.packages LIKE @param_2_12 )
-    AND ( a.packages NOT LIKE @param_2_13 )
-    AND ( LOWER(a.user_comments) LIKE LOWER( @param_2_14 ) )
+    AND ( LOWER(a.email) LIKE LOWER( @param_2_5 ) )
+    AND ( LOWER(a.telegram) LIKE LOWER( @param_2_6 ) )
+    AND ( a.spoken_languages LIKE @param_2_7 )
+    AND ( a.spoken_languages NOT LIKE @param_2_8 )
+    AND ( a.registration_language LIKE @param_2_9 )
+    AND ( a.registration_language NOT LIKE @param_2_10 )
+    AND ( CONCAT(a.flags,IFNULL(ad.flags, '')) LIKE @param_2_11 )
+    AND ( CONCAT(a.flags,IFNULL(ad.flags, '')) NOT LIKE @param_2_12 )
+    AND ( a.options LIKE @param_2_13 )
+    AND ( a.options NOT LIKE @param_2_14 )
+    AND ( a.packages LIKE @param_2_15 )
+    AND ( a.packages NOT LIKE @param_2_16 )
+    AND ( LOWER(a.user_comments) LIKE LOWER( @param_2_17 ) )
     AND ( IFNULL(st.status, 'new') <> 'deleted' )
   )
 ) AND a.id >= @param_0_1 AND a.id <= @param_0_2 ORDER BY CONCAT(a.first_name, ' ', a.last_name) DESC`

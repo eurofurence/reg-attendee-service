@@ -18,17 +18,19 @@ const StartTimeFormat = "2006-01-02T15:04:05-07:00"
 type (
 	// Application is the root configuration type
 	Application struct {
-		Service     ServiceConfig     `yaml:"service"`
-		Server      ServerConfig      `yaml:"server"`
-		Database    DatabaseConfig    `yaml:"database"`
-		Security    SecurityConfig    `yaml:"security"`
-		Logging     LoggingConfig     `yaml:"logging"`
-		Choices     FlagsPkgOptConfig `yaml:"choices"`
-		TShirtSizes []string          `yaml:"tshirtsizes"`
-		Birthday    BirthdayConfig    `yaml:"birthday"`
-		GoLive      GoLiveConfig      `yaml:"go_live"`
-		Countries   []string          `yaml:"countries"`
-		Currency    string            `yaml:"currency"`
+		Service               ServiceConfig     `yaml:"service"`
+		Server                ServerConfig      `yaml:"server"`
+		Database              DatabaseConfig    `yaml:"database"`
+		Security              SecurityConfig    `yaml:"security"`
+		Logging               LoggingConfig     `yaml:"logging"`
+		Choices               FlagsPkgOptConfig `yaml:"choices"`
+		TShirtSizes           []string          `yaml:"tshirtsizes"`
+		Birthday              BirthdayConfig    `yaml:"birthday"`
+		GoLive                GoLiveConfig      `yaml:"go_live"`
+		Countries             []string          `yaml:"countries"`
+		SpokenLanguages       []string          `yaml:"spoken_languages"`
+		RegistrationLanguages []string          `yaml:"registration_languages"`
+		Currency              string            `yaml:"currency"`
 	}
 
 	// ServiceConfig contains configuration values

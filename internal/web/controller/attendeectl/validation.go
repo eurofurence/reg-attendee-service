@@ -70,9 +70,6 @@ func validate(ctx context.Context, a *attendee.AttendeeDto, trustedOriginalState
 	if validation.ViolatesPattern(countryPattern, a.Country) || !validateCountry(ctx, a.Country) {
 		errs.Add("country", "country field must contain a 2 letter upper case ISO-3166-1 country code (Alpha-2 code, see https://en.wikipedia.org/wiki/ISO_3166-1)")
 	}
-	if validation.ViolatesPattern(countryPattern, a.CountryBadge) || !validateCountry(ctx, a.CountryBadge) {
-		errs.Add("country_badge", "country_badge field must contain a 2 letter upper case ISO-3166-1 country code (Alpha-2 code, see https://en.wikipedia.org/wiki/ISO_3166-1)")
-	}
 	validation.CheckLength(&errs, 1, 200, "email", a.Email)
 	if validation.ViolatesPattern(emailPattern, a.Email) {
 		errs.Add("email", "email field is not plausible, must match "+emailPattern)
@@ -89,6 +86,10 @@ func validate(ctx context.Context, a *attendee.AttendeeDto, trustedOriginalState
 	}
 	if validation.NotInAllowedValues(allowedGenders[:], a.Gender) {
 		errs.Add("gender", "optional gender field must be one of male, female, other, notprovided, or it can be left blank, which counts as notprovided")
+	}
+	validation.CheckCombinationOfAllowedValues(&errs, config.AllowedSpokenLanguages(), "spoken_languages", a.SpokenLanguages)
+	if validation.NotInAllowedValues(config.AllowedRegistrationLanguages(), a.RegistrationLanguage) {
+		errs.Add("registration_language", "registration_language field must be one of "+strings.Join(config.AllowedRegistrationLanguages(), ",")+" or it can be left blank, which counts as "+config.DefaultRegistrationLanguage())
 	}
 	validation.CheckCombinationOfAllowedValues(&errs, config.AllowedFlagsNoAdmin(), "flags", a.Flags)
 	validation.CheckCombinationOfAllowedValues(&errs, config.AllowedPackages(), "packages", a.Packages)
