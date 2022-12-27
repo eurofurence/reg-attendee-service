@@ -11,6 +11,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database/dbrepo"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 	"time"
 )
@@ -28,6 +29,7 @@ func (r *MysqlRepository) Open() error {
 		NamingStrategy: schema.NamingStrategy{
 			TablePrefix: "att_",
 		},
+		Logger: logger.Default.LogMode(logger.Silent),
 	}
 	connectString := config.DatabaseMysqlConnectString()
 
