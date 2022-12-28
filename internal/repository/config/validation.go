@@ -42,10 +42,10 @@ func setConfigurationDefaults(c *Application) {
 		c.Security.Cors.AllowOrigin = "*"
 	}
 	if len(c.SpokenLanguages) == 0 {
-		c.SpokenLanguages = []string{"en_US"}
+		c.SpokenLanguages = []string{"en-US"}
 	}
 	if len(c.RegistrationLanguages) == 0 {
-		c.RegistrationLanguages = []string{"en_US"}
+		c.RegistrationLanguages = []string{"en-US"}
 	}
 }
 

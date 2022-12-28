@@ -40,8 +40,8 @@ security:
   cors:
     # set this to true to send disable cors headers - not for production - local/test instances only - will log lots of warnings
     disable: false
-    # if setting disable_cors, you should also specify this, as a comma separated list of allowed origins
-    allow_origin: 'http://localhost:8000,http://localhost:8001'
+    # if setting disable_cors, you should also specify this. Right now, only a single entry is supported, not a comma separated list
+    allow_origin: 'http://localhost:8000'
   # set this to true to require a valid oidc token for initial reg. This allow the service to store the subject of the token and use it for authorization
   require_login_for_reg: true
 logging:
@@ -175,10 +175,10 @@ tshirtsizes:
   - '4XL'
   - 'w4XL'
 spoken_languages:
-  - 'en_US'
-  - 'de_DE'
+  - 'en-US'
+  - 'de-DE'
 registration_languages: # first value is default
-  - 'en_US'
+  - 'en-US'
 countries:
   - 'AF'
   - 'AN'

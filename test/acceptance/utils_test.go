@@ -124,8 +124,8 @@ func tstBuildValidAttendee(testcase string) attendee.AttendeeDto {
 		Birthday:             "1998-11-23",
 		Gender:               "other",
 		Pronouns:             "he/him",
-		SpokenLanguages:      "de_DE,en_US",
-		RegistrationLanguage: "en_US",
+		SpokenLanguages:      "de-DE,en-US",
+		RegistrationLanguage: "en-US",
 		Flags:                "anon,hc",
 		Packages:             "room-none,attendance,stage,sponsor2",
 		Options:              "music,suit",
@@ -196,7 +196,7 @@ func tstValidAttendeeDues(amount int64, comment string) paymentservice.Transacti
 func tstNewStatusMail(testcase string, newStatus status.Status) mailservice.MailSendDto {
 	return mailservice.MailSendDto{
 		CommonID: "change-status-" + string(newStatus),
-		Lang:     "",
+		Lang:     "en-US",
 		To:       []string{testcase},
 		Variables: map[string]string{
 			"badge_number":               "1",
