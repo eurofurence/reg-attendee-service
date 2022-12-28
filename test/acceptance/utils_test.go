@@ -176,10 +176,10 @@ func tstParseJson(body string, dto interface{}) {
 
 func tstValidAttendeeDues(amount int64, comment string) paymentservice.Transaction {
 	return paymentservice.Transaction{
-		ID:        "",
-		DebitorID: 1,
-		Type:      paymentservice.Due,
-		Method:    paymentservice.Internal,
+		TransactionIdentifier: "",
+		DebitorID:             1,
+		TransactionType:       paymentservice.Due,
+		Method:                paymentservice.Internal,
 		Amount: paymentservice.Amount{
 			Currency:  "EUR",
 			GrossCent: amount,
@@ -189,7 +189,7 @@ func tstValidAttendeeDues(amount int64, comment string) paymentservice.Transacti
 		Status:        paymentservice.Valid,
 		EffectiveDate: "",  // TODO
 		DueDate:       "",  // TODO
-		Deletion:      nil, // TODO
+		StatusHistory: nil, // TODO
 	}
 }
 

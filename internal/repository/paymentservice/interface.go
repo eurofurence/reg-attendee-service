@@ -56,10 +56,9 @@ type Amount struct {
 }
 
 type Transaction struct {
-	ID                    string
 	DebitorID             uint              `json:"debitor_id"`
 	TransactionIdentifier string            `json:"transaction_identifier"`
-	Type                  TransactionType   `json:"transaction_type"`
+	TransactionType       TransactionType   `json:"transaction_type"`
 	Method                PaymentMethod     `json:"method"`
 	Amount                Amount            `json:"amount"`
 	Comment               string            `json:"comment"`
@@ -67,7 +66,7 @@ type Transaction struct {
 	EffectiveDate         string            `json:"effective_date"`
 	DueDate               string            `json:"due_date"`
 	CreationDate          time.Time         `json:"creation_date"`
-	Deletion              []StatusHistory   `json:"status_history"`
+	StatusHistory         []StatusHistory   `json:"status_history"`
 }
 
 type TransactionResponse struct {

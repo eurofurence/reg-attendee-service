@@ -134,7 +134,7 @@ func (s *AttendeeServiceImplData) compensateUnpaidDuesOnCancel(ctx context.Conte
 
 	// earliest dues get filled first
 	for _, tx := range transactionHistory {
-		if tx.Status == paymentservice.Valid && tx.Type == paymentservice.Due {
+		if tx.Status == paymentservice.Valid && tx.TransactionType == paymentservice.Due {
 			if tx.Amount.GrossCent > 0 {
 				vatStr := fmt.Sprintf("%.6f", tx.Amount.VatRate)
 
@@ -166,7 +166,7 @@ func (s *AttendeeServiceImplData) compensateUnpaidDuesOnCancel(ctx context.Conte
 func (s *AttendeeServiceImplData) oldDuesByVAT(transactionHistory []paymentservice.Transaction) map[string]int64 {
 	oldDuesByVAT := make(map[string]int64)
 	for _, tx := range transactionHistory {
-		if tx.Status == paymentservice.Valid && tx.Type == paymentservice.Due {
+		if tx.Status == paymentservice.Valid && tx.TransactionType == paymentservice.Due {
 			vatStr := fmt.Sprintf("%.6f", tx.Amount.VatRate)
 
 			// TODO support multiple currencies, or at least read currency from config and reject any not in this currency
@@ -181,9 +181,9 @@ func (s *AttendeeServiceImplData) oldDuesByVAT(transactionHistory []paymentservi
 func (s *AttendeeServiceImplData) balances(transactionHistory []paymentservice.Transaction) (validDues int64, validPayments int64) {
 	for _, tx := range transactionHistory {
 		if tx.Status == paymentservice.Valid {
-			if tx.Type == paymentservice.Payment {
+			if tx.TransactionType == paymentservice.Payment {
 				validPayments += tx.Amount.GrossCent
-			} else if tx.Type == paymentservice.Due {
+			} else if tx.TransactionType == paymentservice.Due {
 				validDues += tx.Amount.GrossCent
 			}
 		}
@@ -193,7 +193,7 @@ func (s *AttendeeServiceImplData) balances(transactionHistory []paymentservice.T
 
 func (s *AttendeeServiceImplData) pseudoPaymentsFromNegativeDues(transactionHistory []paymentservice.Transaction) (validNegativeDuesSum int64) {
 	for _, tx := range transactionHistory {
-		if tx.Status == paymentservice.Valid && tx.Type == paymentservice.Due {
+		if tx.Status == paymentservice.Valid && tx.TransactionType == paymentservice.Due {
 			if tx.Amount.GrossCent < 0 {
 				// refunded tx -> count as pseudo payment
 				validNegativeDuesSum += -tx.Amount.GrossCent
@@ -207,9 +207,9 @@ func (s *AttendeeServiceImplData) duesTransactionForAttendee(attendee *entity.At
 	vat, _ := strconv.ParseFloat(vatStr, 64)
 
 	return paymentservice.Transaction{
-		DebitorID: attendee.ID,
-		Type:      paymentservice.Due,
-		Method:    paymentservice.Internal,
+		DebitorID:       attendee.ID,
+		TransactionType: paymentservice.Due,
+		Method:          paymentservice.Internal,
 		Amount: paymentservice.Amount{
 			Currency:  "EUR", // TODO from config
 			GrossCent: amount,

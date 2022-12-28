@@ -1601,10 +1601,10 @@ func tstCreateTransaction(attid uint, ty paymentservice.TransactionType, amount 
 		method = paymentservice.Credit
 	}
 	return paymentservice.Transaction{
-		ID:        "1234-1234abc",
-		DebitorID: attid,
-		Type:      ty,
-		Method:    method,
+		TransactionIdentifier: "1234-1234abc",
+		DebitorID:             attid,
+		TransactionType:       ty,
+		Method:                method,
 		Amount: paymentservice.Amount{
 			Currency:  "EUR",
 			GrossCent: amount,
@@ -1613,7 +1613,7 @@ func tstCreateTransaction(attid uint, ty paymentservice.TransactionType, amount 
 		Status:        paymentservice.Valid,
 		EffectiveDate: "1999-12-31",
 		DueDate:       "1999-12-31",
-		Deletion:      nil,
+		StatusHistory: nil,
 	}
 }
 
@@ -1623,10 +1623,10 @@ func tstCreateMatcherTransaction(attid uint, ty paymentservice.TransactionType, 
 		method = paymentservice.Credit
 	}
 	return paymentservice.Transaction{
-		ID:        "",
-		DebitorID: attid,
-		Type:      ty,
-		Method:    method,
+		TransactionIdentifier: "",
+		DebitorID:             attid,
+		TransactionType:       ty,
+		Method:                method,
 		Amount: paymentservice.Amount{
 			Currency:  "EUR",
 			GrossCent: amount,
@@ -1635,7 +1635,7 @@ func tstCreateMatcherTransaction(attid uint, ty paymentservice.TransactionType, 
 		Status:        paymentservice.Valid,
 		EffectiveDate: "",  // TODO
 		DueDate:       "",  // TODO
-		Deletion:      nil, // TODO
+		StatusHistory: nil, // TODO
 		Comment:       comment,
 	}
 }
