@@ -1,0 +1,47 @@
+{
+  "consumer": {
+    "name": "MailService"
+  },
+  "provider": {
+    "name": "PaymentService"
+  },
+  "interactions": [
+    {
+      "description": "A request to notify a German speaking attendee of their cancellation",
+      "providerState": "The standard templates are present in the database",
+      "request": {
+        "method": "POST",
+        "path": "/api/v1/mail",
+        "body": {
+          "cid": "change-status-cancelled",
+          "lang": "de-DE",
+          "to": [
+            "person-1-to@not.a.real.domain.com",
+            "person-2-to@not.a.real.domain.com"
+          ],
+          "cc": [
+            "person-1-cc@not.a.real.domain.com",
+            "person-2-cc@not.a.real.domain.com"
+          ],
+          "bcc": [
+            "person-1-bcc@not.a.real.domain.com",
+            "person-2-bcc@not.a.real.domain.com"
+          ],
+          "variables": {
+            "nickname": "someone"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": {
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": {
+      "version": "2.0.0"
+    }
+  }
+}

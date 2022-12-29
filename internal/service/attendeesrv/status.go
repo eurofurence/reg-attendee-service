@@ -212,7 +212,7 @@ var graceAmountCents int64 = 100 // TODO read from config
 
 func (s *AttendeeServiceImplData) checkNoPaymentsExist(ctx context.Context, attendee *entity.Attendee, transactionHistory []paymentservice.Transaction) error {
 	for _, tx := range transactionHistory {
-		if tx.Status == paymentservice.Valid && tx.Type == paymentservice.Payment && tx.Amount.GrossCent != 0 {
+		if tx.Status == paymentservice.Valid && tx.TransactionType == paymentservice.Payment && tx.Amount.GrossCent != 0 {
 			return CannotDeleteError
 		}
 	}

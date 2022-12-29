@@ -56,7 +56,7 @@ func (m *MockImpl) AddTransaction(ctx context.Context, transaction Transaction) 
 	_ = m.InjectTransaction(ctx, transaction)
 	m.recording = append(m.recording, transaction)
 
-	aulogging.Logger.Ctx(ctx).Info().Printf("add transaction debitor %d type %s status %s method %s for %0.2f %s", transaction.DebitorID, transaction.Type, transaction.Status, transaction.Method, float64(transaction.Amount.GrossCent)/100.0, transaction.Amount.Currency)
+	aulogging.Logger.Ctx(ctx).Info().Printf("add transaction debitor %d type %s status %s method %s for %0.2f %s", transaction.DebitorID, transaction.TransactionType, transaction.Status, transaction.Method, float64(transaction.Amount.GrossCent)/100.0, transaction.Amount.Currency)
 
 	return nil
 }

@@ -2,6 +2,7 @@
 *.exe
 config.yaml
 test/contract/*/log/**
+test/contract/*/logs/**
 attendee-service
 main
 
