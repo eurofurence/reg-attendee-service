@@ -8,6 +8,8 @@ import (
 	auresthttpclient "github.com/StephanHCB/go-autumn-restclient/implementation/httpclient"
 	aurestlogging "github.com/StephanHCB/go-autumn-restclient/implementation/requestlogging"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
+	"github.com/eurofurence/reg-attendee-service/internal/web/middleware"
+	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/media"
 	"net/http"
 	"time"
@@ -20,6 +22,7 @@ type Impl struct {
 
 func requestManipulator(ctx context.Context, r *http.Request) {
 	r.Header.Add(media.HeaderXApiKey, config.FixedApiToken())
+	r.Header.Add(middleware.TraceIdHeader, ctxvalues.RequestId(ctx))
 }
 
 func newClient() (MailService, error) {

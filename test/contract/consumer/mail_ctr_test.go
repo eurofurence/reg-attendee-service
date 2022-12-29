@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/mailservice"
+	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
+	"github.com/eurofurence/reg-attendee-service/internal/web/util/media"
 	"github.com/pact-foundation/pact-go/dsl"
 	"log"
 	"testing"
@@ -33,6 +35,7 @@ func TestMailServiceConsumer(t *testing.T) {
 				"nickname": "someone",
 			},
 		}
+		requestId = "abcd1234"
 	)
 
 	// test case (consumer side)
@@ -44,6 +47,10 @@ func TestMailServiceConsumer(t *testing.T) {
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
+
+		ctx = ctxvalues.CreateContextWithValueMap(ctx)
+		ctxvalues.SetRequestId(ctx, requestId)
+
 		err = mailservice.Get().SendEmail(ctx, sendRequest)
 		if err != nil {
 			return err
@@ -61,7 +68,12 @@ func TestMailServiceConsumer(t *testing.T) {
 		WithRequest(dsl.Request{
 			Method: "POST",
 			Path:   dsl.String("/api/v1/mail"),
-			Body:   sendRequest,
+			Headers: dsl.MapMatcher{
+				"Content-Type": dsl.String(media.ContentTypeApplicationJson),
+				"X-Request-Id": dsl.String(requestId),
+				"X-Api-Key":    dsl.String("api-token-for-testing-must-be-pretty-long"),
+			},
+			Body: sendRequest,
 		}).
 		WillRespondWith(dsl.Response{
 			Status: 200,

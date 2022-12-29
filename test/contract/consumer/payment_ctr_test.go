@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/paymentservice"
+	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/media"
 	"github.com/pact-foundation/pact-go/dsl"
 	"github.com/stretchr/testify/assert"
@@ -87,6 +88,7 @@ func TestPaymentServiceConsumer(t *testing.T) {
 			DueDate:       "2023-01-05",
 			CreationDate:  time1DuesBooked,
 		}
+		requestId = "abcd1234"
 	)
 
 	// test case (consumer side)
@@ -98,6 +100,10 @@ func TestPaymentServiceConsumer(t *testing.T) {
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
+
+		ctx = ctxvalues.CreateContextWithValueMap(ctx)
+		ctxvalues.SetRequestId(ctx, requestId)
+
 		transactions, err := paymentservice.Get().GetTransactions(ctx, 1)
 		if err != nil {
 			return err
@@ -130,7 +136,11 @@ func TestPaymentServiceConsumer(t *testing.T) {
 		WithRequest(dsl.Request{
 			Method: "GET",
 			Path:   dsl.String("/api/rest/v1/transactions"),
-			Query:  dsl.MapMatcher{"debitor_id": dsl.String("1")},
+			Headers: dsl.MapMatcher{
+				"X-Request-Id": dsl.String(requestId),
+				"X-Api-Key":    dsl.String("api-token-for-testing-must-be-pretty-long"),
+			},
+			Query: dsl.MapMatcher{"debitor_id": dsl.String("1")},
 		}).
 		WillRespondWith(dsl.Response{
 			Status:  200,
@@ -148,9 +158,13 @@ func TestPaymentServiceConsumer(t *testing.T) {
 		Given("Attendee 1 exists in any state").
 		UponReceiving("A request to create an additional dues transaction").
 		WithRequest(dsl.Request{
-			Method:  "POST",
-			Path:    dsl.String("/api/rest/v1/transactions"),
-			Headers: dsl.MapMatcher{"Content-Type": dsl.String(media.ContentTypeApplicationJson)},
+			Method: "POST",
+			Path:   dsl.String("/api/rest/v1/transactions"),
+			Headers: dsl.MapMatcher{
+				"Content-Type": dsl.String(media.ContentTypeApplicationJson),
+				"X-Request-Id": dsl.String(requestId),
+				"X-Api-Key":    dsl.String("api-token-for-testing-must-be-pretty-long"),
+			},
 			// slight deviation, here we specify a transaction identifier, so we can ensure this is the one that's returned as location
 			Body: duesTransaction2,
 		}).

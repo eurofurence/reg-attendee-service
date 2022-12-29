@@ -12,7 +12,11 @@
       "request": {
         "method": "GET",
         "path": "/api/rest/v1/transactions",
-        "query": "debitor_id=1"
+        "query": "debitor_id=1",
+        "headers": {
+          "X-Api-Key": "api-token-for-testing-must-be-pretty-long",
+          "X-Request-Id": "abcd1234"
+        }
       },
       "response": {
         "status": 200,
@@ -73,7 +77,9 @@
         "method": "POST",
         "path": "/api/rest/v1/transactions",
         "headers": {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "X-Api-Key": "api-token-for-testing-must-be-pretty-long",
+          "X-Request-Id": "abcd1234"
         },
         "body": {
           "debitor_id": 1,
