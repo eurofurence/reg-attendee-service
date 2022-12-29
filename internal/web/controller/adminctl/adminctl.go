@@ -43,7 +43,7 @@ func Create(server chi.Router) {
 // --- handlers ---
 
 func pingResponse(w http.ResponseWriter, r *http.Request) {
-	// TODO easy admin check
+	w.WriteHeader(http.StatusOK)
 }
 
 func getAdminInfoHandler(w http.ResponseWriter, r *http.Request) {
