@@ -97,6 +97,9 @@ birthday:
   latest: '2048-01-01'
 go_live:
   start_iso_datetime: '2019-11-28T20:00:00+01:00'
+dues:
+  earliest_due_date: '2023-01-01'
+  latest_due_date: '2023-08-23' # usually last day of convention
 `
 	err := parseAndOverwriteConfig([]byte(minimalYaml))
 	require.Nil(t, err, "expected no error")

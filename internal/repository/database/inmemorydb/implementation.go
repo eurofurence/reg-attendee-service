@@ -131,7 +131,6 @@ func (r *InMemoryRepository) FindAttendees(ctx context.Context, criteria *attend
 			copiedAttendee := *(r.attendees[aid])
 			adminInfo, _ := r.GetAdminInfoByAttendeeId(ctx, aid)
 			latestStatus, _ := r.GetLatestStatusChangeByAttendeeId(ctx, aid)
-			// TODO only fill needed fields
 			copiedResult := entity.AttendeeQueryResult{
 				Attendee:      copiedAttendee,
 				Status:        latestStatus.Status,

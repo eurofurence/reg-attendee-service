@@ -6,6 +6,7 @@ import (
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/StephanHCB/go-autumn-logging-zerolog/loggermiddleware"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
+	"github.com/eurofurence/reg-attendee-service/internal/service/attendeesrv"
 	"github.com/eurofurence/reg-attendee-service/internal/web/controller/adminctl"
 	"github.com/eurofurence/reg-attendee-service/internal/web/controller/attendeectl"
 	"github.com/eurofurence/reg-attendee-service/internal/web/controller/banctl"
@@ -23,7 +24,7 @@ import (
 	"time"
 )
 
-func CreateRouter(ctx context.Context) chi.Router {
+func CreateRouter(ctx context.Context, attSrv attendeesrv.AttendeeService) chi.Router {
 	aulogging.Logger.NoCtx().Debug().Print("Setting up router")
 	server := chi.NewRouter()
 
@@ -35,10 +36,10 @@ func CreateRouter(ctx context.Context) chi.Router {
 	server.Use(middleware.TokenValidator)
 
 	countdownctl.Create(server)
-	attendeectl.Create(server)
-	adminctl.Create(server)
-	statusctl.Create(server)
-	banctl.Create(server)
+	attendeectl.Create(server, attSrv)
+	adminctl.Create(server, attSrv)
+	statusctl.Create(server, attSrv)
+	banctl.Create(server, attSrv)
 	infoctl.Create(server)
 
 	fallbackctl.Create(server)
@@ -59,13 +60,13 @@ func newServer(ctx context.Context, router chi.Router) *http.Server {
 	}
 }
 
-func runServerWithGracefulShutdown() error {
+func runServerWithGracefulShutdown(attSrv attendeesrv.AttendeeService) error {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
 
-	handler := CreateRouter(ctx)
+	handler := CreateRouter(ctx, attSrv)
 	srv := newServer(ctx, handler)
 
 	go func() {

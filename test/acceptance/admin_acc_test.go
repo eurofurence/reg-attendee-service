@@ -517,9 +517,10 @@ func tstRequireSearchResultMatches(t *testing.T, expectedBody string, body strin
 	actual := attendee.AttendeeSearchResultList{}
 	tstParseJson(body, &actual)
 
-	// ignore emails because they contain a timer
+	// ignore emails and registered field because they contain a timer
 	for i := range actual.Attendees {
 		actual.Attendees[i].Email = nil
+		actual.Attendees[i].Registered = nil
 	}
 
 	require.EqualValues(t, expected, actual, "search result did not match expected values")

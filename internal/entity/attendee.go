@@ -32,8 +32,10 @@ type Attendee struct {
 	Options              string `gorm:"type:varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci"` // comma-separated choice field with leading and trailing comma
 	UserComments         string `gorm:"type:text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci" testdiff:"ignore"`
 	Identity             string `gorm:"type:varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci"`
-	CachePaymentBalance  int64
-	CacheDueDate         string `gorm:"type:varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;NOT NULL"`
+	CacheTotalDues       int64  // cache for search functionality only: valid dues balance
+	CachePaymentBalance  int64  // cache for search functionality only: valid payments balance
+	CacheOpenBalance     int64  // cache for search functionality only: tentative + pending payments balance
+	CacheDueDate         string `gorm:"type:varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci"` // cache for search functionality only: iso due date
 }
 
 type AttendeeQueryResult struct {

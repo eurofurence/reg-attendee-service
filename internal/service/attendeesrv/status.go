@@ -220,7 +220,7 @@ func (s *AttendeeServiceImplData) checkNoPaymentsExist(ctx context.Context, atte
 }
 
 func (s *AttendeeServiceImplData) checkZeroOrNegativePaymentBalance(ctx context.Context, attendee *entity.Attendee, transactionHistory []paymentservice.Transaction) error {
-	_, paid := s.balances(transactionHistory)
+	_, paid, _, _ := s.balances(transactionHistory)
 	if paid <= 0 {
 		return nil
 	} else {
@@ -229,7 +229,7 @@ func (s *AttendeeServiceImplData) checkZeroOrNegativePaymentBalance(ctx context.
 }
 
 func (s *AttendeeServiceImplData) checkPositivePaymentBalanceButNotFullPayment(ctx context.Context, attendee *entity.Attendee, transactionHistory []paymentservice.Transaction) error {
-	dues, paid := s.balances(transactionHistory)
+	dues, paid, _, _ := s.balances(transactionHistory)
 	if paid >= 0 && paid < dues {
 		return nil
 	} else {
@@ -238,7 +238,7 @@ func (s *AttendeeServiceImplData) checkPositivePaymentBalanceButNotFullPayment(c
 }
 
 func (s *AttendeeServiceImplData) checkPaidInFullWithGraceAmount(ctx context.Context, attendee *entity.Attendee, transactionHistory []paymentservice.Transaction) error {
-	dues, paid := s.balances(transactionHistory)
+	dues, paid, _, _ := s.balances(transactionHistory)
 	// intentionally do not check paid >= 0, there may be negative dues (previous year refunds)
 	if paid >= dues-graceAmountCents {
 		return nil
@@ -248,7 +248,7 @@ func (s *AttendeeServiceImplData) checkPaidInFullWithGraceAmount(ctx context.Con
 }
 
 func (s *AttendeeServiceImplData) checkPaidInFull(ctx context.Context, attendee *entity.Attendee, transactionHistory []paymentservice.Transaction) error {
-	dues, paid := s.balances(transactionHistory)
+	dues, paid, _, _ := s.balances(transactionHistory)
 	if paid >= dues {
 		return nil
 	} else {

@@ -26,6 +26,12 @@ logging:
   severity: DEBUG
 go_live:
   start_iso_datetime: '2030-11-28T20:00:00+01:00'
+dues:
+  earliest_due_date: '2020-01-01'
+  latest_due_date: '2099-08-23' # usually last day of convention
+  due_days: 14 # calendar days
+  price_early_until: '2020-03-31'
+  price_late_until: '2020-05-31'
 birthday:
   earliest: '1901-01-01'
   latest: '2001-08-14'

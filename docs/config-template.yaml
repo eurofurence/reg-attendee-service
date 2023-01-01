@@ -51,6 +51,12 @@ go_live:
   start_iso_datetime: '2022-01-29T20:00:00+01:00'
   # optional, only useful if you also set early_reg_role, should be earlier than start_iso_datetime
   early_reg_start_iso_datetime: ''
+dues:
+  earliest_due_date: '2023-01-01'
+  latest_due_date: '2023-08-23' # usually last day of convention
+  due_days: 14 # calendar days
+  price_early_until: '2023-03-31'
+  price_late_until: '2023-05-31'
 birthday:
   earliest: '1901-01-01'
   latest: '2004-08-24'

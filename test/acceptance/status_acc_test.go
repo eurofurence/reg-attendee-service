@@ -1633,8 +1633,8 @@ func tstCreateMatcherTransaction(attid uint, ty paymentservice.TransactionType, 
 			VatRate:   19,
 		},
 		Status:        paymentservice.Valid,
-		EffectiveDate: "",  // TODO
-		DueDate:       "",  // TODO
+		EffectiveDate: "2022-12-08",
+		DueDate:       "2022-12-22",
 		StatusHistory: nil, // TODO
 		Comment:       comment,
 	}

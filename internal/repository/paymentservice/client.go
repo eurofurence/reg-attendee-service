@@ -21,7 +21,7 @@ type Impl struct {
 }
 
 func requestManipulator(ctx context.Context, r *http.Request) {
-	// TODO do we ever need to pass on the user token instead?
+	// we never need to pass on the user token, since all we're doing is reading transactions and creating dues
 	r.Header.Add(media.HeaderXApiKey, config.FixedApiToken())
 	r.Header.Add(middleware.TraceIdHeader, ctxvalues.RequestId(ctx))
 }

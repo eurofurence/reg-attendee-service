@@ -21,17 +21,9 @@ import (
 
 var attendeeService attendeesrv.AttendeeService
 
-// TODO we should not wire this up here
-func init() {
-	attendeeService = &attendeesrv.AttendeeServiceImplData{}
-}
+func Create(server chi.Router, attendeeSrv attendeesrv.AttendeeService) {
+	attendeeService = attendeeSrv
 
-// use only for testing
-func OverrideAttendeeService(overrideAttendeeServiceForTesting attendeesrv.AttendeeService) {
-	attendeeService = overrideAttendeeServiceForTesting
-}
-
-func Create(server chi.Router) {
 	// TODO better role check in auth service
 	server.Get("/api/rest/v1/roles/admin", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(3*time.Second, pingResponse)))
 
