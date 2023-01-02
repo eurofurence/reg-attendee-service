@@ -7,8 +7,10 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/mailservice"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/paymentservice"
+	"github.com/eurofurence/reg-attendee-service/internal/service/attendeesrv"
 	"github.com/eurofurence/reg-attendee-service/internal/web/app"
 	"net/http/httptest"
+	"time"
 )
 
 // placing these here because they are package global
@@ -66,8 +68,15 @@ func tstSetupConfig(configFilePath string) {
 	config.LoadTestingConfigurationFromPathOrAbort(configFilePath)
 }
 
+const IsoDateFormat = "2006-01-02"
+
 func tstSetupHttpTestServer() {
-	router := app.CreateRouter(context.Background())
+	attSrv := attendeesrv.New()
+	attSrv.(*attendeesrv.AttendeeServiceImplData).Now = func() time.Time {
+		t, _ := time.Parse(IsoDateFormat, "2022-12-08")
+		return t
+	}
+	router := app.CreateRouter(context.Background(), attSrv)
 	ts = httptest.NewServer(router)
 }
 

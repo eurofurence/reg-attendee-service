@@ -25,17 +25,9 @@ import (
 
 var attendeeService attendeesrv.AttendeeService
 
-// TODO we should not wire this up here
-func init() {
-	attendeeService = &attendeesrv.AttendeeServiceImplData{}
-}
+func Create(server chi.Router, attendeeSrv attendeesrv.AttendeeService) {
+	attendeeService = attendeeSrv
 
-// use only for testing
-func OverrideAttendeeService(overrideAttendeeServiceForTesting attendeesrv.AttendeeService) {
-	attendeeService = overrideAttendeeServiceForTesting
-}
-
-func Create(server chi.Router) {
 	server.Get("/api/rest/v1/attendees/{id}/status", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, getStatusHandler)))
 	server.Post("/api/rest/v1/attendees/{id}/status", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, postStatusHandler)))
 	server.Get("/api/rest/v1/attendees/{id}/status-history", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(3*time.Second, getStatusHistoryHandler)))

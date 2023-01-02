@@ -32,11 +32,8 @@ func (s *AttendeeServiceImplData) mapToAttendeeSearchResult(att *entity.Attendee
 			"total_dues", "payment_balance", "current_dues", "registered", "admin_comments"}
 	}
 
-	// TODO missing information - dues calculation
-	// TODO format registered (time.Time) as ISO date
-	var totalDues int64 = 0
-	var currentDues int64 = 0
-	var registered = ""
+	var currentDues = att.CacheTotalDues - att.CachePaymentBalance
+	var registered = att.CreatedAt.Format(IsoDateFormat)
 	return attendee.AttendeeSearchResult{
 		Id:                   att.ID,
 		BadgeId:              s.badgeId(att.ID),
@@ -63,7 +60,7 @@ func (s *AttendeeServiceImplData) mapToAttendeeSearchResult(att *entity.Attendee
 		Packages:             contains(p(removeWrappingCommas(att.Packages)), fillFields, "all", "configuration", "packages"),
 		UserComments:         contains(n(att.UserComments), fillFields, "all", "user_comments"),
 		Status:               contains(&att.Status, fillFields, "all", "status"),
-		TotalDues:            contains(&totalDues, fillFields, "all", "balances", "total_dues"),
+		TotalDues:            contains(&att.CacheTotalDues, fillFields, "all", "balances", "total_dues"),
 		PaymentBalance:       contains(&att.CachePaymentBalance, fillFields, "all", "balances", "payment_balance"),
 		CurrentDues:          contains(&currentDues, fillFields, "all", "balances", "current_dues"),
 		DueDate:              contains(n(att.CacheDueDate), fillFields, "all", "balances", "due_date"),

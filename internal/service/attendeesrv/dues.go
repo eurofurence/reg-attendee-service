@@ -7,6 +7,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/paymentservice"
 	"strconv"
 )
@@ -17,45 +18,59 @@ func (s *AttendeeServiceImplData) UpdateDues(ctx context.Context, attendee *enti
 		return newStatus, err
 	}
 
+	updated := false
 	if newStatus == status.New || newStatus == status.Deleted || newStatus == status.Waiting {
-		err = s.compensateAllDues(ctx, attendee, newStatus, transactionHistory)
+		updated, err = s.compensateAllDues(ctx, attendee, newStatus, transactionHistory)
 		if err != nil {
 			return newStatus, err
 		}
 	} else if newStatus == status.Cancelled {
-		err = s.compensateUnpaidDuesOnCancel(ctx, attendee, transactionHistory)
+		updated, err = s.compensateUnpaidDuesOnCancel(ctx, attendee, transactionHistory)
 		if err != nil {
 			return newStatus, err
 		}
 	} else {
-		err = s.adjustDuesAccordingToSelectedPackages(ctx, attendee, transactionHistory)
+		updated, err = s.adjustDuesAccordingToSelectedPackages(ctx, attendee, transactionHistory)
 		if err != nil {
 			return newStatus, err
 		}
+	}
 
-		if newStatus == status.Approved || newStatus == status.PartiallyPaid || newStatus == status.Paid {
-			// we do not adjust status back once checked in
+	updatedTransactionHistory := transactionHistory
+	if updated {
+		updatedTransactionHistory, err = paymentservice.Get().GetTransactions(ctx, attendee.ID)
+		if err != nil && !errors.Is(err, paymentservice.NoSuchDebitor404Error) {
+			return newStatus, err
+		}
+	}
 
-			updatedTransactionHistory, err := paymentservice.Get().GetTransactions(ctx, attendee.ID)
-			if err != nil {
-				return newStatus, err
-			}
+	dues, payments, open, dueDate := s.balances(updatedTransactionHistory)
+	if attendee.CacheTotalDues != dues || attendee.CachePaymentBalance != payments || attendee.CacheOpenBalance != open || attendee.CacheDueDate != dueDate {
+		attendee.CacheTotalDues = dues
+		attendee.CachePaymentBalance = payments
+		attendee.CacheOpenBalance = open
+		attendee.CacheDueDate = dueDate
+		err := database.GetRepository().UpdateAttendee(ctx, attendee)
+		if err != nil {
+			return newStatus, err
+		}
+	}
 
-			dues, payments := s.balances(updatedTransactionHistory)
+	if newStatus == status.Approved || newStatus == status.PartiallyPaid || newStatus == status.Paid {
+		// we do not adjust status back once checked in
 
-			if payments <= 0 {
-				if dues > 0 {
-					newStatus = status.Approved
-				} else {
-					// guests, or has credit :)
-					newStatus = status.Paid
-				}
+		if payments <= 0 {
+			if dues > 0 {
+				newStatus = status.Approved
 			} else {
-				if payments < dues-graceAmountCents {
-					newStatus = status.PartiallyPaid
-				} else {
-					newStatus = status.Paid
-				}
+				// guests, or has credit :)
+				newStatus = status.Paid
+			}
+		} else {
+			if payments < dues-graceAmountCents {
+				newStatus = status.PartiallyPaid
+			} else {
+				newStatus = status.Paid
 			}
 		}
 	}
@@ -63,9 +78,10 @@ func (s *AttendeeServiceImplData) UpdateDues(ctx context.Context, attendee *enti
 	return newStatus, nil
 }
 
-func (s *AttendeeServiceImplData) adjustDuesAccordingToSelectedPackages(ctx context.Context, attendee *entity.Attendee, transactionHistory []paymentservice.Transaction) error {
+func (s *AttendeeServiceImplData) adjustDuesAccordingToSelectedPackages(ctx context.Context, attendee *entity.Attendee, transactionHistory []paymentservice.Transaction) (bool, error) {
 	oldDuesByVAT := s.oldDuesByVAT(transactionHistory)
 	packageDuesByVAT := s.packageDuesByVAT(attendee)
+	updated := false
 
 	// add missing keys to packageDuesByVAT, so we can just iterate over it and not miss any tax rates
 	for vatStr, _ := range oldDuesByVAT {
@@ -78,15 +94,16 @@ func (s *AttendeeServiceImplData) adjustDuesAccordingToSelectedPackages(ctx cont
 	for vatStr, desiredBalance := range packageDuesByVAT {
 		currentBalance, _ := oldDuesByVAT[vatStr]
 		if currentBalance != desiredBalance {
+			updated = true
 			diffTx := s.duesTransactionForAttendee(attendee, desiredBalance-currentBalance, vatStr, "dues adjustment due to change in status or selected packages")
 			err := paymentservice.Get().AddTransaction(ctx, diffTx)
 			if err != nil {
-				return err
+				return updated, err
 			}
 		}
 	}
 
-	return nil
+	return updated, nil
 }
 
 func (s *AttendeeServiceImplData) packageDuesByVAT(attendee *entity.Attendee) map[string]int64 {
@@ -111,31 +128,35 @@ func (s *AttendeeServiceImplData) packageDuesByVAT(attendee *entity.Attendee) ma
 	return result
 }
 
-func (s *AttendeeServiceImplData) compensateAllDues(ctx context.Context, attendee *entity.Attendee, newStatus status.Status, transactionHistory []paymentservice.Transaction) error {
+func (s *AttendeeServiceImplData) compensateAllDues(ctx context.Context, attendee *entity.Attendee, newStatus status.Status, transactionHistory []paymentservice.Transaction) (bool, error) {
 	oldDuesByVAT := s.oldDuesByVAT(transactionHistory)
+	updated := false
 
 	// we want all dues wiped, so book negative balance for each tax rate
 	comment := fmt.Sprintf("remove dues balance - status changed to %s", newStatus) // TODO language
 	for vatStr, duesBalance := range oldDuesByVAT {
 		if duesBalance != 0 {
+			updated = true
 			compensatingTx := s.duesTransactionForAttendee(attendee, -duesBalance, vatStr, comment)
 			err := paymentservice.Get().AddTransaction(ctx, compensatingTx)
 			if err != nil {
-				return err
+				return updated, err
 			}
 		}
 	}
-	return nil
+	return updated, nil
 }
 
-func (s *AttendeeServiceImplData) compensateUnpaidDuesOnCancel(ctx context.Context, attendee *entity.Attendee, transactionHistory []paymentservice.Transaction) error {
-	_, paid := s.balances(transactionHistory)
+func (s *AttendeeServiceImplData) compensateUnpaidDuesOnCancel(ctx context.Context, attendee *entity.Attendee, transactionHistory []paymentservice.Transaction) (bool, error) {
+	_, paid, _, _ := s.balances(transactionHistory)
 	paid += s.pseudoPaymentsFromNegativeDues(transactionHistory)
+	updated := false
 
 	// earliest dues get filled first
 	for _, tx := range transactionHistory {
 		if tx.Status == paymentservice.Valid && tx.TransactionType == paymentservice.Due {
 			if tx.Amount.GrossCent > 0 {
+				updated = true
 				vatStr := fmt.Sprintf("%.6f", tx.Amount.VatRate)
 
 				if paid >= tx.Amount.GrossCent {
@@ -146,7 +167,7 @@ func (s *AttendeeServiceImplData) compensateUnpaidDuesOnCancel(ctx context.Conte
 					remainderCompensatingTx := s.duesTransactionForAttendee(attendee, -(tx.Amount.GrossCent - paid), vatStr, "void unpaid dues on cancel")
 					err := paymentservice.Get().AddTransaction(ctx, remainderCompensatingTx)
 					if err != nil {
-						return err
+						return updated, err
 					}
 					paid = 0
 				} else {
@@ -154,13 +175,13 @@ func (s *AttendeeServiceImplData) compensateUnpaidDuesOnCancel(ctx context.Conte
 					compensatingTx := s.duesTransactionForAttendee(attendee, -tx.Amount.GrossCent, vatStr, "void unpaid dues on cancel")
 					err := paymentservice.Get().AddTransaction(ctx, compensatingTx)
 					if err != nil {
-						return err
+						return updated, err
 					}
 				}
 			}
 		}
 	}
-	return nil
+	return updated, nil
 }
 
 func (s *AttendeeServiceImplData) oldDuesByVAT(transactionHistory []paymentservice.Transaction) map[string]int64 {
@@ -178,13 +199,19 @@ func (s *AttendeeServiceImplData) oldDuesByVAT(transactionHistory []paymentservi
 	return oldDuesByVAT
 }
 
-func (s *AttendeeServiceImplData) balances(transactionHistory []paymentservice.Transaction) (validDues int64, validPayments int64) {
+func (s *AttendeeServiceImplData) balances(transactionHistory []paymentservice.Transaction) (validDues int64, validPayments int64, openPayments int64, dueDate string) {
 	for _, tx := range transactionHistory {
 		if tx.Status == paymentservice.Valid {
 			if tx.TransactionType == paymentservice.Payment {
 				validPayments += tx.Amount.GrossCent
 			} else if tx.TransactionType == paymentservice.Due {
 				validDues += tx.Amount.GrossCent
+				dueDate = tx.DueDate
+			}
+		}
+		if tx.Status == paymentservice.Tentative || tx.Status == paymentservice.Pending {
+			if tx.TransactionType == paymentservice.Payment {
+				openPayments += tx.Amount.GrossCent
 			}
 		}
 	}
@@ -217,7 +244,24 @@ func (s *AttendeeServiceImplData) duesTransactionForAttendee(attendee *entity.At
 		},
 		Comment:       comment,
 		Status:        paymentservice.Valid,
-		EffectiveDate: "2022-12-09", // TODO - dues are effective immediately
-		DueDate:       "2022-12-18", // TODO - implement weeks logic, except for negative amounts
+		EffectiveDate: s.duesEffectiveDate(),
+		DueDate:       s.duesDueDate(),
 	}
+}
+
+const IsoDateFormat = "2006-01-02"
+
+func (s *AttendeeServiceImplData) duesEffectiveDate() string {
+	return s.Now().Format(IsoDateFormat)
+}
+
+func (s *AttendeeServiceImplData) duesDueDate() string {
+	calculated := s.Now().Add(config.DueDays()).Format(IsoDateFormat)
+	if calculated < config.EarliestDueDate() {
+		return config.EarliestDueDate()
+	}
+	if calculated > config.LatestDueDate() {
+		return config.LatestDueDate()
+	}
+	return calculated
 }

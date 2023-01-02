@@ -64,6 +64,7 @@ func (s *AttendeeServiceImplData) UpdateAttendee(ctx context.Context, attendee *
 	currentStatus := statusHistory[len(statusHistory)-1].Status
 
 	subject := ctxvalues.Subject(ctx)
+	// changing packages may change the due amount
 	err = s.UpdateDuesAndDoStatusChangeIfNeeded(ctx, attendee, currentStatus, currentStatus, fmt.Sprintf("attendee update by %s", subject))
 	if err != nil {
 		return err

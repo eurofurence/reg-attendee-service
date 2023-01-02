@@ -5,6 +5,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/mailservice"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/paymentservice"
+	"github.com/eurofurence/reg-attendee-service/internal/service/attendeesrv"
 )
 
 type Application interface {
@@ -41,7 +42,8 @@ func (i *Impl) Run() int {
 		return 1
 	}
 
-	if err := runServerWithGracefulShutdown(); err != nil {
+	attendeeService := attendeesrv.New()
+	if err := runServerWithGracefulShutdown(attendeeService); err != nil {
 		return 2
 	}
 

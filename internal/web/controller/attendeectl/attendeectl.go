@@ -23,16 +23,9 @@ import (
 
 var attendeeService attendeesrv.AttendeeService
 
-func init() {
-	attendeeService = &attendeesrv.AttendeeServiceImplData{}
-}
+func Create(server chi.Router, attendeeSrv attendeesrv.AttendeeService) {
+	attendeeService = attendeeSrv
 
-// use only for testing
-func OverrideAttendeeService(overrideAttendeeServiceForTesting attendeesrv.AttendeeService) {
-	attendeeService = overrideAttendeeServiceForTesting
-}
-
-func Create(server chi.Router) {
 	if config.RequireLoginForReg() {
 		server.Post("/api/rest/v1/attendees", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, newAttendeeHandler)))
 	} else {

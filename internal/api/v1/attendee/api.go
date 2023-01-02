@@ -110,10 +110,10 @@ type AttendeeSearchResult struct {
 	Packages             *string        `json:"packages,omitempty"`
 	UserComments         *string        `json:"user_comments,omitempty"`
 	Status               *status.Status `json:"status,omitempty"`
-	TotalDues            *int64         `json:"total_dues,omitempty"`      // TODO cache in addInfo:dues from payments changed hook
-	PaymentBalance       *int64         `json:"payment_balance,omitempty"` // TODO cache in addInfo:dues from payments changed hook
-	CurrentDues          *int64         `json:"current_dues,omitempty"`    // TODO cache in addInfo:dues from payments changed hook
-	DueDate              *string        `json:"due_date,omitempty"`        // TODO cache in addInfo:overdue from payments changed hook ONLY IF OUTSTANDING
-	Registered           *string        `json:"registered,omitempty"`      // TODO the ISO date we registered
-	AdminComments        *string        `json:"admin_comments,omitempty"`  // TODO include
+	TotalDues            *int64         `json:"total_dues,omitempty"`
+	PaymentBalance       *int64         `json:"payment_balance,omitempty"`
+	CurrentDues          *int64         `json:"current_dues,omitempty"`
+	DueDate              *string        `json:"due_date,omitempty"`
+	Registered           *string        `json:"registered,omitempty"`
+	AdminComments        *string        `json:"admin_comments,omitempty"` // TODO include
 }

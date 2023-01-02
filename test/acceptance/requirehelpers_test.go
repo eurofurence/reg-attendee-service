@@ -28,8 +28,6 @@ func tstRequireTransactions(t *testing.T, expectedTransactions []paymentservice.
 	require.Equal(t, len(expectedTransactions), len(paymentMock.Recording()))
 	for i, expected := range expectedTransactions {
 		actual := paymentMock.Recording()[i]
-		expected.DueDate = actual.DueDate             // TODO remove when due date logic implemented
-		expected.EffectiveDate = actual.EffectiveDate // TODO remove when effective date logic implemented
 		require.EqualValues(t, expected, actual)
 	}
 }

@@ -219,3 +219,23 @@ func PaymentServiceBaseUrl() string {
 func MailServiceBaseUrl() string {
 	return Configuration().Service.MailService
 }
+
+func DueDays() time.Duration {
+	return time.Duration(Configuration().Dues.DueDays*24) * time.Hour
+}
+
+func EarliestDueDate() string {
+	return Configuration().Dues.EarliestDueDate
+}
+
+func LatestDueDate() string {
+	return Configuration().Dues.LatestDueDate
+}
+
+func PriceEarlyUntil() string {
+	return Configuration().Dues.PriceEarlyUntil
+}
+
+func PriceLateUntil() string {
+	return Configuration().Dues.PriceLateUntil
+}

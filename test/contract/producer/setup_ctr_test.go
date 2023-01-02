@@ -9,10 +9,6 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/service/attendeesrv"
 	"github.com/eurofurence/reg-attendee-service/internal/web/app"
-	"github.com/eurofurence/reg-attendee-service/internal/web/controller/adminctl"
-	"github.com/eurofurence/reg-attendee-service/internal/web/controller/attendeectl"
-	"github.com/eurofurence/reg-attendee-service/internal/web/controller/banctl"
-	"github.com/eurofurence/reg-attendee-service/internal/web/controller/statusctl"
 	"github.com/stretchr/testify/mock"
 	"net/http/httptest"
 	"os"
@@ -32,7 +28,6 @@ func TestMain(m *testing.M) {
 
 func tstSetup() {
 	tstSetupConfig()
-	tstSetupServiceMocks()
 	tstSetupHttpTestServer()
 }
 
@@ -42,7 +37,8 @@ func tstSetupConfig() {
 }
 
 func tstSetupHttpTestServer() {
-	router := app.CreateRouter(context.Background())
+	attendeeServiceMock := &MockAttendeeService{}
+	router := app.CreateRouter(context.Background(), attendeeServiceMock)
 	ts = httptest.NewServer(router)
 }
 
@@ -142,12 +138,4 @@ func (s *MockAttendeeService) GetBan(ctx context.Context, id uint) (*entity.Ban,
 
 func (s *MockAttendeeService) GetAllBans(ctx context.Context) ([]*entity.Ban, error) {
 	return make([]*entity.Ban, 0), nil
-}
-
-func tstSetupServiceMocks() {
-	attendeeServiceMock := MockAttendeeService{}
-	attendeectl.OverrideAttendeeService(&attendeeServiceMock)
-	adminctl.OverrideAttendeeService(&attendeeServiceMock)
-	statusctl.OverrideAttendeeService(&attendeeServiceMock)
-	banctl.OverrideAttendeeService(&attendeeServiceMock)
 }

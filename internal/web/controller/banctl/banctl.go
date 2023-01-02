@@ -22,16 +22,9 @@ import (
 
 var attendeeService attendeesrv.AttendeeService
 
-func init() {
-	attendeeService = &attendeesrv.AttendeeServiceImplData{}
-}
+func Create(server chi.Router, attendeeSrv attendeesrv.AttendeeService) {
+	attendeeService = attendeeSrv
 
-// use only for testing
-func OverrideAttendeeService(overrideAttendeeServiceForTesting attendeesrv.AttendeeService) {
-	attendeeService = overrideAttendeeServiceForTesting
-}
-
-func Create(server chi.Router) {
 	server.Get("/api/rest/v1/bans", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(3*time.Second, allBansHandler)))
 	server.Post("/api/rest/v1/bans", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(3*time.Second, newBanHandler)))
 	server.Get("/api/rest/v1/bans/{id}", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(3*time.Second, getBanHandler)))

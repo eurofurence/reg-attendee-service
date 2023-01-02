@@ -47,6 +47,15 @@ func setConfigurationDefaults(c *Application) {
 	if len(c.RegistrationLanguages) == 0 {
 		c.RegistrationLanguages = []string{"en-US"}
 	}
+	if c.Dues.PriceEarlyUntil == "" {
+		c.Dues.PriceEarlyUntil = c.Dues.LatestDueDate
+	}
+	if c.Dues.PriceLateUntil == "" {
+		c.Dues.PriceLateUntil = c.Dues.LatestDueDate
+	}
+	if c.Dues.DueDays == 0 {
+		c.Dues.DueDays = 14
+	}
 }
 
 const portPattern = "^[1-9][0-9]{0,4}$"
@@ -197,6 +206,44 @@ func validateRegistrationStartTime(errs url.Values, c GoLiveConfig, s SecurityCo
 		if s.Oidc.EarlyReg == "" {
 			errs.Add("go_live.early_reg_start_iso_datetime", "if supplied, must also supply security.oidc.early_reg_role so early registration is possible")
 		}
+	}
+}
+
+func validateDuesConfiguration(errs url.Values, c DuesConfig) {
+	earliest, err := time.Parse(IsoDateFormat, c.EarliestDueDate)
+	if err != nil {
+		errs.Add("dues.earliest_due_date", "invalid date format, use ISO date as in "+IsoDateFormat)
+	}
+
+	latest, err := time.Parse(IsoDateFormat, c.LatestDueDate)
+	if err != nil {
+		errs.Add("dues.latest_due_date", "invalid date format, use ISO date as in "+IsoDateFormat)
+	}
+
+	if c.DueDays <= 0 {
+		errs.Add("dues.due_days", "must be positive integer")
+	}
+
+	earlyUntil, err := time.Parse(IsoDateFormat, c.PriceEarlyUntil)
+	if err != nil {
+		errs.Add("dues.price_early_until", "invalid date format, use ISO date as in "+IsoDateFormat)
+	}
+
+	lateUntil, err := time.Parse(IsoDateFormat, c.PriceLateUntil)
+	if err != nil {
+		errs.Add("dues.price_late_until", "invalid date format, use ISO date as in "+IsoDateFormat)
+	}
+
+	if latest.Before(earliest) {
+		errs.Add("dues.latest_due_date", "must be no earlier than dues.earliest_due_date")
+	}
+
+	if earlyUntil.Before(earliest) {
+		errs.Add("dues.price_early_until", "must be no earlier than dues.earliest_due_date")
+	}
+
+	if lateUntil.Before(earlyUntil) {
+		errs.Add("dues.price_late_until", "must be no earlier than dues.price_early_until (which defaults to dues.latest_due_date if unset)")
 	}
 }
 

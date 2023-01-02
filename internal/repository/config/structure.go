@@ -15,6 +15,8 @@ const (
 
 const StartTimeFormat = "2006-01-02T15:04:05-07:00"
 
+const IsoDateFormat = "2006-01-02"
+
 type (
 	// Application is the root configuration type
 	Application struct {
@@ -27,6 +29,7 @@ type (
 		TShirtSizes           []string          `yaml:"tshirtsizes"`
 		Birthday              BirthdayConfig    `yaml:"birthday"`
 		GoLive                GoLiveConfig      `yaml:"go_live"`
+		Dues                  DuesConfig        `yaml:"dues"`
 		Countries             []string          `yaml:"countries"`
 		SpokenLanguages       []string          `yaml:"spoken_languages"`
 		RegistrationLanguages []string          `yaml:"registration_languages"`
@@ -132,5 +135,14 @@ type (
 	GoLiveConfig struct {
 		StartIsoDatetime         string `yaml:"start_iso_datetime"`
 		EarlyRegStartIsoDatetime string `yaml:"early_reg_start_iso_datetime"` // optional, only useful if you also set early_reg_role
+	}
+
+	// DuesConfig configures the due date calculations
+	DuesConfig struct {
+		EarliestDueDate string `yaml:"earliest_due_date"`
+		LatestDueDate   string `yaml:"latest_due_date"` // inclusive
+		DueDays         int    `yaml:"due_days"`
+		PriceEarlyUntil string `yaml:"price_early_until"` // inclusive
+		PriceLateUntil  string `yaml:"price_late_until"`  // inclusive
 	}
 )
