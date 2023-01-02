@@ -16,7 +16,7 @@ func TestEmptySearchQuery(t *testing.T) {
 	expectedParams := map[string]interface{}{
 		"param_force_named_query_detection": 1,
 	}
-	expectedQuery := `SELECT IFNULL(ad.admin_comments, '') as admin_comments, IFNULL(ad.flags, '') as admin_flags, IFNULL(st.status, 'new') as status, a.birthday as birthday, a.cache_payment_balance as cache_payment_balance, a.country as country, a.created_at as created_at, a.email as email, a.first_name as first_name, a.flags as flags, a.id as id, a.last_name as last_name, a.nickname as nickname, a.options as options, a.packages as packages, a.pronouns as pronouns, a.spoken_languages as spoken_languages, a.telegram as telegram, a.tshirt_size as tshirt_size, a.user_comments as user_comments 
+	expectedQuery := `SELECT IFNULL(ad.admin_comments, '') as admin_comments, IFNULL(ad.flags, '') as admin_flags, IFNULL(st.status, 'new') as status, a.birthday as birthday, a.cache_due_date as cache_due_date, a.cache_open_balance as cache_open_balance, a.cache_payment_balance as cache_payment_balance, a.cache_total_dues as cache_total_dues, a.country as country, a.created_at as created_at, a.email as email, a.first_name as first_name, a.flags as flags, a.id as id, a.last_name as last_name, a.nickname as nickname, a.options as options, a.packages as packages, a.pronouns as pronouns, a.spoken_languages as spoken_languages, a.telegram as telegram, a.tshirt_size as tshirt_size, a.user_comments as user_comments 
 FROM att_attendees AS a 
   LEFT JOIN att_admin_infos AS ad ON ad.id = a.id 
   LEFT JOIN (  SELECT sc.attendee_id AS attendee_id,         ( SELECT sc2.status FROM att_status_changes AS sc2 WHERE sc2.id = max(sc.id) ) AS status  FROM att_status_changes AS sc  GROUP BY sc.attendee_id  ) AS st ON st.attendee_id = a.id 
@@ -147,7 +147,7 @@ func TestTwoFullSearchQueries(t *testing.T) {
 		"param_2_16":                        "%,pzero,%",
 		"param_2_17":                        "%more user comments%",
 	}
-	expectedQuery := `SELECT IFNULL(ad.flags, '') as admin_flags, IFNULL(st.status, 'new') as status, a.cache_payment_balance as cache_payment_balance, a.flags as flags, a.id as id, a.options as options, a.packages as packages, a.pronouns as pronouns, a.registration_language as registration_language 
+	expectedQuery := `SELECT IFNULL(ad.flags, '') as admin_flags, IFNULL(st.status, 'new') as status, a.cache_due_date as cache_due_date, a.cache_open_balance as cache_open_balance, a.cache_payment_balance as cache_payment_balance, a.cache_total_dues as cache_total_dues, a.flags as flags, a.id as id, a.options as options, a.packages as packages, a.pronouns as pronouns, a.registration_language as registration_language 
 FROM att_attendees AS a 
   LEFT JOIN att_admin_infos AS ad ON ad.id = a.id 
   LEFT JOIN (  SELECT sc.attendee_id AS attendee_id,         ( SELECT sc2.status FROM att_status_changes AS sc2 WHERE sc2.id = max(sc.id) ) AS status  FROM att_status_changes AS sc  GROUP BY sc.attendee_id  ) AS st ON st.attendee_id = a.id 

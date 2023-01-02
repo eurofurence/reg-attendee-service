@@ -66,7 +66,10 @@ func constructFieldList(spec []string) []string {
 		selected["a.packages as packages"] = true
 		selected["a.user_comments as user_comments"] = true
 		selected["IFNULL(st.status, 'new') as status"] = true
+		selected["a.cache_total_dues as cache_total_dues"] = true
 		selected["a.cache_payment_balance as cache_payment_balance"] = true
+		selected["a.cache_open_balance as cache_open_balance"] = true
+		selected["a.cache_due_date as cache_due_date"] = true
 		selected["a.created_at as created_at"] = true
 		selected["IFNULL(ad.admin_comments, '') as admin_comments"] = true
 	} else {
@@ -88,6 +91,7 @@ func constructFieldList(spec []string) []string {
 			case "status":
 				selected["IFNULL(st.status, 'new') as status"] = true
 			case "total_dues", "payment_balance", "current_dues":
+				selected["a.cache_total_dues as cache_total_dues"] = true
 				selected["a.cache_payment_balance as cache_payment_balance"] = true
 				selected["IFNULL(ad.flags, '') as admin_flags"] = true // needed for dues calc (guest!)
 				selected["IFNULL(st.status, 'new') as status"] = true  // needed for dues calc
@@ -118,7 +122,10 @@ func constructFieldList(spec []string) []string {
 				selected["a.options as options"] = true
 				selected["a.packages as packages"] = true
 			case "balances":
+				selected["a.cache_total_dues as cache_total_dues"] = true
 				selected["a.cache_payment_balance as cache_payment_balance"] = true
+				selected["a.cache_open_balance as cache_open_balance"] = true
+				selected["a.cache_due_date as cache_due_date"] = true
 				selected["IFNULL(ad.flags, '') as admin_flags"] = true // needed for dues calc (guest!)
 				selected["IFNULL(st.status, 'new') as status"] = true  // needed for dues calc
 			case "all":
@@ -146,7 +153,9 @@ func constructFieldList(spec []string) []string {
 				selected["a.packages as packages"] = true
 				selected["a.user_comments as user_comments"] = true
 				selected["IFNULL(st.status, 'new') as status"] = true
+				selected["a.cache_total_dues as cache_total_dues"] = true
 				selected["a.cache_payment_balance as cache_payment_balance"] = true
+				selected["a.cache_open_balance as cache_open_balance"] = true
 				selected["a.cache_due_date as cache_due_date"] = true
 				selected["a.created_at as created_at"] = true
 				selected["IFNULL(ad.admin_comments, '') as admin_comments"] = true
