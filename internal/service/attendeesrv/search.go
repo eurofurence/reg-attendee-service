@@ -29,7 +29,7 @@ func (s *AttendeeServiceImplData) mapToAttendeeSearchResult(att *entity.Attendee
 	if len(fillFields) == 0 {
 		fillFields = []string{"nickname", "name", "country", "spoken_languages", "email", "telegram", "birthday", "pronouns",
 			"tshirt_size", "flags", "options", "packages", "user_comments", "status",
-			"total_dues", "payment_balance", "current_dues", "registered", "admin_comments"}
+			"total_dues", "payment_balance", "current_dues", "due_date", "registered", "admin_comments"}
 	}
 
 	var currentDues = att.CacheTotalDues - att.CachePaymentBalance
