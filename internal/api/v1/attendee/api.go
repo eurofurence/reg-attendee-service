@@ -75,7 +75,7 @@ type AttendeeSearchSingleCriterion struct {
 	Status               []status.Status `json:"status"`
 	Permissions          map[string]int8 `json:"permissions"`
 	AdminComments        string          `json:"admin_comments"`
-	AddInfo              map[string]int8 `json:"add_info"` // TODO implement
+	AddInfo              map[string]int8 `json:"add_info"` // can only search for presence of a value for each area, Note: special area 'overdue'
 }
 
 // --- search result ---
@@ -115,5 +115,5 @@ type AttendeeSearchResult struct {
 	CurrentDues          *int64         `json:"current_dues,omitempty"`
 	DueDate              *string        `json:"due_date,omitempty"`
 	Registered           *string        `json:"registered,omitempty"`
-	AdminComments        *string        `json:"admin_comments,omitempty"` // TODO include
+	AdminComments        *string        `json:"admin_comments,omitempty"`
 }

@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func constructAttendeeSearchQuery(conds *attendee.AttendeeSearchCriteria, params map[string]interface{}) string {
+func (r *MysqlRepository) constructAttendeeSearchQuery(conds *attendee.AttendeeSearchCriteria, params map[string]interface{}) string {
 	newestStatusSubQuery := strings.Builder{}
 	newestStatusSubQuery.WriteString(" SELECT sc.attendee_id AS attendee_id, ")
 	newestStatusSubQuery.WriteString("        ( SELECT sc2.status FROM att_status_changes AS sc2 WHERE sc2.id = max(sc.id) ) AS status ")
@@ -27,7 +27,7 @@ func constructAttendeeSearchQuery(conds *attendee.AttendeeSearchCriteria, params
 	params["param_force_named_query_detection"] = 1 // if we do not have at least one @-param, GORM doesn't do named query mode, and then it fails with a type error
 	if conds != nil {
 		for i, cond := range conds.MatchAny {
-			query.WriteString("  OR\n  (\n" + addSingleCondition(&cond, params, i+1) + "  )\n")
+			query.WriteString("  OR\n  (\n" + r.addSingleCondition(&cond, params, i+1) + "  )\n")
 		}
 	}
 	query.WriteString(") ")
@@ -205,7 +205,7 @@ func orderBy(field string, direction string) string {
 	return fmt.Sprintf("ORDER BY %s %s", fieldName, direction)
 }
 
-func addSingleCondition(cond *attendee.AttendeeSearchSingleCriterion, params map[string]interface{}, idx int) string {
+func (r *MysqlRepository) addSingleCondition(cond *attendee.AttendeeSearchSingleCriterion, params map[string]interface{}, idx int) string {
 	paramBaseName := fmt.Sprintf("param_%d", idx)
 	paramNo := 1
 	query := strings.Builder{}
@@ -248,8 +248,39 @@ func addSingleCondition(cond *attendee.AttendeeSearchSingleCriterion, params map
 	if cond.AdminComments != "" {
 		query.WriteString(substringMatch("IFNULL(ad.admin_comments, '')", cond.AdminComments, params, paramBaseName, &paramNo))
 	}
+	if len(cond.AddInfo) > 0 {
+		query.WriteString(r.addInfoConditions(cond.AddInfo, params, paramBaseName, &paramNo))
+	}
 
 	return query.String()
+}
+
+func (r *MysqlRepository) addInfoConditions(cond map[string]int8, params map[string]interface{}, paramBaseName string, idx *int) string {
+	pName := fmt.Sprintf("%s_%d", paramBaseName, *idx)
+	*idx++
+
+	queryPart := strings.Builder{}
+
+	for i, addInfoKey := range sortedKeySet(cond) {
+		paramName := fmt.Sprintf("%s_%d", pName, i+1)
+		wanted := cond[addInfoKey]
+		if addInfoKey == "overdue" {
+			todayIso := r.Now().Format(config.IsoDateFormat)
+			if wanted == 0 {
+				queryPart.WriteString(notOverdueCondition(todayIso, params, paramName))
+			} else if wanted == 1 {
+				queryPart.WriteString(overdueCondition(todayIso, params, paramName))
+			}
+		} else {
+			if wanted == 0 {
+				queryPart.WriteString(addInfoNotPresentCondition(addInfoKey, params, paramName))
+			} else if wanted == 1 {
+				queryPart.WriteString(addInfoPresentCondition(addInfoKey, params, paramName))
+			}
+		}
+	}
+
+	return queryPart.String()
 }
 
 func uintSliceMatch(field string, values []uint) string {
@@ -295,13 +326,7 @@ func stringExact(field string, condition string, params map[string]interface{}, 
 
 func choiceMatch(field string, condition map[string]int8, params map[string]interface{}, paramBaseName string, idx *int) string {
 	query := strings.Builder{}
-	keys := make([]string, len(condition))
-	i := 0
-	for k := range condition {
-		keys[i] = k
-		i++
-	}
-	sort.Strings(keys)
+	keys := sortedKeySet(condition)
 
 	for _, k := range keys {
 		pName := fmt.Sprintf("%s_%d", paramBaseName, *idx)
@@ -314,4 +339,44 @@ func choiceMatch(field string, condition map[string]int8, params map[string]inte
 		*idx++
 	}
 	return query.String()
+}
+
+func sortedKeySet(condition map[string]int8) []string {
+	keys := make([]string, len(condition))
+	i := 0
+	for k := range condition {
+		keys[i] = k
+		i++
+	}
+	sort.Strings(keys)
+
+	return keys
+}
+
+func notOverdueCondition(todayIso string, params map[string]interface{}, paramName string) string {
+	// a.cache_due_date = NULL => not considered overdue
+	params[paramName] = todayIso
+	return fmt.Sprintf("    AND ( STRCMP( IFNULL(a.cache_due_date,'0000-00-00'), @%s ) <= 0 )\n", paramName)
+}
+
+func overdueCondition(todayIso string, params map[string]interface{}, paramName string) string {
+	// a.cache_due_date = NULL => not considered overdue
+	params[paramName] = todayIso
+	return fmt.Sprintf("    AND ( STRCMP( IFNULL(a.cache_due_date,'0000-00-00'), @%s ) > 0 )\n", paramName)
+}
+
+func addInfoNotPresentCondition(unsafeKey string, params map[string]interface{}, paramName string) string {
+	params[paramName] = unsafeKey
+	subquery := addInfoAreaCountSubquery(paramName)
+	return fmt.Sprintf("    AND ( ( %s ) = 0 )\n", subquery)
+}
+
+func addInfoPresentCondition(unsafeKey string, params map[string]interface{}, paramName string) string {
+	params[paramName] = unsafeKey
+	subquery := addInfoAreaCountSubquery(paramName)
+	return fmt.Sprintf("    AND ( ( %s ) > 0 )\n", subquery)
+}
+
+func addInfoAreaCountSubquery(paramName string) string {
+	return fmt.Sprintf("SELECT COUNT(*) FROM att_additional_infos WHERE attendee_id = a.id AND area = @%s", paramName)
 }

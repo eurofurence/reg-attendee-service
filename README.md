@@ -18,7 +18,7 @@ Command line arguments
 
 This service uses go modules to provide dependency management, see `go.mod`.
 
-If you place this repository outside of your GOPATH, build and test runs will download all required 
+If you place this repository outside your GOPATH, build and test runs will download all required 
 dependencies by default. 
 
 ## Running on localhost
@@ -54,67 +54,18 @@ You are expected to clone that repository into a directory called `reg-attendee-
 right next to this repository. If you wish to place your contract specs somewhere else, simply change the
 path or URL in `test/contract/producer/setup_ctr_test.go`.
 
-## Version History
+## Open Issues and Ideas
 
-### v0.1.0
+We track open issues as GitHub issues on this repository once it becomes clear what exactly needs to be done.
 
-**MVP 1.** Implements attendee resource, userland fields only, with fixed tokens for admin, user, and optionally
-staff access. Changes to attendees are historized, except User Comments. All fields are fully validated, permissions 
-are checked based on 3 simple groups. This version can be used as a backend of the old regsys and for the new initial 
-reg static frontend.
+### ideas
 
-Limitations: 
- - the current fixed-token security model cannot check which user is logged in. This is ok because only the old 
-   regsys will know the user / admin tokens. The only token handed out to users must be the staff token.
+- key_deposit/key_received/sponsor_items flag are supported as additional-info
+- new endpoint for "resend last status change notification email"
 
-### v0.1.1
+### plans for later
 
-**MVP 1.1** Implements a countdown resource with configurable start time for public registration. Before that time,
-no registrations are accepted. The countdown resource response is formatted as expected by the frontend.
-
-Limitations: 
- - the current fixed-token security model cannot check which user is logged in. This is ok because only the old 
-   regsys will know the user / admin tokens. The only token handed out to users must be the staff token.
- - before the configured registration start time, even admin or staff authenticated users will not be able to
-   register because the endpoint does not honor a supplied Authorization header at all. This is ok because
-   currently we use a separate installation for staff reg with a secret link.
-
-### v0.2.0
-
-**MVP 2.** The absolute minimum needed for EF and MMC reg to work.
-
- - ✅ finalized open api v3 spec
- - ✅ implements admin fields handling
- - ✅ implements status transitions
- - ✅ includes an openapi spec
- - 🚧 talks to payment service as appropriate (with contract tests)
- - 🚧 talks to mail service as appropriate (with contract tests)
- - ✅ obtains IDP tokens from the cookies set by the auth service, as well as fixed token security for backend requests
- - ✅ auth header and tokens are honored for all requests, even the ones that do not require authorization
- - ✅ fields for MMC have been added as well (partner, ...) 
- - ✅ day guests are supported simply via the package subsystem 
- - 🚧 guests are supported as an admin only flag which will cause the system to assign 0 dues
- - ✅ implements a general request timeout and panic handling
- - ✅ basic search functionality implemented
- - 🚧 bans support implemented
- - 🚧 manual dues support implemented
- - 🚧 key_deposit/key_received/sponsor_items flag are supported as additional-info
- - ✅ track who (subject, if set) performed a database change (recorded in history table)
-
-### open issues
-
-  - ✅ support status in find
-  - 🚧 allow listing ids of deleted, but omit data (needed by security api so it can mark them deleted too)
-  - 🚧 set attendee to deleted in table on status change to deleted, and verify that these are excluded in all reads
-  - check that at least one attendance option is set
-  - admin only flag skipBanCheck
-  - new endpoint for "resend last status change notification email"
-  - delete ban rule tests
-  - test dues changes caused by setting and removing guest status and corresponding status change logic
-  - test with real DB
-
-### for later
-
-- ❌ more fine-grained permissions using JWT
+- self cancellation if no payments made and before a grace period
+- more fine-grained permissions using JWT
   - viewAttendees, changeAttendees, viewAttendeeAdmininfo, changeAttendeeAdmininfo rights
-- ❌ container build and associated changes
+- container build and associated changes

@@ -190,8 +190,6 @@ func (s *AttendeeServiceImplData) oldDuesByVAT(transactionHistory []paymentservi
 		if tx.Status == paymentservice.Valid && tx.TransactionType == paymentservice.Due {
 			vatStr := fmt.Sprintf("%.6f", tx.Amount.VatRate)
 
-			// TODO support multiple currencies, or at least read currency from config and reject any not in this currency
-
 			previous, _ := oldDuesByVAT[vatStr]
 			oldDuesByVAT[vatStr] = previous + tx.Amount.GrossCent
 		}
@@ -238,7 +236,7 @@ func (s *AttendeeServiceImplData) duesTransactionForAttendee(attendee *entity.At
 		TransactionType: paymentservice.Due,
 		Method:          paymentservice.Internal,
 		Amount: paymentservice.Amount{
-			Currency:  "EUR", // TODO from config
+			Currency:  config.Currency(),
 			GrossCent: amount,
 			VatRate:   vat,
 		},
@@ -249,14 +247,12 @@ func (s *AttendeeServiceImplData) duesTransactionForAttendee(attendee *entity.At
 	}
 }
 
-const IsoDateFormat = "2006-01-02"
-
 func (s *AttendeeServiceImplData) duesEffectiveDate() string {
-	return s.Now().Format(IsoDateFormat)
+	return s.Now().Format(config.IsoDateFormat)
 }
 
 func (s *AttendeeServiceImplData) duesDueDate() string {
-	calculated := s.Now().Add(config.DueDays()).Format(IsoDateFormat)
+	calculated := s.Now().Add(config.DueDays()).Format(config.IsoDateFormat)
 	if calculated < config.EarliestDueDate() {
 		return config.EarliestDueDate()
 	}

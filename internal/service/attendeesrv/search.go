@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
 	"strings"
 )
@@ -33,7 +34,7 @@ func (s *AttendeeServiceImplData) mapToAttendeeSearchResult(att *entity.Attendee
 	}
 
 	var currentDues = att.CacheTotalDues - att.CachePaymentBalance
-	var registered = att.CreatedAt.Format(IsoDateFormat)
+	var registered = att.CreatedAt.Format(config.IsoDateFormat)
 	return attendee.AttendeeSearchResult{
 		Id:                   att.ID,
 		BadgeId:              s.badgeId(att.ID),

@@ -239,3 +239,7 @@ func PriceEarlyUntil() string {
 func PriceLateUntil() string {
 	return Configuration().Dues.PriceLateUntil
 }
+
+func Currency() string {
+	return Configuration().Currency
+}

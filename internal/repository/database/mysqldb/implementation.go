@@ -17,11 +17,14 @@ import (
 )
 
 type MysqlRepository struct {
-	db *gorm.DB
+	db  *gorm.DB
+	Now func() time.Time
 }
 
 func Create() dbrepo.Repository {
-	return &MysqlRepository{}
+	return &MysqlRepository{
+		Now: time.Now,
+	}
 }
 
 func (r *MysqlRepository) Open() error {
@@ -135,7 +138,7 @@ func (r *MysqlRepository) MaxAttendeeId(ctx context.Context) (uint, error) {
 
 func (r *MysqlRepository) FindAttendees(ctx context.Context, criteria *attendee.AttendeeSearchCriteria) ([]*entity.AttendeeQueryResult, error) {
 	params := make(map[string]interface{})
-	query := constructAttendeeSearchQuery(criteria, params)
+	query := r.constructAttendeeSearchQuery(criteria, params)
 
 	result := make([]*entity.AttendeeQueryResult, 0)
 
