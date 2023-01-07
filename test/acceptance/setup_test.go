@@ -68,12 +68,10 @@ func tstSetupConfig(configFilePath string) {
 	config.LoadTestingConfigurationFromPathOrAbort(configFilePath)
 }
 
-const IsoDateFormat = "2006-01-02"
-
 func tstSetupHttpTestServer() {
 	attSrv := attendeesrv.New()
 	attSrv.(*attendeesrv.AttendeeServiceImplData).Now = func() time.Time {
-		t, _ := time.Parse(IsoDateFormat, "2022-12-08")
+		t, _ := time.Parse(config.IsoDateFormat, "2022-12-08")
 		return t
 	}
 	router := app.CreateRouter(context.Background(), attSrv)

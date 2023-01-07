@@ -21,10 +21,13 @@ type InMemoryRepository struct {
 	statusChanges map[uint][]entity.StatusChange
 	history       map[uint]*entity.History
 	idSequence    uint32
+	Now           func() time.Time
 }
 
 func Create() dbrepo.Repository {
-	return &InMemoryRepository{}
+	return &InMemoryRepository{
+		Now: time.Now,
+	}
 }
 
 func (r *InMemoryRepository) Open() error {
@@ -113,7 +116,8 @@ func (r *InMemoryRepository) FindAttendees(ctx context.Context, criteria *attend
 	for id, a := range r.attendees {
 		adm, _ := r.GetAdminInfoByAttendeeId(ctx, a.ID)
 		sc, _ := r.GetLatestStatusChangeByAttendeeId(ctx, a.ID)
-		if matchesCriteria(criteria, a, adm, sc) {
+		addInfs := r.GetAllAdditionalInfoOrEmptyMap(ctx, a.ID)
+		if r.matchesCriteria(criteria, a, adm, sc, addInfs) {
 			resultIds = append(resultIds, id)
 		}
 	}
@@ -324,11 +328,16 @@ func (r *InMemoryRepository) DeleteBan(ctx context.Context, b *entity.Ban) error
 
 // --- additional info ---
 
-func (r *InMemoryRepository) GetAdditionalInfoFor(ctx context.Context, attendeeId uint, area string) (*entity.AdditionalInfo, error) {
+func (r *InMemoryRepository) GetAllAdditionalInfoOrEmptyMap(ctx context.Context, attendeeId uint) map[string]*entity.AdditionalInfo {
 	byAttendeeId, ok := r.addInfo[attendeeId]
 	if !ok {
-		return &entity.AdditionalInfo{}, fmt.Errorf("additional info for attendee id %d and area %s not found", attendeeId, area)
+		byAttendeeId = make(map[string]*entity.AdditionalInfo)
 	}
+	return byAttendeeId
+}
+
+func (r *InMemoryRepository) GetAdditionalInfoFor(ctx context.Context, attendeeId uint, area string) (*entity.AdditionalInfo, error) {
+	byAttendeeId := r.GetAllAdditionalInfoOrEmptyMap(ctx, attendeeId)
 	ai, ok := byAttendeeId[area]
 	if !ok {
 		return &entity.AdditionalInfo{}, fmt.Errorf("additional info for attendee id %d and area %s not found", attendeeId, area)

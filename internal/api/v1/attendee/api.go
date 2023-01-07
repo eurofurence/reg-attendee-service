@@ -75,7 +75,7 @@ type AttendeeSearchSingleCriterion struct {
 	Status               []status.Status `json:"status"`
 	Permissions          map[string]int8 `json:"permissions"`
 	AdminComments        string          `json:"admin_comments"`
-	AddInfo              map[string]int8 `json:"add_info"`
+	AddInfo              map[string]int8 `json:"add_info"` // can only search for presence of a value for each area, Note: special area 'overdue'
 }
 
 // --- search result ---

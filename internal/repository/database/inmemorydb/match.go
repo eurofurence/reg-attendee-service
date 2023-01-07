@@ -4,12 +4,13 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/validation"
 	"github.com/ryanuber/go-glob"
 	"strings"
 )
 
-func matchesCriteria(conds *attendee.AttendeeSearchCriteria, a *entity.Attendee, adm *entity.AdminInfo, st *entity.StatusChange) bool {
+func (r *InMemoryRepository) matchesCriteria(conds *attendee.AttendeeSearchCriteria, a *entity.Attendee, adm *entity.AdminInfo, st *entity.StatusChange, addInf map[string]*entity.AdditionalInfo) bool {
 	if conds != nil {
 		if conds.MinId > 0 && a.ID < conds.MinId {
 			return false
@@ -18,7 +19,7 @@ func matchesCriteria(conds *attendee.AttendeeSearchCriteria, a *entity.Attendee,
 			return false
 		}
 		for _, cond := range conds.MatchAny {
-			if matches(&cond, a, adm, st) {
+			if r.matches(&cond, a, adm, st, addInf) {
 				return true
 			}
 		}
@@ -26,7 +27,7 @@ func matchesCriteria(conds *attendee.AttendeeSearchCriteria, a *entity.Attendee,
 	return false
 }
 
-func matches(cond *attendee.AttendeeSearchSingleCriterion, a *entity.Attendee, adm *entity.AdminInfo, st *entity.StatusChange) bool {
+func (r *InMemoryRepository) matches(cond *attendee.AttendeeSearchSingleCriterion, a *entity.Attendee, adm *entity.AdminInfo, st *entity.StatusChange, addInf map[string]*entity.AdditionalInfo) bool {
 	return matchesUintSliceOrEmpty(cond.Ids, a.ID) &&
 		matchesFullstringGlobOrEmpty(cond.Nickname, a.Nickname) &&
 		matchesFullstringGlobOrEmpty(cond.Name, a.FirstName+" "+a.LastName) &&
@@ -42,7 +43,9 @@ func matches(cond *attendee.AttendeeSearchSingleCriterion, a *entity.Attendee, a
 		matchesSubstringGlobOrEmpty(cond.UserComments, a.UserComments) &&
 		matchesStatus(cond.Status, st.Status) &&
 		choiceMatch(cond.Permissions, adm.Permissions) &&
-		matchesSubstringGlobOrEmpty(cond.AdminComments, adm.AdminComments)
+		matchesSubstringGlobOrEmpty(cond.AdminComments, adm.AdminComments) &&
+		matchesAddInfoPresence(cond.AddInfo, addInf) &&
+		matchesOverdue(cond.AddInfo, a.CacheDueDate, r.Now().Format(config.IsoDateFormat))
 }
 
 func matchesUintSliceOrEmpty(cond []uint, value uint) bool {
@@ -95,4 +98,34 @@ func matchesStatus(wanted []status.Status, value status.Status) bool {
 		}
 	}
 	return false
+}
+
+func matchesAddInfoPresence(cond map[string]int8, values map[string]*entity.AdditionalInfo) bool {
+	for key, wanted := range cond {
+		if key != "overdue" {
+			_, ok := values[key]
+			if wanted == 0 && ok {
+				return false
+			}
+			if wanted == 1 && !ok {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func matchesOverdue(addInfoConds map[string]int8, dueDate string, currDate string) bool {
+	cond, ok := addInfoConds["overdue"]
+	if !ok {
+		return true // no condition given
+	}
+
+	if cond == 0 {
+		return dueDate >= currDate
+	} else if cond == 1 {
+		return dueDate < currDate
+	} else {
+		return false
+	}
 }

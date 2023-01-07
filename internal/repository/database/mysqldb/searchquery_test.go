@@ -3,15 +3,25 @@ package mysqldb
 import (
 	"fmt"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/stretchr/testify/require"
 	"testing"
+	"time"
 )
 
+func tstConstructClassUnderTest() *MysqlRepository {
+	mockNow, _ := time.Parse(config.IsoDateFormat, "2020-12-23")
+	return &MysqlRepository{
+		Now: func() time.Time { return mockNow },
+	}
+}
+
 func TestEmptySearchQuery(t *testing.T) {
+	cut := tstConstructClassUnderTest()
 	spec := &attendee.AttendeeSearchCriteria{}
 
 	actualParams := make(map[string]interface{})
-	actualQuery := constructAttendeeSearchQuery(spec, actualParams)
+	actualQuery := cut.constructAttendeeSearchQuery(spec, actualParams)
 
 	expectedParams := map[string]interface{}{
 		"param_force_named_query_detection": 1,
@@ -29,6 +39,7 @@ WHERE (
 }
 
 func TestTwoFullSearchQueries(t *testing.T) {
+	cut := tstConstructClassUnderTest()
 	spec := &attendee.AttendeeSearchCriteria{
 		MatchAny: []attendee.AttendeeSearchSingleCriterion{
 			{
@@ -60,6 +71,10 @@ func TestTwoFullSearchQueries(t *testing.T) {
 					"pkgzero": 0,
 				},
 				UserComments: "user*comments",
+				AddInfo: map[string]int8{
+					"overdue":       0,
+					"sponsor-items": 0,
+				},
 			},
 			{
 				Ids:      []uint{23, 34, 45},
@@ -90,6 +105,10 @@ func TestTwoFullSearchQueries(t *testing.T) {
 					"pzero": 0,
 				},
 				UserComments: "more user comments",
+				AddInfo: map[string]int8{
+					"overdue":       1,
+					"sponsor-items": 1,
+				},
 			},
 		},
 		MinId:      1,
@@ -100,7 +119,7 @@ func TestTwoFullSearchQueries(t *testing.T) {
 	}
 
 	actualParams := make(map[string]interface{})
-	actualQuery := constructAttendeeSearchQuery(spec, actualParams)
+	actualQuery := cut.constructAttendeeSearchQuery(spec, actualParams)
 
 	str := ""
 	for k, v := range actualParams {
@@ -129,6 +148,8 @@ func TestTwoFullSearchQueries(t *testing.T) {
 		"param_1_15":                        "%,pkgone,%",
 		"param_1_16":                        "%,pkgzero,%",
 		"param_1_17":                        "%user%comments%",
+		"param_1_18_1":                      "2020-12-23",
+		"param_1_18_2":                      "sponsor-items",
 		"param_2_1":                         "small%bird",
 		"param_2_2":                         "Johnny",
 		"param_2_3":                         "%Berlin%",
@@ -146,6 +167,8 @@ func TestTwoFullSearchQueries(t *testing.T) {
 		"param_2_15":                        "%,pone,%",
 		"param_2_16":                        "%,pzero,%",
 		"param_2_17":                        "%more user comments%",
+		"param_2_18_1":                      "2020-12-23",
+		"param_2_18_2":                      "sponsor-items",
 	}
 	expectedQuery := `SELECT IFNULL(ad.flags, '') as admin_flags, IFNULL(st.status, 'new') as status, a.cache_due_date as cache_due_date, a.cache_open_balance as cache_open_balance, a.cache_payment_balance as cache_payment_balance, a.cache_total_dues as cache_total_dues, a.flags as flags, a.id as id, a.options as options, a.packages as packages, a.pronouns as pronouns, a.registration_language as registration_language 
 FROM att_attendees AS a 
@@ -175,6 +198,8 @@ WHERE (
     AND ( a.packages NOT LIKE @param_1_16 )
     AND ( LOWER(a.user_comments) LIKE LOWER( @param_1_17 ) )
     AND ( IFNULL(st.status, 'new') <> 'deleted' )
+    AND ( STRCMP( IFNULL(a.cache_due_date,'0000-00-00'), @param_1_18_1 ) <= 0 )
+    AND ( ( SELECT COUNT(*) FROM att_additional_infos WHERE attendee_id = a.id AND area = @param_1_18_2 ) = 0 )
   )
   OR
   (
@@ -198,6 +223,8 @@ WHERE (
     AND ( a.packages NOT LIKE @param_2_16 )
     AND ( LOWER(a.user_comments) LIKE LOWER( @param_2_17 ) )
     AND ( IFNULL(st.status, 'new') <> 'deleted' )
+    AND ( STRCMP( IFNULL(a.cache_due_date,'0000-00-00'), @param_2_18_1 ) > 0 )
+    AND ( ( SELECT COUNT(*) FROM att_additional_infos WHERE attendee_id = a.id AND area = @param_2_18_2 ) > 0 )
   )
 ) AND a.id >= @param_0_1 AND a.id <= @param_0_2 ORDER BY CONCAT(a.first_name, ' ', a.last_name) DESC`
 

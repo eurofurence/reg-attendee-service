@@ -247,14 +247,12 @@ func (s *AttendeeServiceImplData) duesTransactionForAttendee(attendee *entity.At
 	}
 }
 
-const IsoDateFormat = "2006-01-02"
-
 func (s *AttendeeServiceImplData) duesEffectiveDate() string {
-	return s.Now().Format(IsoDateFormat)
+	return s.Now().Format(config.IsoDateFormat)
 }
 
 func (s *AttendeeServiceImplData) duesDueDate() string {
-	calculated := s.Now().Add(config.DueDays()).Format(IsoDateFormat)
+	calculated := s.Now().Add(config.DueDays()).Format(config.IsoDateFormat)
 	if calculated < config.EarliestDueDate() {
 		return config.EarliestDueDate()
 	}
