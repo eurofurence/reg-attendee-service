@@ -55,8 +55,6 @@ func keyFuncForKey(rsaPublicKey *rsa.PublicKey) func(token *jwt.Token) (interfac
 	}
 }
 
-// TODO example - no idea if this matches the idp claims structure - compare to room service!
-
 type GlobalClaims struct {
 	Name  string   `json:"name"`
 	EMail string   `json:"email"`
@@ -107,7 +105,6 @@ func TokenValidator(next http.Handler) http.Handler {
 				if err == nil && token.Valid {
 					parsedClaims, ok := token.Claims.(*AllClaims)
 					if ok {
-						// TODO this is probably not the exact token structure
 						ctxvalues.SetBearerToken(ctx, bearerTokenValue)
 						ctxvalues.SetEmail(ctx, parsedClaims.Global.EMail)
 						ctxvalues.SetName(ctx, parsedClaims.Global.Name)
