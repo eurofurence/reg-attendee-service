@@ -99,6 +99,16 @@ func (r *InMemoryRepository) CountAttendeesByNicknameZipEmail(ctx context.Contex
 	return count, nil
 }
 
+func (r *InMemoryRepository) CountAttendeesByIdentity(ctx context.Context, identity string) (int64, error) {
+	var count int64
+	for _, v := range r.attendees {
+		if identity == v.Identity {
+			count++
+		}
+	}
+	return count, nil
+}
+
 func (r *InMemoryRepository) MaxAttendeeId(ctx context.Context) (uint, error) {
 	var max uint
 	for _, v := range r.attendees {

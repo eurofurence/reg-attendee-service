@@ -66,6 +66,10 @@ func (r *HistorizingRepository) CountAttendeesByNicknameZipEmail(ctx context.Con
 	return r.wrappedRepository.CountAttendeesByNicknameZipEmail(ctx, nickname, zip, email)
 }
 
+func (r *HistorizingRepository) CountAttendeesByIdentity(ctx context.Context, identity string) (int64, error) {
+	return r.wrappedRepository.CountAttendeesByIdentity(ctx, identity)
+}
+
 func (r *HistorizingRepository) MaxAttendeeId(ctx context.Context) (uint, error) {
 	return r.wrappedRepository.MaxAttendeeId(ctx)
 }

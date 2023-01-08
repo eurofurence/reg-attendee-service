@@ -27,7 +27,7 @@ func Create(server chi.Router, attendeeSrv attendeesrv.AttendeeService) {
 	attendeeService = attendeeSrv
 
 	if config.RequireLoginForReg() {
-		server.Post("/api/rest/v1/attendees", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, newAttendeeHandler)))
+		server.Post("/api/rest/v1/attendees", filter.LoggedIn(filter.WithTimeout(3*time.Second, newAttendeeHandler)))
 	} else {
 		server.Post("/api/rest/v1/attendees", filter.WithTimeout(3*time.Second, newAttendeeHandler))
 	}
@@ -193,6 +193,8 @@ func attendeeWriteErrorHandler(ctx context.Context, w http.ResponseWriter, r *ht
 	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("attendee could not be written: %s", err.Error())
 	if err.Error() == "duplicate attendee data - you are already registered" {
 		ctlutil.ErrorHandler(ctx, w, r, "attendee.data.duplicate", http.StatusConflict, url.Values{"attendee": {"there is already an attendee with this information (looking at nickname, email, and zip code)"}})
+	} else if err.Error() == "duplicate - must use a separate email address and identity account for each person" {
+		ctlutil.ErrorHandler(ctx, w, r, "attendee.user.duplicate", http.StatusConflict, url.Values{"user": {"you already have a registration - please use a separate email address and matching account per person"}})
 	} else {
 		ctlutil.ErrorHandler(ctx, w, r, "attendee.write.error", http.StatusInternalServerError, url.Values{})
 	}

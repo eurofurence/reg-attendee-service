@@ -170,11 +170,15 @@ func (s *AttendeeServiceImplData) oldDuesByVAT(transactionHistory []paymentservi
 // ---
 
 func (s *AttendeeServiceImplData) UpdateAttendeeCacheAndCalculateResultingStatus(ctx context.Context, attendee *entity.Attendee, updatedTransactionHistory []paymentservice.Transaction, newStatus status.Status) (status.Status, error) {
-	identity := s.identitySuffixForDeletedAttendees(attendee, newStatus)
+	// identity and zip each get an id dependent suffix for deleted attendees to ensure the user can register again after deletion
+	// (identity has a unique index in the db!)
+	// (nick, email, zip has a unique index in the db!)
+	identity := s.suffixForDeletedAttendees(attendee, newStatus, attendee.Identity)
+	zip := s.suffixForDeletedAttendees(attendee, newStatus, attendee.Zip)
 
 	dues, payments, open, dueDate := s.balances(updatedTransactionHistory)
 
-	err := s.updateCachedValuesAndIdentityInAttendee(ctx, attendee, dues, payments, open, dueDate, identity)
+	err := s.updateCachedValuesAndIdentityInAttendee(ctx, attendee, dues, payments, open, dueDate, identity, zip)
 	if err != nil {
 		return newStatus, err
 	}
@@ -187,28 +191,26 @@ func (s *AttendeeServiceImplData) UpdateAttendeeCacheAndCalculateResultingStatus
 	return newStatus, nil
 }
 
-func (s *AttendeeServiceImplData) identitySuffixForDeletedAttendees(attendee *entity.Attendee, newStatus status.Status) string {
-	// identity gets an id dependent suffix for deleted attendees to ensure the user can register again after deletion
-	// (identity has a unique index in the db!)
-	ownerIdentity := attendee.Identity
+func (s *AttendeeServiceImplData) suffixForDeletedAttendees(attendee *entity.Attendee, newStatus status.Status, value string) string {
 	deletionSuffix := fmt.Sprintf("_deleted_%d", attendee.ID)
 	if newStatus == status.Deleted {
-		if !strings.HasSuffix(ownerIdentity, deletionSuffix) {
-			ownerIdentity = ownerIdentity + deletionSuffix
+		if !strings.HasSuffix(value, deletionSuffix) {
+			value = value + deletionSuffix
 		}
 	} else {
 		// also prevents undelete after new registration has been made
-		ownerIdentity = strings.TrimSuffix(ownerIdentity, deletionSuffix)
+		value = strings.TrimSuffix(value, deletionSuffix)
 	}
-	return ownerIdentity
+	return value
 }
 
-func (s *AttendeeServiceImplData) updateCachedValuesAndIdentityInAttendee(ctx context.Context, attendee *entity.Attendee, dues int64, payments int64, open int64, dueDate string, identity string) error {
+func (s *AttendeeServiceImplData) updateCachedValuesAndIdentityInAttendee(ctx context.Context, attendee *entity.Attendee, dues int64, payments int64, open int64, dueDate string, identity string, zip string) error {
 	needsUpdate := attendee.CacheTotalDues != dues ||
 		attendee.CachePaymentBalance != payments ||
 		attendee.CacheOpenBalance != open ||
 		attendee.CacheDueDate != dueDate ||
-		attendee.Identity != identity
+		attendee.Identity != identity ||
+		attendee.Zip != zip
 
 	if needsUpdate {
 		attendee.CacheTotalDues = dues
@@ -216,6 +218,7 @@ func (s *AttendeeServiceImplData) updateCachedValuesAndIdentityInAttendee(ctx co
 		attendee.CacheOpenBalance = open
 		attendee.CacheDueDate = dueDate
 		attendee.Identity = identity
+		attendee.Zip = zip
 		return database.GetRepository().UpdateAttendee(ctx, attendee)
 	}
 	return nil

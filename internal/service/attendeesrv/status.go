@@ -73,9 +73,11 @@ func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx contex
 			return err
 		}
 
-		err = s.sendStatusChangeNotificationEmail(ctx, attendee, newStatus, err)
-		if err != nil {
-			return err
+		if newStatus != status.Deleted {
+			err = s.sendStatusChangeNotificationEmail(ctx, attendee, newStatus, err)
+			if err != nil {
+				return err
+			}
 		}
 	}
 

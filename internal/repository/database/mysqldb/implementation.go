@@ -113,6 +113,15 @@ func (r *MysqlRepository) CountAttendeesByNicknameZipEmail(ctx context.Context, 
 	return count, nil
 }
 
+func (r *MysqlRepository) CountAttendeesByIdentity(ctx context.Context, identity string) (int64, error) {
+	var count int64
+	err := r.db.Model(&entity.Attendee{}).Where(&entity.Attendee{Identity: identity}).Count(&count).Error
+	if err != nil {
+		return -1, err
+	}
+	return count, nil
+}
+
 func (r *MysqlRepository) MaxAttendeeId(ctx context.Context) (uint, error) {
 	var max uint
 	rows, err := r.db.Model(&entity.Attendee{}).Select("ifnull(max(id),0) AS max_id").Rows()

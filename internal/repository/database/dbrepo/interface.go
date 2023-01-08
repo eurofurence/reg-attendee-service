@@ -15,6 +15,7 @@ type Repository interface {
 	UpdateAttendee(ctx context.Context, a *entity.Attendee) error
 	GetAttendeeById(ctx context.Context, id uint) (*entity.Attendee, error)
 	CountAttendeesByNicknameZipEmail(ctx context.Context, nickname string, zip string, email string) (int64, error)
+	CountAttendeesByIdentity(ctx context.Context, identity string) (int64, error)
 	MaxAttendeeId(ctx context.Context) (uint, error)
 
 	GetAdminInfoByAttendeeId(ctx context.Context, attendeeId uint) (*entity.AdminInfo, error)
