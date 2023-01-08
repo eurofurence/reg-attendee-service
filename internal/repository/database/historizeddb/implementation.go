@@ -165,7 +165,7 @@ func (r *HistorizingRepository) DeleteBan(ctx context.Context, b *entity.Ban) er
 		Entity:    "Ban",
 		EntityId:  b.ID,
 		RequestId: ctxvalues.RequestId(ctx),
-		UserId:    ctxvalues.Subject(ctx),
+		Identity:  ctxvalues.Subject(ctx),
 		Diff:      "<deleted>",
 	}
 
@@ -217,7 +217,7 @@ func diffReverse[T any](ctx context.Context, oldVersion *T, newVersion *T, entit
 		Entity:    entityName,
 		EntityId:  entityID,
 		RequestId: ctxvalues.RequestId(ctx),
-		UserId:    ctxvalues.Subject(ctx),
+		Identity:  ctxvalues.Subject(ctx),
 	}
 	diff, _ := messagediff.PrettyDiff(newVersion, oldVersion)
 	histEntry.Diff = diff
