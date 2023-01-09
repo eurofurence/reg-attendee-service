@@ -3,6 +3,7 @@ package acceptance
 import (
 	"fmt"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"net/http"
 	"net/url"
 	"testing"
@@ -1055,6 +1056,86 @@ func TestMyRegistrations_User_One(t *testing.T) {
 	require.Equal(t, reg2response.location, actualLocation, "unexpected id returned")
 }
 
+func TestMyRegistrations_User_Two(t *testing.T) {
+	tstSetup(tstConfigFile(true, false, true))
+	defer tstShutdown()
+
+	docs.Given("given there are registrations")
+	token1 := tstValidUserToken(t, 1)
+	reg1 := tstBuildValidAttendee("my11c-")
+	reg1response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(reg1), token1)
+	require.Equal(t, http.StatusCreated, reg1response.status, "unexpected http response status")
+
+	docs.Given("given a different user, who already has a registration")
+	token101 := tstValidUserToken(t, 101)
+	reg2 := tstBuildValidAttendee("my11d-")
+	reg2response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(reg2), token101)
+	require.Equal(t, http.StatusCreated, reg2response.status, "unexpected http response status")
+
+	docs.When("when they try to make a second registration under their identity")
+	reg3 := tstBuildValidAttendee("my11e-")
+	reg3response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(reg3), token101)
+
+	docs.Then("then the request fails with the appropriate error message")
+	tstRequireErrorResponse(t, reg3response, http.StatusConflict, "attendee.user.duplicate",
+		url.Values{"user": []string{"you already have a registration - please use a separate email address and matching account per person"}})
+}
+
+func TestMyRegistrations_User_Deleted(t *testing.T) {
+	tstSetup(tstConfigFile(true, false, true))
+	defer tstShutdown()
+
+	testcase := "my11f-"
+
+	docs.Given("given a user, who has made a single registration")
+	token101 := tstValidUserToken(t, 101)
+	reg1 := tstBuildValidAttendee(testcase)
+	reg1response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(reg1), token101)
+	require.Equal(t, http.StatusCreated, reg1response.status, "unexpected http response status")
+
+	docs.Given("given that registration has been deleted by an admin")
+	body := status.StatusChangeDto{
+		Status:  status.Deleted,
+		Comment: testcase,
+	}
+	statusResponse := tstPerformPost(reg1response.location+"/status", tstRenderJson(body), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, statusResponse.status)
+
+	docs.When("when the user requests the list of registrations they own")
+	response := tstPerformGet("/api/rest/v1/attendees", token101)
+
+	docs.Then("then the request fails (404) and the error is as expected")
+	tstRequireErrorResponse(t, response, http.StatusNotFound, "attendee.owned.notfound", "")
+}
+
+func TestMyRegistrations_Admin_One(t *testing.T) {
+	tstSetup(tstConfigFile(true, false, true))
+	defer tstShutdown()
+
+	docs.Given("given there are registrations")
+	token101 := tstValidUserToken(t, 101)
+	reg1 := tstBuildValidAttendee("my12a-")
+	reg1response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(reg1), token101)
+	require.Equal(t, http.StatusCreated, reg1response.status, "unexpected http response status")
+
+	docs.Given("given an admin, who has made one registration")
+	admToken := tstValidAdminToken(t)
+	reg2 := tstBuildValidAttendee("my12b-")
+	reg2response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(reg2), admToken)
+	require.Equal(t, http.StatusCreated, reg2response.status, "unexpected http response status")
+
+	docs.When("when they request the list of registrations they own")
+	response := tstPerformGet("/api/rest/v1/attendees", admToken)
+
+	docs.Then("then the request is successful and returns only their registration number, even for an admin")
+	require.Equal(t, http.StatusOK, response.status, "unexpected http response status")
+	actualResult := attendee.AttendeeIdList{}
+	tstParseJson(response.body, &actualResult)
+	require.Equal(t, 1, len(actualResult.Ids))
+	actualLocation2 := fmt.Sprintf("/api/rest/v1/attendees/%d", actualResult.Ids[0])
+	require.Equal(t, reg2response.location, actualLocation2, "unexpected id returned")
+}
+
 func TestMyRegistrations_Admin_Two(t *testing.T) {
 	tstSetup(tstConfigFile(true, false, true))
 	defer tstShutdown()
@@ -1065,27 +1146,19 @@ func TestMyRegistrations_Admin_Two(t *testing.T) {
 	reg1response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(reg1), token101)
 	require.Equal(t, http.StatusCreated, reg1response.status, "unexpected http response status")
 
-	docs.Given("given an admin, who has made two registrations")
+	docs.Given("given an admin, who already has a registration")
 	admToken := tstValidAdminToken(t)
 	reg2 := tstBuildValidAttendee("my12b-")
 	reg2response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(reg2), admToken)
 	require.Equal(t, http.StatusCreated, reg2response.status, "unexpected http response status")
+
+	docs.When("when they try to make another registration under their identity")
 	reg3 := tstBuildValidAttendee("my12c-")
 	reg3response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(reg3), admToken)
-	require.Equal(t, http.StatusCreated, reg3response.status, "unexpected http response status")
 
-	docs.When("when they request the list of registrations they own")
-	response := tstPerformGet("/api/rest/v1/attendees", admToken)
-
-	docs.Then("then the request is successful and returns only their registration numbers, even for an admin")
-	require.Equal(t, http.StatusOK, response.status, "unexpected http response status")
-	actualResult := attendee.AttendeeIdList{}
-	tstParseJson(response.body, &actualResult)
-	require.Equal(t, 2, len(actualResult.Ids))
-	actualLocation2 := fmt.Sprintf("/api/rest/v1/attendees/%d", actualResult.Ids[0])
-	actualLocation3 := fmt.Sprintf("/api/rest/v1/attendees/%d", actualResult.Ids[1])
-	require.Equal(t, reg2response.location, actualLocation2, "unexpected id returned")
-	require.Equal(t, reg3response.location, actualLocation3, "unexpected id returned")
+	docs.Then("then the request fails with the appropriate error message")
+	tstRequireErrorResponse(t, reg3response, http.StatusConflict, "attendee.user.duplicate",
+		url.Values{"user": []string{"you already have a registration - please use a separate email address and matching account per person"}})
 }
 
 func TestMyRegistrations_ApiToken(t *testing.T) {

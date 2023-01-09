@@ -127,7 +127,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '409':
-          description: duplicate (same nickname + email + zip code)
+          description: duplicate (same nickname + email + zip code or this user identity already has a registration)
           content:
             application/json:
               schema:
@@ -1905,6 +1905,7 @@ components:
             - attendee.parse.error (json body parse error)
             - attendee.data.invalid (field data failed to validate, see details for more information)
             - attendee.data.duplicate (duplicate registration - nickname + email + zip)
+            - attendee.user.duplicate (this identity already has a registration, and it isn't deleted)
             - attendee.write.error (database error)
             - attendee.payment.error (payment service failure while updating attendee)
             - attendee.id.notfound (no such badge number in the database)

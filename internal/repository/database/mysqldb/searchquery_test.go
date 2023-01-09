@@ -1,6 +1,7 @@
 package mysqldb
 
 import (
+	"context"
 	"fmt"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
@@ -21,7 +22,7 @@ func TestEmptySearchQuery(t *testing.T) {
 	spec := &attendee.AttendeeSearchCriteria{}
 
 	actualParams := make(map[string]interface{})
-	actualQuery := cut.constructAttendeeSearchQuery(spec, actualParams)
+	actualQuery := cut.constructAttendeeSearchQuery(context.Background(), spec, actualParams)
 
 	expectedParams := map[string]interface{}{
 		"param_force_named_query_detection": 1,
@@ -119,7 +120,7 @@ func TestTwoFullSearchQueries(t *testing.T) {
 	}
 
 	actualParams := make(map[string]interface{})
-	actualQuery := cut.constructAttendeeSearchQuery(spec, actualParams)
+	actualQuery := cut.constructAttendeeSearchQuery(context.Background(), spec, actualParams)
 
 	str := ""
 	for k, v := range actualParams {

@@ -10,6 +10,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database/dbrepo"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
 	"gorm.io/gorm"
+	"time"
 )
 
 type HistorizingRepository struct {
@@ -62,8 +63,60 @@ func (r *HistorizingRepository) GetAttendeeById(ctx context.Context, id uint) (*
 	return r.wrappedRepository.GetAttendeeById(ctx, id)
 }
 
+func (r *HistorizingRepository) SoftDeleteAttendeeById(ctx context.Context, id uint) error {
+	oldVersion, err := r.wrappedRepository.GetAttendeeById(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	aCopy := *oldVersion
+	newVersion := &aCopy
+
+	newVersion.DeletedAt = gorm.DeletedAt{
+		Time:  time.Now(),
+		Valid: true,
+	}
+
+	histEntry := diffReverse(ctx, oldVersion, newVersion, "Attendee", id)
+
+	err = r.wrappedRepository.RecordHistory(ctx, histEntry)
+	if err != nil {
+		return err
+	}
+
+	return r.wrappedRepository.SoftDeleteAttendeeById(ctx, id)
+}
+
+func (r *HistorizingRepository) UndeleteAttendeeById(ctx context.Context, id uint) error {
+	oldVersion, err := r.wrappedRepository.GetAttendeeById(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	aCopy := *oldVersion
+	newVersion := &aCopy
+
+	newVersion.DeletedAt = gorm.DeletedAt{
+		Time:  time.Now(),
+		Valid: false,
+	}
+
+	histEntry := diffReverse(ctx, oldVersion, newVersion, "Attendee", id)
+
+	err = r.wrappedRepository.RecordHistory(ctx, histEntry)
+	if err != nil {
+		return err
+	}
+
+	return r.wrappedRepository.UndeleteAttendeeById(ctx, id)
+}
+
 func (r *HistorizingRepository) CountAttendeesByNicknameZipEmail(ctx context.Context, nickname string, zip string, email string) (int64, error) {
 	return r.wrappedRepository.CountAttendeesByNicknameZipEmail(ctx, nickname, zip, email)
+}
+
+func (r *HistorizingRepository) CountAttendeesByIdentity(ctx context.Context, identity string) (int64, error) {
+	return r.wrappedRepository.CountAttendeesByIdentity(ctx, identity)
 }
 
 func (r *HistorizingRepository) MaxAttendeeId(ctx context.Context) (uint, error) {
@@ -165,7 +218,7 @@ func (r *HistorizingRepository) DeleteBan(ctx context.Context, b *entity.Ban) er
 		Entity:    "Ban",
 		EntityId:  b.ID,
 		RequestId: ctxvalues.RequestId(ctx),
-		UserId:    ctxvalues.Subject(ctx),
+		Identity:  ctxvalues.Subject(ctx),
 		Diff:      "<deleted>",
 	}
 
@@ -217,9 +270,9 @@ func diffReverse[T any](ctx context.Context, oldVersion *T, newVersion *T, entit
 		Entity:    entityName,
 		EntityId:  entityID,
 		RequestId: ctxvalues.RequestId(ctx),
-		UserId:    ctxvalues.Subject(ctx),
+		Identity:  ctxvalues.Subject(ctx),
 	}
-	diff, _ := messagediff.PrettyDiff(newVersion, oldVersion)
+	diff, _ := messagediff.PrettyDiff(*newVersion, *oldVersion)
 	histEntry.Diff = diff
 	return histEntry
 }

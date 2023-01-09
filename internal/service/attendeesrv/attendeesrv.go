@@ -30,6 +30,17 @@ func (s *AttendeeServiceImplData) RegisterNewAttendee(ctx context.Context, atten
 	// record which user owns this attendee
 	attendee.Identity = ctxvalues.Subject(ctx)
 
+	if config.RequireLoginForReg() {
+		alreadyHasRegistration, err := userAlreadyHasAnotherRegistration(ctx, attendee.Identity, 0)
+		if err != nil {
+			return 0, err
+		}
+		if alreadyHasRegistration {
+			aulogging.Logger.Ctx(ctx).Warn().Printf("received second registration for same user - nick %s zip %s email %s", attendee.Nickname, attendee.Zip, attendee.Email)
+			return 0, errors.New("duplicate - must use a separate email address and identity account for each person")
+		}
+	}
+
 	id, err := database.GetRepository().AddAttendee(ctx, attendee)
 	return id, err
 }
@@ -117,6 +128,18 @@ func (s *AttendeeServiceImplData) CanRegisterAtThisTime(ctx context.Context) err
 
 func isDuplicateAttendee(ctx context.Context, nickname string, zip string, email string, expectedCount int64) (bool, error) {
 	count, err := database.GetRepository().CountAttendeesByNicknameZipEmail(ctx, nickname, zip, email)
+	if err != nil {
+		return false, err
+	}
+	return count != expectedCount, nil
+}
+
+func userAlreadyHasAnotherRegistration(ctx context.Context, identity string, expectedCount int64) (bool, error) {
+	if identity == "" {
+		return false, nil
+	}
+
+	count, err := database.GetRepository().CountAttendeesByIdentity(ctx, identity)
 	if err != nil {
 		return false, err
 	}

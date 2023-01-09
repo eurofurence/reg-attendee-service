@@ -88,7 +88,8 @@ func (r *MysqlRepository) AddAttendee(ctx context.Context, a *entity.Attendee) (
 }
 
 func (r *MysqlRepository) UpdateAttendee(ctx context.Context, a *entity.Attendee) error {
-	err := r.db.Save(a).Error
+	// allow updating deleted (because the admin ui allows it)
+	err := r.db.Unscoped().Save(a).Error
 	if err != nil {
 		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("mysql error during attendee update: %s", err.Error())
 	}
@@ -97,16 +98,58 @@ func (r *MysqlRepository) UpdateAttendee(ctx context.Context, a *entity.Attendee
 
 func (r *MysqlRepository) GetAttendeeById(ctx context.Context, id uint) (*entity.Attendee, error) {
 	var a entity.Attendee
-	err := r.db.First(&a, id).Error
+	// allow reading deleted so history and undelete work
+	err := r.db.Unscoped().First(&a, id).Error
 	if err != nil {
 		aulogging.Logger.Ctx(ctx).Info().WithErr(err).Printf("mysql error during attendee select - might be ok: %s", err.Error())
 	}
 	return &a, err
 }
 
+func (r *MysqlRepository) SoftDeleteAttendeeById(ctx context.Context, id uint) error {
+	var a entity.Attendee
+	err := r.db.First(&a, id).Error
+	if err != nil {
+		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("mysql error during attendee soft delete - attendee not found: %s", err.Error())
+		return err
+	}
+	err = r.db.Delete(&a).Error
+	if err != nil {
+		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("mysql error during attendee soft delete - deletion failed: %s", err.Error())
+		return err
+	}
+	return nil
+}
+
+func (r *MysqlRepository) UndeleteAttendeeById(ctx context.Context, id uint) error {
+	var a entity.Attendee
+	err := r.db.Unscoped().First(&a, id).Error
+	if err != nil {
+		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("mysql error during attendee undelete - attendee not found: %s", err.Error())
+		return err
+	}
+	err = r.db.Unscoped().Model(&a).Where("id", id).Update("deleted_at", nil).Error
+	if err != nil {
+		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("mysql error during attendee undelete: %s", err.Error())
+		return err
+	}
+	return nil
+}
+
 func (r *MysqlRepository) CountAttendeesByNicknameZipEmail(ctx context.Context, nickname string, zip string, email string) (int64, error) {
 	var count int64
-	err := r.db.Model(&entity.Attendee{}).Where(&entity.Attendee{Nickname: nickname, Zip: zip, Email: email}).Count(&count).Error
+	// count deleted because the unique index in the db will
+	err := r.db.Unscoped().Model(&entity.Attendee{}).Where(&entity.Attendee{Nickname: nickname, Zip: zip, Email: email}).Count(&count).Error
+	if err != nil {
+		return -1, err
+	}
+	return count, nil
+}
+
+func (r *MysqlRepository) CountAttendeesByIdentity(ctx context.Context, identity string) (int64, error) {
+	var count int64
+	// count deleted because the unique index in the db will
+	err := r.db.Unscoped().Model(&entity.Attendee{}).Where(&entity.Attendee{Identity: identity}).Count(&count).Error
 	if err != nil {
 		return -1, err
 	}
@@ -115,7 +158,8 @@ func (r *MysqlRepository) CountAttendeesByNicknameZipEmail(ctx context.Context, 
 
 func (r *MysqlRepository) MaxAttendeeId(ctx context.Context) (uint, error) {
 	var max uint
-	rows, err := r.db.Model(&entity.Attendee{}).Select("ifnull(max(id),0) AS max_id").Rows()
+	// count deleted
+	rows, err := r.db.Unscoped().Model(&entity.Attendee{}).Select("ifnull(max(id),0) AS max_id").Rows()
 	if err != nil {
 		aulogging.Logger.Ctx(ctx).Error().WithErr(err).Printf("error querying for max attendee id: %s", err.Error())
 		return 0, err
@@ -138,10 +182,11 @@ func (r *MysqlRepository) MaxAttendeeId(ctx context.Context) (uint, error) {
 
 func (r *MysqlRepository) FindAttendees(ctx context.Context, criteria *attendee.AttendeeSearchCriteria) ([]*entity.AttendeeQueryResult, error) {
 	params := make(map[string]interface{})
-	query := r.constructAttendeeSearchQuery(criteria, params)
+	query := r.constructAttendeeSearchQuery(ctx, criteria, params)
 
 	result := make([]*entity.AttendeeQueryResult, 0)
 
+	// Raw finds deleted attendees
 	rows, err := r.db.Raw(query, params).Rows()
 	if err != nil {
 		aulogging.Logger.Ctx(ctx).Error().WithErr(err).Printf("error finding attendees: %s", err.Error())

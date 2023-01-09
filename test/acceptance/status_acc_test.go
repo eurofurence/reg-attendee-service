@@ -559,11 +559,10 @@ func TestStatusChange_Admin_New_Cancelled(t *testing.T) {
 
 func TestStatusChange_Admin_New_Deleted(t *testing.T) {
 	testcase := "st0adm7-"
-	tstStatusChange_Admin_Allow(t, testcase,
-		status.New, status.Deleted,
+	tstStatusChange_Admin_Allow_DeletedCanReregister(t, testcase,
+		status.New,
 		nil,
 		[]paymentservice.Transaction{},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Deleted)},
 	)
 }
 
@@ -644,11 +643,10 @@ func TestStatusChange_Admin_Approved_Cancelled(t *testing.T) {
 
 func TestStatusChange_Admin_Approved_Deleted(t *testing.T) {
 	testcase := "st1adm7-"
-	tstStatusChange_Admin_Allow(t, testcase,
-		status.Approved, status.Deleted,
+	tstStatusChange_Admin_Allow_DeletedCanReregister(t, testcase,
+		status.Approved,
 		nil,
 		[]paymentservice.Transaction{tstValidAttendeeDues(-25500, "remove dues balance - status changed to deleted")},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Deleted)},
 	)
 }
 
@@ -982,11 +980,10 @@ func TestStatusChange_Admin_Waiting_Cancelled(t *testing.T) {
 
 func TestStatusChange_Admin_Waiting_Deleted(t *testing.T) {
 	testcase := "st5adm7-"
-	tstStatusChange_Admin_Allow(t, testcase,
-		status.Waiting, status.Deleted,
+	tstStatusChange_Admin_Allow_DeletedCanReregister(t, testcase,
+		status.Waiting,
 		nil,
 		[]paymentservice.Transaction{},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Deleted)},
 	)
 }
 
@@ -1147,8 +1144,6 @@ func TestStatusChange_Admin_Deleted_Cancelled(t *testing.T) {
 }
 
 // ...
-
-// TODO transitions to new or deleted do not get emails
 
 // TODO transition to cancelled and deleted with more complicated dues / payment histories
 
@@ -1492,6 +1487,41 @@ func tstStatusChange_Admin_Allow(t *testing.T, testcase string,
 
 	docs.Then("and the appropriate email messages were sent via the mail service")
 	tstRequireMailRequests(t, expectedMailRequests)
+}
+
+func tstStatusChange_Admin_Allow_DeletedCanReregister(t *testing.T, testcase string,
+	oldStatus status.Status,
+	injectExtraTransactions []paymentservice.Transaction,
+	expectedTransactions []paymentservice.Transaction,
+) {
+	tstSetup(tstConfigFile(false, false, true))
+	defer tstShutdown()
+
+	docs.Given("given an attendee in status " + string(oldStatus))
+	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
+	for _, tx := range injectExtraTransactions {
+		_ = paymentMock.InjectTransaction(context.Background(), tx)
+	}
+
+	docs.When("when an admin changes their status to deleted")
+	body := status.StatusChangeDto{
+		Status:  status.Deleted,
+		Comment: testcase,
+	}
+	response := tstPerformPost(loc+"/status", tstRenderJson(body), tstValidAdminToken(t))
+
+	docs.Then("then the request is successful and the status change to deleted has been done")
+	require.Equal(t, http.StatusNoContent, response.status)
+	tstVerifyStatus(t, loc, status.Deleted)
+
+	docs.Then("and the appropriate dues were booked in the payment service")
+	tstRequireTransactions(t, expectedTransactions)
+
+	docs.Then("and no email messages were sent via the mail service (deleted does not get emails)")
+	tstRequireMailRequests(t, nil)
+
+	docs.Then("and the same user can successfully register again after the deletion")
+	_, _ = tstRegisterAttendeeAndTransitionToStatus(t, testcase, "new")
 }
 
 // TODO test unbook unpaid dues on cancel (but not paid dues!), in order of invoicing (don't forget negative dues in history)

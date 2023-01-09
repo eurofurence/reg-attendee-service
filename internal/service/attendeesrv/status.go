@@ -47,13 +47,17 @@ func (s *AttendeeServiceImplData) GetFullStatusHistory(ctx context.Context, atte
 }
 
 func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status, comments string) error {
-	var err error
 	// controller checks value validity
 	// controller checks permission via StatusChangeAllowed
 	// controller checks precondition via StatusChangePossible
+	// attendee has been loaded from db in all cases
 
-	// Note that UpdateDues may adjust the status according to payment balance
-	newStatus, err = s.UpdateDues(ctx, attendee, oldStatus, newStatus)
+	updatedTransactionHistory, err := s.UpdateDuesTransactions(ctx, attendee, newStatus)
+	if err != nil {
+		return err
+	}
+
+	newStatus, err = s.UpdateAttendeeCacheAndCalculateResultingStatus(ctx, attendee, updatedTransactionHistory, newStatus)
 	if err != nil {
 		return err
 	}
@@ -69,39 +73,61 @@ func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx contex
 			return err
 		}
 
-		mailDto := mailservice.MailSendDto{
-			CommonID: "change-status-" + string(newStatus),
-			Lang:     removeWrappingCommasWithDefault(attendee.RegistrationLanguage, "en-US"),
-			Variables: map[string]string{
-				"badge_number":               fmt.Sprintf("%d", attendee.ID),
-				"badge_number_with_checksum": "TODO",
-				"nickname":                   attendee.Nickname,
-				"email":                      attendee.Email,
-				"reason":                     "TODO cancel reason",
-				"remaining_dues":             "TODO remaining dues",
-				"total_dues":                 "TODO total dues",
-				"due_date":                   "TODO due date (formatted)",
-				"regsys_url":                 "TODO https://reg.eurofurence.org/regsys/",
-
-				// room group variables, just set so all the templates work
-				"room_group_name":         "TODO room group name",
-				"room_group_owner":        "TODO room group owner nickname",
-				"room_group_owner_email":  "TODO room group owner email",
-				"room_group_member":       "TODO room group member nickname",
-				"room_group_member_email": "TODO room group member email",
-
-				// other stuff that is no longer used
-				"confirm_link": "TODO confirmation link",
-				"new_email":    "TODO email change new email",
-			},
-			To: []string{attendee.Email},
+		if newStatus == status.Deleted {
+			err = database.GetRepository().SoftDeleteAttendeeById(ctx, attendee.ID)
+			if err != nil {
+				return err
+			}
+		} else if oldStatus == status.Deleted {
+			err = database.GetRepository().UndeleteAttendeeById(ctx, attendee.ID)
+			if err != nil {
+				return err
+			}
 		}
-		err = mailservice.Get().SendEmail(ctx, mailDto)
-		if err != nil {
-			return err
+
+		if newStatus != status.Deleted {
+			err = s.sendStatusChangeNotificationEmail(ctx, attendee, newStatus, err)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
+	return nil
+}
+
+func (s *AttendeeServiceImplData) sendStatusChangeNotificationEmail(ctx context.Context, attendee *entity.Attendee, newStatus status.Status, err error) error {
+	mailDto := mailservice.MailSendDto{
+		CommonID: "change-status-" + string(newStatus),
+		Lang:     removeWrappingCommasWithDefault(attendee.RegistrationLanguage, "en-US"),
+		Variables: map[string]string{
+			"badge_number":               fmt.Sprintf("%d", attendee.ID),
+			"badge_number_with_checksum": "TODO",
+			"nickname":                   attendee.Nickname,
+			"email":                      attendee.Email,
+			"reason":                     "TODO cancel reason",
+			"remaining_dues":             "TODO remaining dues",
+			"total_dues":                 "TODO total dues",
+			"due_date":                   "TODO due date (formatted)",
+			"regsys_url":                 "TODO https://reg.eurofurence.org/regsys/",
+
+			// room group variables, just set so all the templates work
+			"room_group_name":         "TODO room group name",
+			"room_group_owner":        "TODO room group owner nickname",
+			"room_group_owner_email":  "TODO room group owner email",
+			"room_group_member":       "TODO room group member nickname",
+			"room_group_member_email": "TODO room group member email",
+
+			// other stuff that is no longer used
+			"confirm_link": "TODO confirmation link",
+			"new_email":    "TODO email change new email",
+		},
+		To: []string{attendee.Email},
+	}
+	err = mailservice.Get().SendEmail(ctx, mailDto)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
