@@ -8,6 +8,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database/dbrepo"
+	"gorm.io/gorm"
 	"sort"
 	"sync/atomic"
 	"time"
@@ -69,6 +70,8 @@ func (r *InMemoryRepository) AddAttendee(ctx context.Context, a *entity.Attendee
 
 func (r *InMemoryRepository) UpdateAttendee(ctx context.Context, a *entity.Attendee) error {
 	if _, ok := r.attendees[a.ID]; ok {
+		// allow deleted because the admin ui does
+
 		// copy the attendee, so later modifications won't also modify it in the simulated db
 		copiedAttendee := *a
 		copiedAttendee.UpdatedAt = time.Now()
@@ -81,6 +84,8 @@ func (r *InMemoryRepository) UpdateAttendee(ctx context.Context, a *entity.Atten
 
 func (r *InMemoryRepository) GetAttendeeById(ctx context.Context, id uint) (*entity.Attendee, error) {
 	if att, ok := r.attendees[id]; ok {
+		// allow deleted so history and undelete work
+
 		// copy the attendee, so later modifications won't also modify it in the simulated db
 		copiedAttendee := *att
 		return &copiedAttendee, nil
@@ -89,9 +94,34 @@ func (r *InMemoryRepository) GetAttendeeById(ctx context.Context, id uint) (*ent
 	}
 }
 
+func (r *InMemoryRepository) SoftDeleteAttendeeById(ctx context.Context, id uint) error {
+	if att, ok := r.attendees[id]; ok {
+		att.DeletedAt = gorm.DeletedAt{
+			Time:  r.Now(),
+			Valid: true,
+		}
+		return nil
+	} else {
+		return fmt.Errorf("cannot delete attendee %d - not present", id)
+	}
+}
+
+func (r *InMemoryRepository) UndeleteAttendeeById(ctx context.Context, id uint) error {
+	if att, ok := r.attendees[id]; ok {
+		att.DeletedAt = gorm.DeletedAt{
+			Time:  r.Now(),
+			Valid: false,
+		}
+		return nil
+	} else {
+		return fmt.Errorf("cannot delete attendee %d - not present", id)
+	}
+}
+
 func (r *InMemoryRepository) CountAttendeesByNicknameZipEmail(ctx context.Context, nickname string, zip string, email string) (int64, error) {
 	var count int64
 	for _, v := range r.attendees {
+		// count deleted because the unique index in the db will
 		if nickname == v.Nickname && zip == v.Zip && email == v.Email {
 			count++
 		}
@@ -102,6 +132,7 @@ func (r *InMemoryRepository) CountAttendeesByNicknameZipEmail(ctx context.Contex
 func (r *InMemoryRepository) CountAttendeesByIdentity(ctx context.Context, identity string) (int64, error) {
 	var count int64
 	for _, v := range r.attendees {
+		// count deleted because the unique index in the db will
 		if identity == v.Identity {
 			count++
 		}

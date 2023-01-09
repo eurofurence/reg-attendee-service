@@ -3,6 +3,7 @@ package acceptance
 import (
 	"fmt"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"net/http"
 	"net/url"
 	"testing"
@@ -1078,6 +1079,33 @@ func TestMyRegistrations_User_Two(t *testing.T) {
 	docs.Then("then the request fails with the appropriate error message")
 	tstRequireErrorResponse(t, reg3response, http.StatusConflict, "attendee.user.duplicate",
 		url.Values{"user": []string{"you already have a registration - please use a separate email address and matching account per person"}})
+}
+
+func TestMyRegistrations_User_Deleted(t *testing.T) {
+	tstSetup(tstConfigFile(true, false, true))
+	defer tstShutdown()
+
+	testcase := "my11f-"
+
+	docs.Given("given a user, who has made a single registration")
+	token101 := tstValidUserToken(t, 101)
+	reg1 := tstBuildValidAttendee(testcase)
+	reg1response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(reg1), token101)
+	require.Equal(t, http.StatusCreated, reg1response.status, "unexpected http response status")
+
+	docs.Given("given that registration has been deleted by an admin")
+	body := status.StatusChangeDto{
+		Status:  status.Deleted,
+		Comment: testcase,
+	}
+	statusResponse := tstPerformPost(reg1response.location+"/status", tstRenderJson(body), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, statusResponse.status)
+
+	docs.When("when the user requests the list of registrations they own")
+	response := tstPerformGet("/api/rest/v1/attendees", token101)
+
+	docs.Then("then the request fails (404) and the error is as expected")
+	tstRequireErrorResponse(t, response, http.StatusNotFound, "attendee.owned.notfound", "")
 }
 
 func TestMyRegistrations_Admin_One(t *testing.T) {

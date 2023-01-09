@@ -1,7 +1,9 @@
 package mysqldb
 
 import (
+	"context"
 	"fmt"
+	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
@@ -9,7 +11,7 @@ import (
 	"strings"
 )
 
-func (r *MysqlRepository) constructAttendeeSearchQuery(conds *attendee.AttendeeSearchCriteria, params map[string]interface{}) string {
+func (r *MysqlRepository) constructAttendeeSearchQuery(ctx context.Context, conds *attendee.AttendeeSearchCriteria, params map[string]interface{}) string {
 	newestStatusSubQuery := strings.Builder{}
 	newestStatusSubQuery.WriteString(" SELECT sc.attendee_id AS attendee_id, ")
 	newestStatusSubQuery.WriteString("        ( SELECT sc2.status FROM att_status_changes AS sc2 WHERE sc2.id = max(sc.id) ) AS status ")
@@ -42,7 +44,9 @@ func (r *MysqlRepository) constructAttendeeSearchQuery(conds *attendee.AttendeeS
 		}
 		query.WriteString(orderBy(conds.SortBy, conds.SortOrder))
 	}
-	return query.String()
+	result := query.String()
+	aulogging.Logger.Ctx(ctx).Debug().Printf("SQL query: %s", result)
+	return result
 }
 
 func constructFieldList(spec []string) []string {

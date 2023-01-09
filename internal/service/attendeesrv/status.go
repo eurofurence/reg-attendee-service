@@ -73,6 +73,18 @@ func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx contex
 			return err
 		}
 
+		if newStatus == status.Deleted {
+			err = database.GetRepository().SoftDeleteAttendeeById(ctx, attendee.ID)
+			if err != nil {
+				return err
+			}
+		} else if oldStatus == status.Deleted {
+			err = database.GetRepository().UndeleteAttendeeById(ctx, attendee.ID)
+			if err != nil {
+				return err
+			}
+		}
+
 		if newStatus != status.Deleted {
 			err = s.sendStatusChangeNotificationEmail(ctx, attendee, newStatus, err)
 			if err != nil {

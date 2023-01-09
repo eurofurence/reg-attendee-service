@@ -14,6 +14,9 @@ type Repository interface {
 	AddAttendee(ctx context.Context, a *entity.Attendee) (uint, error)
 	UpdateAttendee(ctx context.Context, a *entity.Attendee) error
 	GetAttendeeById(ctx context.Context, id uint) (*entity.Attendee, error)
+	SoftDeleteAttendeeById(ctx context.Context, id uint) error
+	UndeleteAttendeeById(ctx context.Context, id uint) error
+
 	CountAttendeesByNicknameZipEmail(ctx context.Context, nickname string, zip string, email string) (int64, error)
 	CountAttendeesByIdentity(ctx context.Context, identity string) (int64, error)
 	MaxAttendeeId(ctx context.Context) (uint, error)

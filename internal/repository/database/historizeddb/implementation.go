@@ -10,6 +10,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database/dbrepo"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
 	"gorm.io/gorm"
+	"time"
 )
 
 type HistorizingRepository struct {
@@ -60,6 +61,54 @@ func (r *HistorizingRepository) UpdateAttendee(ctx context.Context, a *entity.At
 
 func (r *HistorizingRepository) GetAttendeeById(ctx context.Context, id uint) (*entity.Attendee, error) {
 	return r.wrappedRepository.GetAttendeeById(ctx, id)
+}
+
+func (r *HistorizingRepository) SoftDeleteAttendeeById(ctx context.Context, id uint) error {
+	oldVersion, err := r.wrappedRepository.GetAttendeeById(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	aCopy := *oldVersion
+	newVersion := &aCopy
+
+	newVersion.DeletedAt = gorm.DeletedAt{
+		Time:  time.Now(),
+		Valid: true,
+	}
+
+	histEntry := diffReverse(ctx, oldVersion, newVersion, "Attendee", id)
+
+	err = r.wrappedRepository.RecordHistory(ctx, histEntry)
+	if err != nil {
+		return err
+	}
+
+	return r.wrappedRepository.SoftDeleteAttendeeById(ctx, id)
+}
+
+func (r *HistorizingRepository) UndeleteAttendeeById(ctx context.Context, id uint) error {
+	oldVersion, err := r.wrappedRepository.GetAttendeeById(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	aCopy := *oldVersion
+	newVersion := &aCopy
+
+	newVersion.DeletedAt = gorm.DeletedAt{
+		Time:  time.Now(),
+		Valid: false,
+	}
+
+	histEntry := diffReverse(ctx, oldVersion, newVersion, "Attendee", id)
+
+	err = r.wrappedRepository.RecordHistory(ctx, histEntry)
+	if err != nil {
+		return err
+	}
+
+	return r.wrappedRepository.UndeleteAttendeeById(ctx, id)
 }
 
 func (r *HistorizingRepository) CountAttendeesByNicknameZipEmail(ctx context.Context, nickname string, zip string, email string) (int64, error) {
@@ -223,7 +272,7 @@ func diffReverse[T any](ctx context.Context, oldVersion *T, newVersion *T, entit
 		RequestId: ctxvalues.RequestId(ctx),
 		Identity:  ctxvalues.Subject(ctx),
 	}
-	diff, _ := messagediff.PrettyDiff(newVersion, oldVersion)
+	diff, _ := messagediff.PrettyDiff(*newVersion, *oldVersion)
 	histEntry.Diff = diff
 	return histEntry
 }
