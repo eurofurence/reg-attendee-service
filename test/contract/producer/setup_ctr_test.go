@@ -74,6 +74,10 @@ func (s *MockAttendeeService) GetAttendeeMaxId(ctx context.Context) (uint, error
 	return 0, nil
 }
 
+func (s *MockAttendeeService) CanChangeEmailTo(ctx context.Context, originalEmail string, newEmail string) error {
+	return nil
+}
+
 func (s *MockAttendeeService) CanChangeChoiceTo(ctx context.Context, originalChoiceStr string, newChoiceStr string, configuration map[string]config.ChoiceConfig) error {
 	return nil
 }

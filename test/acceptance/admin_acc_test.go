@@ -430,7 +430,8 @@ func TestSearch_AdminOk(t *testing.T) {
       "first_name": "Hans",
       "last_name": "Mustermann",
       "street": "Teststraße 24",
-      "zip": "12345",
+      "zip": "search4-12345",
+      "email": "jsquirrel_github_9a6d@packetloss.de",
       "city": "Berlin",
       "country": "DE",
       "state": "Sachsen",
@@ -519,7 +520,6 @@ func tstRequireSearchResultMatches(t *testing.T, expectedBody string, body strin
 
 	// ignore emails and registered field because they contain a timer
 	for i := range actual.Attendees {
-		actual.Attendees[i].Email = nil
 		actual.Attendees[i].Registered = nil
 	}
 

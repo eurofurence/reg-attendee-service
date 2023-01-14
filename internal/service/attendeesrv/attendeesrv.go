@@ -89,6 +89,30 @@ func (s *AttendeeServiceImplData) GetAttendeeMaxId(ctx context.Context) (uint, e
 	return max, err
 }
 
+func (s *AttendeeServiceImplData) CanChangeEmailTo(ctx context.Context, originalEmail string, newEmail string) error {
+	if !config.RequireLoginForReg() {
+		// cannot validate here, need separate validation step
+		return nil
+	}
+
+	if originalEmail == newEmail {
+		// allow even normal users to keep an email once set by an admin
+		return nil
+	}
+
+	if ctxvalues.IsAuthorizedAsRole(ctx, config.OidcAdminRole()) || ctxvalues.HasApiToken(ctx) {
+		// allow admins or api token to set anything
+		return nil
+	}
+
+	if ctxvalues.Email(ctx) == newEmail {
+		// anyone can set their own email address, as validated by IDP - we already know not empty
+		return nil
+	}
+
+	return errors.New("you can only use the email address you're logged in with")
+}
+
 func (s *AttendeeServiceImplData) CanChangeChoiceTo(ctx context.Context, originalChoiceStr string, newChoiceStr string, configuration map[string]config.ChoiceConfig) error {
 	originalChoices := choiceStrToMap(originalChoiceStr)
 	newChoices := choiceStrToMap(newChoiceStr)
@@ -100,6 +124,7 @@ func (s *AttendeeServiceImplData) CanChangeChoiceTo(ctx context.Context, origina
 			return err
 		}
 	}
+	// TODO include config field for "is attendance option" for packages, and check that at least one of them is chosen
 	return nil
 }
 
@@ -126,12 +151,12 @@ func (s *AttendeeServiceImplData) CanRegisterAtThisTime(ctx context.Context) err
 	return nil
 }
 
-func isDuplicateAttendee(ctx context.Context, nickname string, zip string, email string, expectedCount int64) (bool, error) {
+func isDuplicateAttendee(ctx context.Context, nickname string, zip string, email string, expectedCountMax int64) (bool, error) {
 	count, err := database.GetRepository().CountAttendeesByNicknameZipEmail(ctx, nickname, zip, email)
 	if err != nil {
 		return false, err
 	}
-	return count != expectedCount, nil
+	return count > expectedCountMax, nil
 }
 
 func userAlreadyHasAnotherRegistration(ctx context.Context, identity string, expectedCount int64) (bool, error) {

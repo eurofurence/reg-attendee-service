@@ -42,8 +42,6 @@ func tstRequireMailRequests(t *testing.T, expectedMailRequests []mailservice.Mai
 		}
 		actual.To = expected.To
 		require.Equal(t, len(expected.Variables), len(actual.Variables))
-		require.Contains(t, actual.Variables["email"], expected.Variables["email"])
-		actual.Variables["email"] = expected.Variables["email"]
 		require.EqualValues(t, expected, actual)
 	}
 }

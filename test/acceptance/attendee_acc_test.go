@@ -599,11 +599,50 @@ func TestCreateNewAttendee_LoginRequired_After_AdminIsLikeStaff(t *testing.T) {
 	require.Regexp(t, "^\\/api\\/rest\\/v1\\/attendees\\/[1-9][0-9]*$", response.location, "invalid location header in response")
 }
 
+// ... using different email
+
+func TestCreateNewAttendee_LoginRequired_User_CannotUseDifferentEmail(t *testing.T) {
+	docs.Given("given the configuration for login-only registration after normal reg is open")
+	tstSetup(tstConfigFile(true, false, true))
+	defer tstShutdown()
+
+	docs.Given("given a logged in user")
+	token := tstValidUserToken(t, 1)
+
+	docs.When("when they attempt to create a new attendee with an email address they are not logged in with")
+	attendeeSent := tstBuildValidAttendee("na60-")
+	attendeeSent.Email = "na60-" + attendeeSent.Email
+	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), token)
+
+	docs.Then("then the request fails with the expected error")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
+		"email": []string{"you can only use the email address you're logged in with"},
+	})
+}
+
+func TestCreateNewAttendee_LoginRequired_Admin_MayUseDifferentEmail(t *testing.T) {
+	docs.Given("given the configuration for login-only registration after normal reg is open")
+	tstSetup(tstConfigFile(true, false, true))
+	defer tstShutdown()
+
+	docs.Given("given a logged in admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they attempt to create a new attendee with an email address they are not logged in with")
+	attendeeSent := tstBuildValidAttendee("na61-")
+	attendeeSent.Email = "na61-" + attendeeSent.Email
+	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), token)
+
+	docs.Then("then the attendee is successfully created, that is admins are allowed to use somebody else's email address")
+	require.Equal(t, http.StatusCreated, response.status, "unexpected http response status")
+	require.Regexp(t, "^\\/api\\/rest\\/v1\\/attendees\\/[1-9][0-9]*$", response.location, "invalid location header in response")
+}
+
 // --- update attendee ---
 
 func TestUpdateExistingAttendee_Self(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(tstConfigFile(true, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -623,9 +662,29 @@ func TestUpdateExistingAttendee_Self(t *testing.T) {
 	require.EqualValues(t, changedAttendee, attendeeReadAgain, "attendee data read did not match updated data")
 }
 
+func TestUpdateExistingAttendee_Self_ChangeEmail(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstConfigFile(true, false, true))
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee")
+	token := tstValidUserToken(t, 101)
+	location1, attendee1 := tstRegisterAttendeeWithToken(t, "ua1b-", token)
+
+	docs.When("when they attempt to change the email address to one they are not logged in as")
+	changedAttendee := attendee1
+	changedAttendee.Email = "ua1b-" + changedAttendee.Email
+	updateResponse := tstPerformPut(location1, tstRenderJson(changedAttendee), token)
+
+	docs.Then("then the request fails with the appropriate error")
+	tstRequireErrorResponse(t, updateResponse, http.StatusBadRequest, "attendee.data.invalid", url.Values{
+		"email": []string{"you can only use the email address you're logged in with"},
+	})
+}
+
 func TestUpdateExistingAttendee_Other(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(tstConfigFile(true, false, true))
 	defer tstShutdown()
 
 	docs.Given("given two existing users, the second of which has registered")
@@ -644,7 +703,7 @@ func TestUpdateExistingAttendee_Other(t *testing.T) {
 
 func TestUpdateExistingAttendeeSyntaxInvalid(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(tstConfigFile(true, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -663,7 +722,7 @@ func TestUpdateExistingAttendeeSyntaxInvalid(t *testing.T) {
 
 func TestUpdateExistingAttendeeDataInvalid(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(tstConfigFile(true, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee who is logged in")
@@ -689,7 +748,7 @@ func TestUpdateExistingAttendeeDataInvalid(t *testing.T) {
 
 func TestUpdateNonExistingAttendee(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(tstConfigFile(true, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an admin")
@@ -705,7 +764,7 @@ func TestUpdateNonExistingAttendee(t *testing.T) {
 
 func TestUpdateAttendeeInvalidId(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(tstConfigFile(true, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an admin")
@@ -744,7 +803,7 @@ func TestDenyUpdateExistingAttendeeWhileNotLoggedIn(t *testing.T) {
 
 func TestDenyUpdateExistingOtherAttendeeWithStaffToken(t *testing.T) {
 	docs.Given("given the configuration for staff pre-registration (the other config doesn't even have a staff token)")
-	tstSetup(tstConfigFile(false, true, true))
+	tstSetup(tstConfigFile(true, true, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -768,7 +827,7 @@ func TestDenyUpdateExistingOtherAttendeeWithStaffToken(t *testing.T) {
 
 func TestUpdateExistingAttendeeAdminOnlyFlag(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(tstConfigFile(true, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee who is logged in")
@@ -792,7 +851,7 @@ func TestUpdateExistingAttendeeAdminOnlyFlag(t *testing.T) {
 
 func TestUpdateExistingAttendeeAdminOnlyFlag_Admin(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(tstConfigFile(true, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -818,7 +877,7 @@ func TestUpdateExistingAttendeeAdminOnlyFlag_Admin(t *testing.T) {
 
 func TestUpdateExistingAttendeeReadOnlyFlag(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(tstConfigFile(true, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee who is logged in")
@@ -842,7 +901,7 @@ func TestUpdateExistingAttendeeReadOnlyFlag(t *testing.T) {
 
 func TestUpdateExistingAttendeeReadOnlyFlag_Admin(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(tstConfigFile(true, false, true))
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -862,6 +921,30 @@ func TestUpdateExistingAttendeeReadOnlyFlag_Admin(t *testing.T) {
 	attendeeReadAgain := tstReadAttendee(t, location1)
 	require.EqualValues(t, changedAttendee, attendeeReadAgain, "attendee data read did not match updated data")
 	require.EqualValues(t, "anon,hc,ev", attendeeReadAgain.Flags, "attendee data read did not match expected flags value")
+}
+
+func TestUpdateExistingAttendee_Admin_ChangeEmail(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstConfigFile(true, false, true))
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee")
+	token := tstValidUserToken(t, 101)
+	location1, attendee1 := tstRegisterAttendeeWithToken(t, "ua1b-", token)
+
+	docs.Given("given an admin")
+	admin := tstValidAdminToken(t)
+
+	docs.When("when they attempt to change the email address to one they are not logged in as")
+	changedAttendee := attendee1
+	changedAttendee.Email = "ua13-" + changedAttendee.Email
+	updateResponse := tstPerformPut(location1, tstRenderJson(changedAttendee), admin)
+
+	docs.Then("then the attendee is successfully updated and the changed data can be read again")
+	require.Equal(t, http.StatusOK, updateResponse.status, "unexpected http response status for update")
+	require.Equal(t, location1, updateResponse.location, "location unexpectedly changed during update")
+	attendeeReadAgain := tstReadAttendee(t, location1)
+	require.EqualValues(t, changedAttendee, attendeeReadAgain, "attendee data read did not match updated data")
 }
 
 // TODO test dues changes caused by attendee package updates and corresponding status changes

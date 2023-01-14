@@ -98,7 +98,7 @@ func validate(ctx context.Context, a *attendee.AttendeeDto, trustedOriginalState
 		errs.Add("tshirt_size", "optional tshirt_size field must be empty or one of "+strings.Join(config.AllowedTshirtSizes(), ","))
 	}
 
-	// check permission to change flags, packages, options to their new values
+	// check permission to change flags, packages, options, email to their new values
 	if err := attendeeService.CanChangeChoiceTo(ctx, trustedOriginalState.Flags, a.Flags, config.FlagsConfigNoAdmin()); err != nil {
 		errs.Add("flags", err.Error())
 	}
@@ -107,6 +107,9 @@ func validate(ctx context.Context, a *attendee.AttendeeDto, trustedOriginalState
 	}
 	if err := attendeeService.CanChangeChoiceTo(ctx, trustedOriginalState.Options, a.Options, config.OptionsConfig()); err != nil {
 		errs.Add("options", err.Error())
+	}
+	if err := attendeeService.CanChangeEmailTo(ctx, trustedOriginalState.Email, a.Email); err != nil {
+		errs.Add("email", err.Error())
 	}
 
 	if err := attendeeService.CanRegisterAtThisTime(ctx); err != nil {
