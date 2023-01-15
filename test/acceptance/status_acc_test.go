@@ -1143,7 +1143,19 @@ func TestStatusChange_Admin_Deleted_Cancelled(t *testing.T) {
 	)
 }
 
-// ...
+// ban check
+
+func TestStatusChange_Admin_New_Approved_Banned(t *testing.T) {
+	tstStatusChange_Admin_Unavailable_Banned(t, "st0adm1ban-", status.New, status.Approved)
+}
+
+func TestStatusChange_Admin_Cancelled_Approved_Banned(t *testing.T) {
+	tstStatusChange_Admin_Unavailable_Banned(t, "st6adm1ban-", status.Cancelled, status.Approved)
+}
+
+func TestStatusChange_Admin_Deleted_Approved_Banned(t *testing.T) {
+	tstStatusChange_Admin_Unavailable_Banned(t, "st7adm1ban-", status.Deleted, status.Approved)
+}
 
 // TODO transition to cancelled and deleted with more complicated dues / payment histories
 
@@ -1445,6 +1457,43 @@ func tstStatusChange_Admin_Unavailable(t *testing.T, testcase string,
 
 	docs.Then("then the request fails as conflict (409) and the appropriate error is returned")
 	tstRequireErrorResponse(t, response, http.StatusConflict, message, details)
+
+	docs.Then("and the status is unchanged")
+	tstVerifyStatus(t, loc, oldStatus)
+
+	docs.Then("and no dues or payment changes have been recorded")
+	require.Empty(t, paymentMock.Recording())
+
+	docs.Then("and no email messages have been sent")
+	require.Empty(t, mailMock.Recording())
+}
+
+func tstStatusChange_Admin_Unavailable_Banned(t *testing.T, testcase string,
+	oldStatus status.Status, newStatus status.Status,
+) {
+	tstSetup(tstConfigFile(true, false, true))
+	defer tstShutdown()
+
+	docs.Given("given there is a ban rule")
+	ban := tstBuildValidBanRule(testcase)
+	ban.NicknamePattern = "^.*cheetah$"
+	banResponse := tstPerformPost("/api/rest/v1/bans", tstRenderJson(ban), tstValidAdminToken(t))
+	require.Equal(t, http.StatusCreated, banResponse.status, "failed to create ban rule")
+
+	docs.Given("given an attendee in status " + string(oldStatus) + " who matches the rule")
+	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, oldStatus)
+
+	docs.When("when an admin tries to change the status to " + string(newStatus))
+	body := status.StatusChangeDto{
+		Status:  newStatus,
+		Comment: testcase,
+	}
+	response := tstPerformPost(loc+"/status", tstRenderJson(body), tstValidAdminToken(t))
+
+	docs.Then("then the request fails as conflict (409) due to the ban")
+	tstRequireErrorResponse(t, response, http.StatusConflict,
+		"status.ban.match",
+		"this attendee matches a ban rule and cannot be approved, please review and either cancel or set the skip_ban_check admin flag to allow approval")
 
 	docs.Then("and the status is unchanged")
 	tstVerifyStatus(t, loc, oldStatus)

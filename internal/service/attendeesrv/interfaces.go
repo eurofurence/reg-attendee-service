@@ -68,4 +68,5 @@ var (
 	CannotDeleteError        = errors.New("cannot delete attendee for legal reasons (there were payments or invoices)")
 	GoToApprovedFirst        = errors.New("please change status to approved, this will automatically advance to (partially) paid as appropriate")
 	UnknownStatusError       = errors.New("unknown status value - this is a programming error")
+	BanCandidateError        = errors.New("this attendee matches a ban rule and cannot be approved, please review and either cancel or set the skip_ban_check admin flag to allow approval")
 )

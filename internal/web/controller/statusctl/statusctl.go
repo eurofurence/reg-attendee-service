@@ -215,6 +215,8 @@ func statusChangeUnavailableErrorHandler(ctx context.Context, w http.ResponseWri
 		message = "status.cannot.delete"
 	} else if errors.Is(err, attendeesrv.GoToApprovedFirst) {
 		message = "status.use.approved"
+	} else if errors.Is(err, attendeesrv.BanCandidateError) {
+		message = "status.ban.match"
 	}
 	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("unavailable status change attempted: %s - %s", message, err.Error())
 	ctlutil.ErrorHandler(ctx, w, r, message, http.StatusConflict, url.Values{"details": []string{err.Error()}})

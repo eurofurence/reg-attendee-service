@@ -554,6 +554,118 @@ func TestUpdateBanRule_Duplicate(t *testing.T) {
 	require.EqualValues(t, ban2, ban2reread, "ban was unexpectedly changed")
 }
 
+// --- delete a ban rule
+
+func TestDeleteBanRule_Success(t *testing.T) {
+	tstSetup(tstConfigFileIrrelevant())
+	defer tstShutdown()
+
+	docs.Given("given existing ban rules")
+	_, _, _, loc2 := tstCreatePreexistingBans(t, "ban51-")
+
+	docs.Given("given an admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they delete an existing ban rule")
+	response := tstPerformDelete(loc2, token)
+
+	docs.Then("then the request is successful")
+	require.Equal(t, http.StatusNoContent, response.status, "unexpected http response status")
+
+	docs.Then("and the deleted ban is gone")
+	tstRequireBanDbSize(t, 1)
+}
+
+func TestDeleteBanRule_Unauthenticated(t *testing.T) {
+	tstSetup(tstConfigFileIrrelevant())
+	defer tstShutdown()
+
+	docs.Given("given existing ban rules")
+	_, _, ban2, loc2 := tstCreatePreexistingBans(t, "ban52-")
+
+	docs.Given("given an anonymous user")
+
+	docs.When("when they attempt to delete an existing ban rule")
+	response := tstPerformDelete(loc2, tstNoToken())
+
+	docs.Then("then the request is denied as unauthenticated (401) and the correct error is returned")
+	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "you must be logged in for this operation")
+
+	docs.Then("and no change has been made to the ban rule")
+	ban2reread := tstReadBan(t, loc2)
+	require.EqualValues(t, ban2, ban2reread, "ban was unexpectedly changed")
+}
+
+func TestDeleteBanRule_Unauthorized_User(t *testing.T) {
+	tstSetup(tstConfigFileIrrelevant())
+	defer tstShutdown()
+
+	docs.Given("given existing ban rules")
+	_, _, ban2, loc2 := tstCreatePreexistingBans(t, "ban53-")
+
+	docs.Given("given a regular user")
+	token := tstValidUserToken(t, 22)
+
+	docs.When("when they attempt to delete an existing ban rule")
+	response := tstPerformDelete(loc2, token)
+
+	docs.Then("then the request is denied as unauthorized (403) and the correct error is returned")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this operation - the attempt has been logged")
+
+	docs.Then("and no change has been made to the ban rule")
+	ban2reread := tstReadBan(t, loc2)
+	require.EqualValues(t, ban2, ban2reread, "ban was unexpectedly changed")
+}
+
+func TestDeleteBanRule_Unauthorized_Staff(t *testing.T) {
+	tstSetup(tstConfigFileIrrelevant())
+	defer tstShutdown()
+
+	docs.Given("given existing ban rules")
+	_, _, ban2, loc2 := tstCreatePreexistingBans(t, "ban54-")
+
+	docs.Given("given a staffer")
+	token := tstValidStaffToken(t, 42)
+
+	docs.When("when they attempt to delete an existing ban rule")
+	response := tstPerformDelete(loc2, token)
+
+	docs.Then("then the request is denied as unauthorized (403) and the correct error is returned")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this operation - the attempt has been logged")
+
+	docs.Then("and no change has been made to the ban rule")
+	ban2reread := tstReadBan(t, loc2)
+	require.EqualValues(t, ban2, ban2reread, "ban was unexpectedly changed")
+}
+
+func TestDeleteBanRule_InvalidId(t *testing.T) {
+	tstSetup(tstConfigFileIrrelevant())
+	defer tstShutdown()
+
+	docs.Given("given an admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they attempt to delete a ban rule, but supply an invalid id")
+	response := tstPerformDelete("/api/rest/v1/bans/kitten", token)
+
+	docs.Then("then the request fails with the appropriate error")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "ban.id.invalid", url.Values{})
+}
+
+func TestDeleteBanRule_NotFound(t *testing.T) {
+	tstSetup(tstConfigFileIrrelevant())
+	defer tstShutdown()
+
+	docs.Given("given an admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they attempt to delete a ban rule, but supply an id that does not exist")
+	response := tstPerformDelete("/api/rest/v1/bans/46", token)
+
+	docs.Then("then the request fails with the appropriate error")
+	tstRequireErrorResponse(t, response, http.StatusNotFound, "ban.id.notfound", url.Values{})
+}
+
 // helper functions
 
 func tstReadBan(t *testing.T, location string) bans.BanRule {
