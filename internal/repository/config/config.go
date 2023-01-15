@@ -236,14 +236,10 @@ func LatestDueDate() string {
 	return Configuration().Dues.LatestDueDate
 }
 
-func PriceEarlyUntil() string {
-	return Configuration().Dues.PriceEarlyUntil
-}
-
-func PriceLateUntil() string {
-	return Configuration().Dues.PriceLateUntil
-}
-
 func Currency() string {
 	return Configuration().Currency
+}
+
+func VatPercent() float64 {
+	return Configuration().VatPercent
 }

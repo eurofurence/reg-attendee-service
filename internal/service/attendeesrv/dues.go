@@ -20,6 +20,11 @@ func (s *AttendeeServiceImplData) UpdateDuesTransactions(ctx context.Context, at
 		return []paymentservice.Transaction{}, err
 	}
 
+	adminInfo, err := database.GetRepository().GetAdminInfoByAttendeeId(ctx, attendee.ID)
+	if err != nil {
+		return []paymentservice.Transaction{}, err
+	}
+
 	updated := false
 	if newStatus == status.New || newStatus == status.Deleted || newStatus == status.Waiting {
 		updated, err = s.compensateAllDues(ctx, attendee, newStatus, transactionHistory)
@@ -32,7 +37,7 @@ func (s *AttendeeServiceImplData) UpdateDuesTransactions(ctx context.Context, at
 			return transactionHistory, err
 		}
 	} else {
-		updated, err = s.adjustDuesAccordingToSelectedPackages(ctx, attendee, transactionHistory)
+		updated, err = s.adjustDuesAccordingToSelectedPackages(ctx, attendee, adminInfo, transactionHistory)
 		if err != nil {
 			return transactionHistory, err
 		}
@@ -105,9 +110,9 @@ func (s *AttendeeServiceImplData) compensateUnpaidDuesOnCancel(ctx context.Conte
 	return updated, nil
 }
 
-func (s *AttendeeServiceImplData) adjustDuesAccordingToSelectedPackages(ctx context.Context, attendee *entity.Attendee, transactionHistory []paymentservice.Transaction) (bool, error) {
+func (s *AttendeeServiceImplData) adjustDuesAccordingToSelectedPackages(ctx context.Context, attendee *entity.Attendee, adminInfo *entity.AdminInfo, transactionHistory []paymentservice.Transaction) (bool, error) {
 	oldDuesByVAT := s.oldDuesByVAT(transactionHistory)
-	packageDuesByVAT := s.packageDuesByVAT(ctx, attendee)
+	packageDuesByVAT := s.packageDuesByVAT(ctx, attendee, adminInfo)
 	updated := false
 
 	// add missing keys to packageDuesByVAT, so we can just iterate over it and not miss any tax rates
@@ -133,8 +138,12 @@ func (s *AttendeeServiceImplData) adjustDuesAccordingToSelectedPackages(ctx cont
 	return updated, nil
 }
 
-func (s *AttendeeServiceImplData) packageDuesByVAT(ctx context.Context, attendee *entity.Attendee) map[string]int64 {
+func (s *AttendeeServiceImplData) packageDuesByVAT(ctx context.Context, attendee *entity.Attendee, adminInfo *entity.AdminInfo) map[string]int64 {
 	result := make(map[string]int64)
+	// TODO deal with guest
+
+	// TODO consider manual dues
+
 	packageConfigs := config.PackagesConfig()
 	for key, selected := range choiceStrToMap(attendee.Packages, packageConfigs) {
 		if selected {
@@ -144,11 +153,8 @@ func (s *AttendeeServiceImplData) packageDuesByVAT(ctx context.Context, attendee
 			} else {
 				vatStr := fmt.Sprintf("%.6f", packageConfig.VatPercent)
 
-				// TODO IMPORTANT determine whether to use early, late, or atcon dues rate, based on time constraints in config
-				price := packageConfig.PriceEarly
-
 				previous, _ := result[vatStr]
-				result[vatStr] = previous + price
+				result[vatStr] = previous + packageConfig.Price
 			}
 		}
 	}
