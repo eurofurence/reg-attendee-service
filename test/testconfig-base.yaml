@@ -1,5 +1,5 @@
 service:
-  name: 'Registration Attendee Service Testconfig With Login After Staffreg Started'
+  name: 'Registration Attendee Service Testconfig'
 security:
   fixed_token:
     api: 'api-token-for-testing-must-be-pretty-long'
@@ -17,17 +17,11 @@ security:
         mwIDAQAB
         -----END PUBLIC KEY-----
     admin_role: 'admin'
-    early_reg_role: 'staff'
-  cors:
-    disable: true
-    allow_origin: '*'
-  require_login_for_reg: true
+    early_reg_role: ''
 logging:
   severity: DEBUG
 go_live:
-  # public reg has not started yet, so only staff may register
-  start_iso_datetime: '2030-11-28T20:00:00+01:00'
-  early_reg_start_iso_datetime: '2019-10-31T20:00:00+01:00'
+  start_iso_datetime: '2019-10-31T20:00:00+01:00'
 dues:
   earliest_due_date: '2020-01-01'
   latest_due_date: '2099-08-23' # usually last day of convention
@@ -66,6 +60,8 @@ choices:
       default: true
       read_only: true
       at-least-one-mandatory: true
+      constraint: 'stage'
+      constraint_msg: 'Must also choose stage pass with full attendance.'
     stage:
       description: 'Entrance Fee (Stage Ticket)'
       help_url: 'help/fee_stage.html'

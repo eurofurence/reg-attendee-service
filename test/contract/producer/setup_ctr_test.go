@@ -33,7 +33,7 @@ func tstSetup() {
 
 func tstSetupConfig() {
 	aulogging.SetupNoLoggerForTesting()
-	config.LoadTestingConfigurationFromPathOrAbort("../../../test/testconfig-public.yaml")
+	config.LoadTestingConfigurationFromPathOrAbort("../../../test/testconfig-base.yaml")
 }
 
 func tstSetupHttpTestServer() {

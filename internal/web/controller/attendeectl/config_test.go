@@ -32,7 +32,7 @@ func tstShutdown() {
 }
 
 func tstSetupConfig() {
-	config.LoadTestingConfigurationFromPathOrAbort("../../../../test/testconfig-public.yaml")
+	config.LoadTestingConfigurationFromPathOrAbort("../../../../test/testconfig-base.yaml")
 }
 
 type MockAttendeeService struct {

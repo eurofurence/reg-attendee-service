@@ -7,8 +7,8 @@ import (
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/system"
 	"gopkg.in/yaml.v2"
-	"io/ioutil"
 	"net/url"
+	"os"
 	"sort"
 	"sync"
 )
@@ -89,7 +89,7 @@ func parseAndOverwriteConfig(yamlFile []byte) error {
 }
 
 func loadConfiguration() error {
-	yamlFile, err := ioutil.ReadFile(configurationFilename)
+	yamlFile, err := os.ReadFile(configurationFilename)
 	if err != nil {
 		// cannot use logging package here as this would create a circular dependency (logging needs config)
 		aulogging.Logger.NoCtx().Error().Printf("failed to load configuration file '%s': %v", configurationFilename, err)

@@ -19,7 +19,7 @@ import (
 // --- create new ban rule ---
 
 func TestCreateNewBanRule_Success(t *testing.T) {
-	tstSetup(tstConfigFileIrrelevant())
+	tstSetupConfigIrrelevant()
 	defer tstShutdown()
 
 	docs.Given("given an admin")
@@ -41,7 +41,7 @@ func TestCreateNewBanRule_Success(t *testing.T) {
 }
 
 func TestCreateNewBanRule_Unauthenticated(t *testing.T) {
-	tstSetup(tstConfigFileIrrelevant())
+	tstSetupConfigIrrelevant()
 	defer tstShutdown()
 
 	docs.Given("given an anonymous user")
@@ -58,7 +58,7 @@ func TestCreateNewBanRule_Unauthenticated(t *testing.T) {
 }
 
 func TestCreateNewBanRule_Unauthorized_User(t *testing.T) {
-	tstSetup(tstConfigFileIrrelevant())
+	tstSetupConfigIrrelevant()
 	defer tstShutdown()
 
 	docs.Given("given a regular user")
@@ -76,7 +76,7 @@ func TestCreateNewBanRule_Unauthorized_User(t *testing.T) {
 }
 
 func TestCreateNewBanRule_Unauthorized_Staff(t *testing.T) {
-	tstSetup(tstConfigFileIrrelevant())
+	tstSetupConfigIrrelevant()
 	defer tstShutdown()
 
 	docs.Given("given a staffer")
@@ -94,7 +94,7 @@ func TestCreateNewBanRule_Unauthorized_Staff(t *testing.T) {
 }
 
 func TestCreateNewBanRule_InvalidJson(t *testing.T) {
-	tstSetup(tstConfigFileIrrelevant())
+	tstSetupConfigIrrelevant()
 	defer tstShutdown()
 
 	docs.Given("given an admin")
@@ -108,7 +108,7 @@ func TestCreateNewBanRule_InvalidJson(t *testing.T) {
 }
 
 func TestCreateNewBanRule_InvalidValues(t *testing.T) {
-	tstSetup(tstConfigFileIrrelevant())
+	tstSetupConfigIrrelevant()
 	defer tstShutdown()
 
 	docs.Given("given an admin")
@@ -137,7 +137,7 @@ func TestCreateNewBanRule_InvalidValues(t *testing.T) {
 }
 
 func TestCreateNewBanRule_Duplicate(t *testing.T) {
-	tstSetup(tstConfigFileIrrelevant())
+	tstSetupConfigIrrelevant()
 	defer tstShutdown()
 
 	docs.Given("given an admin")
@@ -161,7 +161,7 @@ func TestCreateNewBanRule_Duplicate(t *testing.T) {
 }
 
 func TestCreateNewBanRule_NoDuplicate(t *testing.T) {
-	tstSetup(tstConfigFileIrrelevant())
+	tstSetupConfigIrrelevant()
 	defer tstShutdown()
 
 	docs.Given("given an admin")
@@ -186,7 +186,7 @@ func TestCreateNewBanRule_NoDuplicate(t *testing.T) {
 // --- read all existing ban rules ---
 
 func TestReadBanRules_Success(t *testing.T) {
-	tstSetup(tstConfigFileIrrelevant())
+	tstSetupConfigIrrelevant()
 	defer tstShutdown()
 
 	docs.Given("given existing ban rules")
@@ -209,7 +209,7 @@ func TestReadBanRules_Success(t *testing.T) {
 }
 
 func TestReadBanRules_Unauthenticated(t *testing.T) {
-	tstSetup(tstConfigFileIrrelevant())
+	tstSetupConfigIrrelevant()
 	defer tstShutdown()
 
 	docs.Given("given existing ban rules")
@@ -225,7 +225,7 @@ func TestReadBanRules_Unauthenticated(t *testing.T) {
 }
 
 func TestReadBanRules_Unauthorized_User(t *testing.T) {
-	tstSetup(tstConfigFileIrrelevant())
+	tstSetupConfigIrrelevant()
 	defer tstShutdown()
 
 	docs.Given("given existing ban rules")
@@ -242,7 +242,7 @@ func TestReadBanRules_Unauthorized_User(t *testing.T) {
 }
 
 func TestReadBanRules_Unauthorized_Staff(t *testing.T) {
-	tstSetup(tstConfigFileIrrelevant())
+	tstSetupConfigIrrelevant()
 	defer tstShutdown()
 
 	docs.Given("given existing ban rules")
@@ -261,7 +261,7 @@ func TestReadBanRules_Unauthorized_Staff(t *testing.T) {
 // --- read a single ban rule ---
 
 func TestReadBanRule_Success(t *testing.T) {
-	tstSetup(tstConfigFileIrrelevant())
+	tstSetupConfigIrrelevant()
 	defer tstShutdown()
 
 	docs.Given("given existing ban rules")
@@ -281,7 +281,7 @@ func TestReadBanRule_Success(t *testing.T) {
 }
 
 func TestReadBanRule_Unauthenticated(t *testing.T) {
-	tstSetup(tstConfigFileIrrelevant())
+	tstSetupConfigIrrelevant()
 	defer tstShutdown()
 
 	docs.Given("given existing ban rules")
@@ -297,7 +297,7 @@ func TestReadBanRule_Unauthenticated(t *testing.T) {
 }
 
 func TestReadBanRule_Unauthorized_User(t *testing.T) {
-	tstSetup(tstConfigFileIrrelevant())
+	tstSetupConfigIrrelevant()
 	defer tstShutdown()
 
 	docs.Given("given existing ban rules")
@@ -314,7 +314,7 @@ func TestReadBanRule_Unauthorized_User(t *testing.T) {
 }
 
 func TestReadBanRule_Unauthorized_Staff(t *testing.T) {
-	tstSetup(tstConfigFileIrrelevant())
+	tstSetupConfigIrrelevant()
 	defer tstShutdown()
 
 	docs.Given("given existing ban rules")
@@ -331,7 +331,7 @@ func TestReadBanRule_Unauthorized_Staff(t *testing.T) {
 }
 
 func TestReadBanRule_InvalidId(t *testing.T) {
-	tstSetup(tstConfigFileIrrelevant())
+	tstSetupConfigIrrelevant()
 	defer tstShutdown()
 
 	docs.Given("given an admin")
@@ -345,7 +345,7 @@ func TestReadBanRule_InvalidId(t *testing.T) {
 }
 
 func TestReadBanRule_NotFound(t *testing.T) {
-	tstSetup(tstConfigFileIrrelevant())
+	tstSetupConfigIrrelevant()
 	defer tstShutdown()
 
 	docs.Given("given an admin")
@@ -361,7 +361,7 @@ func TestReadBanRule_NotFound(t *testing.T) {
 // --- update a ban rule
 
 func TestUpdateBanRule_Success(t *testing.T) {
-	tstSetup(tstConfigFileIrrelevant())
+	tstSetupConfigIrrelevant()
 	defer tstShutdown()
 
 	docs.Given("given existing ban rules")
@@ -383,7 +383,7 @@ func TestUpdateBanRule_Success(t *testing.T) {
 }
 
 func TestUpdateBanRule_Unauthenticated(t *testing.T) {
-	tstSetup(tstConfigFileIrrelevant())
+	tstSetupConfigIrrelevant()
 	defer tstShutdown()
 
 	docs.Given("given existing ban rules")
@@ -405,7 +405,7 @@ func TestUpdateBanRule_Unauthenticated(t *testing.T) {
 }
 
 func TestUpdateBanRule_Unauthorized_User(t *testing.T) {
-	tstSetup(tstConfigFileIrrelevant())
+	tstSetupConfigIrrelevant()
 	defer tstShutdown()
 
 	docs.Given("given existing ban rules")
@@ -428,7 +428,7 @@ func TestUpdateBanRule_Unauthorized_User(t *testing.T) {
 }
 
 func TestUpdateBanRule_Unauthorized_Staff(t *testing.T) {
-	tstSetup(tstConfigFileIrrelevant())
+	tstSetupConfigIrrelevant()
 	defer tstShutdown()
 
 	docs.Given("given existing ban rules")
@@ -451,7 +451,7 @@ func TestUpdateBanRule_Unauthorized_Staff(t *testing.T) {
 }
 
 func TestUpdateBanRule_InvalidId(t *testing.T) {
-	tstSetup(tstConfigFileIrrelevant())
+	tstSetupConfigIrrelevant()
 	defer tstShutdown()
 
 	docs.Given("given an admin")
@@ -466,7 +466,7 @@ func TestUpdateBanRule_InvalidId(t *testing.T) {
 }
 
 func TestUpdateBanRule_NotFound(t *testing.T) {
-	tstSetup(tstConfigFileIrrelevant())
+	tstSetupConfigIrrelevant()
 	defer tstShutdown()
 
 	docs.Given("given an admin")
@@ -482,7 +482,7 @@ func TestUpdateBanRule_NotFound(t *testing.T) {
 }
 
 func TestUpdateBanRule_InvalidJson(t *testing.T) {
-	tstSetup(tstConfigFileIrrelevant())
+	tstSetupConfigIrrelevant()
 	defer tstShutdown()
 
 	docs.Given("given existing ban rules")
@@ -503,7 +503,7 @@ func TestUpdateBanRule_InvalidJson(t *testing.T) {
 }
 
 func TestUpdateBanRule_InvalidValues(t *testing.T) {
-	tstSetup(tstConfigFileIrrelevant())
+	tstSetupConfigIrrelevant()
 	defer tstShutdown()
 
 	docs.Given("given existing ban rules")
@@ -528,7 +528,7 @@ func TestUpdateBanRule_InvalidValues(t *testing.T) {
 }
 
 func TestUpdateBanRule_Duplicate(t *testing.T) {
-	tstSetup(tstConfigFileIrrelevant())
+	tstSetupConfigIrrelevant()
 	defer tstShutdown()
 
 	docs.Given("given existing ban rules")
@@ -557,7 +557,7 @@ func TestUpdateBanRule_Duplicate(t *testing.T) {
 // --- delete a ban rule
 
 func TestDeleteBanRule_Success(t *testing.T) {
-	tstSetup(tstConfigFileIrrelevant())
+	tstSetupConfigIrrelevant()
 	defer tstShutdown()
 
 	docs.Given("given existing ban rules")
@@ -577,7 +577,7 @@ func TestDeleteBanRule_Success(t *testing.T) {
 }
 
 func TestDeleteBanRule_Unauthenticated(t *testing.T) {
-	tstSetup(tstConfigFileIrrelevant())
+	tstSetupConfigIrrelevant()
 	defer tstShutdown()
 
 	docs.Given("given existing ban rules")
@@ -597,7 +597,7 @@ func TestDeleteBanRule_Unauthenticated(t *testing.T) {
 }
 
 func TestDeleteBanRule_Unauthorized_User(t *testing.T) {
-	tstSetup(tstConfigFileIrrelevant())
+	tstSetupConfigIrrelevant()
 	defer tstShutdown()
 
 	docs.Given("given existing ban rules")
@@ -618,7 +618,7 @@ func TestDeleteBanRule_Unauthorized_User(t *testing.T) {
 }
 
 func TestDeleteBanRule_Unauthorized_Staff(t *testing.T) {
-	tstSetup(tstConfigFileIrrelevant())
+	tstSetupConfigIrrelevant()
 	defer tstShutdown()
 
 	docs.Given("given existing ban rules")
@@ -639,7 +639,7 @@ func TestDeleteBanRule_Unauthorized_Staff(t *testing.T) {
 }
 
 func TestDeleteBanRule_InvalidId(t *testing.T) {
-	tstSetup(tstConfigFileIrrelevant())
+	tstSetupConfigIrrelevant()
 	defer tstShutdown()
 
 	docs.Given("given an admin")
@@ -653,7 +653,7 @@ func TestDeleteBanRule_InvalidId(t *testing.T) {
 }
 
 func TestDeleteBanRule_NotFound(t *testing.T) {
-	tstSetup(tstConfigFileIrrelevant())
+	tstSetupConfigIrrelevant()
 	defer tstShutdown()
 
 	docs.Given("given an admin")

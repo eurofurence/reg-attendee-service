@@ -18,7 +18,7 @@ import (
 
 func TestAdminDefaults_AnonDeny(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -36,7 +36,7 @@ func TestAdminDefaults_AnonDeny(t *testing.T) {
 
 func TestAdminDefaults_UserDeny(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -54,7 +54,7 @@ func TestAdminDefaults_UserDeny(t *testing.T) {
 
 func TestAdminDefaults_StaffDeny(t *testing.T) {
 	docs.Given("given the configuration for staff registration")
-	tstSetup(tstConfigFile(false, true, true))
+	tstSetup(false, true, true)
 	defer tstShutdown()
 
 	docs.Given("given an authenticated staffer who has registered")
@@ -70,7 +70,7 @@ func TestAdminDefaults_StaffDeny(t *testing.T) {
 
 func TestAdminDefaults_AdminOk(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee right after registration")
@@ -89,7 +89,7 @@ func TestAdminDefaults_AdminOk(t *testing.T) {
 
 func TestReadAdminInfo_NonexistentAttendee(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given a logged in admin")
@@ -104,7 +104,7 @@ func TestReadAdminInfo_NonexistentAttendee(t *testing.T) {
 
 func TestReadAdminInfo_InvalidAttendeeId(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given a logged in admin")
@@ -121,7 +121,7 @@ func TestReadAdminInfo_InvalidAttendeeId(t *testing.T) {
 
 func TestAdminWrite_AnonDeny(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given an unauthenticated user")
@@ -146,7 +146,7 @@ func TestAdminWrite_AnonDeny(t *testing.T) {
 
 func TestAdminWrite_UserDeny(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -171,7 +171,7 @@ func TestAdminWrite_UserDeny(t *testing.T) {
 
 func TestAdminWrite_StaffDeny(t *testing.T) {
 	docs.Given("given the configuration for staff registration")
-	tstSetup(tstConfigFile(false, true, true))
+	tstSetup(false, true, true)
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee who is staff")
@@ -194,7 +194,7 @@ func TestAdminWrite_StaffDeny(t *testing.T) {
 
 func TestAdminWrite_AdminOk(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee right after registration")
@@ -226,7 +226,7 @@ func TestAdminWrite_AdminOk(t *testing.T) {
 
 func TestAdminWrite_NonexistentAttendee(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given a logged in admin")
@@ -244,7 +244,7 @@ func TestAdminWrite_NonexistentAttendee(t *testing.T) {
 
 func TestAdminWrite_InvalidAttendeeId(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given a logged in admin")
@@ -262,7 +262,7 @@ func TestAdminWrite_InvalidAttendeeId(t *testing.T) {
 
 func TestAdminWrite_InvalidBody(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee right after registration")
@@ -281,7 +281,7 @@ func TestAdminWrite_InvalidBody(t *testing.T) {
 
 func TestAdminWrite_CannotChangeId(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -302,7 +302,7 @@ func TestAdminWrite_CannotChangeId(t *testing.T) {
 
 func TestAdminWrite_WrongFlagType(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -334,7 +334,7 @@ func TestAdminWrite_WrongFlagType(t *testing.T) {
 
 func TestSearch_AnonDeny(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -357,7 +357,7 @@ func TestSearch_AnonDeny(t *testing.T) {
 
 func TestSearch_UserDeny(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -380,7 +380,7 @@ func TestSearch_UserDeny(t *testing.T) {
 
 func TestSearch_StaffDeny(t *testing.T) {
 	docs.Given("given the configuration for staff registration")
-	tstSetup(tstConfigFile(false, true, true))
+	tstSetup(false, true, true)
 	defer tstShutdown()
 
 	docs.Given("given an authenticated staffer who has registered")
@@ -401,7 +401,7 @@ func TestSearch_StaffDeny(t *testing.T) {
 
 func TestSearch_AdminOk(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee right after registration")
@@ -458,7 +458,7 @@ func TestSearch_AdminOk(t *testing.T) {
 
 func TestSearch_NonexistentAttendee(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee right after registration")
@@ -487,7 +487,7 @@ func TestSearch_NonexistentAttendee(t *testing.T) {
 
 func TestSearch_InvalidJson(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee right after registration")
