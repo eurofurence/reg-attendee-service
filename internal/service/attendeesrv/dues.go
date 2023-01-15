@@ -14,32 +14,32 @@ import (
 	"strings"
 )
 
-func (s *AttendeeServiceImplData) UpdateDuesTransactions(ctx context.Context, attendee *entity.Attendee, newStatus status.Status) ([]paymentservice.Transaction, error) {
-	transactionHistory, err := paymentservice.Get().GetTransactions(ctx, attendee.ID)
-	if err != nil && !errors.Is(err, paymentservice.NoSuchDebitor404Error) {
-		return []paymentservice.Transaction{}, err
-	}
-
+func (s *AttendeeServiceImplData) UpdateDuesTransactions(ctx context.Context, attendee *entity.Attendee, newStatus status.Status, commentOverride string) ([]paymentservice.Transaction, *entity.AdminInfo, error) {
 	adminInfo, err := database.GetRepository().GetAdminInfoByAttendeeId(ctx, attendee.ID)
 	if err != nil {
-		return []paymentservice.Transaction{}, err
+		return []paymentservice.Transaction{}, adminInfo, err
+	}
+
+	transactionHistory, err := paymentservice.Get().GetTransactions(ctx, attendee.ID)
+	if err != nil && !errors.Is(err, paymentservice.NoSuchDebitor404Error) {
+		return []paymentservice.Transaction{}, adminInfo, err
 	}
 
 	updated := false
 	if newStatus == status.New || newStatus == status.Deleted || newStatus == status.Waiting {
 		updated, err = s.compensateAllDues(ctx, attendee, newStatus, transactionHistory)
 		if err != nil {
-			return transactionHistory, err
+			return transactionHistory, adminInfo, err
 		}
 	} else if newStatus == status.Cancelled {
 		updated, err = s.compensateUnpaidDuesOnCancel(ctx, attendee, transactionHistory)
 		if err != nil {
-			return transactionHistory, err
+			return transactionHistory, adminInfo, err
 		}
 	} else {
-		updated, err = s.adjustDuesAccordingToSelectedPackages(ctx, attendee, adminInfo, transactionHistory)
+		updated, err = s.adjustDuesAccordingToSelectedPackages(ctx, attendee, adminInfo, transactionHistory, commentOverride)
 		if err != nil {
-			return transactionHistory, err
+			return transactionHistory, adminInfo, err
 		}
 	}
 
@@ -47,11 +47,11 @@ func (s *AttendeeServiceImplData) UpdateDuesTransactions(ctx context.Context, at
 	if updated {
 		updatedTransactionHistory, err = paymentservice.Get().GetTransactions(ctx, attendee.ID)
 		if err != nil && !errors.Is(err, paymentservice.NoSuchDebitor404Error) {
-			return []paymentservice.Transaction{}, err
+			return []paymentservice.Transaction{}, adminInfo, err
 		}
 	}
 
-	return updatedTransactionHistory, nil
+	return updatedTransactionHistory, adminInfo, nil
 }
 
 func (s *AttendeeServiceImplData) compensateAllDues(ctx context.Context, attendee *entity.Attendee, newStatus status.Status, transactionHistory []paymentservice.Transaction) (bool, error) {
@@ -110,7 +110,7 @@ func (s *AttendeeServiceImplData) compensateUnpaidDuesOnCancel(ctx context.Conte
 	return updated, nil
 }
 
-func (s *AttendeeServiceImplData) adjustDuesAccordingToSelectedPackages(ctx context.Context, attendee *entity.Attendee, adminInfo *entity.AdminInfo, transactionHistory []paymentservice.Transaction) (bool, error) {
+func (s *AttendeeServiceImplData) adjustDuesAccordingToSelectedPackages(ctx context.Context, attendee *entity.Attendee, adminInfo *entity.AdminInfo, transactionHistory []paymentservice.Transaction, commentOverride string) (bool, error) {
 	oldDuesByVAT := s.oldDuesByVAT(transactionHistory)
 	packageDuesByVAT := s.packageDuesByVAT(ctx, attendee, adminInfo)
 	updated := false
@@ -123,11 +123,16 @@ func (s *AttendeeServiceImplData) adjustDuesAccordingToSelectedPackages(ctx cont
 		}
 	}
 
+	comment := "dues adjustment due to change in status or selected packages"
+	if commentOverride != "" {
+		comment = commentOverride
+	}
+
 	for vatStr, desiredBalance := range packageDuesByVAT {
 		currentBalance, _ := oldDuesByVAT[vatStr]
 		if currentBalance != desiredBalance {
 			updated = true
-			diffTx := s.duesTransactionForAttendee(attendee, desiredBalance-currentBalance, vatStr, "dues adjustment due to change in status or selected packages")
+			diffTx := s.duesTransactionForAttendee(attendee, desiredBalance-currentBalance, vatStr, comment)
 			err := paymentservice.Get().AddTransaction(ctx, diffTx)
 			if err != nil {
 				return updated, err
@@ -140,9 +145,17 @@ func (s *AttendeeServiceImplData) adjustDuesAccordingToSelectedPackages(ctx cont
 
 func (s *AttendeeServiceImplData) packageDuesByVAT(ctx context.Context, attendee *entity.Attendee, adminInfo *entity.AdminInfo) map[string]int64 {
 	result := make(map[string]int64)
-	// TODO deal with guest
 
-	// TODO consider manual dues
+	// consider manual dues before guest status (they might be due a refund from last year, or something)
+	if adminInfo.ManualDues != 0 {
+		vatStr := fmt.Sprintf("%.6f", config.VatPercent())
+		result[vatStr] = adminInfo.ManualDues
+	}
+
+	if s.considerGuest(ctx, adminInfo) {
+		// guests pay nothing for ANY normal packages
+		return result
+	}
 
 	packageConfigs := config.PackagesConfig()
 	for key, selected := range choiceStrToMap(attendee.Packages, packageConfigs) {
@@ -159,6 +172,15 @@ func (s *AttendeeServiceImplData) packageDuesByVAT(ctx context.Context, attendee
 		}
 	}
 	return result
+}
+
+func (s *AttendeeServiceImplData) considerGuest(ctx context.Context, adminInfo *entity.AdminInfo) bool {
+	adminFlagsMap := choiceStrToMap(adminInfo.Flags, config.FlagsConfigAdminOnly())
+	isGuest, ok := adminFlagsMap["guest"]
+	if !ok {
+		aulogging.Logger.Ctx(ctx).Warn().Print("admin only flag 'guest' not configured, skipping")
+	}
+	return isGuest
 }
 
 func (s *AttendeeServiceImplData) oldDuesByVAT(transactionHistory []paymentservice.Transaction) map[string]int64 {

@@ -237,3 +237,9 @@ func tstNewStatusMail(testcase string, newStatus status.Status) mailservice.Mail
 		},
 	}
 }
+
+func tstGuestMail(testcase string) mailservice.MailSendDto {
+	result := tstNewStatusMail(testcase, "paid")
+	result.CommonID = "guest"
+	return result
+}

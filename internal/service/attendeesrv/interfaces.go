@@ -38,7 +38,7 @@ type AttendeeService interface {
 	// If newStatus is one of approved/partially paid/paid, the actual status value written may be any of these three.
 	// This is because depending on package and flag changes (guests attend for free!), the dues may change, and
 	// so paid may turn into partially paid etc.
-	UpdateDuesAndDoStatusChangeIfNeeded(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status, comments string) error
+	UpdateDuesAndDoStatusChangeIfNeeded(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status, statusComment string, overrideDuesComment string) error
 	StatusChangeAllowed(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status) error
 	StatusChangePossible(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status) error
 

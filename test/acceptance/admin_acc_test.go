@@ -4,6 +4,9 @@ import (
 	"github.com/eurofurence/reg-attendee-service/docs"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/admin"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/mailservice"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/paymentservice"
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/url"
@@ -326,6 +329,89 @@ func TestAdminWrite_WrongFlagType(t *testing.T) {
 		Id: attendee1.Id,
 	}
 	tstRequireAdminInfoMatches(t, expectedAdminInfo, response2.body)
+}
+
+// --- guest and manual dues ---
+
+func TestAdminWrite_GuestBeforeApprove(t *testing.T) {
+	testcase := "admguest1-"
+
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an attendee in status new")
+	loc, _ := tstRegisterAttendee(t, testcase)
+
+	docs.Given("given an admin has given them guest status")
+	token := tstValidAdminToken(t)
+	body := admin.AdminInfoDto{
+		Flags:         "guest",
+		AdminComments: "set to guest",
+	}
+	response := tstPerformPut(loc+"/admin", tstRenderJson(body), token)
+	require.Equal(t, http.StatusNoContent, response.status, "unexpected http response status")
+	require.Equal(t, "", response.body, "unexpected response body")
+
+	docs.When("when the attendee is approved")
+	body2 := status.StatusChangeDto{
+		Status:  status.Approved,
+		Comment: "approve after setting to guest",
+	}
+	response2 := tstPerformPost(loc+"/status", tstRenderJson(body2), tstValidAdminToken(t))
+
+	docs.Then("then the status goes right to paid")
+	require.Equal(t, http.StatusNoContent, response2.status)
+	tstVerifyStatus(t, loc, "paid")
+
+	docs.Then("and NO dues were booked in the payment service")
+	tstRequireTransactions(t, []paymentservice.Transaction{})
+
+	docs.Then("and the guest email message was sent via the mail service")
+	tstRequireMailRequests(t, []mailservice.MailSendDto{tstGuestMail(testcase)})
+}
+
+func TestAdminWrite_GuestAfterApprove(t *testing.T) {
+	testcase := "admguest2-"
+
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an attendee in status approved")
+	loc, _ := tstRegisterAttendee(t, testcase)
+	body2 := status.StatusChangeDto{
+		Status:  status.Approved,
+		Comment: "approve before setting to guest",
+	}
+	responseApprove := tstPerformPost(loc+"/status", tstRenderJson(body2), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, responseApprove.status)
+
+	docs.When("when an admin gives them guest status")
+	token := tstValidAdminToken(t)
+	body := admin.AdminInfoDto{
+		Flags:         "guest",
+		AdminComments: "set to guest",
+	}
+	response := tstPerformPut(loc+"/admin", tstRenderJson(body), token)
+	require.Equal(t, http.StatusNoContent, response.status, "unexpected http response status")
+	require.Equal(t, "", response.body, "unexpected response body")
+
+	docs.Then("then the status changes to 'paid'")
+	require.Equal(t, http.StatusNoContent, response.status)
+	tstVerifyStatus(t, loc, status.Paid)
+
+	docs.Then("and the compensating negative dues were booked in the payment service")
+	tstRequireTransactions(t, []paymentservice.Transaction{
+		tstValidAttendeeDues(25500, "dues adjustment due to change in status or selected packages"),
+		tstValidAttendeeDues(-25500, "admin info change"),
+	})
+
+	docs.Then("and the expected email messages were sent via the mail service")
+	tstRequireMailRequests(t, []mailservice.MailSendDto{
+		tstNewStatusMail(testcase, status.Approved),
+		tstGuestMail(testcase),
+	})
 }
 
 // TODO test dues changes caused by setting and removing guest status and corresponding status change logic

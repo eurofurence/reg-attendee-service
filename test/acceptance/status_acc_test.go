@@ -483,7 +483,7 @@ func TestStatusChange_Regdesk_Paid_CheckedIn(t *testing.T) {
 	tstStatusChange_Regdesk_Allow(t, testcase,
 		status.Paid, status.CheckedIn,
 		[]paymentservice.Transaction{},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.CheckedIn)},
+		[]mailservice.MailSendDto{},
 	)
 }
 
@@ -617,7 +617,7 @@ func TestStatusChange_Admin_Approved_CheckedIn(t *testing.T) {
 		status.Approved, status.CheckedIn,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, 25500)},
 		[]paymentservice.Transaction{},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.CheckedIn)},
+		[]mailservice.MailSendDto{},
 	)
 }
 
@@ -692,7 +692,7 @@ func TestStatusChange_Admin_PartiallyPaid_CheckedIn(t *testing.T) {
 		status.PartiallyPaid, status.CheckedIn,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, 10000)},
 		[]paymentservice.Transaction{},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.CheckedIn)},
+		[]mailservice.MailSendDto{},
 	)
 }
 
@@ -792,7 +792,7 @@ func TestStatusChange_Admin_Paid_CheckedIn(t *testing.T) {
 		status.Paid, status.CheckedIn,
 		[]paymentservice.Transaction{},
 		[]paymentservice.Transaction{},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.CheckedIn)},
+		[]mailservice.MailSendDto{},
 	)
 }
 
