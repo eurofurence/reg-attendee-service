@@ -99,6 +99,10 @@ func AllowedOptions() []string {
 	return sortedKeys(Configuration().Choices.Options)
 }
 
+func AllowedPermissions() []string {
+	return []string{"regdesk", "sponsordesk"}
+}
+
 func AllowedTshirtSizes() []string {
 	return Configuration().TShirtSizes
 }

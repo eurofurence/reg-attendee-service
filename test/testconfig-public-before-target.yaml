@@ -63,6 +63,7 @@ choices:
       vat_percent: 19
       default: true
       read_only: true
+      at-least-one-mandatory: true
     stage:
       description: 'Entrance Fee (Stage Ticket)'
       help_url: 'help/fee_stage.html'
@@ -96,6 +97,7 @@ choices:
       price_atcon: 6000
       vat_percent: 19
       read_only: true
+      at-least-one-mandatory: true
       constraint: '!attendance,!stage'
       constraint_msg: 'Must disable Convention Ticket and Stage Ticket for Day Guests.'
     day-fri:
@@ -106,6 +108,7 @@ choices:
       price_atcon: 6000
       vat_percent: 19
       read_only: true
+      at-least-one-mandatory: true
       constraint: '!attendance,!stage'
       constraint_msg: 'Must disable Convention Ticket and Stage Ticket for Day Guests.'
     day-sat:
@@ -116,6 +119,7 @@ choices:
       price_atcon: 6000
       vat_percent: 19
       read_only: true
+      at-least-one-mandatory: true
       constraint: '!attendance,!stage'
       constraint_msg: 'Must disable Convention Ticket and Stage Ticket for Day Guests.'
   options:

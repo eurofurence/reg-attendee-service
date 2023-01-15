@@ -116,9 +116,10 @@ type (
 		PriceLate     int64   `yaml:"price_late"`
 		PriceAtCon    int64   `yaml:"price_atcon"`
 		VatPercent    float64 `yaml:"vat_percent"`
-		Default       bool    `yaml:"default"`    // if set to true, is added to flags by default. Not available for admin only flags!
-		AdminOnly     bool    `yaml:"admin_only"` // this flag is kept under the adminInfo structure, so it is not visible to users
-		ReadOnly      bool    `yaml:"read_only"`  // this flag is kept under the normal flags, thus visible to end user, but only admin can change it
+		Default       bool    `yaml:"default"`                // if set to true, is added to flags by default. Not available for admin only flags!
+		AdminOnly     bool    `yaml:"admin_only"`             // this flag is kept under the adminInfo structure, so it is not visible to users
+		ReadOnly      bool    `yaml:"read_only"`              // this flag is kept under the normal flags, thus visible to end user, but only admin can change it
+		Mandatory     bool    `yaml:"at-least-one-mandatory"` // one of these MUST be chosen (no constraint if not set on any choices)
 		Constraint    string  `yaml:"constraint"`
 		ConstraintMsg string  `yaml:"constraint_msg"`
 	}

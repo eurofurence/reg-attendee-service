@@ -180,7 +180,7 @@ func (s *AttendeeServiceImplData) StatusChangeAllowed(ctx context.Context, atten
 			if err != nil {
 				return err
 			}
-			permissions := choiceStrToMap(adminInfo.Permissions)
+			permissions := commaSeparatedStrToMap(adminInfo.Permissions, config.AllowedPermissions())
 			allowed, _ := permissions["regdesk"]
 			if allowed {
 				aulogging.Logger.Ctx(ctx).Info().Printf("regdesk check in for attendee %d by %s", attendee.ID, subject)

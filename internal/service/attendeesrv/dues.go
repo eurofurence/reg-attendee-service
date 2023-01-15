@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
@@ -106,7 +107,7 @@ func (s *AttendeeServiceImplData) compensateUnpaidDuesOnCancel(ctx context.Conte
 
 func (s *AttendeeServiceImplData) adjustDuesAccordingToSelectedPackages(ctx context.Context, attendee *entity.Attendee, transactionHistory []paymentservice.Transaction) (bool, error) {
 	oldDuesByVAT := s.oldDuesByVAT(transactionHistory)
-	packageDuesByVAT := s.packageDuesByVAT(attendee)
+	packageDuesByVAT := s.packageDuesByVAT(ctx, attendee)
 	updated := false
 
 	// add missing keys to packageDuesByVAT, so we can just iterate over it and not miss any tax rates
@@ -132,14 +133,14 @@ func (s *AttendeeServiceImplData) adjustDuesAccordingToSelectedPackages(ctx cont
 	return updated, nil
 }
 
-func (s *AttendeeServiceImplData) packageDuesByVAT(attendee *entity.Attendee) map[string]int64 {
+func (s *AttendeeServiceImplData) packageDuesByVAT(ctx context.Context, attendee *entity.Attendee) map[string]int64 {
 	result := make(map[string]int64)
-	packageConfigs := config.Configuration().Choices.Packages
-	for key, selected := range choiceStrToMap(attendee.Packages) {
+	packageConfigs := config.PackagesConfig()
+	for key, selected := range choiceStrToMap(attendee.Packages, packageConfigs) {
 		if selected {
 			packageConfig, ok := packageConfigs[key]
 			if !ok {
-				// TODO attendee has package that is not configured - log as error and discard
+				aulogging.Logger.Ctx(ctx).Warn().Printf("attendee id %d has unknown package %s in db - ignoring during dues calculation")
 			} else {
 				vatStr := fmt.Sprintf("%.6f", packageConfig.VatPercent)
 

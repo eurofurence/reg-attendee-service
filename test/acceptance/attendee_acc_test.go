@@ -42,6 +42,24 @@ func TestCreateNewAttendeeInvalid(t *testing.T) {
 	})
 }
 
+func TestCreateNewAttendeeInvalid_NoMandatoryPackage(t *testing.T) {
+	docs.Given("given the configuration for public standard registration")
+	tstSetup(tstConfigFile(false, false, true))
+	defer tstShutdown()
+
+	docs.Given("given an unauthenticated user")
+
+	docs.When("when they create a new attendee, but pick none of the at-least-one-mandatory packages")
+	attendeeSent := tstBuildValidAttendee("nav1b-")
+	attendeeSent.Packages = "room-none,sponsor"
+	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), tstNoToken())
+
+	docs.Then("then the attendee is rejected with an appropriate error response")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
+		"packages": []string{"you must pick at least one of the mandatory options (attendance,day-fri,day-sat,day-thu)"},
+	})
+}
+
 func TestCreateNewAttendeeSyntaxInvalid(t *testing.T) {
 	docs.Given("given the configuration for public standard registration")
 	tstSetup(tstConfigFile(false, false, true))
@@ -90,7 +108,7 @@ func TestCreateNewAttendeeReadOnlyFlag(t *testing.T) {
 
 	docs.Then("then the attendee is rejected with an error response")
 	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
-		"flags": []string{"forbidden change in state of choice key ev - only an admin can do that"},
+		"flags": []string{"forbidden select or deselect of flag ev - only an admin can do that"},
 	})
 }
 
@@ -128,7 +146,7 @@ func TestCreateNewAttendeeDefaultReadOnlyPackage(t *testing.T) {
 
 	docs.Then("then the attendee is rejected with an error response")
 	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
-		"packages": []string{"forbidden change in state of choice key room-none - only an admin can do that"},
+		"packages": []string{"forbidden select or deselect of package room-none - only an admin can do that"},
 	})
 }
 
@@ -682,6 +700,26 @@ func TestUpdateExistingAttendee_Self_ChangeEmail(t *testing.T) {
 	})
 }
 
+func TestUpdateExistingAttendee_Self_NoMandatoryPackages(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(tstConfigFile(false, false, true))
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee")
+	token := tstValidUserToken(t, 101)
+	location1, attendee1 := tstRegisterAttendeeWithToken(t, "ua1b-", token)
+
+	docs.When("when they attempt to change the selected packages, and pick none of the at-least-one-mandatory packages")
+	changedAttendee := attendee1
+	changedAttendee.Packages = "room-none,sponsor"
+	updateResponse := tstPerformPut(location1, tstRenderJson(changedAttendee), token)
+
+	docs.Then("then the request fails with the appropriate error")
+	tstRequireErrorResponse(t, updateResponse, http.StatusBadRequest, "attendee.data.invalid", url.Values{
+		"packages": []string{"you must pick at least one of the mandatory options (attendance,day-fri,day-sat,day-thu)"},
+	})
+}
+
 func TestUpdateExistingAttendee_Other(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
 	tstSetup(tstConfigFile(true, false, true))
@@ -891,7 +929,7 @@ func TestUpdateExistingAttendeeReadOnlyFlag(t *testing.T) {
 
 	docs.Then("then the request is denied with an appropriate error, because only admins can change read only flags")
 	tstRequireErrorResponse(t, updateResponse, http.StatusBadRequest, "attendee.data.invalid", url.Values{
-		"flags": []string{"forbidden change in state of choice key ev - only an admin can do that"},
+		"flags": []string{"forbidden select or deselect of flag ev - only an admin can do that"},
 	})
 
 	docs.Then("and the data remains unchanged")

@@ -78,7 +78,7 @@ func (s *MockAttendeeService) CanChangeEmailTo(ctx context.Context, originalEmai
 	return nil
 }
 
-func (s *MockAttendeeService) CanChangeChoiceTo(ctx context.Context, originalChoiceStr string, newChoiceStr string, configuration map[string]config.ChoiceConfig) error {
+func (s *MockAttendeeService) CanChangeChoiceTo(ctx context.Context, what string, originalChoiceStr string, newChoiceStr string, configuration map[string]config.ChoiceConfig) error {
 	return nil
 }
 
