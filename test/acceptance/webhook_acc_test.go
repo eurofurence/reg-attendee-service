@@ -81,7 +81,7 @@ var subcaseAdmOrApi = []string{
 	"api",
 }
 var subcaseAdmOrApiTokens = []string{
-	valid_JWT_is_admin,
+	valid_JWT_is_admin_sub1234567890,
 	valid_Api_Token_Matches_Test_Configuration_Files,
 }
 

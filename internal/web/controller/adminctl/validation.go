@@ -17,10 +17,10 @@ func validate(ctx context.Context, a *admin.AdminInfoDto, trustedOriginalState *
 		errs.Add("id", "id field must be empty or correctly assigned for incoming requests")
 	}
 
-	validation.CheckCombinationOfAllowedValues(&errs, []string{"admin", "regdesk", "sponsordesk", "view", "stats", "announce", "export_conbook"}, "permissions", a.Permissions)
+	validation.CheckCombinationOfAllowedValues(&errs, config.AllowedPermissions(), "permissions", a.Permissions)
 
 	validation.CheckCombinationOfAllowedValues(&errs, config.AllowedFlagsAdminOnly(), "flags", a.Flags)
-	if err := attendeeService.CanChangeChoiceTo(ctx, trustedOriginalState.Flags, a.Flags, config.FlagsConfigAdminOnly()); err != nil {
+	if err := attendeeService.CanChangeChoiceTo(ctx, "admin flag", trustedOriginalState.Flags, a.Flags, config.FlagsConfigAdminOnly()); err != nil {
 		errs.Add("flags", err.Error())
 	}
 

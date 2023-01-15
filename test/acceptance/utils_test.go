@@ -2,7 +2,6 @@ package acceptance
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/bans"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
@@ -16,7 +15,6 @@ import (
 	"net/http"
 	"strings"
 	"testing"
-	"time"
 )
 
 // placing these here because they are package global
@@ -108,17 +106,16 @@ func tstPerformPost(relativeUrlWithLeadingSlash string, requestBody string, toke
 }
 
 func tstBuildValidAttendee(testcase string) attendee.AttendeeDto {
-	timer := time.Now().UnixNano()
 	return attendee.AttendeeDto{
 		Nickname:             "BlackCheetah",
 		FirstName:            "Hans",
 		LastName:             "Mustermann",
 		Street:               "Teststraße 24",
-		Zip:                  "12345",
+		Zip:                  testcase + "12345",
 		City:                 "Berlin",
 		Country:              "DE",
 		State:                "Sachsen",
-		Email:                testcase + fmt.Sprint(timer) + "-jsquirrel_github_9a6d@packetloss.de",
+		Email:                "jsquirrel_github_9a6d@packetloss.de",
 		Phone:                "+49-30-123",
 		Telegram:             "@ihopethisuserdoesnotexist",
 		Birthday:             "1998-11-23",
@@ -197,12 +194,12 @@ func tstNewStatusMail(testcase string, newStatus status.Status) mailservice.Mail
 	return mailservice.MailSendDto{
 		CommonID: "change-status-" + string(newStatus),
 		Lang:     "en-US",
-		To:       []string{testcase},
+		To:       []string{"jsquirrel_github_9a6d@packetloss.de"},
 		Variables: map[string]string{
 			"badge_number":               "1",
 			"badge_number_with_checksum": "TODO",
 			"nickname":                   "BlackCheetah",
-			"email":                      testcase,
+			"email":                      "jsquirrel_github_9a6d@packetloss.de",
 			"reason":                     "TODO cancel reason",
 			"remaining_dues":             "TODO remaining dues",
 			"total_dues":                 "TODO total dues",

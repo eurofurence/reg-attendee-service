@@ -195,6 +195,8 @@ func attendeeWriteErrorHandler(ctx context.Context, w http.ResponseWriter, r *ht
 		ctlutil.ErrorHandler(ctx, w, r, "attendee.data.duplicate", http.StatusConflict, url.Values{"attendee": {"there is already an attendee with this information (looking at nickname, email, and zip code)"}})
 	} else if err.Error() == "duplicate - must use a separate email address and identity account for each person" {
 		ctlutil.ErrorHandler(ctx, w, r, "attendee.user.duplicate", http.StatusConflict, url.Values{"user": {"you already have a registration - please use a separate email address and matching account per person"}})
+	} else if err.Error() == "your changes would lead to duplicate attendee data - same nickname, zip, email" {
+		ctlutil.ErrorHandler(ctx, w, r, "attendee.user.duplicate", http.StatusConflict, url.Values{"attendee": {"your changes would lead to duplicate attendee data - same nickname, zip, email"}})
 	} else {
 		ctlutil.ErrorHandler(ctx, w, r, "attendee.write.error", http.StatusInternalServerError, url.Values{})
 	}

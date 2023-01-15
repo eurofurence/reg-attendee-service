@@ -62,7 +62,10 @@ choices:
       price_atcon: 12500
       vat_percent: 19
       default: true
-      read_only: true
+      read_only: false # allow deselecting so we can test at-least-one-mandatory
+      at-least-one-mandatory: true
+      constraint: 'stage'
+      constraint_msg: 'Must also choose stage pass with full attendance.'
     stage:
       description: 'Entrance Fee (Stage Ticket)'
       help_url: 'help/fee_stage.html'
@@ -71,7 +74,7 @@ choices:
       price_atcon: 500
       vat_percent: 19
       default: true
-      read_only: true
+      read_only: false # allow deselecting so we can test at-least-one-mandatory
     sponsor:
       description: 'Sponsor Upgrade'
       help_url: 'help/fee_sponsor.html'
@@ -96,6 +99,7 @@ choices:
       price_atcon: 6000
       vat_percent: 19
       read_only: true
+      at-least-one-mandatory: true
       constraint: '!attendance,!stage'
       constraint_msg: 'Must disable Convention Ticket and Stage Ticket for Day Guests.'
     day-fri:
@@ -106,6 +110,7 @@ choices:
       price_atcon: 6000
       vat_percent: 19
       read_only: true
+      at-least-one-mandatory: true
       constraint: '!attendance,!stage'
       constraint_msg: 'Must disable Convention Ticket and Stage Ticket for Day Guests.'
     day-sat:
@@ -116,6 +121,7 @@ choices:
       price_atcon: 6000
       vat_percent: 19
       read_only: true
+      at-least-one-mandatory: true
       constraint: '!attendance,!stage'
       constraint_msg: 'Must disable Convention Ticket and Stage Ticket for Day Guests.'
   options:

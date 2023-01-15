@@ -1543,7 +1543,7 @@ func tstRequireAttendeeStatus(t *testing.T, expected status.Status, responseBody
 func tstRegisterRegdeskAttendee(t *testing.T, testcase string) string {
 	token := tstValidUserToken(t, 101)
 
-	loc2, _ := tstRegisterAttendeeWithToken(t, testcase+"second", token)
+	loc2, _ := tstRegisterAttendeeWithToken(t, testcase+"2nd", token)
 	permBody := admin.AdminInfoDto{
 		Permissions: "regdesk",
 	}

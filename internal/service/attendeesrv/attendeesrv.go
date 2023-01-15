@@ -9,6 +9,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
+	"sort"
 	"strings"
 	"time"
 )
@@ -89,17 +90,57 @@ func (s *AttendeeServiceImplData) GetAttendeeMaxId(ctx context.Context) (uint, e
 	return max, err
 }
 
-func (s *AttendeeServiceImplData) CanChangeChoiceTo(ctx context.Context, originalChoiceStr string, newChoiceStr string, configuration map[string]config.ChoiceConfig) error {
-	originalChoices := choiceStrToMap(originalChoiceStr)
-	newChoices := choiceStrToMap(newChoiceStr)
+func (s *AttendeeServiceImplData) CanChangeEmailTo(ctx context.Context, originalEmail string, newEmail string) error {
+	if !config.RequireLoginForReg() {
+		// cannot validate here, need separate validation step
+		return nil
+	}
+
+	if originalEmail == newEmail {
+		// allow even normal users to keep an email once set by an admin
+		return nil
+	}
+
+	if ctxvalues.IsAuthorizedAsRole(ctx, config.OidcAdminRole()) || ctxvalues.HasApiToken(ctx) {
+		// allow admins or api token to set anything
+		return nil
+	}
+
+	if ctxvalues.Email(ctx) == newEmail {
+		// anyone can set their own email address, as validated by IDP - we already know not empty
+		return nil
+	}
+
+	return errors.New("you can only use the email address you're logged in with")
+}
+
+func (s *AttendeeServiceImplData) CanChangeChoiceTo(ctx context.Context, what string, originalChoiceStr string, newChoiceStr string, configuration map[string]config.ChoiceConfig) error {
+	originalChoices := choiceStrToMap(originalChoiceStr, configuration)
+	newChoices := choiceStrToMap(newChoiceStr, configuration)
+	oneIsMandatory := false
+	satisfiesOneIsMandatory := false
+	mandatoryList := make([]string, 0)
 	for k, v := range configuration {
-		if err := checkNoForbiddenChanges(ctx, k, v, originalChoices, newChoices); err != nil {
+		if err := checkNoForbiddenChanges(ctx, what, k, v, originalChoices, newChoices); err != nil {
 			return err
 		}
 		if err := checkNoConstraintViolation(k, v, newChoices); err != nil {
 			return err
 		}
+		if v.Mandatory {
+			oneIsMandatory = true
+			mandatoryList = append(mandatoryList, k)
+			if newChoices[k] {
+				satisfiesOneIsMandatory = true
+			}
+		}
 	}
+
+	if oneIsMandatory && !satisfiesOneIsMandatory {
+		sort.Strings(mandatoryList)
+		return fmt.Errorf("you must pick at least one of the mandatory options (%s)", strings.Join(mandatoryList, ","))
+	}
+
 	return nil
 }
 
@@ -126,12 +167,12 @@ func (s *AttendeeServiceImplData) CanRegisterAtThisTime(ctx context.Context) err
 	return nil
 }
 
-func isDuplicateAttendee(ctx context.Context, nickname string, zip string, email string, expectedCount int64) (bool, error) {
+func isDuplicateAttendee(ctx context.Context, nickname string, zip string, email string, expectedCountMax int64) (bool, error) {
 	count, err := database.GetRepository().CountAttendeesByNicknameZipEmail(ctx, nickname, zip, email)
 	if err != nil {
 		return false, err
 	}
-	return count != expectedCount, nil
+	return count > expectedCountMax, nil
 }
 
 func userAlreadyHasAnotherRegistration(ctx context.Context, identity string, expectedCount int64) (bool, error) {
@@ -146,11 +187,11 @@ func userAlreadyHasAnotherRegistration(ctx context.Context, identity string, exp
 	return count != expectedCount, nil
 }
 
-func checkNoForbiddenChanges(ctx context.Context, key string, choiceConfig config.ChoiceConfig, originalChoices map[string]bool, newChoices map[string]bool) error {
+func checkNoForbiddenChanges(ctx context.Context, what string, key string, choiceConfig config.ChoiceConfig, originalChoices map[string]bool, newChoices map[string]bool) error {
 	if choiceConfig.AdminOnly || choiceConfig.ReadOnly {
 		if originalChoices[key] != newChoices[key] {
 			if !ctxvalues.HasApiToken(ctx) && !ctxvalues.IsAuthorizedAsRole(ctx, config.OidcAdminRole()) {
-				return errors.New("forbidden change in state of choice key " + key + " - only an admin can do that")
+				return fmt.Errorf("forbidden select or deselect of %s %s - only an admin can do that", what, key)
 			}
 		}
 	}
@@ -177,8 +218,27 @@ func checkNoConstraintViolation(key string, choiceConfig config.ChoiceConfig, ne
 	return nil
 }
 
-func choiceStrToMap(choiceStr string) map[string]bool {
+func choiceStrToMap(choiceStr string, configuration map[string]config.ChoiceConfig) map[string]bool {
 	result := make(map[string]bool)
+	// ensure all available keys present
+	for k, _ := range configuration {
+		result[k] = false
+	}
+	if choiceStr != "" {
+		choices := strings.Split(choiceStr, ",")
+		for _, pickedKey := range choices {
+			result[pickedKey] = true
+		}
+	}
+	return result
+}
+
+func commaSeparatedStrToMap(choiceStr string, allowedValues []string) map[string]bool {
+	result := make(map[string]bool)
+	// ensure all available values present
+	for _, k := range allowedValues {
+		result[k] = false
+	}
 	if choiceStr != "" {
 		choices := strings.Split(choiceStr, ",")
 		for _, pickedKey := range choices {
