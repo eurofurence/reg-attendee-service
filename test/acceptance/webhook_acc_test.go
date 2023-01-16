@@ -15,7 +15,7 @@ import (
 // --- error cases
 
 func TestPaymentsChangedWebhook_InvalidAttendeeId(t *testing.T) {
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.When("when the payments-changed webhook is invoked with an invalid attendee id")
@@ -26,7 +26,7 @@ func TestPaymentsChangedWebhook_InvalidAttendeeId(t *testing.T) {
 }
 
 func TestPaymentsChangedWebhook_NonexistentAttendee(t *testing.T) {
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.When("when the payments-changed webhook is invoked with an attendee id that does not exist")
@@ -349,7 +349,7 @@ func tstStatusChange_Webhook_Success_WithToken(t *testing.T, testcase string,
 	expectedNewStatus status.Status,
 	expectedMailRequests []mailservice.MailSendDto,
 ) {
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given an attendee in status " + string(oldStatus))
@@ -397,7 +397,7 @@ func tstStatusChange_Webhook_Ignored_WithToken(t *testing.T, testcase string,
 	oldStatus status.Status,
 	injectExtraTransactions []paymentservice.Transaction,
 ) {
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given an attendee in status " + string(oldStatus))
@@ -434,7 +434,7 @@ func tstStatusChange_Webhook_Decline(t *testing.T, testcase string,
 	injectExtraTransactions []paymentservice.Transaction,
 	expectedHttpStatus int,
 ) {
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given an attendee in status " + string(oldStatus))

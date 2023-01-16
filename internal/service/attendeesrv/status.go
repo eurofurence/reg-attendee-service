@@ -46,13 +46,13 @@ func (s *AttendeeServiceImplData) GetFullStatusHistory(ctx context.Context, atte
 	return result, nil
 }
 
-func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status, comments string) error {
+func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status, statusComment string, overrideDuesComment string) error {
 	// controller checks value validity
 	// controller checks permission via StatusChangeAllowed
 	// controller checks precondition via StatusChangePossible
 	// attendee has been loaded from db in all cases
 
-	updatedTransactionHistory, err := s.UpdateDuesTransactions(ctx, attendee, newStatus)
+	updatedTransactionHistory, adminInfo, err := s.UpdateDuesTransactions(ctx, attendee, newStatus, overrideDuesComment)
 	if err != nil {
 		return err
 	}
@@ -66,7 +66,7 @@ func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx contex
 		change := entity.StatusChange{
 			AttendeeId: attendee.ID,
 			Status:     newStatus,
-			Comments:   comments,
+			Comments:   statusComment,
 		}
 		err = database.GetRepository().AddStatusChange(ctx, &change)
 		if err != nil {
@@ -85,8 +85,8 @@ func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx contex
 			}
 		}
 
-		if newStatus != status.Deleted {
-			err = s.sendStatusChangeNotificationEmail(ctx, attendee, newStatus, err)
+		if newStatus != status.Deleted && newStatus != status.CheckedIn {
+			err = s.sendStatusChangeNotificationEmail(ctx, attendee, adminInfo, newStatus, err)
 			if err != nil {
 				return err
 			}
@@ -96,7 +96,7 @@ func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx contex
 	return nil
 }
 
-func (s *AttendeeServiceImplData) sendStatusChangeNotificationEmail(ctx context.Context, attendee *entity.Attendee, newStatus status.Status, err error) error {
+func (s *AttendeeServiceImplData) sendStatusChangeNotificationEmail(ctx context.Context, attendee *entity.Attendee, adminInfo *entity.AdminInfo, newStatus status.Status, err error) error {
 	mailDto := mailservice.MailSendDto{
 		CommonID: "change-status-" + string(newStatus),
 		Lang:     removeWrappingCommasWithDefault(attendee.RegistrationLanguage, "en-US"),
@@ -124,6 +124,13 @@ func (s *AttendeeServiceImplData) sendStatusChangeNotificationEmail(ctx context.
 		},
 		To: []string{attendee.Email},
 	}
+
+	if s.considerGuest(ctx, adminInfo) {
+		if newStatus == status.Approved || newStatus == status.PartiallyPaid || newStatus == status.Paid {
+			mailDto.CommonID = "guest"
+		}
+	}
+
 	err = mailservice.Get().SendEmail(ctx, mailDto)
 	if err != nil {
 		return err
@@ -209,6 +216,11 @@ func (s *AttendeeServiceImplData) StatusChangePossible(ctx context.Context, atte
 	case status.Waiting:
 		return s.checkZeroOrNegativePaymentBalance(ctx, attendee, transactionHistory)
 	case status.Approved:
+		if oldStatus == status.New || oldStatus == status.Waiting || oldStatus == status.Cancelled || oldStatus == status.Deleted {
+			if err := s.matchesBan(ctx, attendee); err != nil {
+				return err
+			}
+		}
 		return s.checkZeroOrNegativePaymentBalance(ctx, attendee, transactionHistory)
 	case status.PartiallyPaid:
 		if oldStatus == status.New || oldStatus == status.Waiting || oldStatus == status.Cancelled || oldStatus == status.Deleted {

@@ -38,7 +38,7 @@ type AttendeeService interface {
 	// If newStatus is one of approved/partially paid/paid, the actual status value written may be any of these three.
 	// This is because depending on package and flag changes (guests attend for free!), the dues may change, and
 	// so paid may turn into partially paid etc.
-	UpdateDuesAndDoStatusChangeIfNeeded(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status, comments string) error
+	UpdateDuesAndDoStatusChangeIfNeeded(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status, statusComment string, overrideDuesComment string) error
 	StatusChangeAllowed(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status) error
 	StatusChangePossible(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status) error
 
@@ -68,4 +68,5 @@ var (
 	CannotDeleteError        = errors.New("cannot delete attendee for legal reasons (there were payments or invoices)")
 	GoToApprovedFirst        = errors.New("please change status to approved, this will automatically advance to (partially) paid as appropriate")
 	UnknownStatusError       = errors.New("unknown status value - this is a programming error")
+	BanCandidateError        = errors.New("this attendee matches a ban rule and cannot be approved, please review and either cancel or set the skip_ban_check admin flag to allow approval")
 )

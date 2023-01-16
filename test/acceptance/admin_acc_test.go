@@ -4,6 +4,9 @@ import (
 	"github.com/eurofurence/reg-attendee-service/docs"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/admin"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/mailservice"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/paymentservice"
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/url"
@@ -18,7 +21,7 @@ import (
 
 func TestAdminDefaults_AnonDeny(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -36,7 +39,7 @@ func TestAdminDefaults_AnonDeny(t *testing.T) {
 
 func TestAdminDefaults_UserDeny(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -54,7 +57,7 @@ func TestAdminDefaults_UserDeny(t *testing.T) {
 
 func TestAdminDefaults_StaffDeny(t *testing.T) {
 	docs.Given("given the configuration for staff registration")
-	tstSetup(tstConfigFile(false, true, true))
+	tstSetup(false, true, true)
 	defer tstShutdown()
 
 	docs.Given("given an authenticated staffer who has registered")
@@ -70,7 +73,7 @@ func TestAdminDefaults_StaffDeny(t *testing.T) {
 
 func TestAdminDefaults_AdminOk(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee right after registration")
@@ -89,7 +92,7 @@ func TestAdminDefaults_AdminOk(t *testing.T) {
 
 func TestReadAdminInfo_NonexistentAttendee(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given a logged in admin")
@@ -104,7 +107,7 @@ func TestReadAdminInfo_NonexistentAttendee(t *testing.T) {
 
 func TestReadAdminInfo_InvalidAttendeeId(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given a logged in admin")
@@ -121,7 +124,7 @@ func TestReadAdminInfo_InvalidAttendeeId(t *testing.T) {
 
 func TestAdminWrite_AnonDeny(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given an unauthenticated user")
@@ -146,7 +149,7 @@ func TestAdminWrite_AnonDeny(t *testing.T) {
 
 func TestAdminWrite_UserDeny(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -171,7 +174,7 @@ func TestAdminWrite_UserDeny(t *testing.T) {
 
 func TestAdminWrite_StaffDeny(t *testing.T) {
 	docs.Given("given the configuration for staff registration")
-	tstSetup(tstConfigFile(false, true, true))
+	tstSetup(false, true, true)
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee who is staff")
@@ -194,7 +197,7 @@ func TestAdminWrite_StaffDeny(t *testing.T) {
 
 func TestAdminWrite_AdminOk(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee right after registration")
@@ -226,7 +229,7 @@ func TestAdminWrite_AdminOk(t *testing.T) {
 
 func TestAdminWrite_NonexistentAttendee(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given a logged in admin")
@@ -244,7 +247,7 @@ func TestAdminWrite_NonexistentAttendee(t *testing.T) {
 
 func TestAdminWrite_InvalidAttendeeId(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given a logged in admin")
@@ -262,7 +265,7 @@ func TestAdminWrite_InvalidAttendeeId(t *testing.T) {
 
 func TestAdminWrite_InvalidBody(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee right after registration")
@@ -281,7 +284,7 @@ func TestAdminWrite_InvalidBody(t *testing.T) {
 
 func TestAdminWrite_CannotChangeId(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -302,7 +305,7 @@ func TestAdminWrite_CannotChangeId(t *testing.T) {
 
 func TestAdminWrite_WrongFlagType(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -328,13 +331,502 @@ func TestAdminWrite_WrongFlagType(t *testing.T) {
 	tstRequireAdminInfoMatches(t, expectedAdminInfo, response2.body)
 }
 
-// TODO test dues changes caused by setting and removing guest status and corresponding status change logic
+// --- guest and manual dues ---
+
+func TestAdminWrite_GuestBeforeApprove(t *testing.T) {
+	testcase := "admguest1-"
+
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an attendee in status new")
+	loc, _ := tstRegisterAttendee(t, testcase)
+
+	docs.Given("given an admin has given them guest status")
+	token := tstValidAdminToken(t)
+	body := admin.AdminInfoDto{
+		Flags:         "guest",
+		AdminComments: "set to guest",
+	}
+	response := tstPerformPut(loc+"/admin", tstRenderJson(body), token)
+	require.Equal(t, http.StatusNoContent, response.status, "unexpected http response status")
+	require.Equal(t, "", response.body, "unexpected response body")
+
+	docs.When("when the attendee is approved")
+	body2 := status.StatusChangeDto{
+		Status:  status.Approved,
+		Comment: "approve after setting to guest",
+	}
+	response2 := tstPerformPost(loc+"/status", tstRenderJson(body2), tstValidAdminToken(t))
+
+	docs.Then("then the status goes right to paid")
+	require.Equal(t, http.StatusNoContent, response2.status)
+	tstVerifyStatus(t, loc, "paid")
+
+	docs.Then("and NO dues were booked in the payment service")
+	tstRequireTransactions(t, []paymentservice.Transaction{})
+
+	docs.Then("and the guest email message was sent via the mail service")
+	tstRequireMailRequests(t, []mailservice.MailSendDto{tstGuestMail(testcase)})
+}
+
+func TestAdminWrite_GuestAfterApprove(t *testing.T) {
+	testcase := "admguest2-"
+
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an attendee in status approved")
+	loc, _ := tstRegisterAttendee(t, testcase)
+	body2 := status.StatusChangeDto{
+		Status:  status.Approved,
+		Comment: "approve before setting to guest",
+	}
+	responseApprove := tstPerformPost(loc+"/status", tstRenderJson(body2), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, responseApprove.status)
+
+	docs.When("when an admin gives them guest status")
+	token := tstValidAdminToken(t)
+	body := admin.AdminInfoDto{
+		Flags:         "guest",
+		AdminComments: "set to guest",
+	}
+	response := tstPerformPut(loc+"/admin", tstRenderJson(body), token)
+	require.Equal(t, http.StatusNoContent, response.status, "unexpected http response status")
+	require.Equal(t, "", response.body, "unexpected response body")
+
+	docs.Then("then the status changes to 'paid'")
+	require.Equal(t, http.StatusNoContent, response.status)
+	tstVerifyStatus(t, loc, status.Paid)
+
+	docs.Then("and the compensating negative dues were booked in the payment service")
+	tstRequireTransactions(t, []paymentservice.Transaction{
+		tstValidAttendeeDues(25500, "dues adjustment due to change in status or selected packages"),
+		tstValidAttendeeDues(-25500, "admin info change"),
+	})
+
+	docs.Then("and the expected email messages were sent via the mail service")
+	tstRequireMailRequests(t, []mailservice.MailSendDto{
+		tstNewStatusMail(testcase, status.Approved),
+		tstGuestMail(testcase),
+	})
+}
+
+func TestAdminWrite_CancelledGuest(t *testing.T) {
+	testcase := "admguest3-"
+
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given a guest attendee in status paid")
+	loc, _ := tstRegisterAttendee(t, testcase)
+	bodyApprove := status.StatusChangeDto{
+		Status:  status.Approved,
+		Comment: "approve before setting to guest",
+	}
+	responseApprove := tstPerformPost(loc+"/status", tstRenderJson(bodyApprove), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, responseApprove.status)
+
+	token := tstValidAdminToken(t)
+	bodyGuest := admin.AdminInfoDto{
+		Flags:         "guest",
+		AdminComments: "set to guest",
+	}
+	response := tstPerformPut(loc+"/admin", tstRenderJson(bodyGuest), token)
+	require.Equal(t, http.StatusNoContent, response.status, "unexpected http response status")
+
+	docs.When("when an admin changes their status to cancelled")
+	bodyCancel := status.StatusChangeDto{
+		Status:  status.Cancelled,
+		Comment: "guest set to status cancelled",
+	}
+	responseCancel := tstPerformPost(loc+"/status", tstRenderJson(bodyCancel), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, responseCancel.status)
+
+	docs.Then("then the status changes to 'cancelled'")
+	tstVerifyStatus(t, loc, status.Cancelled)
+
+	docs.Then("and the expected transactions were booked in the payment service")
+	tstRequireTransactions(t, []paymentservice.Transaction{
+		tstValidAttendeeDues(25500, "dues adjustment due to change in status or selected packages"),
+		tstValidAttendeeDues(-25500, "admin info change"),
+		// the change introduces no further transactions
+	})
+
+	docs.Then("and the expected email messages were sent via the mail service")
+	tstRequireMailRequests(t, []mailservice.MailSendDto{
+		tstNewStatusMail(testcase, status.Approved),
+		tstGuestMail(testcase),
+		tstNewStatusMail(testcase, status.Cancelled),
+	})
+}
+
+func TestAdminWrite_GuestMadeNormal(t *testing.T) {
+	testcase := "admguest4-"
+
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given a guest attendee in status paid")
+	loc, _ := tstRegisterAttendee(t, testcase)
+	bodyApprove := status.StatusChangeDto{
+		Status:  status.Approved,
+		Comment: "approve before setting to guest",
+	}
+	responseApprove := tstPerformPost(loc+"/status", tstRenderJson(bodyApprove), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, responseApprove.status)
+
+	token := tstValidAdminToken(t)
+	bodyGuest := admin.AdminInfoDto{
+		Flags:         "guest",
+		AdminComments: "set to guest",
+	}
+	response := tstPerformPut(loc+"/admin", tstRenderJson(bodyGuest), token)
+	require.Equal(t, http.StatusNoContent, response.status, "unexpected http response status")
+
+	docs.When("when an admin removes the guest admin flag")
+	bodyGuestRevoke := admin.AdminInfoDto{
+		Flags:         "",
+		AdminComments: "removed guest again",
+	}
+	responseRevoke := tstPerformPut(loc+"/admin", tstRenderJson(bodyGuestRevoke), token)
+	require.Equal(t, http.StatusNoContent, responseRevoke.status, "unexpected http response status")
+
+	docs.Then("then the status changes to 'approved'")
+	tstVerifyStatus(t, loc, status.Approved)
+
+	docs.Then("and the expected transactions were booked in the payment service")
+	tstRequireTransactions(t, []paymentservice.Transaction{
+		tstValidAttendeeDues(25500, "dues adjustment due to change in status or selected packages"),
+		tstValidAttendeeDues(-25500, "admin info change"),
+		tstValidAttendeeDues(25500, "admin info change"),
+	})
+
+	docs.Then("and the expected email messages were sent via the mail service")
+	tstRequireMailRequests(t, []mailservice.MailSendDto{
+		tstNewStatusMail(testcase, status.Approved),
+		tstGuestMail(testcase),
+		tstNewStatusMail(testcase, status.Approved),
+	})
+}
+
+func TestAdminWrite_ManualDuesPositive_BeforeApprove(t *testing.T) {
+	testcase := "admman1-"
+
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an attendee in status new")
+	loc, _ := tstRegisterAttendee(t, testcase)
+
+	docs.Given("given an admin has added positive manual dues")
+	bodyManual := admin.AdminInfoDto{
+		ManualDues:            8000,
+		ManualDuesDescription: "you still need to pay for last year",
+	}
+	responseManual := tstPerformPut(loc+"/admin", tstRenderJson(bodyManual), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, responseManual.status, "unexpected http response status")
+	require.Equal(t, "", responseManual.body, "unexpected response body")
+
+	docs.When("when the attendee is approved")
+	bodyApprove := status.StatusChangeDto{
+		Status:  status.Approved,
+		Comment: "approve after manual dues",
+	}
+	responseApprove := tstPerformPost(loc+"/status", tstRenderJson(bodyApprove), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, responseApprove.status)
+
+	docs.Then("then the status changes to 'approved'")
+	tstVerifyStatus(t, loc, status.Approved)
+
+	docs.Then("and the expected dues were booked in the payment service")
+	tstRequireTransactions(t, []paymentservice.Transaction{
+		tstValidAttendeeDues(33500, "dues adjustment due to change in status or selected packages"),
+	})
+
+	docs.Then("and the expected email messages were sent via the mail service")
+	tstRequireMailRequests(t, []mailservice.MailSendDto{
+		tstNewStatusMail(testcase, status.Approved),
+	})
+}
+
+func TestAdminWrite_ManualDuesPositive_AfterApprove(t *testing.T) {
+	testcase := "admman2-"
+
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an attendee in status approved")
+	loc, _ := tstRegisterAttendee(t, testcase)
+	bodyApprove := status.StatusChangeDto{
+		Status:  status.Approved,
+		Comment: "approve before setting manual dues",
+	}
+	responseApprove := tstPerformPost(loc+"/status", tstRenderJson(bodyApprove), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, responseApprove.status)
+
+	docs.When("when an admin adds manual dues")
+	bodyManual := admin.AdminInfoDto{
+		ManualDues:            8000,
+		ManualDuesDescription: "you still need to pay for last year",
+	}
+	responseManual := tstPerformPut(loc+"/admin", tstRenderJson(bodyManual), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, responseManual.status, "unexpected http response status")
+	require.Equal(t, "", responseManual.body, "unexpected response body")
+
+	docs.Then("then the status remains on 'approved'")
+	tstVerifyStatus(t, loc, status.Approved)
+
+	docs.Then("and the expected dues were booked in the payment service")
+	tstRequireTransactions(t, []paymentservice.Transaction{
+		tstValidAttendeeDues(25500, "dues adjustment due to change in status or selected packages"),
+		tstValidAttendeeDues(8000, "you still need to pay for last year"),
+	})
+
+	docs.Then("and the expected email messages were sent via the mail service")
+	tstRequireMailRequests(t, []mailservice.MailSendDto{
+		tstNewStatusMail(testcase, status.Approved),
+	})
+}
+
+func TestAdminWrite_ManualDuesPositive_AfterPaid(t *testing.T) {
+	testcase := "admman3-"
+
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an attendee in status paid")
+	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, status.Paid)
+
+	docs.When("when an admin adds manual dues")
+	bodyManual := admin.AdminInfoDto{
+		ManualDues:            8000,
+		ManualDuesDescription: "you still need to pay for last year",
+	}
+	responseManual := tstPerformPut(loc+"/admin", tstRenderJson(bodyManual), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, responseManual.status, "unexpected http response status")
+	require.Equal(t, "", responseManual.body, "unexpected response body")
+
+	docs.Then("then the status goes back to 'partially paid'")
+	tstVerifyStatus(t, loc, status.PartiallyPaid)
+
+	docs.Then("and the expected dues were booked in the payment service")
+	tstRequireTransactions(t, []paymentservice.Transaction{
+		tstValidAttendeeDues(8000, "you still need to pay for last year"),
+	})
+
+	docs.Then("and the expected email messages were sent via the mail service")
+	tstRequireMailRequests(t, []mailservice.MailSendDto{
+		tstNewStatusMail(testcase, status.PartiallyPaid),
+	})
+}
+
+func TestAdminWrite_ManualDuesPositive_AfterCheckedIn(t *testing.T) {
+	testcase := "admman4-"
+
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an attendee in status checked in")
+	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, status.CheckedIn)
+
+	docs.When("when an admin adds manual dues")
+	bodyManual := admin.AdminInfoDto{
+		ManualDues:            8000,
+		ManualDuesDescription: "you still need to pay for last year",
+	}
+	responseManual := tstPerformPut(loc+"/admin", tstRenderJson(bodyManual), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, responseManual.status, "unexpected http response status")
+	require.Equal(t, "", responseManual.body, "unexpected response body")
+
+	docs.Then("then the status stays at 'checked in'")
+	tstVerifyStatus(t, loc, status.CheckedIn)
+
+	docs.Then("and the expected dues were booked in the payment service")
+	tstRequireTransactions(t, []paymentservice.Transaction{
+		tstValidAttendeeDues(8000, "you still need to pay for last year"),
+	})
+
+	docs.Then("and no email messages were sent via the mail service")
+	tstRequireMailRequests(t, nil)
+}
+
+func TestAdminWrite_ManualDuesNegativePartial_BeforeApprove(t *testing.T) {
+	testcase := "admman5-"
+
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an attendee in status new")
+	loc, _ := tstRegisterAttendee(t, testcase)
+
+	docs.Given("given an admin has added positive manual dues")
+	bodyManual := admin.AdminInfoDto{
+		ManualDues:            -12000,
+		ManualDuesDescription: "we owe you this from last year",
+	}
+	responseManual := tstPerformPut(loc+"/admin", tstRenderJson(bodyManual), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, responseManual.status, "unexpected http response status")
+	require.Equal(t, "", responseManual.body, "unexpected response body")
+
+	docs.When("when the attendee is approved")
+	bodyApprove := status.StatusChangeDto{
+		Status:  status.Approved,
+		Comment: "approve after negative partial manual dues",
+	}
+	responseApprove := tstPerformPost(loc+"/status", tstRenderJson(bodyApprove), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, responseApprove.status)
+
+	docs.Then("then the status changes to 'approved'")
+	tstVerifyStatus(t, loc, status.Approved)
+
+	docs.Then("and the expected dues were booked in the payment service")
+	tstRequireTransactions(t, []paymentservice.Transaction{
+		tstValidAttendeeDues(13500, "dues adjustment due to change in status or selected packages"),
+	})
+
+	docs.Then("and the expected email messages were sent via the mail service")
+	tstRequireMailRequests(t, []mailservice.MailSendDto{
+		tstNewStatusMail(testcase, status.Approved),
+	})
+}
+
+// TODO maybe it would make it easier to understand if manual dues always caused separate transactions?
+
+func TestAdminWrite_ManualDuesNegativeFull_BeforeApprove(t *testing.T) {
+	testcase := "admman6-"
+
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an attendee in status new")
+	loc, _ := tstRegisterAttendee(t, testcase)
+
+	docs.Given("given an admin has added positive manual dues that cover their complete fee")
+	bodyManual := admin.AdminInfoDto{
+		ManualDues:            -25500,
+		ManualDuesDescription: "comped from last year",
+	}
+	responseManual := tstPerformPut(loc+"/admin", tstRenderJson(bodyManual), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, responseManual.status, "unexpected http response status")
+	require.Equal(t, "", responseManual.body, "unexpected response body")
+
+	docs.When("when the attendee is approved")
+	bodyApprove := status.StatusChangeDto{
+		Status:  status.Approved,
+		Comment: "approve after negative partial manual dues",
+	}
+	responseApprove := tstPerformPost(loc+"/status", tstRenderJson(bodyApprove), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, responseApprove.status)
+
+	docs.Then("then the status goes right to 'paid'")
+	tstVerifyStatus(t, loc, status.Paid)
+
+	docs.Then("and no dues were booked in the payment service")
+	tstRequireTransactions(t, nil)
+
+	docs.Then("and the expected email messages were sent via the mail service")
+	tstRequireMailRequests(t, []mailservice.MailSendDto{
+		tstNewStatusMail(testcase, status.Paid),
+	})
+}
+
+func TestAdminWrite_ManualDuesNegativePartial_AfterApprove(t *testing.T) {
+	testcase := "admman7-"
+
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an attendee in status approved")
+	loc, _ := tstRegisterAttendee(t, testcase)
+	bodyApprove := status.StatusChangeDto{
+		Status:  status.Approved,
+		Comment: "approve before setting manual dues",
+	}
+	responseApprove := tstPerformPost(loc+"/status", tstRenderJson(bodyApprove), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, responseApprove.status)
+
+	docs.When("when an admin adds negative manual dues that cover part of the fee")
+	bodyManual := admin.AdminInfoDto{
+		ManualDues:            -8000,
+		ManualDuesDescription: "we owe you this for something",
+	}
+	responseManual := tstPerformPut(loc+"/admin", tstRenderJson(bodyManual), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, responseManual.status, "unexpected http response status")
+	require.Equal(t, "", responseManual.body, "unexpected response body")
+
+	docs.Then("then the status stays at 'approved'")
+	tstVerifyStatus(t, loc, status.Approved)
+
+	docs.Then("and the expected dues were booked in the payment service")
+	tstRequireTransactions(t, []paymentservice.Transaction{
+		tstValidAttendeeDues(25500, "dues adjustment due to change in status or selected packages"),
+		tstValidAttendeeDues(-8000, "we owe you this for something"),
+	})
+
+	docs.Then("and the expected email messages were sent via the mail service")
+	tstRequireMailRequests(t, []mailservice.MailSendDto{
+		tstNewStatusMail(testcase, status.Approved),
+	})
+}
+
+func TestAdminWrite_ManualDuesNegativeFull_AfterApprove(t *testing.T) {
+	testcase := "admman8-"
+
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an attendee in status approved")
+	loc, _ := tstRegisterAttendee(t, testcase)
+	bodyApprove := status.StatusChangeDto{
+		Status:  status.Approved,
+		Comment: "approve before setting manual dues",
+	}
+	responseApprove := tstPerformPost(loc+"/status", tstRenderJson(bodyApprove), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, responseApprove.status)
+
+	docs.When("when an admin adds negative manual dues that cover their full fee")
+	bodyManual := admin.AdminInfoDto{
+		ManualDues:            -26000,
+		ManualDuesDescription: "we are so sorry",
+	}
+	responseManual := tstPerformPut(loc+"/admin", tstRenderJson(bodyManual), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, responseManual.status, "unexpected http response status")
+	require.Equal(t, "", responseManual.body, "unexpected response body")
+
+	docs.Then("then the status goes to 'paid'")
+	tstVerifyStatus(t, loc, status.Paid)
+
+	docs.Then("and the expected dues were booked in the payment service")
+	tstRequireTransactions(t, []paymentservice.Transaction{
+		tstValidAttendeeDues(25500, "dues adjustment due to change in status or selected packages"),
+		tstValidAttendeeDues(-26000, "we are so sorry"),
+	})
+
+	docs.Then("and the expected email messages were sent via the mail service")
+	tstRequireMailRequests(t, []mailservice.MailSendDto{
+		tstNewStatusMail(testcase, status.Approved),
+		tstNewStatusMail(testcase, status.Paid),
+	})
+}
 
 // --- search ---
 
 func TestSearch_AnonDeny(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -357,7 +849,7 @@ func TestSearch_AnonDeny(t *testing.T) {
 
 func TestSearch_UserDeny(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee")
@@ -380,7 +872,7 @@ func TestSearch_UserDeny(t *testing.T) {
 
 func TestSearch_StaffDeny(t *testing.T) {
 	docs.Given("given the configuration for staff registration")
-	tstSetup(tstConfigFile(false, true, true))
+	tstSetup(false, true, true)
 	defer tstShutdown()
 
 	docs.Given("given an authenticated staffer who has registered")
@@ -401,7 +893,7 @@ func TestSearch_StaffDeny(t *testing.T) {
 
 func TestSearch_AdminOk(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee right after registration")
@@ -458,7 +950,7 @@ func TestSearch_AdminOk(t *testing.T) {
 
 func TestSearch_NonexistentAttendee(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee right after registration")
@@ -487,7 +979,7 @@ func TestSearch_NonexistentAttendee(t *testing.T) {
 
 func TestSearch_InvalidJson(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given an existing attendee right after registration")

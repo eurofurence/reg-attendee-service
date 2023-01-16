@@ -17,7 +17,7 @@ import (
 
 func TestHealthEndpoint(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given an unauthenticated user")
@@ -33,7 +33,7 @@ func TestHealthEndpoint(t *testing.T) {
 
 func TestErrorFallback(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
-	tstSetup(tstConfigFile(false, false, true))
+	tstSetup(false, false, true)
 	defer tstShutdown()
 
 	docs.Given("given an unauthenticated user")

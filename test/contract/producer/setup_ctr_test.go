@@ -33,7 +33,7 @@ func tstSetup() {
 
 func tstSetupConfig() {
 	aulogging.SetupNoLoggerForTesting()
-	config.LoadTestingConfigurationFromPathOrAbort("../../../test/testconfig-public.yaml")
+	config.LoadTestingConfigurationFromPathOrAbort("../../../test/testconfig-base.yaml")
 }
 
 func tstSetupHttpTestServer() {
@@ -98,7 +98,7 @@ func (s *MockAttendeeService) GetFullStatusHistory(ctx context.Context, attendee
 	return []entity.StatusChange{}, nil
 }
 
-func (s *MockAttendeeService) UpdateDuesAndDoStatusChangeIfNeeded(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status, comments string) error {
+func (s *MockAttendeeService) UpdateDuesAndDoStatusChangeIfNeeded(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status, statusComment string, overrideDuesComment string) error {
 	return nil
 }
 

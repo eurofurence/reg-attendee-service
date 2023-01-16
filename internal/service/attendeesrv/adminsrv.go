@@ -20,7 +20,17 @@ func (s *AttendeeServiceImplData) UpdateAdminInfo(ctx context.Context, attendee 
 	// presence of attendeeId is checked in the controller
 	// controller has called GetAdminInfo before this, so we know ID is set
 
-	err := database.GetRepository().WriteAdminInfo(ctx, adminInfo)
+	originalAdminInfo, err := s.GetAdminInfo(ctx, attendee.ID)
+	if err != nil {
+		return err
+	}
+
+	overrideDuesTransactionComment := "admin info change"
+	if originalAdminInfo.ManualDues != adminInfo.ManualDues {
+		overrideDuesTransactionComment = adminInfo.ManualDuesDescription
+	}
+
+	err = database.GetRepository().WriteAdminInfo(ctx, adminInfo)
 	if err != nil {
 		return err
 	}
@@ -33,7 +43,7 @@ func (s *AttendeeServiceImplData) UpdateAdminInfo(ctx context.Context, attendee 
 
 	// setting admin flags such as guest may change dues, and change status
 	subject := ctxvalues.Subject(ctx)
-	err = s.UpdateDuesAndDoStatusChangeIfNeeded(ctx, attendee, currentStatus, currentStatus, fmt.Sprintf("admin info update by %s", subject))
+	err = s.UpdateDuesAndDoStatusChangeIfNeeded(ctx, attendee, currentStatus, currentStatus, fmt.Sprintf("admin info update by %s", subject), overrideDuesTransactionComment)
 	if err != nil {
 		return err
 	}

@@ -32,7 +32,7 @@ func tstShutdown() {
 }
 
 func tstSetupConfig() {
-	config.LoadTestingConfigurationFromPathOrAbort("../../../../test/testconfig-public.yaml")
+	config.LoadTestingConfigurationFromPathOrAbort("../../../../test/testconfig-base.yaml")
 }
 
 type MockAttendeeService struct {
@@ -85,7 +85,7 @@ func (s *MockAttendeeService) GetFullStatusHistory(ctx context.Context, attendee
 	return []entity.StatusChange{}, nil
 }
 
-func (s *MockAttendeeService) UpdateDuesAndDoStatusChangeIfNeeded(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status, comments string) error {
+func (s *MockAttendeeService) UpdateDuesAndDoStatusChangeIfNeeded(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status, statusComment string, overrideDuesComment string) error {
 	return nil
 }
 

@@ -21,42 +21,63 @@ var (
 	mailMock    mailservice.Mock
 )
 
-const tstDefaultConfigFileBeforeTarget = "../../test/testconfig-before-target.yaml"
+const tstDefaultConfigFile = "../../test/testconfig-base.yaml"
 
-func tstConfigFileIrrelevant() string {
-	return tstConfigFile(true, false, true)
+func tstSetupConfigIrrelevant() {
+	tstSetup(true, false, true)
 }
 
-func tstConfigFile(needLogin bool, staffReg bool, afterTarget bool) string {
-	path := "../../test/testconfig-"
+func tstAdjustConfig(needLogin bool, earlyReg bool, afterTarget bool) {
+	conf := config.Configuration()
 	if needLogin {
-		path += "needlogin"
+		conf.Service.Name += " With Login"
+		conf.Security.RequireLogin = true
+
+		// just so we cover these code paths somewhere:
+		conf.Security.Cors.DisableCors = true
+		conf.Security.Cors.AllowOrigin = "http://localhost:8000"
 	} else {
-		path += "public"
+		conf.Service.Name += " No Login"
 	}
-	if staffReg {
+
+	if earlyReg {
 		if afterTarget {
-			// after the staffreg target but before the normal target
-			path += "-staffreg.yaml"
+			conf.Service.Name += " After Early Reg Started But Before Normal Reg"
+			conf.Security.Oidc.EarlyReg = "staff"
+			// public reg has not started yet, so only staff may register
+			conf.GoLive.StartIsoDatetime = "2050-11-28T20:00:00+01:00"
+			conf.GoLive.EarlyRegStartIsoDatetime = "2019-10-31T20:00:00+01:00"
 		} else {
+			conf.Service.Name += " Before Early Reg"
+			conf.Security.Oidc.EarlyReg = "staff"
 			// neither public reg nor staff reg has started yet
-			path += "-before-target-staffreg.yaml"
+			conf.GoLive.StartIsoDatetime = "2050-11-28T20:00:00+01:00"
+			conf.GoLive.EarlyRegStartIsoDatetime = "2050-10-31T20:00:00+01:00"
 		}
 		// we do not test the after both targets case separately because it is a low risk case
 	} else {
 		if afterTarget {
-			// after main target, no staff reg configured
-			path += ".yaml"
+			conf.Service.Name += " After Target No Early Reg Configured"
+
+			// just so we cover these code paths somewhere:
+			// allow deselecting, so we can test at-least-one-mandatory
+			att := conf.Choices.Packages["attendance"]
+			att.ReadOnly = false
+			conf.Choices.Packages["attendance"] = att
+			sta := conf.Choices.Packages["stage"]
+			sta.ReadOnly = false
+			conf.Choices.Packages["stage"] = sta
 		} else {
-			// no staff reg configured
-			path += "-before-target.yaml"
+			// no staff reg configured, and public reg has not started yet
+			conf.Service.Name += " Before Target No Early Reg Configured"
+			conf.GoLive.StartIsoDatetime = "2050-11-28T20:00:00+01:00"
 		}
 	}
-	return path
 }
 
-func tstSetup(configFilePath string) {
-	tstSetupConfig(configFilePath)
+func tstSetup(needLogin bool, staffReg bool, afterTarget bool) {
+	tstSetupConfig(tstDefaultConfigFile)
+	tstAdjustConfig(needLogin, staffReg, afterTarget)
 	paymentMock = paymentservice.CreateMock()
 	mailMock = mailservice.CreateMock()
 	tstSetupDatabase()

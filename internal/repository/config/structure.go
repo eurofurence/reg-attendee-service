@@ -34,6 +34,7 @@ type (
 		SpokenLanguages       []string          `yaml:"spoken_languages"`
 		RegistrationLanguages []string          `yaml:"registration_languages"`
 		Currency              string            `yaml:"currency"`
+		VatPercent            float64           `yaml:"vat_percent"` // used for manual dues
 	}
 
 	// ServiceConfig contains configuration values
@@ -112,9 +113,7 @@ type (
 	ChoiceConfig struct {
 		Description   string  `yaml:"description"`
 		HelpUrl       string  `yaml:"help_url"`
-		PriceEarly    int64   `yaml:"price_early"`
-		PriceLate     int64   `yaml:"price_late"`
-		PriceAtCon    int64   `yaml:"price_atcon"`
+		Price         int64   `yaml:"price"`
 		VatPercent    float64 `yaml:"vat_percent"`
 		Default       bool    `yaml:"default"`                // if set to true, is added to flags by default. Not available for admin only flags!
 		AdminOnly     bool    `yaml:"admin_only"`             // this flag is kept under the adminInfo structure, so it is not visible to users
@@ -143,7 +142,5 @@ type (
 		EarliestDueDate string `yaml:"earliest_due_date"`
 		LatestDueDate   string `yaml:"latest_due_date"` // inclusive
 		DueDays         int    `yaml:"due_days"`
-		PriceEarlyUntil string `yaml:"price_early_until"` // inclusive
-		PriceLateUntil  string `yaml:"price_late_until"`  // inclusive
 	}
 )

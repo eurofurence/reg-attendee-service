@@ -6,6 +6,8 @@ import (
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
+	"regexp"
+	"strings"
 )
 
 var DuplicateBanError = errors.New("duplicate ban rule")
@@ -87,4 +89,30 @@ func isDuplicateBan(ctx context.Context, ban *entity.Ban) (bool, error) {
 	}
 
 	return false, nil
+}
+
+func (s *AttendeeServiceImplData) matchesBan(ctx context.Context, attendee *entity.Attendee) error {
+	bans, err := s.GetAllBans(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, ban := range bans {
+		if matchesLowercased(ctx, "nickname", ban.ID, ban.NicknamePattern, attendee.Nickname) ||
+			matchesLowercased(ctx, "name", ban.ID, ban.NamePattern, attendee.FirstName+" "+attendee.LastName) ||
+			matchesLowercased(ctx, "email", ban.ID, ban.EmailPattern, attendee.Email) {
+			return BanCandidateError
+		}
+	}
+
+	return nil
+}
+
+func matchesLowercased(ctx context.Context, field string, id uint, pattern string, value string) bool {
+	match, err := regexp.MatchString(pattern, strings.ToLower(value))
+	if err != nil {
+		aulogging.Logger.Ctx(ctx).Error().Printf("invalid %s pattern '%s' in ban %d - ignored due to compile error: %s", field, pattern, id, err.Error())
+		return false
+	}
+	return match
 }

@@ -11,6 +11,8 @@ func mapDtoToAdminInfo(dto *admin.AdminInfoDto, a *entity.AdminInfo) {
 	a.Flags = addWrappingCommas(dto.Flags)
 	a.Permissions = addWrappingCommas(dto.Permissions)
 	a.AdminComments = dto.AdminComments
+	a.ManualDues = dto.ManualDues
+	a.ManualDuesDescription = dto.ManualDuesDescription
 }
 
 func mapAdminInfoToDto(a *entity.AdminInfo, dto *admin.AdminInfoDto) {
@@ -19,6 +21,8 @@ func mapAdminInfoToDto(a *entity.AdminInfo, dto *admin.AdminInfoDto) {
 	dto.Flags = removeWrappingCommas(a.Flags)
 	dto.Permissions = removeWrappingCommas(a.Permissions)
 	dto.AdminComments = a.AdminComments
+	dto.ManualDues = a.ManualDues
+	dto.ManualDuesDescription = a.ManualDuesDescription
 }
 
 func removeWrappingCommas(v string) string {

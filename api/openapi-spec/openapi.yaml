@@ -1936,6 +1936,7 @@ components:
             - status.has.paid (this status change is impossible because there is a nonzero payment balance) 
             - status.cannot.delete (deletion is not possible, e.g. there are payments, or an invoice was issued and tax law says we have to store this data for 10 years)
             - status.use.approved (you tried to go directly to partially paid, paid, or checked in from new, cancelled, deleted - please use approved, this will automatically set (partially) paid as appropriate)
+            - status.ban.match (must set admin flag skip_ban_check to allow transition to approved to proceed anyway)
           example: attendee.data.invalid
         details:
           type: object

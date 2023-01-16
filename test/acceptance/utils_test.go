@@ -105,6 +105,24 @@ func tstPerformPost(relativeUrlWithLeadingSlash string, requestBody string, toke
 	return tstWebResponseFromResponse(response)
 }
 
+func tstPerformDelete(relativeUrlWithLeadingSlash string, token string) tstWebResponse {
+	request, err := http.NewRequest(http.MethodDelete, ts.URL+relativeUrlWithLeadingSlash, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if token == tstValidApiToken() || token == tstInvalidApiToken() {
+		request.Header.Set(media.HeaderXApiKey, token)
+	} else if token != "" {
+		request.Header.Set(headers.Authorization, "Bearer "+token)
+	}
+	request.Header.Set(headers.ContentType, media.ContentTypeApplicationJson)
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return tstWebResponseFromResponse(response)
+}
+
 func tstBuildValidAttendee(testcase string) attendee.AttendeeDto {
 	return attendee.AttendeeDto{
 		Nickname:             "BlackCheetah",
@@ -218,4 +236,10 @@ func tstNewStatusMail(testcase string, newStatus status.Status) mailservice.Mail
 			"new_email":    "TODO email change new email",
 		},
 	}
+}
+
+func tstGuestMail(testcase string) mailservice.MailSendDto {
+	result := tstNewStatusMail(testcase, "paid")
+	result.CommonID = "guest"
+	return result
 }

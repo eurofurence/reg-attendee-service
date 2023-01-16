@@ -16,7 +16,7 @@ func TestMain(m *testing.M) {
 
 func tstSetup() {
 	aulogging.SetupNoLoggerForTesting()
-	config.LoadTestingConfigurationFromPathOrAbort("../../../test/testconfig-public.yaml")
+	config.LoadTestingConfigurationFromPathOrAbort("../../../test/testconfig-base.yaml")
 }
 
 func tstShutdown() {
