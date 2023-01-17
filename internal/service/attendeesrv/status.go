@@ -175,24 +175,13 @@ func (s *AttendeeServiceImplData) StatusChangeAllowed(ctx context.Context, atten
 	// others
 
 	if oldStatus == status.Paid && newStatus == status.CheckedIn {
-		// TODO - this is kind of ugly
-
-		// check that any of the registrations owned by subject have the regdesk permission
-		ownedAttendees, err := database.GetRepository().FindByIdentity(ctx, subject)
+		allowed, err := s.subjectHasAdminPermissionEntry(ctx, subject, "regdesk")
 		if err != nil {
 			return err
 		}
-		for _, oa := range ownedAttendees {
-			adminInfo, err := database.GetRepository().GetAdminInfoByAttendeeId(ctx, oa.ID)
-			if err != nil {
-				return err
-			}
-			permissions := commaSeparatedStrToMap(adminInfo.Permissions, config.AllowedPermissions())
-			allowed, _ := permissions["regdesk"]
-			if allowed {
-				aulogging.Logger.Ctx(ctx).Info().Printf("regdesk check in for attendee %d by %s", attendee.ID, subject)
-				return nil
-			}
+		if allowed {
+			aulogging.Logger.Ctx(ctx).Info().Printf("regdesk check in for attendee %d by %s", attendee.ID, subject)
+			return nil
 		}
 	}
 

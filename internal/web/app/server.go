@@ -7,6 +7,7 @@ import (
 	"github.com/StephanHCB/go-autumn-logging-zerolog/loggermiddleware"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/service/attendeesrv"
+	"github.com/eurofurence/reg-attendee-service/internal/web/controller/addinfoctl"
 	"github.com/eurofurence/reg-attendee-service/internal/web/controller/adminctl"
 	"github.com/eurofurence/reg-attendee-service/internal/web/controller/attendeectl"
 	"github.com/eurofurence/reg-attendee-service/internal/web/controller/banctl"
@@ -40,6 +41,7 @@ func CreateRouter(ctx context.Context, attSrv attendeesrv.AttendeeService) chi.R
 	adminctl.Create(server, attSrv)
 	statusctl.Create(server, attSrv)
 	banctl.Create(server, attSrv)
+	addinfoctl.Create(server, attSrv)
 	infoctl.Create(server)
 
 	fallbackctl.Create(server)
