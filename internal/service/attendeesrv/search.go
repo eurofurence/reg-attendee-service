@@ -70,9 +70,26 @@ func (s *AttendeeServiceImplData) mapToAttendeeSearchResult(att *entity.Attendee
 	}
 }
 
+var checksumLetters = strings.Split("FJQCEKNTWLVGYHSZXDBUARP", "") // 23 letters (prime)
+
+var checksumWeights = [5]int{3, 7, 11, 13, 17}
+
+func calculateChecksum(id int) string {
+	sum := 0
+	place := 0
+	for id > 0 && place < 5 {
+		digit := id % 10
+		sum += digit * checksumWeights[place]
+		id /= 10
+		place++
+	}
+	idx := sum % len(checksumLetters)
+
+	return checksumLetters[idx]
+}
+
 func (s *AttendeeServiceImplData) badgeId(id uint) *string {
-	// TODO implement checksum character
-	checksum := "Y"
+	checksum := calculateChecksum(int(id))
 	result := fmt.Sprintf("%d%s", id, checksum)
 	return &result
 }

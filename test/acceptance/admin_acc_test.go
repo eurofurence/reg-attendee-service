@@ -917,7 +917,7 @@ func TestSearch_AdminOk(t *testing.T) {
   "attendees": [
     {
       "id": 1,
-      "badge_id": "1Y",
+      "badge_id": "1C",
       "nickname": "BlackCheetah",
       "first_name": "Hans",
       "last_name": "Mustermann",
