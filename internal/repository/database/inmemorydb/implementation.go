@@ -381,7 +381,11 @@ func (r *InMemoryRepository) GetAdditionalInfoFor(ctx context.Context, attendeeI
 	byAttendeeId := r.GetAllAdditionalInfoOrEmptyMap(ctx, attendeeId)
 	ai, ok := byAttendeeId[area]
 	if !ok {
-		return &entity.AdditionalInfo{}, fmt.Errorf("additional info for attendee id %d and area %s not found", attendeeId, area)
+		// return a new entry suitable for saving
+		return &entity.AdditionalInfo{
+			AttendeeId: attendeeId,
+			Area:       area,
+		}, nil
 	}
 	copiedAi := *ai
 	return &copiedAi, nil

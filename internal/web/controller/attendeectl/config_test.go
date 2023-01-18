@@ -131,6 +131,18 @@ func (s *MockAttendeeService) GetAllBans(ctx context.Context) ([]*entity.Ban, er
 	return make([]*entity.Ban, 0), nil
 }
 
+func (s *MockAttendeeService) GetAdditionalInfo(ctx context.Context, attendeeId uint, area string) (string, error) {
+	return "", nil
+}
+
+func (s *MockAttendeeService) WriteAdditionalInfo(ctx context.Context, attendeeId uint, area string, value string) error {
+	return nil
+}
+
+func (s *MockAttendeeService) CanAccessAdditionalInfoArea(ctx context.Context, area string) (bool, error) {
+	return false, nil
+}
+
 func tstSetupServiceMocks() {
 	attendeeService = &MockAttendeeService{}
 }

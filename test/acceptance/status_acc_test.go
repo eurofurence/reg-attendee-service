@@ -597,7 +597,7 @@ func TestStatusChange_Admin_Approved_PartiallyPaid(t *testing.T) {
 		status.Approved, status.PartiallyPaid,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, 2040)},
 		[]paymentservice.Transaction{},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.PartiallyPaid)},
+		[]mailservice.MailSendDto{tstNewStatusMailWithAmounts(testcase, status.PartiallyPaid, 234.60, 255)},
 	)
 }
 
@@ -607,7 +607,7 @@ func TestStatusChange_Admin_Approved_Paid_WithGraceAmount(t *testing.T) {
 		status.Approved, status.Paid,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, 25400)},
 		[]paymentservice.Transaction{},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Paid)},
+		[]mailservice.MailSendDto{tstNewStatusMailWithAmounts(testcase, status.Paid, 1, 255)},
 	)
 }
 
@@ -720,7 +720,7 @@ func TestStatusChange_Admin_PartiallyPaid_Cancelled(t *testing.T) {
 		status.PartiallyPaid, status.Cancelled,
 		nil,
 		[]paymentservice.Transaction{tstValidAttendeeDues(-10000, "void unpaid dues on cancel")},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Cancelled)},
+		[]mailservice.MailSendDto{tstNewCancelMail(testcase, testcase, 155)},
 	)
 }
 
@@ -820,7 +820,7 @@ func TestStatusChange_Admin_Paid_Cancelled(t *testing.T) {
 		status.Paid, status.Cancelled,
 		nil,
 		[]paymentservice.Transaction{},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Cancelled)},
+		[]mailservice.MailSendDto{tstNewCancelMail(testcase, testcase, 255)},
 	)
 }
 
@@ -912,7 +912,7 @@ func TestStatusChange_Admin_CheckedIn_Cancelled(t *testing.T) {
 		status.CheckedIn, status.Cancelled,
 		nil,
 		[]paymentservice.Transaction{},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Cancelled)},
+		[]mailservice.MailSendDto{tstNewCancelMail(testcase, testcase, 255)},
 	)
 }
 
@@ -1673,8 +1673,10 @@ func tstCreateStatusChange(attid uint, status status.Status) *entity.StatusChang
 
 func tstCreateTransaction(attid uint, ty paymentservice.TransactionType, amount int64) paymentservice.Transaction {
 	method := paymentservice.Internal
+	dueDate := "2022-12-22"
 	if ty == paymentservice.Payment {
 		method = paymentservice.Credit
+		dueDate = "1999-12-31"
 	}
 	return paymentservice.Transaction{
 		TransactionIdentifier: "1234-1234abc",
@@ -1687,8 +1689,8 @@ func tstCreateTransaction(attid uint, ty paymentservice.TransactionType, amount 
 			VatRate:   19,
 		},
 		Status:        paymentservice.Valid,
-		EffectiveDate: "1999-12-31",
-		DueDate:       "1999-12-31",
+		EffectiveDate: dueDate,
+		DueDate:       dueDate,
 		StatusHistory: nil,
 	}
 }

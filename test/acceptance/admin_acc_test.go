@@ -460,7 +460,7 @@ func TestAdminWrite_CancelledGuest(t *testing.T) {
 	tstRequireMailRequests(t, []mailservice.MailSendDto{
 		tstNewStatusMail(testcase, status.Approved),
 		tstGuestMail(testcase),
-		tstNewStatusMail(testcase, status.Cancelled),
+		tstNewCancelMail(testcase, "guest set to status cancelled", 0),
 	})
 }
 
@@ -551,7 +551,7 @@ func TestAdminWrite_ManualDuesPositive_BeforeApprove(t *testing.T) {
 
 	docs.Then("and the expected email messages were sent via the mail service")
 	tstRequireMailRequests(t, []mailservice.MailSendDto{
-		tstNewStatusMail(testcase, status.Approved),
+		tstNewStatusMailWithAmounts(testcase, status.Approved, 335, 335),
 	})
 }
 
@@ -624,7 +624,7 @@ func TestAdminWrite_ManualDuesPositive_AfterPaid(t *testing.T) {
 
 	docs.Then("and the expected email messages were sent via the mail service")
 	tstRequireMailRequests(t, []mailservice.MailSendDto{
-		tstNewStatusMail(testcase, status.PartiallyPaid),
+		tstNewStatusMailWithAmounts(testcase, status.PartiallyPaid, 80, 335),
 	})
 }
 
@@ -696,7 +696,7 @@ func TestAdminWrite_ManualDuesNegativePartial_BeforeApprove(t *testing.T) {
 
 	docs.Then("and the expected email messages were sent via the mail service")
 	tstRequireMailRequests(t, []mailservice.MailSendDto{
-		tstNewStatusMail(testcase, status.Approved),
+		tstNewStatusMailWithAmounts(testcase, status.Approved, 135, 135),
 	})
 }
 
@@ -737,7 +737,7 @@ func TestAdminWrite_ManualDuesNegativeFull_BeforeApprove(t *testing.T) {
 
 	docs.Then("and the expected email messages were sent via the mail service")
 	tstRequireMailRequests(t, []mailservice.MailSendDto{
-		tstNewStatusMail(testcase, status.Paid),
+		tstNewStatusMailWithAmounts(testcase, status.Paid, 0, 0),
 	})
 }
 
@@ -818,7 +818,7 @@ func TestAdminWrite_ManualDuesNegativeFull_AfterApprove(t *testing.T) {
 	docs.Then("and the expected email messages were sent via the mail service")
 	tstRequireMailRequests(t, []mailservice.MailSendDto{
 		tstNewStatusMail(testcase, status.Approved),
-		tstNewStatusMail(testcase, status.Paid),
+		tstNewStatusMailWithAmounts(testcase, status.Paid, -5, -5),
 	})
 }
 
@@ -917,7 +917,7 @@ func TestSearch_AdminOk(t *testing.T) {
   "attendees": [
     {
       "id": 1,
-      "badge_id": "1Y",
+      "badge_id": "1C",
       "nickname": "BlackCheetah",
       "first_name": "Hans",
       "last_name": "Mustermann",

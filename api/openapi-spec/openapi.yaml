@@ -1899,6 +1899,12 @@ components:
             A keyed description of the error. We do not write human readable text here because the user interface will be multi language.
             
             At this time, there are these values:
+            - addinfo.area.invalid (must match [a-z]+, and can't be "overdue")
+            - addinfo.notfound.error (no value for area is present, although the attendee was found)
+            - addinfo.receive.error (error receiving body - maybe too large?)
+            - addinfo.read.error (database error)
+            - addinfo.write.error (database error)
+            - addinfo.use.delete (you should use http delete to drop an entry, not send an empty body)
             - attendee.max_id.error (database error or overload)
             - attendee.owned.error (database error or overload)
             - attendee.owned.notfound (no registrations owned by current user)

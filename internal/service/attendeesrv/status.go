@@ -14,6 +14,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
 	"gorm.io/gorm"
 	"strings"
+	"time"
 )
 
 func (s *AttendeeServiceImplData) GetFullStatusHistory(ctx context.Context, attendee *entity.Attendee) ([]entity.StatusChange, error) {
@@ -86,7 +87,7 @@ func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx contex
 		}
 
 		if newStatus != status.Deleted && newStatus != status.CheckedIn {
-			err = s.sendStatusChangeNotificationEmail(ctx, attendee, adminInfo, newStatus, err)
+			err = s.sendStatusChangeNotificationEmail(ctx, attendee, adminInfo, newStatus, statusComment)
 			if err != nil {
 				return err
 			}
@@ -96,22 +97,51 @@ func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx contex
 	return nil
 }
 
-func (s *AttendeeServiceImplData) sendStatusChangeNotificationEmail(ctx context.Context, attendee *entity.Attendee, adminInfo *entity.AdminInfo, newStatus status.Status, err error) error {
+func formatCurr(value int64) string {
+	// TODO: format currency according to provided format from config
+	return fmt.Sprintf("%s %0.2f", config.Currency(), float64(value)/100.0)
+}
+
+func formatDate(value string) string {
+	// TODO: format due according to provided format from config
+	parsed, err := time.Parse(config.IsoDateFormat, value)
+	if err != nil {
+		return value
+	}
+	return parsed.Format(config.HumanDateFormat)
+}
+
+func (s *AttendeeServiceImplData) sendStatusChangeNotificationEmail(ctx context.Context, attendee *entity.Attendee, adminInfo *entity.AdminInfo, newStatus status.Status, statusComment string) error {
+	checkSummedId := s.badgeId(attendee.ID)
+	cancelReason := ""
+	if newStatus == status.Cancelled {
+		cancelReason = statusComment
+	}
+	remainingDues := attendee.CacheTotalDues - attendee.CachePaymentBalance
+
+	dueDate := formatDate(attendee.CacheDueDate)
+	if remainingDues <= 0 {
+		dueDate = ""
+	}
+
 	mailDto := mailservice.MailSendDto{
 		CommonID: "change-status-" + string(newStatus),
 		Lang:     removeWrappingCommasWithDefault(attendee.RegistrationLanguage, "en-US"),
 		Variables: map[string]string{
 			"badge_number":               fmt.Sprintf("%d", attendee.ID),
-			"badge_number_with_checksum": "TODO",
+			"badge_number_with_checksum": *checkSummedId,
 			"nickname":                   attendee.Nickname,
 			"email":                      attendee.Email,
-			"reason":                     "TODO cancel reason",
-			"remaining_dues":             "TODO remaining dues",
-			"total_dues":                 "TODO total dues",
-			"due_date":                   "TODO due date (formatted)",
-			"regsys_url":                 "TODO https://reg.eurofurence.org/regsys/",
+			"reason":                     cancelReason,
+			"remaining_dues":             formatCurr(remainingDues),
+			"total_dues":                 formatCurr(attendee.CacheTotalDues),
+			"pending_payments":           formatCurr(attendee.CacheOpenBalance),
+			"due_date":                   dueDate,
+			"regsys_url":                 config.RegsysPublicUrl(),
 
-			// room group variables, just set so all the templates work
+			// --- unused values ---
+
+			// room group variables, just set so all the templates work for now
 			"room_group_name":         "TODO room group name",
 			"room_group_owner":        "TODO room group owner nickname",
 			"room_group_owner_email":  "TODO room group owner email",
@@ -131,7 +161,7 @@ func (s *AttendeeServiceImplData) sendStatusChangeNotificationEmail(ctx context.
 		}
 	}
 
-	err = mailservice.Get().SendEmail(ctx, mailDto)
+	err := mailservice.Get().SendEmail(ctx, mailDto)
 	if err != nil {
 		return err
 	}
@@ -175,24 +205,13 @@ func (s *AttendeeServiceImplData) StatusChangeAllowed(ctx context.Context, atten
 	// others
 
 	if oldStatus == status.Paid && newStatus == status.CheckedIn {
-		// TODO - this is kind of ugly
-
-		// check that any of the registrations owned by subject have the regdesk permission
-		ownedAttendees, err := database.GetRepository().FindByIdentity(ctx, subject)
+		allowed, err := s.subjectHasAdminPermissionEntry(ctx, subject, "regdesk")
 		if err != nil {
 			return err
 		}
-		for _, oa := range ownedAttendees {
-			adminInfo, err := database.GetRepository().GetAdminInfoByAttendeeId(ctx, oa.ID)
-			if err != nil {
-				return err
-			}
-			permissions := commaSeparatedStrToMap(adminInfo.Permissions, config.AllowedPermissions())
-			allowed, _ := permissions["regdesk"]
-			if allowed {
-				aulogging.Logger.Ctx(ctx).Info().Printf("regdesk check in for attendee %d by %s", attendee.ID, subject)
-				return nil
-			}
+		if allowed {
+			aulogging.Logger.Ctx(ctx).Info().Printf("regdesk check in for attendee %d by %s", attendee.ID, subject)
+			return nil
 		}
 	}
 

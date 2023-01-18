@@ -1,5 +1,6 @@
 service:
   name: 'Registration Attendee Service Testconfig'
+  regsys_public_url: 'http://localhost:10000/register'
 security:
   fixed_token:
     api: 'api-token-for-testing-must-be-pretty-long'

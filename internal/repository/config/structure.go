@@ -17,6 +17,8 @@ const StartTimeFormat = "2006-01-02T15:04:05-07:00"
 
 const IsoDateFormat = "2006-01-02"
 
+const HumanDateFormat = "02.01.2006"
+
 type (
 	// Application is the root configuration type
 	Application struct {
@@ -40,9 +42,10 @@ type (
 	// ServiceConfig contains configuration values
 	// for service related tasks. E.g. URLs to downstream services
 	ServiceConfig struct {
-		Name           string `yaml:"name"`
-		PaymentService string `yaml:"payment_service"` // base url, usually http://localhost:nnnn, will use in-memory-mock if unset
-		MailService    string `yaml:"mail_service"`    // base url, usually http://localhost:nnnn, will use in-memory-mock if unset
+		Name            string `yaml:"name"`
+		RegsysPublicUrl string `yaml:"regsys_public_url"` // used in emails
+		PaymentService  string `yaml:"payment_service"`   // base url, usually http://localhost:nnnn, will use in-memory-mock if unset
+		MailService     string `yaml:"mail_service"`      // base url, usually http://localhost:nnnn, will use in-memory-mock if unset
 	}
 
 	// ServerConfig contains all values for http configuration

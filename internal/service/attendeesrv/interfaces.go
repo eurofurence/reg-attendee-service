@@ -59,6 +59,22 @@ type AttendeeService interface {
 	DeleteBan(ctx context.Context, ban *entity.Ban) error
 	GetBan(ctx context.Context, id uint) (*entity.Ban, error)
 	GetAllBans(ctx context.Context) ([]*entity.Ban, error)
+
+	// GetAdditionalInfo obtains additional info for a given attendeeId and area.
+	//
+	// If this returns an empty string, then no value existed.
+	GetAdditionalInfo(ctx context.Context, attendeeId uint, area string) (string, error)
+
+	// WriteAdditionalInfo writes additional info for a given attendeeId and area.
+	//
+	// If value is the empty string, the entry is deleted instead.
+	WriteAdditionalInfo(ctx context.Context, attendeeId uint, area string, value string) error
+
+	// CanAccessAdditionalInfoArea checks permission to access additional info for area.
+	//
+	// Normal users (loaded by identity) need a matching permissions entry in their admin info.
+	// Admins and Api Token can see all areas.
+	CanAccessAdditionalInfoArea(ctx context.Context, area string) (bool, error)
 }
 
 var (
