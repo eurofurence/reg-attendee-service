@@ -243,3 +243,7 @@ func Currency() string {
 func VatPercent() float64 {
 	return Configuration().VatPercent
 }
+
+func RegsysPublicUrl() string {
+	return Configuration().Service.RegsysPublicUrl
+}

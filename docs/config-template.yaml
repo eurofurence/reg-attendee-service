@@ -1,5 +1,6 @@
 service:
   name: 'Registration Attendee Service'
+  regsys_public_url: 'http://localhost:10000/register'
   # if you leave this blank, a local mock will be used
   payment_service: 'http://localhost:9092' # no trailing slash
   # if you leave this blank, a local mock will be used

@@ -129,7 +129,7 @@ func TestPaymentsChangedWebhook_Approved_PartiallyPaid(t *testing.T) {
 			tstCreateTransaction(1, paymentservice.Payment, 2040),
 		},
 		status.PartiallyPaid,
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.PartiallyPaid)},
+		[]mailservice.MailSendDto{tstNewStatusMailWithAmounts(testcase, status.PartiallyPaid, 234.60, 255)},
 	)
 }
 
@@ -143,7 +143,7 @@ func TestPaymentsChangedWebhook_Approved_Paid_WithGraceAmount(t *testing.T) {
 			tstCreateTransaction(1, paymentservice.Payment, 25400),
 		},
 		status.Paid,
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Paid)},
+		[]mailservice.MailSendDto{tstNewStatusMailWithAmounts(testcase, status.Paid, 1, 255)},
 	)
 }
 
@@ -157,7 +157,7 @@ func TestPaymentsChangedWebhook_Approved_Paid_Overpaid(t *testing.T) {
 			tstCreateTransaction(1, paymentservice.Payment, 27000),
 		},
 		status.Paid,
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Paid)},
+		[]mailservice.MailSendDto{tstNewStatusMailWithAmounts(testcase, status.Paid, -15, 255)},
 	)
 }
 
@@ -251,7 +251,7 @@ func TestPaymentsChangedWebhook_Paid_PartiallyPaid(t *testing.T) {
 			tstCreateTransaction(1, paymentservice.Payment, -15500),
 		},
 		status.PartiallyPaid,
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.PartiallyPaid)},
+		[]mailservice.MailSendDto{tstNewStatusMailWithAmounts(testcase, status.PartiallyPaid, 155, 255)},
 	)
 }
 

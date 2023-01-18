@@ -87,6 +87,8 @@ database:
 func TestParseAndOverwriteDefaults(t *testing.T) {
 	docs.Description("check that a minimal yaml leads to all defaults being set")
 	minimalYaml := `# yaml with minimal settings
+service:
+  regsys_public_url: 'http://localhost:10000/register'
 security:
   fixed_token:
     api: 'fixed-testing-token-abc'

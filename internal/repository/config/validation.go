@@ -226,13 +226,17 @@ func validateDuesConfiguration(errs url.Values, c DuesConfig) {
 	}
 }
 
+const publicUrlPattern = "^https?://"
 const downstreamPattern = "^(|https?://.*[^/])$"
 
 func validateServiceConfiguration(errs url.Values, c ServiceConfig) {
+	if validation.ViolatesPattern(publicUrlPattern, c.RegsysPublicUrl) {
+		errs.Add("service.regsys_public_url", "public url must start with http:// or https://, this should be the outward facing main page of the regsys, used in emails")
+	}
 	if validation.ViolatesPattern(downstreamPattern, c.PaymentService) {
-		errs.Add("downstream.payment_service", "base url must be empty (enables in-memory simulator) or start with http:// or https:// and may not end in a /")
+		errs.Add("service.payment_service", "base url must be empty (enables in-memory simulator) or start with http:// or https:// and may not end in a /")
 	}
 	if validation.ViolatesPattern(downstreamPattern, c.MailService) {
-		errs.Add("downstream.payment_service", "base url must be empty (enables in-memory simulator) or start with http:// or https:// and may not end in a /")
+		errs.Add("service.mail_service", "base url must be empty (enables in-memory simulator) or start with http:// or https:// and may not end in a /")
 	}
 }

@@ -2,6 +2,7 @@ package acceptance
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/bans"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
@@ -209,20 +210,21 @@ func tstValidAttendeeDues(amount int64, comment string) paymentservice.Transacti
 }
 
 func tstNewStatusMail(testcase string, newStatus status.Status) mailservice.MailSendDto {
-	return mailservice.MailSendDto{
+	result := mailservice.MailSendDto{
 		CommonID: "change-status-" + string(newStatus),
 		Lang:     "en-US",
 		To:       []string{"jsquirrel_github_9a6d@packetloss.de"},
 		Variables: map[string]string{
 			"badge_number":               "1",
-			"badge_number_with_checksum": "TODO",
+			"badge_number_with_checksum": "1C",
 			"nickname":                   "BlackCheetah",
 			"email":                      "jsquirrel_github_9a6d@packetloss.de",
-			"reason":                     "TODO cancel reason",
-			"remaining_dues":             "TODO remaining dues",
-			"total_dues":                 "TODO total dues",
-			"due_date":                   "TODO due date (formatted)",
-			"regsys_url":                 "TODO https://reg.eurofurence.org/regsys/",
+			"reason":                     "",
+			"remaining_dues":             "EUR 0.00",
+			"total_dues":                 "EUR 255.00",
+			"pending_payments":           "EUR 0.00",
+			"due_date":                   "",
+			"regsys_url":                 "http://localhost:10000/register",
 
 			// room group variables
 			"room_group_member":       "TODO room group member nickname",
@@ -236,10 +238,50 @@ func tstNewStatusMail(testcase string, newStatus status.Status) mailservice.Mail
 			"new_email":    "TODO email change new email",
 		},
 	}
+	if newStatus == status.New {
+		result.Variables["total_dues"] = "EUR 0.00"
+	}
+	if newStatus == status.Approved {
+		result.Variables["remaining_dues"] = "EUR 255.00"
+		result.Variables["due_date"] = "22.12.2022"
+	}
+	if newStatus == status.PartiallyPaid {
+		result.Variables["remaining_dues"] = "EUR 100.00"
+		result.Variables["due_date"] = "22.12.2022"
+	}
+	if newStatus == status.Paid {
+		result.Variables["remaining_dues"] = "EUR 0.00"
+	}
+	if newStatus == status.Cancelled {
+		result.Variables["total_dues"] = "EUR 0.00"
+		result.Variables["remaining_dues"] = "EUR 0.00"
+		result.Variables["reason"] = testcase
+	}
+	if newStatus == status.Waiting {
+		result.Variables["total_dues"] = "EUR 0.00"
+	}
+	return result
 }
 
 func tstGuestMail(testcase string) mailservice.MailSendDto {
 	result := tstNewStatusMail(testcase, "paid")
 	result.CommonID = "guest"
+	result.Variables["total_dues"] = "EUR 0.00"
+	return result
+}
+
+func tstNewStatusMailWithAmounts(testcase string, newStatus status.Status, remaining float64, total float64) mailservice.MailSendDto {
+	result := tstNewStatusMail(testcase, newStatus)
+	result.Variables["remaining_dues"] = fmt.Sprintf("EUR %0.2f", remaining)
+	result.Variables["total_dues"] = fmt.Sprintf("EUR %0.2f", total)
+	if remaining > 0 {
+		result.Variables["due_date"] = "22.12.2022"
+	}
+	return result
+}
+
+func tstNewCancelMail(testcase string, reason string, alreadyPaid float64) mailservice.MailSendDto {
+	result := tstNewStatusMailWithAmounts(testcase, status.Cancelled, 0, alreadyPaid)
+	result.Variables["reason"] = reason
 	return result
 }
