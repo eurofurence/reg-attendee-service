@@ -6,7 +6,7 @@ require (
 	github.com/StephanHCB/go-autumn-logging v0.3.0
 	github.com/StephanHCB/go-autumn-logging-zerolog v0.3.1
 	github.com/StephanHCB/go-autumn-restclient v0.5.0
-	github.com/StephanHCB/go-autumn-restclient-circuitbreaker v0.4.0
+	github.com/StephanHCB/go-autumn-restclient-circuitbreaker v0.4.1
 	github.com/d4l3k/messagediff v1.2.1
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
