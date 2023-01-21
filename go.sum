@@ -20,8 +20,8 @@ github.com/StephanHCB/go-autumn-logging-zerolog v0.3.1 h1:ZkMZhgA9XyG5UKypNPsWHh
 github.com/StephanHCB/go-autumn-logging-zerolog v0.3.1/go.mod h1:LB3tb1gP4mY17sjal55SRlxG6Cp03gxoHpFXIcebJOI=
 github.com/StephanHCB/go-autumn-restclient v0.5.0 h1:UadP+Tj8NShkaVPZWEVarYIyUeSYalZvEVi0znd9Dqo=
 github.com/StephanHCB/go-autumn-restclient v0.5.0/go.mod h1:cvpDXD4WxJuhJxJ0HIMep+teDYdRw4wakln0bFxVK0c=
-github.com/StephanHCB/go-autumn-restclient-circuitbreaker v0.4.0 h1:udlEftKp//4efbyQ88rHASdA25DgKo/TKcaXtayibac=
-github.com/StephanHCB/go-autumn-restclient-circuitbreaker v0.4.0/go.mod h1:SCwdS7859lZe+uo90EA0cgxbbKmSSPmKlA/dJ6HoBYo=
+github.com/StephanHCB/go-autumn-restclient-circuitbreaker v0.4.1 h1:aRs7bVnENGiKsWyvz6d5jAb2LuRkM1AUIzMoOgjzRLs=
+github.com/StephanHCB/go-autumn-restclient-circuitbreaker v0.4.1/go.mod h1:ICUphrYTDMZ3HYZ8mEuFe0dZB163LBsmo1HtXaN10As=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
 github.com/armon/circbuf v0.0.0-20150827004946-bbbad097214e/go.mod h1:3U/XgcO3hCbHZ8TKRvWD2dDTCfh9M9ya+I9JpbB7O8o=
