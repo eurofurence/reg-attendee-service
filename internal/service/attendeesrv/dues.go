@@ -162,7 +162,7 @@ func (s *AttendeeServiceImplData) packageDuesByVAT(ctx context.Context, attendee
 		if selected {
 			packageConfig, ok := packageConfigs[key]
 			if !ok {
-				aulogging.Logger.Ctx(ctx).Warn().Printf("attendee id %d has unknown package %s in db - ignoring during dues calculation")
+				aulogging.Logger.Ctx(ctx).Warn().Printf("attendee id %d has unknown package %s in db - ignoring during dues calculation", attendee.ID, key)
 			} else {
 				vatStr := fmt.Sprintf("%.6f", packageConfig.VatPercent)
 
