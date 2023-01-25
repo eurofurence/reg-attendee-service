@@ -227,7 +227,9 @@ func choiceStrToMap(choiceStr string, configuration map[string]config.ChoiceConf
 	if choiceStr != "" {
 		choices := strings.Split(choiceStr, ",")
 		for _, pickedKey := range choices {
-			result[pickedKey] = true
+			if pickedKey != "" {
+				result[pickedKey] = true
+			}
 		}
 	}
 	return result
@@ -242,7 +244,9 @@ func commaSeparatedStrToMap(choiceStr string, allowedValues []string) map[string
 	if choiceStr != "" {
 		choices := strings.Split(choiceStr, ",")
 		for _, pickedKey := range choices {
-			result[pickedKey] = true
+			if pickedKey != "" {
+				result[pickedKey] = true
+			}
 		}
 	}
 	return result
