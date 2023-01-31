@@ -76,7 +76,7 @@ func validateLoggingConfiguration(errs url.Values, c LoggingConfig) {
 
 func validateSecurityConfiguration(errs url.Values, c SecurityConfig) {
 	validation.CheckLength(&errs, 16, 256, "security.fixed.api", c.Fixed.Api)
-	validation.CheckLength(&errs, 1, 256, "security.oidc.admin_role", c.Oidc.AdminRole)
+	validation.CheckLength(&errs, 1, 256, "security.oidc.admin_group", c.Oidc.AdminGroup)
 
 	parsedKeySet = make([]*rsa.PublicKey, 0)
 	for i, keyStr := range c.Oidc.TokenPublicKeysPEM {
@@ -200,8 +200,8 @@ func validateRegistrationStartTime(errs url.Values, c GoLiveConfig, s SecurityCo
 			errs.Add("go_live.early_reg_start_iso_datetime", "if supplied, must be earlier than go_live.start_iso_datetime")
 		}
 
-		if s.Oidc.EarlyReg == "" {
-			errs.Add("go_live.early_reg_start_iso_datetime", "if supplied, must also supply security.oidc.early_reg_role so early registration is possible")
+		if s.Oidc.EarlyRegGroup == "" {
+			errs.Add("go_live.early_reg_start_iso_datetime", "if supplied, must also supply security.oidc.early_reg_group so early registration is possible")
 		}
 	}
 }

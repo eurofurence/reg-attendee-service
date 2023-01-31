@@ -25,11 +25,11 @@ var attendeeService attendeesrv.AttendeeService
 func Create(server chi.Router, attendeeSrv attendeesrv.AttendeeService) {
 	attendeeService = attendeeSrv
 
-	server.Get("/api/rest/v1/bans", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(3*time.Second, allBansHandler)))
-	server.Post("/api/rest/v1/bans", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(3*time.Second, newBanHandler)))
-	server.Get("/api/rest/v1/bans/{id}", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(3*time.Second, getBanHandler)))
-	server.Put("/api/rest/v1/bans/{id}", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(3*time.Second, updateBanHandler)))
-	server.Delete("/api/rest/v1/bans/{id}", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(3*time.Second, deleteBanHandler)))
+	server.Get("/api/rest/v1/bans", filter.HasRoleOrApiToken(config.OidcAdminGroup(), filter.WithTimeout(3*time.Second, allBansHandler)))
+	server.Post("/api/rest/v1/bans", filter.HasRoleOrApiToken(config.OidcAdminGroup(), filter.WithTimeout(3*time.Second, newBanHandler)))
+	server.Get("/api/rest/v1/bans/{id}", filter.HasRoleOrApiToken(config.OidcAdminGroup(), filter.WithTimeout(3*time.Second, getBanHandler)))
+	server.Put("/api/rest/v1/bans/{id}", filter.HasRoleOrApiToken(config.OidcAdminGroup(), filter.WithTimeout(3*time.Second, updateBanHandler)))
+	server.Delete("/api/rest/v1/bans/{id}", filter.HasRoleOrApiToken(config.OidcAdminGroup(), filter.WithTimeout(3*time.Second, deleteBanHandler)))
 }
 
 func allBansHandler(w http.ResponseWriter, r *http.Request) {

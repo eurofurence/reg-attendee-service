@@ -75,7 +75,7 @@ func getAttendeeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := filter.IsSubjectOrRoleOrApiToken(w, r, existingAttendee.Identity, config.OidcAdminRole()); err != nil {
+	if err := filter.IsSubjectOrGroupOrApiToken(w, r, existingAttendee.Identity, config.OidcAdminGroup()); err != nil {
 		return
 	}
 
@@ -102,7 +102,7 @@ func updateAttendeeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := filter.IsSubjectOrRoleOrApiToken(w, r, attd.Identity, config.OidcAdminRole()); err != nil {
+	if err := filter.IsSubjectOrGroupOrApiToken(w, r, attd.Identity, config.OidcAdminGroup()); err != nil {
 		return
 	}
 

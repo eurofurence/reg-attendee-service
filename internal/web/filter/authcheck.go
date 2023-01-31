@@ -11,7 +11,7 @@ import (
 func HasRoleOrApiToken(role string, handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		if ctxvalues.HasApiToken(ctx) || ctxvalues.IsAuthorizedAsRole(ctx, role) {
+		if ctxvalues.HasApiToken(ctx) || ctxvalues.IsAuthorizedAsGroup(ctx, role) {
 			handler(w, r)
 		} else {
 			culprit := ctxvalues.Subject(ctx)
@@ -46,12 +46,12 @@ func LoggedIn(handler http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// IsSubjectOrRoleOrApiToken cannot be used as a filter because the subject needs to be loaded from the database first (part of the attendee admin data). Use in your handler functions.
+// IsSubjectOrGroupOrApiToken cannot be used as a filter because the subject needs to be loaded from the database first (part of the attendee admin data). Use in your handler functions.
 //
 // Do not forget to return from the handler if an error is returned!
-func IsSubjectOrRoleOrApiToken(w http.ResponseWriter, r *http.Request, subject string, role string) error {
+func IsSubjectOrGroupOrApiToken(w http.ResponseWriter, r *http.Request, subject string, group string) error {
 	ctx := r.Context()
-	if ctxvalues.HasApiToken(ctx) || ctxvalues.IsAuthorizedAsRole(ctx, role) || ctxvalues.Subject(ctx) == subject {
+	if ctxvalues.HasApiToken(ctx) || ctxvalues.IsAuthorizedAsGroup(ctx, group) || ctxvalues.Subject(ctx) == subject {
 		return nil
 	} else {
 		culprit := ctxvalues.Subject(ctx)

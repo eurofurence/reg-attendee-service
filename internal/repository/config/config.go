@@ -53,20 +53,24 @@ func FixedApiToken() string {
 	return Configuration().Security.Fixed.Api
 }
 
-func OidcTokenCookieName() string {
-	return Configuration().Security.Oidc.TokenCookieName
+func OidcIdTokenCookieName() string {
+	return Configuration().Security.Oidc.IdTokenCookieName
+}
+
+func OidcAccessTokenCookieName() string {
+	return Configuration().Security.Oidc.AccessTokenCookieName
 }
 
 func OidcKeySet() []*rsa.PublicKey {
 	return parsedKeySet
 }
 
-func OidcAdminRole() string {
-	return Configuration().Security.Oidc.AdminRole
+func OidcAdminGroup() string {
+	return Configuration().Security.Oidc.AdminGroup
 }
 
-func OidcEarlyRegRole() string {
-	return Configuration().Security.Oidc.EarlyReg
+func OidcEarlyRegGroup() string {
+	return Configuration().Security.Oidc.EarlyRegGroup
 }
 
 func AllowedFlagsNoAdmin() []string {
@@ -222,6 +226,10 @@ func PaymentServiceBaseUrl() string {
 
 func MailServiceBaseUrl() string {
 	return Configuration().Service.MailService
+}
+
+func AuthServiceBaseUrl() string {
+	return Configuration().Service.AuthService
 }
 
 func DueDays() time.Duration {

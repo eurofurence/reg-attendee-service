@@ -61,7 +61,9 @@ func tstPerformGet(relativeUrlWithLeadingSlash string, token string) tstWebRespo
 	if token == tstValidApiToken() || token == tstInvalidApiToken() {
 		request.Header.Set(media.HeaderXApiKey, token)
 	} else if token != "" {
-		request.Header.Set(headers.Authorization, "Bearer "+token)
+		// TODO: either this
+		request.Header.Set(headers.Authorization, "access"+token)
+		// TODO: or two cookies should also work
 	}
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
@@ -78,7 +80,9 @@ func tstPerformPut(relativeUrlWithLeadingSlash string, requestBody string, token
 	if token == tstValidApiToken() || token == tstInvalidApiToken() {
 		request.Header.Set(media.HeaderXApiKey, token)
 	} else if token != "" {
-		request.Header.Set(headers.Authorization, "Bearer "+token)
+		// TODO: either this
+		request.Header.Set(headers.Authorization, "access"+token)
+		// TODO: or two cookies should also work
 	}
 	request.Header.Set(headers.ContentType, media.ContentTypeApplicationJson)
 	response, err := http.DefaultClient.Do(request)
@@ -96,7 +100,9 @@ func tstPerformPost(relativeUrlWithLeadingSlash string, requestBody string, toke
 	if token == tstValidApiToken() || token == tstInvalidApiToken() {
 		request.Header.Set(media.HeaderXApiKey, token)
 	} else if token != "" {
-		request.Header.Set(headers.Authorization, "Bearer "+token)
+		// TODO: either this
+		request.Header.Set(headers.Authorization, "access"+token)
+		// TODO: or two cookies should also work
 	}
 	request.Header.Set(headers.ContentType, media.ContentTypeApplicationJson)
 	response, err := http.DefaultClient.Do(request)
@@ -114,7 +120,9 @@ func tstPerformDelete(relativeUrlWithLeadingSlash string, token string) tstWebRe
 	if token == tstValidApiToken() || token == tstInvalidApiToken() {
 		request.Header.Set(media.HeaderXApiKey, token)
 	} else if token != "" {
-		request.Header.Set(headers.Authorization, "Bearer "+token)
+		// TODO: either this
+		request.Header.Set(headers.Authorization, "access"+token)
+		// TODO: or two cookies should also work
 	}
 	request.Header.Set(headers.ContentType, media.ContentTypeApplicationJson)
 	response, err := http.DefaultClient.Do(request)
