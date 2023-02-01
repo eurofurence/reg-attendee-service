@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 )
 
 // placing these here because they are package global
@@ -53,18 +54,42 @@ func tstWebResponseFromResponse(response *http.Response) tstWebResponse {
 	}
 }
 
+func tstAddAuth(request *http.Request, token string) {
+	if token == tstValidApiToken() || token == tstInvalidApiToken() {
+		request.Header.Set(media.HeaderXApiKey, token)
+	} else if token == valid_JWT_is_staff_sub202 {
+		// small trick: we derive the access token from the JWT token (for tests only)
+		request.Header.Set(headers.Authorization, "Bearer access"+token)
+	} else if token != "" {
+		request.AddCookie(&http.Cookie{
+			Name:     "JWT",
+			Value:    token,
+			Domain:   "localhost",
+			Expires:  time.Now().Add(10 * time.Minute),
+			Path:     "/",
+			Secure:   true,
+			HttpOnly: true,
+			SameSite: http.SameSiteStrictMode,
+		})
+		request.AddCookie(&http.Cookie{
+			Name:     "AUTH",
+			Value:    "access" + token,
+			Domain:   "localhost",
+			Expires:  time.Now().Add(10 * time.Minute),
+			Path:     "/",
+			Secure:   true,
+			HttpOnly: true,
+			SameSite: http.SameSiteStrictMode,
+		})
+	}
+}
+
 func tstPerformGet(relativeUrlWithLeadingSlash string, token string) tstWebResponse {
 	request, err := http.NewRequest(http.MethodGet, ts.URL+relativeUrlWithLeadingSlash, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if token == tstValidApiToken() || token == tstInvalidApiToken() {
-		request.Header.Set(media.HeaderXApiKey, token)
-	} else if token != "" {
-		// TODO: either this
-		request.Header.Set(headers.Authorization, "Bearer access"+token)
-		// TODO: or two cookies should also work
-	}
+	tstAddAuth(request, token)
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
 		log.Fatal(err)
@@ -77,13 +102,7 @@ func tstPerformPut(relativeUrlWithLeadingSlash string, requestBody string, token
 	if err != nil {
 		log.Fatal(err)
 	}
-	if token == tstValidApiToken() || token == tstInvalidApiToken() {
-		request.Header.Set(media.HeaderXApiKey, token)
-	} else if token != "" {
-		// TODO: either this
-		request.Header.Set(headers.Authorization, "Bearer access"+token)
-		// TODO: or two cookies should also work
-	}
+	tstAddAuth(request, token)
 	request.Header.Set(headers.ContentType, media.ContentTypeApplicationJson)
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
@@ -97,13 +116,7 @@ func tstPerformPost(relativeUrlWithLeadingSlash string, requestBody string, toke
 	if err != nil {
 		log.Fatal(err)
 	}
-	if token == tstValidApiToken() || token == tstInvalidApiToken() {
-		request.Header.Set(media.HeaderXApiKey, token)
-	} else if token != "" {
-		// TODO: either this
-		request.Header.Set(headers.Authorization, "Bearer access"+token)
-		// TODO: or two cookies should also work
-	}
+	tstAddAuth(request, token)
 	request.Header.Set(headers.ContentType, media.ContentTypeApplicationJson)
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
@@ -117,13 +130,7 @@ func tstPerformDelete(relativeUrlWithLeadingSlash string, token string) tstWebRe
 	if err != nil {
 		log.Fatal(err)
 	}
-	if token == tstValidApiToken() || token == tstInvalidApiToken() {
-		request.Header.Set(media.HeaderXApiKey, token)
-	} else if token != "" {
-		// TODO: either this
-		request.Header.Set(headers.Authorization, "Bearer access"+token)
-		// TODO: or two cookies should also work
-	}
+	tstAddAuth(request, token)
 	request.Header.Set(headers.ContentType, media.ContentTypeApplicationJson)
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
