@@ -86,6 +86,8 @@ type (
 		TokenPublicKeysPEM    []string `yaml:"token_public_keys_PEM"`    // a list of public RSA keys in PEM format, see https://github.com/Jumpy-Squirrel/jwks2pem for obtaining PEM from openid keyset endpoint
 		AdminGroup            string   `yaml:"admin_group"`              // the group claim that supplies regsys admin rights
 		EarlyRegGroup         string   `yaml:"early_reg_group"`          // optional, the group claim that turns on early registration
+		Audience              string   `yaml:"audience"`
+		Issuer                string   `yaml:"issuer"`
 	}
 
 	CorsConfig struct {

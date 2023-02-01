@@ -34,7 +34,13 @@ func fromCookie(r *http.Request, cookieName string) string {
 }
 
 func fromAuthHeader(r *http.Request) string {
-	return r.Header.Get(headers.Authorization)
+	headerValue := r.Header.Get(headers.Authorization)
+
+	if !strings.HasPrefix(headerValue, "Bearer ") {
+		return ""
+	}
+
+	return strings.TrimPrefix(headerValue, "Bearer ")
 }
 
 func fromApiTokenHeader(r *http.Request) string {
@@ -116,9 +122,17 @@ func checkIdToken_MustReturnOnError(ctx context.Context, idTokenValue string) (s
 			if err == nil && token.Valid {
 				parsedClaims, ok := token.Claims.(*AllClaims)
 				if ok {
-					// TODO check single audience against config or out
+					if config.OidcAllowedAudience() != "" {
+						if len(parsedClaims.Audience) != 1 || parsedClaims.Audience[0] != config.OidcAllowedAudience() {
+							return false, errors.New("token audience does not match")
+						}
+					}
 
-					// TODO check issuer against config or out
+					if config.OidcAllowedIssuer() != "" {
+						if parsedClaims.Issuer != config.OidcAllowedIssuer() {
+							return false, errors.New("token issuer does not match")
+						}
+					}
 
 					ctxvalues.SetIdToken(ctx, idTokenValue)
 					ctxvalues.SetEmail(ctx, parsedClaims.Email)

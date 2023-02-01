@@ -62,7 +62,7 @@ func tstPerformGet(relativeUrlWithLeadingSlash string, token string) tstWebRespo
 		request.Header.Set(media.HeaderXApiKey, token)
 	} else if token != "" {
 		// TODO: either this
-		request.Header.Set(headers.Authorization, "access"+token)
+		request.Header.Set(headers.Authorization, "Bearer access"+token)
 		// TODO: or two cookies should also work
 	}
 	response, err := http.DefaultClient.Do(request)
@@ -81,7 +81,7 @@ func tstPerformPut(relativeUrlWithLeadingSlash string, requestBody string, token
 		request.Header.Set(media.HeaderXApiKey, token)
 	} else if token != "" {
 		// TODO: either this
-		request.Header.Set(headers.Authorization, "access"+token)
+		request.Header.Set(headers.Authorization, "Bearer access"+token)
 		// TODO: or two cookies should also work
 	}
 	request.Header.Set(headers.ContentType, media.ContentTypeApplicationJson)
@@ -101,7 +101,7 @@ func tstPerformPost(relativeUrlWithLeadingSlash string, requestBody string, toke
 		request.Header.Set(media.HeaderXApiKey, token)
 	} else if token != "" {
 		// TODO: either this
-		request.Header.Set(headers.Authorization, "access"+token)
+		request.Header.Set(headers.Authorization, "Bearer access"+token)
 		// TODO: or two cookies should also work
 	}
 	request.Header.Set(headers.ContentType, media.ContentTypeApplicationJson)
@@ -121,7 +121,7 @@ func tstPerformDelete(relativeUrlWithLeadingSlash string, token string) tstWebRe
 		request.Header.Set(media.HeaderXApiKey, token)
 	} else if token != "" {
 		// TODO: either this
-		request.Header.Set(headers.Authorization, "access"+token)
+		request.Header.Set(headers.Authorization, "Bearer access"+token)
 		// TODO: or two cookies should also work
 	}
 	request.Header.Set(headers.ContentType, media.ContentTypeApplicationJson)

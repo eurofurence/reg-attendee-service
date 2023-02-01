@@ -41,6 +41,10 @@ security:
     admin_group: 'admin'
     # set this nonempty to allow early reg
     early_reg_group: ''
+    # optional, but will be checked if set (should set to reject tokens created for other clients than regsys)
+    audience: 'only-allowed-audience-in-tokens'
+    # optional, but will be checked if set
+    issuer: 'only-allowed-issuer-in-tokens'
   cors:
     # set this to true to send disable cors headers - not for production - local/test instances only - will log lots of warnings
     disable: false

@@ -73,6 +73,14 @@ func OidcEarlyRegGroup() string {
 	return Configuration().Security.Oidc.EarlyRegGroup
 }
 
+func OidcAllowedAudience() string {
+	return Configuration().Security.Oidc.Audience
+}
+
+func OidcAllowedIssuer() string {
+	return Configuration().Security.Oidc.Issuer
+}
+
 func AllowedFlagsNoAdmin() []string {
 	flags := Configuration().Choices.Flags
 	result := make([]string, 0)
