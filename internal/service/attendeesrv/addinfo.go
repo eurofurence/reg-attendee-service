@@ -24,7 +24,7 @@ func (s *AttendeeServiceImplData) WriteAdditionalInfo(ctx context.Context, atten
 }
 
 func (s *AttendeeServiceImplData) CanAccessAdditionalInfoArea(ctx context.Context, area string) (bool, error) {
-	if ctxvalues.HasApiToken(ctx) || ctxvalues.IsAuthorizedAsRole(ctx, config.OidcAdminRole()) {
+	if ctxvalues.HasApiToken(ctx) || ctxvalues.IsAuthorizedAsGroup(ctx, config.OidcAdminGroup()) {
 		return true, nil
 	}
 

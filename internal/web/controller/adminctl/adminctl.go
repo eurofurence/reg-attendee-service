@@ -24,11 +24,11 @@ var attendeeService attendeesrv.AttendeeService
 func Create(server chi.Router, attendeeSrv attendeesrv.AttendeeService) {
 	attendeeService = attendeeSrv
 
-	server.Get("/api/rest/v1/roles/admin", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(3*time.Second, pingResponse)))
+	server.Get("/api/rest/v1/roles/admin", filter.HasRoleOrApiToken(config.OidcAdminGroup(), filter.WithTimeout(3*time.Second, pingResponse)))
 
-	server.Get("/api/rest/v1/attendees/{id}/admin", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(3*time.Second, getAdminInfoHandler)))
-	server.Put("/api/rest/v1/attendees/{id}/admin", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(3*time.Second, writeAdminInfoHandler)))
-	server.Post("/api/rest/v1/attendees/find", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(60*time.Second, findAttendeesHandler)))
+	server.Get("/api/rest/v1/attendees/{id}/admin", filter.HasRoleOrApiToken(config.OidcAdminGroup(), filter.WithTimeout(3*time.Second, getAdminInfoHandler)))
+	server.Put("/api/rest/v1/attendees/{id}/admin", filter.HasRoleOrApiToken(config.OidcAdminGroup(), filter.WithTimeout(3*time.Second, writeAdminInfoHandler)))
+	server.Post("/api/rest/v1/attendees/find", filter.HasRoleOrApiToken(config.OidcAdminGroup(), filter.WithTimeout(60*time.Second, findAttendeesHandler)))
 }
 
 // --- handlers ---

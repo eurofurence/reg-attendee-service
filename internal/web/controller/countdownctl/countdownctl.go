@@ -56,8 +56,8 @@ func mockCountdownHandler(ctx context.Context, w http.ResponseWriter, r *http.Re
 
 func commonCountdownHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, current time.Time) {
 	target := config.RegistrationStartTime()
-	if config.OidcEarlyRegRole() != "" {
-		if ctxvalues.IsAuthorizedAsRole(ctx, config.OidcEarlyRegRole()) {
+	if config.OidcEarlyRegGroup() != "" {
+		if ctxvalues.IsAuthorizedAsGroup(ctx, config.OidcEarlyRegGroup()) {
 			target = config.EarlyRegistrationStartTime()
 		}
 	}

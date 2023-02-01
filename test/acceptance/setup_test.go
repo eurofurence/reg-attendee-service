@@ -3,6 +3,7 @@ package acceptance
 import (
 	"context"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/authservice"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/mailservice"
@@ -19,6 +20,7 @@ var (
 	ts          *httptest.Server
 	paymentMock paymentservice.Mock
 	mailMock    mailservice.Mock
+	authMock    authservice.Mock
 )
 
 const tstDefaultConfigFile = "../../test/testconfig-base.yaml"
@@ -43,13 +45,13 @@ func tstAdjustConfig(needLogin bool, earlyReg bool, afterTarget bool) {
 	if earlyReg {
 		if afterTarget {
 			conf.Service.Name += " After Early Reg Started But Before Normal Reg"
-			conf.Security.Oidc.EarlyReg = "staff"
+			conf.Security.Oidc.EarlyRegGroup = "staff"
 			// public reg has not started yet, so only staff may register
 			conf.GoLive.StartIsoDatetime = "2050-11-28T20:00:00+01:00"
 			conf.GoLive.EarlyRegStartIsoDatetime = "2019-10-31T20:00:00+01:00"
 		} else {
 			conf.Service.Name += " Before Early Reg"
-			conf.Security.Oidc.EarlyReg = "staff"
+			conf.Security.Oidc.EarlyRegGroup = "staff"
 			// neither public reg nor staff reg has started yet
 			conf.GoLive.StartIsoDatetime = "2050-11-28T20:00:00+01:00"
 			conf.GoLive.EarlyRegStartIsoDatetime = "2050-10-31T20:00:00+01:00"
@@ -80,6 +82,9 @@ func tstSetup(needLogin bool, staffReg bool, afterTarget bool) {
 	tstAdjustConfig(needLogin, staffReg, afterTarget)
 	paymentMock = paymentservice.CreateMock()
 	mailMock = mailservice.CreateMock()
+	authMock = authservice.CreateMock()
+	authMock.Enable()
+	tstSetupAuthMockResponses()
 	tstSetupDatabase()
 	tstSetupHttpTestServer()
 }

@@ -30,8 +30,8 @@ func Create(server chi.Router, attendeeSrv attendeesrv.AttendeeService) {
 
 	server.Get("/api/rest/v1/attendees/{id}/status", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, getStatusHandler)))
 	server.Post("/api/rest/v1/attendees/{id}/status", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, postStatusHandler)))
-	server.Get("/api/rest/v1/attendees/{id}/status-history", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(3*time.Second, getStatusHistoryHandler)))
-	server.Post("/api/rest/v1/attendees/{id}/payments-changed", filter.HasRoleOrApiToken(config.OidcAdminRole(), filter.WithTimeout(10*time.Second, paymentsChangedHandler)))
+	server.Get("/api/rest/v1/attendees/{id}/status-history", filter.HasRoleOrApiToken(config.OidcAdminGroup(), filter.WithTimeout(3*time.Second, getStatusHistoryHandler)))
+	server.Post("/api/rest/v1/attendees/{id}/payments-changed", filter.HasRoleOrApiToken(config.OidcAdminGroup(), filter.WithTimeout(10*time.Second, paymentsChangedHandler)))
 }
 
 // --- handlers ---
@@ -44,7 +44,7 @@ func getStatusHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := filter.IsSubjectOrRoleOrApiToken(w, r, att.Identity, config.OidcAdminRole()); err != nil {
+	if err := filter.IsSubjectOrGroupOrApiToken(w, r, att.Identity, config.OidcAdminGroup()); err != nil {
 		return
 	}
 

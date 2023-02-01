@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/eurofurence/reg-attendee-service/internal/repository/authservice"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/mailservice"
@@ -39,6 +40,9 @@ func (i *Impl) Run() int {
 		return 1
 	}
 	if err := mailservice.Create(); err != nil {
+		return 1
+	}
+	if err := authservice.Create(); err != nil {
 		return 1
 	}
 

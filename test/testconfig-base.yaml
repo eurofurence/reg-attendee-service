@@ -5,7 +5,8 @@ security:
   fixed_token:
     api: 'api-token-for-testing-must-be-pretty-long'
   oidc:
-    token_cookie_name: 'JWT'
+    id_token_cookie_name: 'JWT'
+    access_token_cookie_name: 'AUTH'
     token_public_keys_PEM:
       - |
         -----BEGIN PUBLIC KEY-----
@@ -17,8 +18,8 @@ security:
         cKWTjpBP2dPwVZ4WWC+9aGVd+Gyn1o0CLelf4rEjGoXbAAEgAqeGUxrcIlbjXfbc
         mwIDAQAB
         -----END PUBLIC KEY-----
-    admin_role: 'admin'
-    early_reg_role: ''
+    admin_group: 'admin'
+    early_reg_group: ''
 logging:
   severity: DEBUG
 go_live:

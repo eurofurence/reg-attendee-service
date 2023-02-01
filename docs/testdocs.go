@@ -1,25 +1,30 @@
 package docs
 
-import "log"
+import (
+	"fmt"
+)
 
 // these do nothing really, but they make tests and their log output way more readable
 
+const indentation = "             "
+const iLimitation = "LIMITATION:  "
+
 func Given(s string) {
-	log.Print(s)
+	fmt.Println(indentation, s)
 }
 
 func When(s string) {
-	log.Print(s)
+	fmt.Println(indentation, s)
 }
 
 func Then(s string) {
-	log.Print(s)
+	fmt.Println(indentation, s)
 }
 
 func Description(s string) {
-	log.Print(s)
+	fmt.Println(indentation, s)
 }
 
 func Limitation(s string) {
-	log.Print("LIMITATION: " + s)
+	fmt.Println(iLimitation + s)
 }

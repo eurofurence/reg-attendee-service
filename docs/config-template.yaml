@@ -5,6 +5,8 @@ service:
   payment_service: 'http://localhost:9092' # no trailing slash
   # if you leave this blank, a local mock will be used
   mail_service: 'http://localhost:9093' # no trailing slash
+  # if you leave this blank, userinfo checks will be skipped
+  auth_service: 'http://localhost:4712' # no trailing slash
 server:
   port: 9091
 database:
@@ -21,8 +23,9 @@ security:
   fixed_token:
     api: 'put_secure_random_string_here_for_api_token'
   oidc:
-    # set this nonempty to also try to read the jwt token from a cookie
-    token_cookie_name: 'JWT'
+    # set this nonempty to read the jwt token from a cookie
+    id_token_cookie_name: 'JWT'
+    access_token_cookie_name: 'AUTH'
     # a list of public RSA keys in PEM format, see https://github.com/Jumpy-Squirrel/jwks2pem for obtaining PEM from openid keyset endpoint
     token_public_keys_PEM:
       - |
@@ -35,9 +38,13 @@ security:
         V6L11BWkpzGXSW4Hv43qa+GSYOD2QU68Mb59oSk2OB+BtOLpJofmbGEGgvmwyCI9
         MwIDAQAB
         -----END PUBLIC KEY-----
-    admin_role: 'admin'
+    admin_group: 'admin'
     # set this nonempty to allow early reg
-    early_reg_role: ''
+    early_reg_group: ''
+    # optional, but will be checked if set (should set to reject tokens created for other clients than regsys)
+    audience: 'only-allowed-audience-in-tokens'
+    # optional, but will be checked if set
+    issuer: 'only-allowed-issuer-in-tokens'
   cors:
     # set this to true to send disable cors headers - not for production - local/test instances only - will log lots of warnings
     disable: false

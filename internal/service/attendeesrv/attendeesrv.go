@@ -101,7 +101,7 @@ func (s *AttendeeServiceImplData) CanChangeEmailTo(ctx context.Context, original
 		return nil
 	}
 
-	if ctxvalues.IsAuthorizedAsRole(ctx, config.OidcAdminRole()) || ctxvalues.HasApiToken(ctx) {
+	if ctxvalues.IsAuthorizedAsGroup(ctx, config.OidcAdminGroup()) || ctxvalues.HasApiToken(ctx) {
 		// allow admins or api token to set anything
 		return nil
 	}
@@ -146,8 +146,8 @@ func (s *AttendeeServiceImplData) CanChangeChoiceTo(ctx context.Context, what st
 
 func (s *AttendeeServiceImplData) CanRegisterAtThisTime(ctx context.Context) error {
 	// staff early reg? (also for admins)
-	earlyRole := config.OidcEarlyRegRole()
-	if earlyRole != "" && (ctxvalues.IsAuthorizedAsRole(ctx, earlyRole) || ctxvalues.IsAuthorizedAsRole(ctx, config.OidcAdminRole())) {
+	earlyRole := config.OidcEarlyRegGroup()
+	if earlyRole != "" && (ctxvalues.IsAuthorizedAsGroup(ctx, earlyRole) || ctxvalues.IsAuthorizedAsGroup(ctx, config.OidcAdminGroup())) {
 		current := time.Now()
 		target := config.EarlyRegistrationStartTime()
 		secondsToGo := target.Sub(current).Seconds()
@@ -190,7 +190,7 @@ func userAlreadyHasAnotherRegistration(ctx context.Context, identity string, exp
 func checkNoForbiddenChanges(ctx context.Context, what string, key string, choiceConfig config.ChoiceConfig, originalChoices map[string]bool, newChoices map[string]bool) error {
 	if choiceConfig.AdminOnly || choiceConfig.ReadOnly {
 		if originalChoices[key] != newChoices[key] {
-			if !ctxvalues.HasApiToken(ctx) && !ctxvalues.IsAuthorizedAsRole(ctx, config.OidcAdminRole()) {
+			if !ctxvalues.HasApiToken(ctx) && !ctxvalues.IsAuthorizedAsGroup(ctx, config.OidcAdminGroup()) {
 				return fmt.Errorf("forbidden select or deselect of %s %s - only an admin can do that", what, key)
 			}
 		}

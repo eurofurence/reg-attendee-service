@@ -93,7 +93,7 @@ security:
   fixed_token:
     api: 'fixed-testing-token-abc'
   oidc:
-    admin_role: 'admin'
+    admin_group: 'admin'
 birthday:
   earliest: '1851-01-01'
   latest: '2048-01-01'
