@@ -214,6 +214,6 @@ func myRegsErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Requ
 }
 
 func myRegsNotFoundErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	aulogging.Logger.Ctx(ctx).Info().Printf("found no registrations owned by logged in subject")
+	aulogging.Logger.Ctx(ctx).Debug().Printf("found no registrations owned by logged in subject")
 	ctlutil.ErrorHandler(ctx, w, r, "attendee.owned.notfound", http.StatusNotFound, url.Values{})
 }
