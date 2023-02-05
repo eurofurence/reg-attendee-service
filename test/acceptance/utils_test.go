@@ -81,6 +81,9 @@ func tstAddAuth(request *http.Request, token string) {
 			HttpOnly: true,
 			SameSite: http.SameSiteStrictMode,
 		})
+		if token == valid_JWT_is_admin_sub1234567890 {
+			request.Header.Set("X-Admin-Request", "available")
+		}
 	}
 }
 
