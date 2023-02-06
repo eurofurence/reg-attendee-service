@@ -35,8 +35,8 @@ func TestCheckConstraints(t *testing.T) {
 
 func TestCheckFlags(t *testing.T) {
 	c := make(map[string]ChoiceConfig)
-	c["admindefault"] = ChoiceConfig{Default: true, AdminOnly: true, Description: "admin and default at the same time - invalid", HelpUrl: "some url"}
-	c["adminro"] = ChoiceConfig{AdminOnly: true, ReadOnly: true, Description: "admin and read only at the same time - invalid", HelpUrl: "some url"}
+	c["admindefault"] = ChoiceConfig{Default: true, AdminOnly: true, Description: "admin and default at the same time - invalid"}
+	c["adminro"] = ChoiceConfig{AdminOnly: true, ReadOnly: true, Description: "admin and read only at the same time - invalid"}
 
 	actualErrors := url.Values{}
 	validateFlagsConfiguration(actualErrors, c)
@@ -53,7 +53,7 @@ func TestCheckFlags(t *testing.T) {
 
 func TestCheckPackages(t *testing.T) {
 	c := make(map[string]ChoiceConfig)
-	c["myadmin"] = ChoiceConfig{Default: true, AdminOnly: true, Description: "admin only package - invalid", HelpUrl: "some url"}
+	c["myadmin"] = ChoiceConfig{Default: true, AdminOnly: true, Description: "admin only package - invalid"}
 
 	actualErrors := url.Values{}
 	validatePackagesConfiguration(actualErrors, c)
@@ -69,8 +69,8 @@ func TestCheckPackages(t *testing.T) {
 
 func TestCheckOptions(t *testing.T) {
 	c := make(map[string]ChoiceConfig)
-	c["myadmin"] = ChoiceConfig{Default: true, AdminOnly: true, Description: "admin only option - invalid", HelpUrl: "some url"}
-	c["myro"] = ChoiceConfig{ReadOnly: true, Description: "read only option - invalid", HelpUrl: "some url"}
+	c["myadmin"] = ChoiceConfig{Default: true, AdminOnly: true, Description: "admin only option - invalid"}
+	c["myro"] = ChoiceConfig{ReadOnly: true, Description: "read only option - invalid"}
 
 	actualErrors := url.Values{}
 	validateOptionsConfiguration(actualErrors, c)

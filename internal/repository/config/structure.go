@@ -118,7 +118,6 @@ type (
 
 	ChoiceConfig struct {
 		Description   string  `yaml:"description"`
-		HelpUrl       string  `yaml:"help_url"`
 		Price         int64   `yaml:"price"`
 		VatPercent    float64 `yaml:"vat_percent"`
 		Default       bool    `yaml:"default"`                // if set to true, is added to flags by default. Not available for admin only flags!

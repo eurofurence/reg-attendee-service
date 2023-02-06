@@ -119,7 +119,6 @@ func validateFlagsConfiguration(errs url.Values, c map[string]ChoiceConfig) {
 			errs.Add("choices.flags."+k, "invalid key, must consist of a-z A-Z 0-9 - _ only")
 		}
 		validation.CheckLength(&errs, 1, 256, "choices.flags."+k+".description", v.Description)
-		validation.CheckLength(&errs, 1, 256, "choices.flags."+k+".help_url", v.HelpUrl)
 		checkConstraints(errs, c, "choices.flags", k, v.Constraint, v.ConstraintMsg)
 		if v.AdminOnly && v.ReadOnly {
 			errs.Add("choices.flags."+k+".admin", "a flag cannot both be admin_only and read_only")
@@ -136,7 +135,6 @@ func validatePackagesConfiguration(errs url.Values, c map[string]ChoiceConfig) {
 			errs.Add("choices.packages."+k, "invalid key, must consist of a-z A-Z 0-9 - _ only")
 		}
 		validation.CheckLength(&errs, 1, 256, "choices.packages."+k+".description", v.Description)
-		validation.CheckLength(&errs, 1, 256, "choices.packages."+k+".help_url", v.HelpUrl)
 		checkConstraints(errs, c, "choices.packages", k, v.Constraint, v.ConstraintMsg)
 		if v.AdminOnly {
 			errs.Add("choices.packages."+k+".admin", "packages cannot be admin_only (they cost money). Try read_only instead.")
@@ -150,7 +148,6 @@ func validateOptionsConfiguration(errs url.Values, c map[string]ChoiceConfig) {
 			errs.Add("choices.options."+k, "invalid key, must consist of a-z A-Z 0-9 - _ only")
 		}
 		validation.CheckLength(&errs, 1, 256, "choices.options."+k+".description", v.Description)
-		validation.CheckLength(&errs, 1, 256, "choices.options."+k+".help_url", v.HelpUrl)
 		checkConstraints(errs, c, "choices.options", k, v.Constraint, v.ConstraintMsg)
 		if v.AdminOnly {
 			errs.Add("choices.options."+k+".admin", "options cannot be admin_only (they represent user choices).")
