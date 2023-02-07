@@ -106,6 +106,10 @@ func (s *AttendeeServiceImplData) CanChangeEmailTo(ctx context.Context, original
 		return nil
 	}
 
+	if !ctxvalues.EmailVerified(ctx) {
+		return errors.New("you must verify your email address with the identity provider first")
+	}
+
 	if ctxvalues.Email(ctx) == newEmail {
 		// anyone can set their own email address, as validated by IDP - we already know not empty
 		return nil
