@@ -57,11 +57,6 @@ path or URL in `test/contract/producer/setup_ctr_test.go`.
 
 We track open issues as GitHub issues on this repository once it becomes clear what exactly needs to be done.
 
-### ideas
-
-- key_deposit/key_received/sponsor_items flag are supported as additional-info
-- new endpoint for "resend last status change notification email"
-
 ### plans for later
 
 - self cancellation if no payments made and before a grace period
