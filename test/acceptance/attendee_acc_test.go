@@ -407,7 +407,44 @@ func TestCreateNewAttendee_NoLoginRequired_After_AdminIsLikeStaff(t *testing.T) 
 
 // -- login required for all new registrations --
 
-// we only test the timing-related cases, validation is no different
+// we only test the timing-related cases, validation is no different except for the email validation against the token
+
+func TestCreateNewAttendee_LoginRequired_EmailWrong(t *testing.T) {
+	docs.Given("given the configuration for login-only registration after normal reg is open")
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given a logged in user")
+	token := tstValidUserToken(t, 1)
+
+	docs.When("when they attempt to create a new attendee with a different email address")
+	attendeeSent := tstBuildValidAttendee("na24-")
+	attendeeSent.Email = "nobody@example.com"
+	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), token)
+
+	docs.Then("then the attempt is rejected as invalid (400) with an appropriate error response")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
+		"email": []string{"you can only use the email address you're logged in with"},
+	})
+}
+
+func TestCreateNewAttendee_LoginRequired_EmailUnverified(t *testing.T) {
+	docs.Given("given the configuration for login-only registration after normal reg is open")
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given a logged in user who has not verified their email address")
+	token := valid_JWT_is_not_staff_sub101_unverified
+
+	docs.When("when they attempt to create a new attendee")
+	attendeeSent := tstBuildValidAttendee("na25-")
+	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), token)
+
+	docs.Then("then the attempt is rejected as invalid (400) with an appropriate error response")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
+		"email": []string{"you must verify your email address with the identity provider first"},
+	})
+}
 
 // - before both target times -
 
