@@ -72,8 +72,15 @@ choices:
       description: 'Wheelchair'
     anon:
       description: 'Legal Name is Confidential'
+    digi-book:
+      description: 'Digital only convention booklet'
+    terms-accepted:
+      description: 'Accepted the terms'
+      default: true
+      read_only: true
     ev:
       description: 'Eurofurence e.V. Member'
+      read_only: true
     guest:
       description: 'Guest of the Convention'
       admin_only: true
@@ -289,7 +296,6 @@ countries:
   - BR
   - BS
   - BT
-  - BU
   - BV
   - BW
   - BY
@@ -335,7 +341,6 @@ countries:
   - FM
   - FO
   - FR
-  - FX
   - GA
   - GB
   - GD
@@ -431,7 +436,6 @@ countries:
   - NO
   - NP
   - NR
-  - NT
   - NU
   - NZ
   - OM
@@ -512,5 +516,4 @@ countries:
   - YT
   - ZA
   - ZM
-  - ZR
   - ZW

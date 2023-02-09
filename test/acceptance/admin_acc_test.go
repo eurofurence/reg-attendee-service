@@ -321,7 +321,7 @@ func TestAdminWrite_WrongFlagType(t *testing.T) {
 	response := tstPerformPut(location1+"/admin", tstRenderJson(body), token)
 
 	docs.Then("then the appropriate error is returned")
-	tstRequireErrorResponse(t, response, http.StatusBadRequest, "admin.data.invalid", url.Values{"flags": []string{"flags field must be a comma separated combination of any of guest"}})
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "admin.data.invalid", url.Values{"flags": []string{"flags field must be a comma separated combination of any of guest,skip_ban_check"}})
 
 	docs.Then("and the admin info is unchanged")
 	response2 := tstPerformGet(location1+"/admin", token)
@@ -935,7 +935,7 @@ func TestSearch_AdminOk(t *testing.T) {
       "tshirt_size": "XXL",
       "spoken_languages": "de-DE,en-US",
       "registration_language": "en-US",
-      "flags": "anon,hc",
+      "flags": "anon,hc,terms-accepted",
       "options": "music,suit",
       "packages": "room-none,attendance,stage,sponsor2",
       "status": "new",

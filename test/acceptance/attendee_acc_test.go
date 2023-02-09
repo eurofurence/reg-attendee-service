@@ -6,6 +6,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"net/http"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/eurofurence/reg-attendee-service/docs"
@@ -85,12 +86,12 @@ func TestCreateNewAttendeeAdminOnlyFlag(t *testing.T) {
 
 	docs.When("when they send a new attendee and attempt to set an admin only flag (guest)")
 	attendeeSent := tstBuildValidAttendee("nav3-")
-	attendeeSent.Flags = "guest,hc"
+	attendeeSent.Flags = "guest,hc,terms-accepted"
 	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), tstNoToken())
 
 	docs.Then("then the attendee is rejected with an error response")
 	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
-		"flags": []string{"flags field must be a comma separated combination of any of anon,ev,hc"},
+		"flags": []string{"flags field must be a comma separated combination of any of anon,ev,hc,terms-accepted"},
 	})
 }
 
@@ -103,12 +104,30 @@ func TestCreateNewAttendeeReadOnlyFlag(t *testing.T) {
 
 	docs.When("when they send a new attendee and attempt to set a read only flag (ev)")
 	attendeeSent := tstBuildValidAttendee("nav4-")
-	attendeeSent.Flags = "ev,anon"
+	attendeeSent.Flags = "ev,anon,terms-accepted"
 	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), tstNoToken())
 
 	docs.Then("then the attendee is rejected with an error response")
 	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
 		"flags": []string{"forbidden select or deselect of flag ev - only an admin can do that"},
+	})
+}
+
+func TestCreateNewAttendeeReadOnlyFlagRemove(t *testing.T) {
+	docs.Given("given the configuration for standard public registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an unauthenticated user")
+
+	docs.When("when they send a new attendee and attempt to leave out a read only flag (terms-accepted)")
+	attendeeSent := tstBuildValidAttendee("nav4-")
+	attendeeSent.Flags = "anon"
+	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), tstNoToken())
+
+	docs.Then("then the attendee is rejected with an error response")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
+		"flags": []string{"forbidden select or deselect of flag terms-accepted - only an admin can do that"},
 	})
 }
 
@@ -127,7 +146,7 @@ func TestCreateNewAttendeeAdminOnlyFlag_Admin(t *testing.T) {
 
 	docs.Then("then the attendee is rejected with an error response, because admin only flags belong in adminInfo")
 	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
-		"flags": []string{"flags field must be a comma separated combination of any of anon,ev,hc"},
+		"flags": []string{"flags field must be a comma separated combination of any of anon,ev,hc,terms-accepted"},
 	})
 }
 
@@ -916,12 +935,12 @@ func TestUpdateExistingAttendeeAdminOnlyFlag(t *testing.T) {
 
 	docs.Then("then the request is denied with an appropriate error")
 	tstRequireErrorResponse(t, updateResponse, http.StatusBadRequest, "attendee.data.invalid", url.Values{
-		"flags": []string{"flags field must be a comma separated combination of any of anon,ev,hc"},
+		"flags": []string{"flags field must be a comma separated combination of any of anon,ev,hc,terms-accepted"},
 	})
 
 	docs.Then("and the data remains unchanged")
 	attendeeReadAgain := tstReadAttendee(t, location1)
-	require.EqualValues(t, "anon,hc", attendeeReadAgain.Flags, "attendee data read did not match original data")
+	require.EqualValues(t, "anon,hc,terms-accepted", attendeeReadAgain.Flags, "attendee data read did not match original data")
 }
 
 func TestUpdateExistingAttendeeAdminOnlyFlag_Admin(t *testing.T) {
@@ -942,12 +961,12 @@ func TestUpdateExistingAttendeeAdminOnlyFlag_Admin(t *testing.T) {
 
 	docs.Then("then the request is denied with an appropriate error, because admin only flags belong in adminInfo")
 	tstRequireErrorResponse(t, updateResponse, http.StatusBadRequest, "attendee.data.invalid", url.Values{
-		"flags": []string{"flags field must be a comma separated combination of any of anon,ev,hc"},
+		"flags": []string{"flags field must be a comma separated combination of any of anon,ev,hc,terms-accepted"},
 	})
 
 	docs.Then("and the data remains unchanged")
 	attendeeReadAgain := tstReadAttendee(t, location1)
-	require.EqualValues(t, "anon,hc", attendeeReadAgain.Flags, "attendee data read did not match original data")
+	require.EqualValues(t, "anon,hc,terms-accepted", attendeeReadAgain.Flags, "attendee data read did not match original data")
 }
 
 func TestUpdateExistingAttendeeReadOnlyFlag(t *testing.T) {
@@ -971,7 +990,31 @@ func TestUpdateExistingAttendeeReadOnlyFlag(t *testing.T) {
 
 	docs.Then("and the data remains unchanged")
 	attendeeReadAgain := tstReadAttendee(t, location1)
-	require.EqualValues(t, "anon,hc", attendeeReadAgain.Flags, "attendee data read did not match original data")
+	require.EqualValues(t, "anon,hc,terms-accepted", attendeeReadAgain.Flags, "attendee data read did not match original data")
+}
+
+func TestUpdateExistingAttendeeRemoveReadOnlyFlag(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee who is logged in")
+	token := tstValidUserToken(t, 101)
+	location1, attendee1 := tstRegisterAttendeeWithToken(t, "ua11-", token)
+
+	docs.When("when they send updated attendee info and attempt to remove a read-only flag (terms-accepted)")
+	changedAttendee := attendee1
+	changedAttendee.Flags = strings.ReplaceAll(changedAttendee.Flags, ",terms-accepted", "")
+	updateResponse := tstPerformPut(location1, tstRenderJson(changedAttendee), token)
+
+	docs.Then("then the request is denied with an appropriate error, because only admins can change read only flags")
+	tstRequireErrorResponse(t, updateResponse, http.StatusBadRequest, "attendee.data.invalid", url.Values{
+		"flags": []string{"forbidden select or deselect of flag terms-accepted - only an admin can do that"},
+	})
+
+	docs.Then("and the data remains unchanged")
+	attendeeReadAgain := tstReadAttendee(t, location1)
+	require.EqualValues(t, "anon,hc,terms-accepted", attendeeReadAgain.Flags, "attendee data read did not match original data")
 }
 
 func TestUpdateExistingAttendeeReadOnlyFlag_Admin(t *testing.T) {
@@ -995,7 +1038,7 @@ func TestUpdateExistingAttendeeReadOnlyFlag_Admin(t *testing.T) {
 	require.Equal(t, location1, updateResponse.location, "location unexpectedly changed during update")
 	attendeeReadAgain := tstReadAttendee(t, location1)
 	require.EqualValues(t, changedAttendee, attendeeReadAgain, "attendee data read did not match updated data")
-	require.EqualValues(t, "anon,hc,ev", attendeeReadAgain.Flags, "attendee data read did not match expected flags value")
+	require.EqualValues(t, "anon,hc,terms-accepted,ev", attendeeReadAgain.Flags, "attendee data read did not match expected flags value")
 }
 
 func TestUpdateExistingAttendee_Admin_ChangeEmail(t *testing.T) {

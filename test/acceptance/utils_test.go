@@ -160,7 +160,7 @@ func tstBuildValidAttendee(testcase string) attendee.AttendeeDto {
 		Pronouns:             "he/him",
 		SpokenLanguages:      "de-DE,en-US",
 		RegistrationLanguage: "en-US",
-		Flags:                "anon,hc",
+		Flags:                "anon,hc,terms-accepted",
 		Packages:             "room-none,attendance,stage,sponsor2",
 		Options:              "music,suit",
 		TshirtSize:           "XXL",
