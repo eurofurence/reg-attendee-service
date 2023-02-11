@@ -79,6 +79,7 @@ func validate(ctx context.Context, a *attendee.AttendeeDto, trustedOriginalState
 		errs.Add("telegram", "optional telegram field must contain your @username from telegram, or it can be left blank")
 	}
 	validation.CheckLength(&errs, 0, 80, "telegram", a.Telegram)
+	validation.CheckLength(&errs, 0, 40, "pronouns", a.Pronouns)
 	if validation.InvalidISODate(a.Birthday) {
 		errs.Add("birthday", "birthday field must be a valid ISO 8601 date (format yyyy-MM-dd)")
 	} else if validation.DateNotInRangeInclusive(a.Birthday, config.EarliestBirthday(), config.LatestBirthday()) {
