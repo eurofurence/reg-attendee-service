@@ -80,7 +80,7 @@ choices:
       read_only: true
     ev:
       description: 'Eurofurence e.V. Member'
-      read_only: true
+      admin_only: true
     guest:
       description: 'Guest of the Convention'
       admin_only: true
