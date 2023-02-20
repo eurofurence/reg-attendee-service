@@ -10,7 +10,7 @@ require (
 	github.com/d4l3k/messagediff v1.2.1
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
-	github.com/golang-jwt/jwt/v4 v4.4.3
+	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/google/uuid v1.3.0
 	github.com/pact-foundation/pact-go v1.7.0
 	github.com/rs/zerolog v1.29.0
