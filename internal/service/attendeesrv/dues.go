@@ -221,7 +221,7 @@ func (s *AttendeeServiceImplData) UpdateAttendeeCacheAndCalculateResultingStatus
 }
 
 func (s *AttendeeServiceImplData) suffixForDeletedAttendees(attendee *entity.Attendee, newStatus status.Status, value string) string {
-	deletionSuffix := fmt.Sprintf("_deleted_%d", attendee.ID)
+	deletionSuffix := fmt.Sprintf("_d_%d", attendee.ID)
 	if newStatus == status.Deleted {
 		if !strings.HasSuffix(value, deletionSuffix) {
 			value = value + deletionSuffix
