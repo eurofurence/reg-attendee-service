@@ -1065,6 +1065,76 @@ func TestUpdateExistingAttendee_Admin_ChangeEmail(t *testing.T) {
 	require.EqualValues(t, changedAttendee, attendeeReadAgain, "attendee data read did not match updated data")
 }
 
+func tstUpdateExistingAttendee_RemovePackage_Forbidden(t *testing.T, testcase string, who string, targetStatus status.Status, token string) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given(fmt.Sprintf("given an existing %s in status %s", who, targetStatus))
+	loc, att := tstRegisterAttendeeAndTransitionToStatus(t, testcase, targetStatus)
+
+	docs.When("when they send updated attendee info and remove a package that has associated cost")
+	changedAttendee := att
+	changedAttendee.Packages = "room-none,attendance,stage" // removes sponsor2
+	response := tstPerformPut(loc, tstRenderJson(changedAttendee), token)
+
+	docs.Then("then the update is rejected with the corresponding error message")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
+		"packages": []string{"forbidden select or deselect of package sponsor2 after payment - only an admin can do that at this time"},
+	})
+}
+
+func tstUpdateExistingAttendee_RemovePackage_Allowed(t *testing.T, testcase string, who string, targetStatus status.Status, token string) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given(fmt.Sprintf("given an existing %s in status %s", who, targetStatus))
+	loc, att := tstRegisterAttendeeAndTransitionToStatus(t, testcase, targetStatus)
+
+	docs.When("when they send updated attendee info and remove a package that has associated cost")
+	changedAttendee := att
+	changedAttendee.Packages = "room-none,attendance,stage" // removes sponsor2
+	response := tstPerformPut(loc, tstRenderJson(changedAttendee), token)
+
+	docs.Then("then the attendee is successfully updated and the changed data can be read again")
+	require.Equal(t, http.StatusOK, response.status, "unexpected http response status for update")
+	require.Equal(t, loc, response.location, "location unexpectedly changed during update")
+	attendeeReadAgain := tstReadAttendee(t, loc)
+	require.EqualValues(t, changedAttendee, attendeeReadAgain, "attendee data read did not match updated data")
+	require.EqualValues(t, "room-none,attendance,stage", attendeeReadAgain.Packages, "attendee data read did not match expected package value")
+}
+
+func TestUpdateExistingAttendee_RemovePackageWithCost_AfterPaid_UserForbidden(t *testing.T) {
+	for i, targetStatus := range []status.Status{status.PartiallyPaid, status.Paid, status.CheckedIn} {
+		testcase := fmt.Sprintf("ua2b-%d", i+1)
+		token := tstValidStaffToken(t, 1) // user who registered, staff makes no difference
+		t.Run(string(targetStatus), func(t *testing.T) {
+			tstUpdateExistingAttendee_RemovePackage_Forbidden(t, testcase, "attendee", targetStatus, token)
+		})
+	}
+}
+
+func TestUpdateExistingAttendee_RemovePackageWithCost_BeforePaid_UserAllowed(t *testing.T) {
+	for i, targetStatus := range []status.Status{status.New, status.Approved} {
+		testcase := fmt.Sprintf("ua2c-%d", i+1)
+		token := tstValidStaffToken(t, 1) // user who registered, staff makes no difference
+		t.Run(string(targetStatus), func(t *testing.T) {
+			tstUpdateExistingAttendee_RemovePackage_Allowed(t, testcase, "attendee", targetStatus, token)
+		})
+	}
+}
+
+func TestUpdateExistingAttendee_RemovePackageWithCost_Whenever_AdminOk(t *testing.T) {
+	for i, targetStatus := range []status.Status{status.New, status.Approved, status.PartiallyPaid, status.Paid, status.CheckedIn, status.Cancelled} {
+		testcase := fmt.Sprintf("ua2c-%d", i+1)
+		token := tstValidAdminToken(t)
+		t.Run(string(targetStatus), func(t *testing.T) {
+			tstUpdateExistingAttendee_RemovePackage_Allowed(t, testcase, "admin", targetStatus, token)
+		})
+	}
+}
+
 // TODO test dues changes caused by attendee package updates and corresponding status changes
 
 // --- get attendee ---

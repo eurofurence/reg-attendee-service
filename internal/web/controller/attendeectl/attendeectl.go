@@ -3,9 +3,11 @@ package attendeectl
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/service/attendeesrv"
@@ -44,7 +46,7 @@ func newAttendeeHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-	validationErrs := validate(ctx, dto, &entity.Attendee{Flags: config.DefaultFlags(), Packages: config.DefaultPackages(), Options: config.DefaultOptions()})
+	validationErrs := validate(ctx, dto, &entity.Attendee{Flags: config.DefaultFlags(), Packages: config.DefaultPackages(), Options: config.DefaultOptions()}, "irrelevant")
 	if len(validationErrs) != 0 {
 		attendeeValidationErrorHandler(ctx, w, r, validationErrs)
 		return
@@ -106,7 +108,12 @@ func updateAttendeeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	validationErrs := validate(ctx, dto, attd)
+	latestStatus, err := obtainAttendeeLatestStatusMustReturnOnError(ctx, w, r, attd)
+	if err != nil {
+		return
+	}
+
+	validationErrs := validate(ctx, dto, attd, latestStatus)
 	if len(validationErrs) != 0 {
 		attendeeValidationErrorHandler(ctx, w, r, validationErrs)
 		return
@@ -179,6 +186,21 @@ func parseBodyToAttendeeDto(ctx context.Context, w http.ResponseWriter, r *http.
 	return dto, err
 }
 
+func obtainAttendeeLatestStatusMustReturnOnError(ctx context.Context, w http.ResponseWriter, r *http.Request, att *entity.Attendee) (status.Status, error) {
+	history, err := attendeeService.GetFullStatusHistory(ctx, att)
+	if err != nil {
+		attendeeReadErrorHandler(ctx, w, r, err)
+		return "unknown", err
+	} else if len(history) == 0 {
+		err := errors.New("got empty status change history")
+		attendeeReadErrorHandler(ctx, w, r, err)
+		return "unknown", err
+	}
+
+	latest := history[len(history)-1]
+	return latest.Status, nil
+}
+
 func attendeeValidationErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, errs url.Values) {
 	aulogging.Logger.Ctx(ctx).Warn().Printf("received attendee data with validation errors: %v", errs)
 	ctlutil.ErrorHandler(ctx, w, r, "attendee.data.invalid", http.StatusBadRequest, errs)
@@ -201,6 +223,11 @@ func attendeeWriteErrorHandler(ctx context.Context, w http.ResponseWriter, r *ht
 		ctlutil.ErrorHandler(ctx, w, r, "attendee.write.error", http.StatusInternalServerError, url.Values{})
 	}
 	// TODO: distinguish attendee.payment.error -> bad gateway
+}
+
+func attendeeReadErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
+	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("attendee could not be read: %s", err.Error())
+	ctlutil.ErrorHandler(ctx, w, r, "attendee.read.error", http.StatusInternalServerError, url.Values{})
 }
 
 func attendeeMaxIdErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {

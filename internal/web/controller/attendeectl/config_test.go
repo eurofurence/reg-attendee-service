@@ -69,6 +69,10 @@ func (s *MockAttendeeService) CanChangeChoiceTo(ctx context.Context, what string
 	return nil
 }
 
+func (s *MockAttendeeService) CanChangeChoiceToCurrentStatus(ctx context.Context, what string, originalChoiceStr string, newChoiceStr string, configuration map[string]config.ChoiceConfig, currentStatus status.Status) error {
+	return nil
+}
+
 func (s *MockAttendeeService) CanRegisterAtThisTime(ctx context.Context) error {
 	return nil
 }

@@ -258,7 +258,7 @@ func performEmailValidationTest(t *testing.T, wrongEmail string) {
 }
 
 func performValidationTest(t *testing.T, a *attendee.AttendeeDto, expectedErrors url.Values, allowedId uint) {
-	actualErrors := validate(context.TODO(), a, &entity.Attendee{Model: gorm.Model{ID: allowedId}})
+	actualErrors := validate(context.TODO(), a, &entity.Attendee{Model: gorm.Model{ID: allowedId}}, "irrelevant")
 
 	prettyprintedActualErrors, _ := json.MarshalIndent(actualErrors, "", "  ")
 	prettyprintedExpectedErrors, _ := json.MarshalIndent(expectedErrors, "", "  ")
