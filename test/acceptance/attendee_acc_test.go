@@ -1080,7 +1080,7 @@ func tstUpdateExistingAttendee_RemovePackage_Forbidden(t *testing.T, testcase st
 
 	docs.Then("then the update is rejected with the corresponding error message")
 	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
-		"packages": []string{"forbidden select or deselect of package sponsor2 after payment - only an admin can do that at this time"},
+		"packages": []string{"forbidden deselect of package sponsor2 after payment - only an admin can do that at this time"},
 	})
 }
 

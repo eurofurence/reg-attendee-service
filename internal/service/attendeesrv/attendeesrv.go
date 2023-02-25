@@ -216,7 +216,7 @@ func checkNoForbiddenChangesAfterPayment(ctx context.Context, what string, key s
 	if currentStatus == status.PartiallyPaid || currentStatus == status.Paid || currentStatus == status.CheckedIn {
 		if originalChoices[key] && !newChoices[key] && choiceConfig.Price > 0 {
 			if !ctxvalues.HasApiToken(ctx) && !ctxvalues.IsAuthorizedAsGroup(ctx, config.OidcAdminGroup()) {
-				return fmt.Errorf("forbidden select or deselect of %s %s after payment - only an admin can do that at this time", what, key)
+				return fmt.Errorf("forbidden deselect of %s %s after payment - only an admin can do that at this time", what, key)
 			}
 		}
 	}
