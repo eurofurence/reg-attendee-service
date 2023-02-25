@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
@@ -119,6 +120,10 @@ func (s *AttendeeServiceImplData) CanChangeEmailTo(ctx context.Context, original
 }
 
 func (s *AttendeeServiceImplData) CanChangeChoiceTo(ctx context.Context, what string, originalChoiceStr string, newChoiceStr string, configuration map[string]config.ChoiceConfig) error {
+	return s.CanChangeChoiceToCurrentStatus(ctx, what, originalChoiceStr, newChoiceStr, configuration, "irrelevant")
+}
+
+func (s *AttendeeServiceImplData) CanChangeChoiceToCurrentStatus(ctx context.Context, what string, originalChoiceStr string, newChoiceStr string, configuration map[string]config.ChoiceConfig, currentStatus status.Status) error {
 	originalChoices := choiceStrToMap(originalChoiceStr, configuration)
 	newChoices := choiceStrToMap(newChoiceStr, configuration)
 	oneIsMandatory := false
@@ -130,6 +135,11 @@ func (s *AttendeeServiceImplData) CanChangeChoiceTo(ctx context.Context, what st
 		}
 		if err := checkNoConstraintViolation(k, v, newChoices); err != nil {
 			return err
+		}
+		if currentStatus != "irrelevant" {
+			if err := checkNoForbiddenChangesAfterPayment(ctx, what, k, v, originalChoices, newChoices, currentStatus); err != nil {
+				return err
+			}
 		}
 		if v.Mandatory {
 			oneIsMandatory = true
@@ -196,6 +206,17 @@ func checkNoForbiddenChanges(ctx context.Context, what string, key string, choic
 		if originalChoices[key] != newChoices[key] {
 			if !ctxvalues.HasApiToken(ctx) && !ctxvalues.IsAuthorizedAsGroup(ctx, config.OidcAdminGroup()) {
 				return fmt.Errorf("forbidden select or deselect of %s %s - only an admin can do that", what, key)
+			}
+		}
+	}
+	return nil
+}
+
+func checkNoForbiddenChangesAfterPayment(ctx context.Context, what string, key string, choiceConfig config.ChoiceConfig, originalChoices map[string]bool, newChoices map[string]bool, currentStatus status.Status) error {
+	if currentStatus == status.PartiallyPaid || currentStatus == status.Paid || currentStatus == status.CheckedIn {
+		if originalChoices[key] && !newChoices[key] && choiceConfig.Price > 0 {
+			if !ctxvalues.HasApiToken(ctx) && !ctxvalues.IsAuthorizedAsGroup(ctx, config.OidcAdminGroup()) {
+				return fmt.Errorf("forbidden deselect of %s %s after payment - only an admin can do that at this time", what, key)
 			}
 		}
 	}

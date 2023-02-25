@@ -4,6 +4,7 @@ import (
 	"context"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/validation"
 	"net/url"
 	"strings"
@@ -53,7 +54,7 @@ func validateNickname(errs *url.Values, nickname string) {
 	validation.CheckLength(errs, 1, 80, "nickname", nickname)
 }
 
-func validate(ctx context.Context, a *attendee.AttendeeDto, trustedOriginalState *entity.Attendee) url.Values {
+func validate(ctx context.Context, a *attendee.AttendeeDto, trustedOriginalState *entity.Attendee, currentStatus status.Status) url.Values {
 	errs := url.Values{}
 
 	if a.Id != 0 && a.Id != trustedOriginalState.ID {
@@ -103,7 +104,7 @@ func validate(ctx context.Context, a *attendee.AttendeeDto, trustedOriginalState
 	if err := attendeeService.CanChangeChoiceTo(ctx, "flag", trustedOriginalState.Flags, a.Flags, config.FlagsConfigNoAdmin()); err != nil {
 		errs.Add("flags", err.Error())
 	}
-	if err := attendeeService.CanChangeChoiceTo(ctx, "package", trustedOriginalState.Packages, a.Packages, config.PackagesConfig()); err != nil {
+	if err := attendeeService.CanChangeChoiceToCurrentStatus(ctx, "package", trustedOriginalState.Packages, a.Packages, config.PackagesConfig(), currentStatus); err != nil {
 		errs.Add("packages", err.Error())
 	}
 	if err := attendeeService.CanChangeChoiceTo(ctx, "option", trustedOriginalState.Options, a.Options, config.OptionsConfig()); err != nil {

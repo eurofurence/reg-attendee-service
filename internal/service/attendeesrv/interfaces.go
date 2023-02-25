@@ -28,6 +28,7 @@ type AttendeeService interface {
 	CanChangeEmailTo(ctx context.Context, originalEmail string, newEmail string) error
 
 	CanChangeChoiceTo(ctx context.Context, what string, originalChoiceStr string, newChoiceStr string, configuration map[string]config.ChoiceConfig) error
+	CanChangeChoiceToCurrentStatus(ctx context.Context, what string, originalChoiceStr string, newChoiceStr string, configuration map[string]config.ChoiceConfig, currentStatus status.Status) error
 
 	GetAdminInfo(ctx context.Context, attendeeId uint) (*entity.AdminInfo, error)
 	UpdateAdminInfo(ctx context.Context, attendee *entity.Attendee, adminInfo *entity.AdminInfo) error
