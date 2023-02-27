@@ -142,6 +142,49 @@ choices:
       at-least-one-mandatory: true
       constraint: '!attendance,!stage'
       constraint_msg: 'Must disable Convention Ticket and Stage Ticket for Day Guests.'
+    dealer-half:
+      description: 'Dealer Table Fee (Half)'
+      price: 5000
+      vat_percent: 19
+      read_only: true
+      constraint: '!dealer-full,!dealer-double,!dealer-quad'
+      constraint_msg: 'Cannot mix dealer table packages.'
+    dealer-full:
+      description: 'Dealer Table Fee (Full)'
+      price: 10000
+      vat_percent: 19
+      read_only: true
+      constraint: '!dealer-half,!dealer-double,!dealer-quad'
+      constraint_msg: 'Cannot mix dealer table packages.'
+    dealer-double:
+      description: 'Dealer Table Fee (Double)'
+      price: 20000
+      vat_percent: 19
+      read_only: true
+      constraint: '!dealer-half,!dealer-full,!dealer-quad'
+      constraint_msg: 'Cannot mix dealer table packages.'
+    dealer-quad:
+      description: 'Dealer Table Fee (Quad)'
+      price: 40000
+      vat_percent: 19
+      read_only: true
+      constraint: '!dealer-half,!dealer-full,!dealer-double'
+      constraint_msg: 'Cannot mix dealer table packages.'
+    boat-trip:
+      description: 'Summerboat Boat Trip'
+      price: 2500
+      vat_percent: 19
+      read_only: true
+    artshow-table:
+      description: 'Artshow Table'
+      price: 10000
+      vat_percent: 19
+      read_only: true
+    artshow-panel:
+      description: 'Artshow Panel'
+      price: 10000
+      vat_percent: 19
+      read_only: true
   options:
     art:
       description: 'Artist'
