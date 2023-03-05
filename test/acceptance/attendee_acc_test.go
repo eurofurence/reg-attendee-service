@@ -1181,7 +1181,7 @@ func TestAllowReadExistingAttendee_Self(t *testing.T) {
 	token := tstValidUserToken(t, 101)
 	location1, attendee1 := tstRegisterAttendeeWithToken(t, "ga3-", token)
 
-	docs.When("when the first one attempts to read the attendee info of the second one")
+	docs.When("when they request their own information")
 	readResponse := tstPerformGet(location1, token)
 
 	docs.Then("then the attendee is successfully read and the response is as expected")
@@ -1235,6 +1235,22 @@ func TestReadAttendeeInvalidId(t *testing.T) {
 
 	docs.Then("then the appropriate error response is returned")
 	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.id.invalid", "")
+}
+
+func TestDenyReadExistingAttendee_Self_AccessToken_OtherAudience(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee who is logged in")
+	token := tstValidUserToken(t, 101)
+	location1, _ := tstRegisterAttendeeWithToken(t, "ga5-", token)
+
+	docs.When("when they attempt to read their information using a token for a different audience")
+	readResponse := tstPerformGet(location1, "access_other_audience_101")
+
+	docs.Then("then the appropriate error response is returned")
+	tstRequireErrorResponse(t, readResponse, http.StatusUnauthorized, "auth.unauthorized", "invalid bearer token")
 }
 
 // --- attendee max id ---
@@ -1447,6 +1463,34 @@ func TestMyRegistrations_ApiToken(t *testing.T) {
 
 	docs.Then("then the request fails (401) and the error is as expected")
 	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "you must be logged in for this operation")
+}
+
+func TestMyRegistrations_AccessToken_OtherAudience(t *testing.T) {
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given there are registrations")
+	token1 := tstValidUserToken(t, 1)
+	reg1 := tstBuildValidAttendee("my21a-")
+	reg1response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(reg1), token1)
+	require.Equal(t, http.StatusCreated, reg1response.status, "unexpected http response status")
+
+	docs.Given("given a different user, who has made a single registration")
+	token101 := tstValidUserToken(t, 101)
+	reg2 := tstBuildValidAttendee("my21b-")
+	reg2response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(reg2), token101)
+	require.Equal(t, http.StatusCreated, reg2response.status, "unexpected http response status")
+
+	docs.When("when they request the list of registrations they own using an access token for a different audience")
+	response := tstPerformGet("/api/rest/v1/attendees", "access_other_audience_101")
+
+	docs.Then("then the request is successful and returns only their registration number")
+	require.Equal(t, http.StatusOK, response.status, "unexpected http response status")
+	actualResult := attendee.AttendeeIdList{}
+	tstParseJson(response.body, &actualResult)
+	require.Equal(t, 1, len(actualResult.Ids))
+	actualLocation := fmt.Sprintf("/api/rest/v1/attendees/%d", actualResult.Ids[0])
+	require.Equal(t, reg2response.location, actualLocation, "unexpected id returned")
 }
 
 // helper functions
