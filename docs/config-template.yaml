@@ -176,13 +176,13 @@ choices:
       vat_percent: 19
       read_only: true
     artshow-table:
-      description: 'Artshow Table'
-      price: 10000
+      description: 'Artshow Tablespace'
+      price: 500
       vat_percent: 19
       read_only: true
     artshow-panel:
-      description: 'Artshow Panel'
-      price: 10000
+      description: 'Artshow Panelspace'
+      price: 1000
       vat_percent: 19
       read_only: true
   options:
