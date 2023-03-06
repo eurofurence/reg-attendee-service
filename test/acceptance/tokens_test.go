@@ -55,18 +55,21 @@ func tstInvalidApiToken() string {
 func tstSetupAuthMockResponses() {
 	// we pretend the id token is also an access token, but with a prefix
 	authMock.SetupResponse(valid_JWT_is_not_staff_sub1234567890, "access"+valid_JWT_is_not_staff_sub1234567890, authservice.UserInfoResponse{
+		Audiences:     []string{"14d9f37a-1eec-47c9-a949-5f1ebdf9c8e5"},
 		Subject:       "1234567890",
 		Name:          "John Doe",
 		Email:         "jsquirrel_github_9a6d@packetloss.de",
 		EmailVerified: true,
 	})
 	authMock.SetupResponse(valid_JWT_is_not_staff_sub101, "access"+valid_JWT_is_not_staff_sub101, authservice.UserInfoResponse{
+		Audiences:     []string{"14d9f37a-1eec-47c9-a949-5f1ebdf9c8e5"},
 		Subject:       "101",
 		Name:          "John Doe",
 		Email:         "jsquirrel_github_9a6d@packetloss.de",
 		EmailVerified: true,
 	})
 	authMock.SetupResponse(valid_JWT_is_staff_sub1234567890, "access"+valid_JWT_is_staff_sub1234567890, authservice.UserInfoResponse{
+		Audiences:     []string{"14d9f37a-1eec-47c9-a949-5f1ebdf9c8e5"},
 		Subject:       "1234567890",
 		Name:          "John Staff",
 		Email:         "jsquirrel_github_9a6d@packetloss.de",
@@ -74,6 +77,7 @@ func tstSetupAuthMockResponses() {
 		Groups:        []string{"staff"},
 	})
 	authMock.SetupResponse(valid_JWT_is_staff_sub202, "access"+valid_JWT_is_staff_sub202, authservice.UserInfoResponse{
+		Audiences:     []string{"14d9f37a-1eec-47c9-a949-5f1ebdf9c8e5"},
 		Subject:       "202",
 		Name:          "John Staff",
 		Email:         "jsquirrel_github_9a6d@packetloss.de",
@@ -81,6 +85,7 @@ func tstSetupAuthMockResponses() {
 		Groups:        []string{"staff"},
 	})
 	authMock.SetupResponse(valid_JWT_is_admin_sub1234567890, "access"+valid_JWT_is_admin_sub1234567890, authservice.UserInfoResponse{
+		Audiences:     []string{"14d9f37a-1eec-47c9-a949-5f1ebdf9c8e5"},
 		Subject:       "1234567890",
 		Name:          "John Admin",
 		Email:         "jsquirrel_github_9a6d@packetloss.de",
@@ -90,18 +95,21 @@ func tstSetupAuthMockResponses() {
 
 	// also accept auth with just the access token
 	authMock.SetupResponse("", "access"+valid_JWT_is_not_staff_sub1234567890, authservice.UserInfoResponse{
+		Audiences:     []string{"14d9f37a-1eec-47c9-a949-5f1ebdf9c8e5"},
 		Subject:       "1234567890",
 		Name:          "John Doe",
 		Email:         "jsquirrel_github_9a6d@packetloss.de",
 		EmailVerified: true,
 	})
 	authMock.SetupResponse("", "access"+valid_JWT_is_not_staff_sub101, authservice.UserInfoResponse{
+		Audiences:     []string{"14d9f37a-1eec-47c9-a949-5f1ebdf9c8e5"},
 		Subject:       "101",
 		Name:          "John Doe",
 		Email:         "jsquirrel_github_9a6d@packetloss.de",
 		EmailVerified: true,
 	})
 	authMock.SetupResponse("", "access"+valid_JWT_is_staff_sub1234567890, authservice.UserInfoResponse{
+		Audiences:     []string{"14d9f37a-1eec-47c9-a949-5f1ebdf9c8e5"},
 		Subject:       "1234567890",
 		Name:          "John Staff",
 		Email:         "jsquirrel_github_9a6d@packetloss.de",
@@ -109,6 +117,7 @@ func tstSetupAuthMockResponses() {
 		Groups:        []string{"staff"},
 	})
 	authMock.SetupResponse("", "access"+valid_JWT_is_staff_sub202, authservice.UserInfoResponse{
+		Audiences:     []string{"14d9f37a-1eec-47c9-a949-5f1ebdf9c8e5"},
 		Subject:       "202",
 		Name:          "John Staff",
 		Email:         "jsquirrel_github_9a6d@packetloss.de",
@@ -116,10 +125,21 @@ func tstSetupAuthMockResponses() {
 		Groups:        []string{"staff"},
 	})
 	authMock.SetupResponse("", "access"+valid_JWT_is_admin_sub1234567890, authservice.UserInfoResponse{
+		Audiences:     []string{"14d9f37a-1eec-47c9-a949-5f1ebdf9c8e5"},
 		Subject:       "1234567890",
 		Name:          "John Admin",
 		Email:         "jsquirrel_github_9a6d@packetloss.de",
 		EmailVerified: true,
 		Groups:        []string{"admin"},
 	})
+
+	// setup auth response with a different audience
+	authMock.SetupResponse("", "access_other_audience_101", authservice.UserInfoResponse{
+		Audiences:     []string{"meow"},
+		Subject:       "101",
+		Name:          "John Doe",
+		Email:         "jsquirrel_github_9a6d@packetloss.de",
+		EmailVerified: true,
+	})
+
 }

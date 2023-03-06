@@ -174,6 +174,7 @@ func TestAccessTokenValid(t *testing.T) {
 	authServiceMock.Reset()
 	authServiceMock.Enable()
 	authServiceMock.SetupResponse("", valid_access_token, authservice.UserInfoResponse{
+		Audiences:     []string{"14d9f37a-1eec-47c9-a949-5f1ebdf9c8e5"},
 		Email:         "jsquirrel_github_9a6d@packetloss.de",
 		EmailVerified: true,
 		Groups:        []string{"admin"},
@@ -203,6 +204,7 @@ func TestCookiesValidWithUserinfo(t *testing.T) {
 	authServiceMock.Reset()
 	authServiceMock.Enable()
 	authServiceMock.SetupResponse(valid_JWT_id_is_admin_sub1234567890, valid_access_token, authservice.UserInfoResponse{
+		Audiences:     []string{"14d9f37a-1eec-47c9-a949-5f1ebdf9c8e5"},
 		Subject:       "1234567890",
 		Name:          "John Admin",
 		Email:         "jsquirrel_github_9a6d@packetloss.de",

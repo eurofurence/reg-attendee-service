@@ -60,6 +60,8 @@ func tstAddAuth(request *http.Request, token string) {
 	} else if token == valid_JWT_is_staff_sub202 {
 		// small trick: we derive the access token from the JWT token (for tests only)
 		request.Header.Set(headers.Authorization, "Bearer access"+token)
+	} else if strings.HasPrefix(token, "access") {
+		request.Header.Set(headers.Authorization, "Bearer "+token)
 	} else if token != "" {
 		request.AddCookie(&http.Cookie{
 			Name:     "JWT",

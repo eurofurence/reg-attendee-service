@@ -64,7 +64,7 @@ func checkApiToken_MustReturnOnError(ctx context.Context, apiTokenValue string) 
 	return false, nil
 }
 
-func checkAccessToken_MustReturnOnError(ctx context.Context, accessTokenValue string) (success bool, err error) {
+func checkAccessToken_MustReturnOnError(ctx context.Context, accessTokenValue string, verifyAudience bool) (success bool, err error) {
 	if accessTokenValue != "" {
 		if authservice.Get().IsEnabled() {
 			ctxvalues.SetAccessToken(ctx, accessTokenValue) // need this for userinfo call
@@ -72,6 +72,12 @@ func checkAccessToken_MustReturnOnError(ctx context.Context, accessTokenValue st
 			userInfo, err := authservice.Get().UserInfo(ctx)
 			if err != nil {
 				return false, fmt.Errorf("request failed access token check, denying: %s", err.Error())
+			}
+
+			if verifyAudience && config.OidcAllowedAudience() != "" {
+				if len(userInfo.Audiences) != 1 || userInfo.Audiences[0] != config.OidcAllowedAudience() {
+					return false, errors.New("token audience does not match")
+				}
 			}
 
 			ctxvalues.SetName(ctx, userInfo.Name)
@@ -169,6 +175,10 @@ func canSkipAccessTokenCheckWithCookieAuth(method string, urlPath string) bool {
 		allow(method, urlPath, http.MethodPost, "/api/rest/v1/attendees") // only receiving data
 }
 
+func canSkipAudienceCheckWithAccessToken(method string, urlPath string) bool {
+	return allow(method, urlPath, http.MethodGet, "/api/rest/v1/attendees")
+}
+
 // --- top level ---
 
 func checkAllAuthentication_MustReturnOnError(ctx context.Context, method string, urlPath string, apiTokenHeaderValue string, authHeaderValue string, idTokenCookieValue string, accessTokenCookieValue string) (userFacingErrMsg string, err error) {
@@ -182,7 +192,7 @@ func checkAllAuthentication_MustReturnOnError(ctx context.Context, method string
 	}
 
 	// now try authorization header (gives only access token, so MUST use userinfo endpoint)
-	success, err = checkAccessToken_MustReturnOnError(ctx, authHeaderValue)
+	success, err = checkAccessToken_MustReturnOnError(ctx, authHeaderValue, !canSkipAudienceCheckWithAccessToken(method, urlPath))
 	if err != nil {
 		return "invalid bearer token", err
 	}
@@ -202,7 +212,7 @@ func checkAllAuthentication_MustReturnOnError(ctx context.Context, method string
 			return "", nil
 		}
 
-		success2, err := checkAccessToken_MustReturnOnError(ctx, accessTokenCookieValue)
+		success2, err := checkAccessToken_MustReturnOnError(ctx, accessTokenCookieValue, true)
 		if err != nil {
 			return "invalid or missing access token in cookie", err
 		}
