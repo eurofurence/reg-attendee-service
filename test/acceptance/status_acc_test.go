@@ -1157,6 +1157,18 @@ func TestStatusChange_Admin_Deleted_Approved_Banned(t *testing.T) {
 	tstStatusChange_Admin_Unavailable_Banned(t, "st7adm1ban-", status.Deleted, status.Approved)
 }
 
+func TestStatusChange_Admin_New_Approved_Banned_WithSkip(t *testing.T) {
+	tstStatusChange_Admin_Allow_Banned_WithSkip(t, "st0adm1bsk-", status.New, status.Approved)
+}
+
+func TestStatusChange_Admin_Cancelled_Approved_WithSkip(t *testing.T) {
+	tstStatusChange_Admin_Allow_Banned_WithSkip(t, "st6adm1bsk-", status.Cancelled, status.Approved)
+}
+
+func TestStatusChange_Admin_Deleted_Approved_WithSkip(t *testing.T) {
+	tstStatusChange_Admin_Allow_Banned_WithSkip(t, "st7adm1bsk-", status.Deleted, status.Approved)
+}
+
 // TODO transition to cancelled and deleted with more complicated dues / payment histories
 
 // TODO ban check
@@ -1503,6 +1515,42 @@ func tstStatusChange_Admin_Unavailable_Banned(t *testing.T, testcase string,
 
 	docs.Then("and no email messages have been sent")
 	require.Empty(t, mailMock.Recording())
+}
+
+func tstStatusChange_Admin_Allow_Banned_WithSkip(t *testing.T, testcase string,
+	oldStatus status.Status, newStatus status.Status,
+) {
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given there is a ban rule")
+	ban := tstBuildValidBanRule(testcase)
+	ban.NicknamePattern = "^.*cheetah$"
+	banResponse := tstPerformPost("/api/rest/v1/bans", tstRenderJson(ban), tstValidAdminToken(t))
+	require.Equal(t, http.StatusCreated, banResponse.status, "failed to create ban rule")
+
+	docs.Given("given an attendee in status " + string(oldStatus) + " who matches the rule")
+	loc, att := tstRegisterAttendeeAndTransitionToStatus(t, testcase, "approved")
+	// manually progress from approved to oldStatus so no payments get created
+	_ = database.GetRepository().AddStatusChange(context.Background(), tstCreateStatusChange(att.Id, oldStatus))
+
+	docs.Given("given the admin flag skip_ban_check has been set by an admin")
+	adminInfoBody := admin.AdminInfoDto{
+		Flags: "skip_ban_check",
+	}
+	adminInfoResponse := tstPerformPut(loc+"/admin", tstRenderJson(adminInfoBody), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, adminInfoResponse.status, "unexpected http response status")
+
+	docs.When("when an admin tries to change the status to " + string(newStatus))
+	body := status.StatusChangeDto{
+		Status:  newStatus,
+		Comment: testcase,
+	}
+	response := tstPerformPost(loc+"/status", tstRenderJson(body), tstValidAdminToken(t))
+
+	docs.Then("then the request is successful and the status change has been done")
+	require.Equal(t, http.StatusNoContent, response.status)
+	tstVerifyStatus(t, loc, newStatus)
 }
 
 func tstStatusChange_Admin_Allow(t *testing.T, testcase string,
