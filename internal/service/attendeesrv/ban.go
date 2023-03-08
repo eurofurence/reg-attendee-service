@@ -91,7 +91,16 @@ func isDuplicateBan(ctx context.Context, ban *entity.Ban) (bool, error) {
 	return false, nil
 }
 
-func (s *AttendeeServiceImplData) matchesBan(ctx context.Context, attendee *entity.Attendee) error {
+func (s *AttendeeServiceImplData) matchesBanAndNoSkip(ctx context.Context, attendee *entity.Attendee) error {
+	adminInfo, err := s.GetAdminInfo(ctx, attendee.ID)
+	if err != nil {
+		return err
+	}
+
+	if strings.Contains(adminInfo.Flags, ",skip_ban_check,") {
+		return nil
+	}
+
 	bans, err := s.GetAllBans(ctx)
 	if err != nil {
 		return err

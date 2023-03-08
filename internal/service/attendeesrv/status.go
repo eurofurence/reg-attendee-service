@@ -236,7 +236,7 @@ func (s *AttendeeServiceImplData) StatusChangePossible(ctx context.Context, atte
 		return s.checkZeroOrNegativePaymentBalance(ctx, attendee, transactionHistory)
 	case status.Approved:
 		if oldStatus == status.New || oldStatus == status.Waiting || oldStatus == status.Cancelled || oldStatus == status.Deleted {
-			if err := s.matchesBan(ctx, attendee); err != nil {
+			if err := s.matchesBanAndNoSkip(ctx, attendee); err != nil {
 				return err
 			}
 		}
