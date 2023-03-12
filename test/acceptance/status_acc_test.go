@@ -658,12 +658,14 @@ func TestStatusChange_Admin_PartiallyPaid_New(t *testing.T) {
 		"status.has.paid", "there is a non-zero payment balance, please use partially paid, or refund")
 }
 
-func TestStatusChange_Admin_PartiallyPaid_Approved(t *testing.T) {
+func TestStatusChange_Admin_PartiallyPaid_Approved_OkButDoesNothing(t *testing.T) {
 	testcase := "st2adm1-"
-	tstStatusChange_Admin_Unavailable(t, testcase,
-		status.PartiallyPaid, status.Approved,
-		nil,
-		"status.has.paid", "there is a non-zero payment balance, please use partially paid, or refund")
+	tstStatusChange_Admin_Allow_WithStatusAutoProgress(t, testcase,
+		status.PartiallyPaid, status.Approved, status.PartiallyPaid,
+		[]paymentservice.Transaction{},
+		[]paymentservice.Transaction{},
+		[]mailservice.MailSendDto{},
+	)
 }
 
 func TestStatusChange_Admin_PartiallyPaid_Approved_OkAfterRefund(t *testing.T) {
@@ -750,12 +752,14 @@ func TestStatusChange_Admin_Paid_New_OkAfterRefund(t *testing.T) {
 	)
 }
 
-func TestStatusChange_Admin_Paid_Approved(t *testing.T) {
+func TestStatusChange_Admin_Paid_Approved_OkButDoesNothing(t *testing.T) {
 	testcase := "st3adm1-"
-	tstStatusChange_Admin_Unavailable(t, testcase,
-		status.Paid, status.Approved,
-		nil,
-		"status.has.paid", "there is a non-zero payment balance, please use partially paid, or refund")
+	tstStatusChange_Admin_Allow_WithStatusAutoProgress(t, testcase,
+		status.Paid, status.Approved, status.Paid,
+		[]paymentservice.Transaction{},
+		[]paymentservice.Transaction{},
+		[]mailservice.MailSendDto{},
+	)
 }
 
 func TestStatusChange_Admin_Paid_Approved_OkAfterRefund(t *testing.T) {
@@ -799,7 +803,7 @@ func TestStatusChange_Admin_Paid_CheckedIn(t *testing.T) {
 func TestStatusChange_Admin_Paid_Waiting(t *testing.T) {
 	testcase := "st3adm5-"
 	tstStatusChange_Admin_Unavailable(t, testcase,
-		status.Paid, status.Approved,
+		status.Paid, status.Waiting,
 		nil,
 		"status.has.paid", "there is a non-zero payment balance, please use partially paid, or refund")
 }
@@ -807,10 +811,10 @@ func TestStatusChange_Admin_Paid_Waiting(t *testing.T) {
 func TestStatusChange_Admin_Paid_Waiting_OkAfterRefund(t *testing.T) {
 	testcase := "st3adm5r-"
 	tstStatusChange_Admin_Allow(t, testcase,
-		status.Paid, status.Approved,
+		status.Paid, status.Waiting,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -25500)},
-		[]paymentservice.Transaction{},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Approved)},
+		[]paymentservice.Transaction{tstCreateMatcherTransaction(1, paymentservice.Due, -25500, "remove dues balance - status changed to waiting")},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Waiting)},
 	)
 }
 
@@ -850,12 +854,14 @@ func TestStatusChange_Admin_CheckedIn_New_OkAfterRefund(t *testing.T) {
 	)
 }
 
-func TestStatusChange_Admin_CheckedIn_Approved(t *testing.T) {
+func TestStatusChange_Admin_CheckedIn_Approved_OkButLeadsToPaid(t *testing.T) {
 	testcase := "st4adm1-"
-	tstStatusChange_Admin_Unavailable(t, testcase,
-		status.CheckedIn, status.Approved,
-		nil,
-		"status.has.paid", "there is a non-zero payment balance, please use partially paid, or refund")
+	tstStatusChange_Admin_Allow_WithStatusAutoProgress(t, testcase,
+		status.CheckedIn, status.Approved, status.Paid,
+		[]paymentservice.Transaction{},
+		[]paymentservice.Transaction{},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Paid)},
+	)
 }
 
 func TestStatusChange_Admin_CheckedIn_Approved_OkAfterRefund(t *testing.T) {
@@ -1005,12 +1011,14 @@ func TestStatusChange_Admin_Cancelled_New_OkAfterRefund(t *testing.T) {
 	)
 }
 
-func TestStatusChange_Admin_Cancelled_Approved(t *testing.T) {
+func TestStatusChange_Admin_Cancelled_Approved_OkButLeadsToPaid(t *testing.T) {
 	testcase := "st6adm1-"
-	tstStatusChange_Admin_Unavailable(t, testcase,
-		status.Cancelled, status.Approved,
-		nil,
-		"status.has.paid", "there is a non-zero payment balance, please use partially paid, or refund")
+	tstStatusChange_Admin_Allow_WithStatusAutoProgress(t, testcase,
+		status.Cancelled, status.Approved, status.Paid,
+		[]paymentservice.Transaction{},
+		[]paymentservice.Transaction{},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Paid)},
+	)
 }
 
 func TestStatusChange_Admin_Cancelled_Approved_OkAfterRefund(t *testing.T) {
@@ -1170,8 +1178,6 @@ func TestStatusChange_Admin_Deleted_Approved_WithSkip(t *testing.T) {
 }
 
 // TODO transition to cancelled and deleted with more complicated dues / payment histories
-
-// TODO ban check
 
 // TODO guest handling
 
@@ -1553,8 +1559,8 @@ func tstStatusChange_Admin_Allow_Banned_WithSkip(t *testing.T, testcase string,
 	tstVerifyStatus(t, loc, newStatus)
 }
 
-func tstStatusChange_Admin_Allow(t *testing.T, testcase string,
-	oldStatus status.Status, newStatus status.Status,
+func tstStatusChange_Admin_Allow_WithStatusAutoProgress(t *testing.T, testcase string,
+	oldStatus status.Status, newStatus status.Status, targetStatus status.Status,
 	injectExtraTransactions []paymentservice.Transaction,
 	expectedTransactions []paymentservice.Transaction,
 	expectedMailRequests []mailservice.MailSendDto,
@@ -1575,15 +1581,27 @@ func tstStatusChange_Admin_Allow(t *testing.T, testcase string,
 	}
 	response := tstPerformPost(loc+"/status", tstRenderJson(body), tstValidAdminToken(t))
 
-	docs.Then("then the request is successful and the status change has been done")
+	docs.Then("then the request is successful and their status has been set to " + string(targetStatus))
 	require.Equal(t, http.StatusNoContent, response.status)
-	tstVerifyStatus(t, loc, newStatus)
+	tstVerifyStatus(t, loc, targetStatus)
 
 	docs.Then("and the appropriate dues were booked in the payment service")
 	tstRequireTransactions(t, expectedTransactions)
 
 	docs.Then("and the appropriate email messages were sent via the mail service")
 	tstRequireMailRequests(t, expectedMailRequests)
+}
+
+func tstStatusChange_Admin_Allow(t *testing.T, testcase string,
+	oldStatus status.Status, newStatus status.Status,
+	injectExtraTransactions []paymentservice.Transaction,
+	expectedTransactions []paymentservice.Transaction,
+	expectedMailRequests []mailservice.MailSendDto,
+) {
+	tstStatusChange_Admin_Allow_WithStatusAutoProgress(t, testcase,
+		oldStatus, newStatus, newStatus,
+		injectExtraTransactions, expectedTransactions, expectedMailRequests,
+	)
 }
 
 func tstStatusChange_Admin_Allow_DeletedCanReregister(t *testing.T, testcase string,
