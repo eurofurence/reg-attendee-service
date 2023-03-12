@@ -240,7 +240,7 @@ func (s *AttendeeServiceImplData) StatusChangePossible(ctx context.Context, atte
 				return err
 			}
 		}
-		return s.checkZeroOrNegativePaymentBalance(ctx, attendee, transactionHistory)
+		return nil // explicitly allow "approved" for people with a payment balance (auto-skips ahead to partially paid or paid)
 	case status.PartiallyPaid:
 		if oldStatus == status.New || oldStatus == status.Waiting || oldStatus == status.Cancelled || oldStatus == status.Deleted {
 			return GoToApprovedFirst
