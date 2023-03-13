@@ -212,7 +212,8 @@ func checkAllAuthentication_MustReturnOnError(ctx context.Context, method string
 			return "", nil
 		}
 
-		success2, err := checkAccessToken_MustReturnOnError(ctx, accessTokenCookieValue, true)
+		// TODO allow skipping non-working audience check for now
+		success2, err := checkAccessToken_MustReturnOnError(ctx, accessTokenCookieValue, false)
 		if err != nil {
 			return "invalid or missing access token in cookie", err
 		}
