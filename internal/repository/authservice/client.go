@@ -93,5 +93,9 @@ func (i Impl) UserInfo(ctx context.Context) (UserInfoResponse, error) {
 		Body: &bodyDto,
 	}
 	err := i.client.Perform(ctx, http.MethodGet, url, nil, &response)
+
+	// TODO blank audience until properly available
+	bodyDto.Audiences = []string{}
+
 	return bodyDto, errByStatus(err, response.Status)
 }
