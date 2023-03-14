@@ -9,6 +9,7 @@ import (
 	aurestlogging "github.com/StephanHCB/go-autumn-restclient/implementation/requestlogging"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
+	"github.com/go-http-utils/headers"
 	"net/http"
 	"time"
 )
@@ -20,26 +21,30 @@ type Impl struct {
 
 func requestManipulator(ctx context.Context, r *http.Request) {
 	r.Header.Add(TraceIdHeader, ctxvalues.RequestId(ctx))
-	r.AddCookie(&http.Cookie{
-		Name:     config.OidcIdTokenCookieName(),
-		Value:    ctxvalues.IdToken(ctx),
-		Domain:   "localhost",
-		Expires:  time.Now().Add(10 * time.Minute),
-		Path:     "/",
-		Secure:   true,
-		HttpOnly: true,
-		SameSite: http.SameSiteStrictMode,
-	})
-	r.AddCookie(&http.Cookie{
-		Name:     config.OidcAccessTokenCookieName(),
-		Value:    ctxvalues.AccessToken(ctx),
-		Domain:   "localhost",
-		Expires:  time.Now().Add(10 * time.Minute),
-		Path:     "/",
-		Secure:   true,
-		HttpOnly: true,
-		SameSite: http.SameSiteStrictMode,
-	})
+	if ctxvalues.IdToken(ctx) == "" && ctxvalues.AccessToken(ctx) != "" {
+		r.Header.Add(headers.Authorization, "Bearer "+ctxvalues.AccessToken(ctx))
+	} else {
+		r.AddCookie(&http.Cookie{
+			Name:     config.OidcIdTokenCookieName(),
+			Value:    ctxvalues.IdToken(ctx),
+			Domain:   "localhost",
+			Expires:  time.Now().Add(10 * time.Minute),
+			Path:     "/",
+			Secure:   true,
+			HttpOnly: true,
+			SameSite: http.SameSiteStrictMode,
+		})
+		r.AddCookie(&http.Cookie{
+			Name:     config.OidcAccessTokenCookieName(),
+			Value:    ctxvalues.AccessToken(ctx),
+			Domain:   "localhost",
+			Expires:  time.Now().Add(10 * time.Minute),
+			Path:     "/",
+			Secure:   true,
+			HttpOnly: true,
+			SameSite: http.SameSiteStrictMode,
+		})
+	}
 }
 
 func newClient() (AuthService, error) {
@@ -88,5 +93,9 @@ func (i Impl) UserInfo(ctx context.Context) (UserInfoResponse, error) {
 		Body: &bodyDto,
 	}
 	err := i.client.Perform(ctx, http.MethodGet, url, nil, &response)
+
+	// TODO blank audience until properly available
+	bodyDto.Audiences = []string{}
+
 	return bodyDto, errByStatus(err, response.Status)
 }
