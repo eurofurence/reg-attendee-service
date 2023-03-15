@@ -203,7 +203,7 @@ func TestValidateChoiceFieldsAndId(t *testing.T) {
 		"gender":                []string{"optional gender field must be one of male, female, other, notprovided, or it can be left blank, which counts as notprovided"},
 		"options":               []string{"options field must be a comma separated combination of any of anim,art,music,suit"},
 		"flags":                 []string{"flags field must be a comma separated combination of any of anon,ev,hc,terms-accepted"},
-		"packages":              []string{"packages field must be a comma separated combination of any of attendance,day-fri,day-sat,day-thu,room-none,sponsor,sponsor2,stage"},
+		"packages":              []string{"packages field must be a comma separated combination of any of attendance,boat-trip,day-fri,day-sat,day-thu,mountain-trip,room-none,sponsor,sponsor2,stage"},
 		"registration_language": []string{"registration_language field must be one of en-US or it can be left blank, which counts as en-US"},
 		"spoken_languages":      []string{"spoken_languages field must be a comma separated combination of any of en-US,de-DE"},
 		"telegram":              []string{"optional telegram field must contain your @username from telegram, or it can be left blank"},

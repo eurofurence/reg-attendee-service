@@ -137,7 +137,7 @@ func (s *AttendeeServiceImplData) CanChangeChoiceToCurrentStatus(ctx context.Con
 			return err
 		}
 		if currentStatus != "irrelevant" {
-			if err := checkNoForbiddenChangesAfterPayment(ctx, what, k, v, originalChoices, newChoices, currentStatus); err != nil {
+			if err := checkNoForbiddenChangesAfterPayment(ctx, what, k, v, configuration, originalChoices, newChoices, currentStatus); err != nil {
 				return err
 			}
 		}
@@ -212,15 +212,33 @@ func checkNoForbiddenChanges(ctx context.Context, what string, key string, choic
 	return nil
 }
 
-func checkNoForbiddenChangesAfterPayment(ctx context.Context, what string, key string, choiceConfig config.ChoiceConfig, originalChoices map[string]bool, newChoices map[string]bool, currentStatus status.Status) error {
+func checkNoForbiddenChangesAfterPayment(ctx context.Context, what string, key string, choiceConfig config.ChoiceConfig, configuration map[string]config.ChoiceConfig, originalChoices map[string]bool, newChoices map[string]bool, currentStatus status.Status) error {
+	if ctxvalues.HasApiToken(ctx) || ctxvalues.IsAuthorizedAsGroup(ctx, config.OidcAdminGroup()) {
+		return nil
+	}
+
 	if currentStatus == status.PartiallyPaid || currentStatus == status.Paid || currentStatus == status.CheckedIn {
 		if originalChoices[key] && !newChoices[key] && choiceConfig.Price > 0 {
-			if !ctxvalues.HasApiToken(ctx) && !ctxvalues.IsAuthorizedAsGroup(ctx, config.OidcAdminGroup()) {
-				return fmt.Errorf("forbidden deselect of %s %s after payment - only an admin can do that at this time", what, key)
+			oldDues := calcTotalDuesHelper(configuration, originalChoices)
+			newDues := calcTotalDuesHelper(configuration, newChoices)
+
+			if newDues < oldDues {
+				return fmt.Errorf("deselect of %s %s after payment leads to dues reduction - only an admin can do that at this time", what, key)
 			}
 		}
 	}
+
 	return nil
+}
+
+func calcTotalDuesHelper(configuration map[string]config.ChoiceConfig, choices map[string]bool) (dues int64) {
+	for k, selected := range choices {
+		choiceConfig, ok := configuration[k]
+		if ok && selected {
+			dues += choiceConfig.Price
+		}
+	}
+	return dues
 }
 
 func checkNoConstraintViolation(key string, choiceConfig config.ChoiceConfig, newChoices map[string]bool) error {
