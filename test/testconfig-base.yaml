@@ -82,6 +82,14 @@ choices:
       vat_percent: 19
       constraint: '!sponsor'
       constraint_msg: 'Please choose only one of Sponsor or Supersponsor.'
+    boat-trip:
+      description: 'Boat Trip'
+      price: 2000
+      vat_percent: 19
+    mountain-trip:
+      description: 'Mountain Trip'
+      price: 3000
+      vat_percent: 19
     day-thu:
       description: 'Day Guest (Thursday)'
       price: 6000
