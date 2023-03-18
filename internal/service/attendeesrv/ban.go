@@ -118,6 +118,10 @@ func (s *AttendeeServiceImplData) matchesBanAndNoSkip(ctx context.Context, atten
 }
 
 func matchesLowercased(ctx context.Context, field string, id uint, pattern string, value string) bool {
+	if pattern == "" {
+		return false
+	}
+
 	match, err := regexp.MatchString(pattern, strings.ToLower(value))
 	if err != nil {
 		aulogging.Logger.Ctx(ctx).Error().Printf("invalid %s pattern '%s' in ban %d - ignored due to compile error: %s", field, pattern, id, err.Error())
