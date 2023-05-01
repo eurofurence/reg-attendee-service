@@ -130,6 +130,19 @@ func tstPerformPost(relativeUrlWithLeadingSlash string, requestBody string, toke
 	return tstWebResponseFromResponse(response)
 }
 
+func tstPerformPostNoBody(relativeUrlWithLeadingSlash string, token string) tstWebResponse {
+	request, err := http.NewRequest(http.MethodPost, ts.URL+relativeUrlWithLeadingSlash, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	tstAddAuth(request, token)
+	response, err := http.DefaultClient.Do(request)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return tstWebResponseFromResponse(response)
+}
+
 func tstPerformDelete(relativeUrlWithLeadingSlash string, token string) tstWebResponse {
 	request, err := http.NewRequest(http.MethodDelete, ts.URL+relativeUrlWithLeadingSlash, nil)
 	if err != nil {

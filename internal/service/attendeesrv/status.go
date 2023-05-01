@@ -111,6 +111,22 @@ func formatDate(value string) string {
 	return parsed.Format(config.HumanDateFormat)
 }
 
+func (s *AttendeeServiceImplData) ResendStatusMail(ctx context.Context, attendee *entity.Attendee, currentStatus status.Status, currentStatusComment string) error {
+	adminInfo, err := database.GetRepository().GetAdminInfoByAttendeeId(ctx, attendee.ID)
+	if err != nil {
+		return err
+	}
+
+	if currentStatus != status.Deleted && currentStatus != status.CheckedIn && currentStatus != status.New {
+		err = s.sendStatusChangeNotificationEmail(ctx, attendee, adminInfo, currentStatus, currentStatusComment)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (s *AttendeeServiceImplData) sendStatusChangeNotificationEmail(ctx context.Context, attendee *entity.Attendee, adminInfo *entity.AdminInfo, newStatus status.Status, statusComment string) error {
 	checkSummedId := s.badgeId(attendee.ID)
 	cancelReason := ""

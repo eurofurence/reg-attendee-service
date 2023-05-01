@@ -93,6 +93,10 @@ func (s *MockAttendeeService) UpdateDuesAndDoStatusChangeIfNeeded(ctx context.Co
 	return nil
 }
 
+func (s *MockAttendeeService) ResendStatusMail(ctx context.Context, attendee *entity.Attendee, currentStatus status.Status, currentStatusComment string) error {
+	return nil
+}
+
 func (s *MockAttendeeService) StatusChangeAllowed(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status) error {
 	return nil
 }

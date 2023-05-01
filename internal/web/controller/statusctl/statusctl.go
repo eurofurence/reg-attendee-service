@@ -31,6 +31,7 @@ func Create(server chi.Router, attendeeSrv attendeesrv.AttendeeService) {
 	server.Get("/api/rest/v1/attendees/{id}/status", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, getStatusHandler)))
 	server.Post("/api/rest/v1/attendees/{id}/status", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, postStatusHandler)))
 	server.Get("/api/rest/v1/attendees/{id}/status-history", filter.HasGroupOrApiToken(config.OidcAdminGroup(), filter.WithTimeout(3*time.Second, getStatusHistoryHandler)))
+	server.Post("/api/rest/v1/attendees/{id}/status/resend", filter.HasGroupOrApiToken(config.OidcAdminGroup(), filter.WithTimeout(10*time.Second, resendStatusMailHandler)))
 	server.Post("/api/rest/v1/attendees/{id}/payments-changed", filter.HasGroupOrApiToken(config.OidcAdminGroup(), filter.WithTimeout(10*time.Second, paymentsChangedHandler)))
 }
 
@@ -139,6 +140,31 @@ func getStatusHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Add(headers.ContentType, media.ContentTypeApplicationJson)
 	ctlutil.WriteJson(ctx, w, dto)
+}
+
+func resendStatusMailHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	att, err := attendeeByIdMustReturnOnError(ctx, w, r)
+	if err != nil {
+		return
+	}
+
+	latest, err := obtainAttendeeLatestStatusMustReturnOnError(ctx, w, r, att)
+	if err != nil {
+		return
+	}
+
+	err = attendeeService.ResendStatusMail(ctx, att, latest.Status, latest.Comments)
+	if err != nil {
+		if errors.Is(err, paymentservice.DownstreamError) || errors.Is(err, mailservice.DownstreamError) {
+			statusChangeDownstreamError(ctx, w, r, err)
+		} else {
+			statusReadErrorHandler(ctx, w, r, err)
+		}
+	} else {
+		w.WriteHeader(http.StatusNoContent)
+	}
 }
 
 func paymentsChangedHandler(w http.ResponseWriter, r *http.Request) {

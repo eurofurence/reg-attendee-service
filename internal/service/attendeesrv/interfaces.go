@@ -42,6 +42,8 @@ type AttendeeService interface {
 	UpdateDuesAndDoStatusChangeIfNeeded(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status, statusComment string, overrideDuesComment string) error
 	StatusChangeAllowed(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status) error
 	StatusChangePossible(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status) error
+	// ResendStatusMail resends the current status mail, but with dues recalculated
+	ResendStatusMail(ctx context.Context, attendee *entity.Attendee, currentStatus status.Status, currentStatusComment string) error
 
 	// IsOwnerFor returns the list of attendees (registrations) that are owned by the currently logged
 	// in user account.
