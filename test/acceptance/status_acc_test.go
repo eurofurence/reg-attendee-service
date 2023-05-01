@@ -1181,6 +1181,100 @@ func TestStatusChange_Admin_Deleted_Approved_WithSkip(t *testing.T) {
 
 // TODO guest handling
 
+// -- resend status mail
+
+func TestResendStatusMail_Anonymous_Deny(t *testing.T) {
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an attendee in status approved")
+	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, "stml1anon", status.Approved)
+
+	docs.When("when an anonymous user requests the status mail to be resent")
+	response := tstPerformPostNoBody(loc+"/status/resend", tstNoToken())
+
+	docs.Then("then the request is denied with the appropriate error")
+	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "you must be logged in for this operation")
+
+	docs.Then("and no email messages have been sent")
+	require.Empty(t, mailMock.Recording())
+}
+
+func TestResendStatusMail_User_Deny(t *testing.T) {
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an attendee in status approved")
+	loc, att := tstRegisterAttendeeAndTransitionToStatus(t, "stml1user", status.Approved)
+
+	docs.When("when they request their last status mail to be resent")
+	response := tstPerformPostNoBody(loc+"/status/resend", tstValidUserToken(t, att.Id))
+
+	docs.Then("then the request is denied with the appropriate error (this is not yet supported for any user)")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this operation - the attempt has been logged")
+
+	docs.Then("and no email messages have been sent")
+	require.Empty(t, mailMock.Recording())
+}
+
+func TestResendStatusMail_Admin_NoMails(t *testing.T) {
+	for n, targetStatus := range config.AllowedStatusValues() {
+		if targetStatus == status.Deleted || targetStatus == status.CheckedIn || targetStatus == status.New {
+			testname := fmt.Sprintf("TestResendStatusMail_Admin_NoMails_%s", targetStatus)
+			t.Run(testname, func(t *testing.T) {
+				tstResendStatusMail_Admin(t, fmt.Sprintf("stml%dadm", n),
+					targetStatus,
+					nil)
+			})
+
+		}
+	}
+}
+
+func TestResendStatusMail_Admin_WithMail(t *testing.T) {
+	for n, targetStatus := range config.AllowedStatusValues() {
+		if targetStatus != status.Deleted && targetStatus != status.CheckedIn && targetStatus != status.New {
+			testname := fmt.Sprintf("TestResendStatusMail_Admin_WithMail_%s", targetStatus)
+			t.Run(testname, func(t *testing.T) {
+				testcase := fmt.Sprintf("stml%dadm", n)
+				statusMail := tstNewStatusMail(testcase, targetStatus)
+				if targetStatus == status.Cancelled {
+					statusMail.Variables["reason"] = "change to cancelled"
+				}
+				tstResendStatusMail_Admin(t, testcase,
+					targetStatus,
+					[]mailservice.MailSendDto{statusMail})
+			})
+		}
+	}
+}
+
+// --- detail implementations for status mail resend tests ---
+
+func tstResendStatusMail_Admin(t *testing.T, testcase string,
+	theStatus status.Status,
+	expectedMailRequests []mailservice.MailSendDto,
+) {
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an attendee in status " + string(theStatus))
+	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, theStatus)
+	// we (ab)use the payments-changed webhook to set all the cached attendee fields
+	// (but note this may also change status and thus trigger mails if we set up injected payments wrong)
+	webhookResponse := tstPerformPost(loc+"/payments-changed", "", tstValidApiToken())
+	require.True(t, http.StatusAccepted == webhookResponse.status || http.StatusNoContent == webhookResponse.status)
+
+	docs.When("when an admin requests their last status mail to be resent")
+	response := tstPerformPostNoBody(loc+"/status/resend", tstValidAdminToken(t))
+
+	docs.Then("then the request is successful")
+	require.Equal(t, http.StatusNoContent, response.status)
+
+	docs.Then("and the appropriate email messages were sent via the mail service")
+	tstRequireMailRequests(t, expectedMailRequests)
+}
+
 // --- detail implementations for the status change tests ---
 
 func tstStatusChange_Anonymous_Deny(t *testing.T, testcase string, oldStatus status.Status, newStatus status.Status) {
@@ -1734,6 +1828,7 @@ func tstCreateStatusChange(attid uint, status status.Status) *entity.StatusChang
 	return &entity.StatusChange{
 		AttendeeId: attid,
 		Status:     status,
+		Comments:   fmt.Sprintf("change to %s", status),
 	}
 }
 

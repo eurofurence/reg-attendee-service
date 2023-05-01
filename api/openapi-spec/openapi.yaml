@@ -768,6 +768,67 @@ paths:
       security:
         - BearerAuth: []
         - ApiKeyAuth: []
+  /attendees/{id}/status/resend:
+    post:
+      tags:
+        - status
+      summary: resend the last status information mail
+      description: |-
+        Resend the last status information mail, but with updated dues etc. information        
+        
+        Not available for status new, checked in, deleted. For these values, no mails are sent, so it fails silently.
+      operationId: resendStatusMail
+      parameters:
+        - name: id
+          in: path
+          description: Badge number of attendee to return
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            format: int64
+      responses:
+        '204':
+          description: successful operation
+        '400':
+          description: Invalid ID supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: You do not have permission to perform this operation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Attendee not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: An unexpected error occurred. This includes database errors. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '502':
+          description: The mail service failed to send an email as part of the update.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
   /attendees/{id}/status-history:
     get:
       tags:
