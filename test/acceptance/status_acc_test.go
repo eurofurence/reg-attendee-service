@@ -1240,6 +1240,7 @@ func TestResendStatusMail_Admin_WithMail(t *testing.T) {
 				statusMail := tstNewStatusMail(testcase, targetStatus)
 				if targetStatus == status.Cancelled {
 					statusMail.Variables["reason"] = "change to cancelled"
+					statusMail.Variables["total_dues"] = "EUR 255.00" // correct here because we cancelled after paid - means: no refund
 				}
 				tstResendStatusMail_Admin(t, testcase,
 					targetStatus,
@@ -1261,9 +1262,11 @@ func tstResendStatusMail_Admin(t *testing.T, testcase string,
 	docs.Given("given an attendee in status " + string(theStatus))
 	loc, _ := tstRegisterAttendeeAndTransitionToStatus(t, testcase, theStatus)
 	// we (ab)use the payments-changed webhook to set all the cached attendee fields
-	// (but note this may also change status and thus trigger mails if we set up injected payments wrong)
+	// (but note this may also change status and trigger mails)
 	webhookResponse := tstPerformPost(loc+"/payments-changed", "", tstValidApiToken())
 	require.True(t, http.StatusAccepted == webhookResponse.status || http.StatusNoContent == webhookResponse.status)
+	// so now reset mail recording
+	mailMock.Reset()
 
 	docs.When("when an admin requests their last status mail to be resent")
 	response := tstPerformPostNoBody(loc+"/status/resend", tstValidAdminToken(t))
@@ -1271,7 +1274,7 @@ func tstResendStatusMail_Admin(t *testing.T, testcase string,
 	docs.Then("then the request is successful")
 	require.Equal(t, http.StatusNoContent, response.status)
 
-	docs.Then("and the appropriate email messages were sent via the mail service")
+	docs.Then("and the appropriate email message was sent via the mail service")
 	tstRequireMailRequests(t, expectedMailRequests)
 }
 
@@ -1667,6 +1670,8 @@ func tstStatusChange_Admin_Allow_WithStatusAutoProgress(t *testing.T, testcase s
 	for _, tx := range injectExtraTransactions {
 		_ = paymentMock.InjectTransaction(context.Background(), tx)
 	}
+	// may have sent mails, so let's reset the mail recording here
+	mailMock.Reset()
 
 	docs.When("when an admin changes their status to " + string(newStatus))
 	body := status.StatusChangeDto{
@@ -1762,6 +1767,22 @@ func tstRegisterRegdeskAttendee(t *testing.T, testcase string) string {
 	return token
 }
 
+func tstUpdateCache(ctx context.Context, attid uint, du int64, pa int64, dd string) {
+	a, _ := database.GetRepository().GetAttendeeById(ctx, attid)
+	a.CacheTotalDues = du
+	a.CachePaymentBalance = pa
+	a.CacheDueDate = dd
+	_ = database.GetRepository().UpdateAttendee(ctx, a)
+}
+
+func tstUpdateCacheRelative(ctx context.Context, attid uint, du int64, pa int64, dd string) {
+	a, _ := database.GetRepository().GetAttendeeById(ctx, attid)
+	a.CacheTotalDues = a.CacheTotalDues + du
+	a.CachePaymentBalance = a.CachePaymentBalance + pa
+	a.CacheDueDate = dd
+	_ = database.GetRepository().UpdateAttendee(ctx, a)
+}
+
 func tstRegisterAttendeeAndTransitionToStatus(t *testing.T, testcase string, targetStatus status.Status) (location string, att attendee.AttendeeDto) {
 	// this works in all configurations, and for status changes, it makes no difference if a user is staff
 	token := tstValidStaffToken(t, 1)
@@ -1783,6 +1804,7 @@ func tstRegisterAttendeeAndTransitionToStatus(t *testing.T, testcase string, tar
 	// approved
 	_ = database.GetRepository().AddStatusChange(ctx, tstCreateStatusChange(attid, status.Approved))
 	_ = paymentMock.InjectTransaction(ctx, tstCreateTransaction(attid, paymentservice.Due, 25500))
+	tstUpdateCache(ctx, attid, 25500, 0, "2022-12-22")
 	if targetStatus == status.Approved {
 		return
 	}
@@ -1790,12 +1812,14 @@ func tstRegisterAttendeeAndTransitionToStatus(t *testing.T, testcase string, tar
 	if targetStatus == status.Deleted {
 		_ = database.GetRepository().AddStatusChange(ctx, tstCreateStatusChange(attid, status.Deleted))
 		_ = paymentMock.InjectTransaction(ctx, tstCreateTransaction(attid, paymentservice.Due, -25500))
+		tstUpdateCache(ctx, attid, 0, 0, "2022-12-22")
 		return
 	}
 
 	// partially paid
 	_ = database.GetRepository().AddStatusChange(ctx, tstCreateStatusChange(attid, status.PartiallyPaid))
 	_ = paymentMock.InjectTransaction(ctx, tstCreateTransaction(attid, paymentservice.Payment, 15500))
+	tstUpdateCache(ctx, attid, 25500, 15500, "2022-12-22")
 	if targetStatus == status.PartiallyPaid {
 		return
 	}
@@ -1803,6 +1827,7 @@ func tstRegisterAttendeeAndTransitionToStatus(t *testing.T, testcase string, tar
 	// paid
 	_ = database.GetRepository().AddStatusChange(ctx, tstCreateStatusChange(attid, status.Paid))
 	_ = paymentMock.InjectTransaction(ctx, tstCreateTransaction(attid, paymentservice.Payment, 10000))
+	tstUpdateCache(ctx, attid, 25500, 25500, "2022-12-22")
 	if targetStatus == status.Paid {
 		return
 	}

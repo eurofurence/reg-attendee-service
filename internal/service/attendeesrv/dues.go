@@ -198,7 +198,7 @@ func (s *AttendeeServiceImplData) oldDuesByVAT(transactionHistory []paymentservi
 
 // ---
 
-func (s *AttendeeServiceImplData) UpdateAttendeeCacheAndCalculateResultingStatus(ctx context.Context, attendee *entity.Attendee, updatedTransactionHistory []paymentservice.Transaction, newStatus status.Status) (status.Status, error) {
+func (s *AttendeeServiceImplData) UpdateAttendeeCacheAndCalculateResultingStatus(ctx context.Context, attendee *entity.Attendee, updatedTransactionHistory []paymentservice.Transaction, newStatus status.Status) (status.Status, bool, error) {
 	// identity and zip each get an id dependent suffix for deleted attendees to ensure the user can register again after deletion
 	// (identity has a unique index in the db!)
 	// (nick, email, zip has a unique index in the db!)
@@ -206,10 +206,14 @@ func (s *AttendeeServiceImplData) UpdateAttendeeCacheAndCalculateResultingStatus
 	zip := s.suffixForDeletedAttendees(attendee, newStatus, attendee.Zip)
 
 	dues, payments, open, dueDate := s.balances(updatedTransactionHistory)
+	// never move due date back in time (allows manual override)
+	if attendee.CacheDueDate != "" && attendee.CacheDueDate > dueDate {
+		dueDate = attendee.CacheDueDate
+	}
 
-	err := s.updateCachedValuesAndIdentityInAttendee(ctx, attendee, dues, payments, open, dueDate, identity, zip)
+	duesInformationChanged, err := s.updateCachedValuesAndIdentityInAttendee(ctx, attendee, dues, payments, open, dueDate, identity, zip)
 	if err != nil {
-		return newStatus, err
+		return newStatus, false, err
 	}
 
 	if newStatus == status.Approved || newStatus == status.PartiallyPaid || newStatus == status.Paid {
@@ -217,7 +221,7 @@ func (s *AttendeeServiceImplData) UpdateAttendeeCacheAndCalculateResultingStatus
 		newStatus = s.calculateResultingStatusForApprovedToPaid(payments, dues)
 	}
 
-	return newStatus, nil
+	return newStatus, duesInformationChanged, nil
 }
 
 func (s *AttendeeServiceImplData) suffixForDeletedAttendees(attendee *entity.Attendee, newStatus status.Status, value string) string {
@@ -233,11 +237,13 @@ func (s *AttendeeServiceImplData) suffixForDeletedAttendees(attendee *entity.Att
 	return value
 }
 
-func (s *AttendeeServiceImplData) updateCachedValuesAndIdentityInAttendee(ctx context.Context, attendee *entity.Attendee, dues int64, payments int64, open int64, dueDate string, identity string, zip string) error {
-	needsUpdate := attendee.CacheTotalDues != dues ||
+func (s *AttendeeServiceImplData) updateCachedValuesAndIdentityInAttendee(ctx context.Context, attendee *entity.Attendee, dues int64, payments int64, open int64, dueDate string, identity string, zip string) (bool, error) {
+	duesRelevantUpdate := attendee.CacheTotalDues != dues ||
 		attendee.CachePaymentBalance != payments ||
+		attendee.CacheDueDate != dueDate
+
+	needsUpdate := duesRelevantUpdate ||
 		attendee.CacheOpenBalance != open ||
-		attendee.CacheDueDate != dueDate ||
 		attendee.Identity != identity ||
 		attendee.Zip != zip
 
@@ -248,9 +254,10 @@ func (s *AttendeeServiceImplData) updateCachedValuesAndIdentityInAttendee(ctx co
 		attendee.CacheDueDate = dueDate
 		attendee.Identity = identity
 		attendee.Zip = zip
-		return database.GetRepository().UpdateAttendee(ctx, attendee)
+		err := database.GetRepository().UpdateAttendee(ctx, attendee)
+		return duesRelevantUpdate, err
 	}
-	return nil
+	return duesRelevantUpdate, nil
 }
 
 func (s *AttendeeServiceImplData) calculateResultingStatusForApprovedToPaid(payments int64, dues int64) status.Status {
@@ -277,7 +284,7 @@ func (s *AttendeeServiceImplData) balances(transactionHistory []paymentservice.T
 				validPayments += tx.Amount.GrossCent
 			} else if tx.TransactionType == paymentservice.Due {
 				validDues += tx.Amount.GrossCent
-				dueDate = tx.DueDate
+				dueDate = tx.DueDate // initialize with last due date as default (most likely causes no change for non dues status values such as paid)
 			}
 		}
 		if tx.Status == paymentservice.Tentative || tx.Status == paymentservice.Pending {
@@ -286,7 +293,24 @@ func (s *AttendeeServiceImplData) balances(transactionHistory []paymentservice.T
 			}
 		}
 	}
+	dueDate = s.calculateDueDate(transactionHistory, validPayments, dueDate)
 	return
+}
+
+func (s *AttendeeServiceImplData) calculateDueDate(transactionHistory []paymentservice.Transaction, validPayments int64, defaultDueDate string) string {
+	var accruedDues int64
+	for _, tx := range transactionHistory {
+		if tx.Status == paymentservice.Valid {
+			if tx.TransactionType == paymentservice.Due {
+				accruedDues += tx.Amount.GrossCent
+				if accruedDues > validPayments {
+					// the first incompletely paid due amount determines the due date
+					return tx.DueDate
+				}
+			}
+		}
+	}
+	return defaultDueDate
 }
 
 func (s *AttendeeServiceImplData) pseudoPaymentsFromNegativeDues(transactionHistory []paymentservice.Transaction) (validNegativeDuesSum int64) {

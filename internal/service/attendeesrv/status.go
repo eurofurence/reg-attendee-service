@@ -58,7 +58,8 @@ func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx contex
 		return err
 	}
 
-	newStatus, err = s.UpdateAttendeeCacheAndCalculateResultingStatus(ctx, attendee, updatedTransactionHistory, newStatus)
+	var duesInformationChanged bool
+	newStatus, duesInformationChanged, err = s.UpdateAttendeeCacheAndCalculateResultingStatus(ctx, attendee, updatedTransactionHistory, newStatus)
 	if err != nil {
 		return err
 	}
@@ -91,6 +92,11 @@ func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx contex
 			if err != nil {
 				return err
 			}
+		}
+	} else if duesInformationChanged && (newStatus == status.Approved || newStatus == status.PartiallyPaid) {
+		err = s.sendStatusChangeNotificationEmail(ctx, attendee, adminInfo, newStatus, statusComment)
+		if err != nil {
+			return err
 		}
 	}
 
