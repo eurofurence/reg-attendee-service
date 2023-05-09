@@ -360,14 +360,14 @@ func sortedKeySet(condition map[string]int8) []string {
 func notOverdueCondition(todayIso string, params map[string]interface{}, paramName string) string {
 	// a.cache_due_date = NULL => not considered overdue
 	params[paramName] = todayIso
-	return fmt.Sprintf("    AND ( STRCMP( IFNULL(a.cache_due_date,'0000-00-00'), @%s ) <= 0 )\n", paramName) +
+	return fmt.Sprintf("    AND ( STRCMP( IFNULL(a.cache_due_date,'9999-99-99'), @%s ) >= 0 )\n", paramName) +
 		safeStatusSliceMatch("IFNULL(st.status, 'new')", []status.Status{status.Approved, status.PartiallyPaid})
 }
 
 func overdueCondition(todayIso string, params map[string]interface{}, paramName string) string {
 	// a.cache_due_date = NULL => not considered overdue
 	params[paramName] = todayIso
-	return fmt.Sprintf("    AND ( STRCMP( IFNULL(a.cache_due_date,'0000-00-00'), @%s ) > 0 )\n", paramName) +
+	return fmt.Sprintf("    AND ( STRCMP( IFNULL(a.cache_due_date,'9999-99-99'), @%s ) < 0 )\n", paramName) +
 		safeStatusSliceMatch("IFNULL(st.status, 'new')", []status.Status{status.Approved, status.PartiallyPaid})
 }
 
