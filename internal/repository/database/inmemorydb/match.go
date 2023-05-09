@@ -121,6 +121,10 @@ func matchesOverdue(addInfoConds map[string]int8, dueDate string, currDate strin
 		return true // no condition given
 	}
 
+	if dueDate == "" {
+		return false // not in correct status anyway
+	}
+
 	if cond == 0 {
 		return dueDate >= currDate && (currStatus == status.Approved || currStatus == status.PartiallyPaid)
 	} else if cond == 1 {
