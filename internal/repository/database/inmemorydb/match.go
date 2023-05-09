@@ -45,7 +45,7 @@ func (r *InMemoryRepository) matches(cond *attendee.AttendeeSearchSingleCriterio
 		choiceMatch(cond.Permissions, adm.Permissions) &&
 		matchesSubstringGlobOrEmpty(cond.AdminComments, adm.AdminComments) &&
 		matchesAddInfoPresence(cond.AddInfo, addInf) &&
-		matchesOverdue(cond.AddInfo, a.CacheDueDate, r.Now().Format(config.IsoDateFormat))
+		matchesOverdue(cond.AddInfo, a.CacheDueDate, r.Now().Format(config.IsoDateFormat), st.Status)
 }
 
 func matchesUintSliceOrEmpty(cond []uint, value uint) bool {
@@ -115,16 +115,16 @@ func matchesAddInfoPresence(cond map[string]int8, values map[string]*entity.Addi
 	return true
 }
 
-func matchesOverdue(addInfoConds map[string]int8, dueDate string, currDate string) bool {
+func matchesOverdue(addInfoConds map[string]int8, dueDate string, currDate string, currStatus status.Status) bool {
 	cond, ok := addInfoConds["overdue"]
 	if !ok {
 		return true // no condition given
 	}
 
 	if cond == 0 {
-		return dueDate >= currDate
+		return dueDate >= currDate && (currStatus == status.Approved || currStatus == status.PartiallyPaid)
 	} else if cond == 1 {
-		return dueDate < currDate
+		return dueDate < currDate && (currStatus == status.Approved || currStatus == status.PartiallyPaid)
 	} else {
 		return false
 	}
