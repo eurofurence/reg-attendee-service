@@ -1,9 +1,11 @@
 package acceptance
 
 import (
+	"context"
 	"fmt"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/mailservice"
 	"net/http"
 	"net/url"
 	"strings"
@@ -1168,6 +1170,112 @@ func TestUpdateExistingAttendee_RemovePackageNoCostReduction_AnyTime_UserAllowed
 		token := tstValidStaffToken(t, 1) // user who registered, staff makes no difference
 		t.Run(string(targetStatus), func(t *testing.T) {
 			tstUpdateExistingAttendee_RemovePackage_NoCostReduce_Allowed(t, testcase, "attendee", targetStatus, token)
+		})
+	}
+}
+
+func tstUpdateExistingAttendee_AddOnePackage(t *testing.T, testcase string, origStatus status.Status, token string, expectedMails []mailservice.MailSendDto) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given(fmt.Sprintf("given an existing attendee in status %s", origStatus))
+	loc, att := tstRegisterAttendeeAndTransitionToStatus(t, testcase, origStatus)
+
+	docs.When("when they send updated attendee info and add a package that has associated cost")
+	changedAttendee := att
+	changedAttendee.Packages = "room-none,attendance,stage,sponsor2,boat-trip" // adds boat-trip
+	response := tstPerformPut(loc, tstRenderJson(changedAttendee), token)
+
+	docs.Then("then the attendee is successfully updated and the changed data can be read again")
+	require.Equal(t, http.StatusOK, response.status, "unexpected http response status for update")
+	require.Equal(t, loc, response.location, "location unexpectedly changed during update")
+	attendeeReadAgain := tstReadAttendee(t, loc)
+	require.EqualValues(t, changedAttendee, attendeeReadAgain, "attendee data read did not match updated data")
+	require.EqualValues(t, "room-none,attendance,stage,sponsor2,boat-trip", attendeeReadAgain.Packages, "attendee data read did not match expected package value")
+
+	docs.Then("and the expected mail messages have been sent")
+	tstRequireMailRequests(t, expectedMails)
+}
+
+func TestUpdateExistingAttendee_AddOnePackage_AnyTime_UserAllowed(t *testing.T) {
+	for i, origStatus := range []status.Status{status.New, status.Approved, status.PartiallyPaid, status.Paid, status.CheckedIn, status.Cancelled} {
+		testcase := fmt.Sprintf("ua3a-%d", i+1)
+		token := tstValidStaffToken(t, 1) // user who registered, staff makes no difference
+		targetStatus := origStatus
+		mails := []mailservice.MailSendDto{}
+		if origStatus == status.Approved {
+			mail := tstNewStatusMailWithAmounts(testcase, targetStatus, 275.00, 275.00)
+			mails = append(mails, mail)
+		} else if origStatus == status.PartiallyPaid {
+			mail := tstNewStatusMailWithAmounts(testcase, targetStatus, 120.00, 275.00)
+			mails = append(mails, mail)
+		} else if origStatus == status.Paid {
+			targetStatus = status.PartiallyPaid
+			mail := tstNewStatusMailWithAmounts(testcase, targetStatus, 20.00, 275.00)
+			mails = append(mails, mail)
+		}
+		t.Run(string(origStatus), func(t *testing.T) {
+			tstUpdateExistingAttendee_AddOnePackage(t, testcase, origStatus, token, mails)
+		})
+	}
+}
+
+func tstUpdateExistingAttendee_AddTwoPackages(t *testing.T, testcase string, origStatus status.Status, token string, expectedMails []mailservice.MailSendDto) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given(fmt.Sprintf("given an existing attendee in status %s who has been granted a due date extension", origStatus))
+	loc, att := tstRegisterAttendeeAndTransitionToStatus(t, testcase, origStatus)
+	tstUpdateCacheRelative(context.Background(), att.Id, 0, 0, "2023-04-20")
+
+	docs.When("when they send updated attendee info and add a package that has associated cost")
+	changedAttendee := att
+	changedAttendee.Packages = "room-none,attendance,stage,sponsor2,boat-trip" // adds boat-trip
+	response := tstPerformPut(loc, tstRenderJson(changedAttendee), token)
+
+	docs.When("and then send updated attendee info and add a second package that has associated cost")
+	changedAttendee2 := att
+	changedAttendee2.Packages = "room-none,attendance,stage,sponsor2,boat-trip,mountain-trip" // adds mountain-trip
+	response2 := tstPerformPut(loc, tstRenderJson(changedAttendee2), token)
+
+	docs.Then("then the attendee is successfully updated both times and the final data can be read again")
+	require.Equal(t, http.StatusOK, response.status, "unexpected http response status for update")
+	require.Equal(t, http.StatusOK, response2.status, "unexpected http response status for update")
+	attendeeReadAgain := tstReadAttendee(t, loc)
+	require.EqualValues(t, changedAttendee2, attendeeReadAgain, "attendee data read did not match final updated data")
+	require.EqualValues(t, "room-none,attendance,stage,sponsor2,boat-trip,mountain-trip", attendeeReadAgain.Packages, "attendee data read did not match expected package value")
+
+	docs.Then("and the expected mail messages have been sent with the extended due date kept in place")
+	for i := range expectedMails {
+		expectedMails[i].Variables["due_date"] = "20.04.2023" // TODO format language dependent
+	}
+	tstRequireMailRequests(t, expectedMails)
+}
+
+func TestUpdateExistingAttendee_AddTwoPackages_AnyTime_UserAllowed(t *testing.T) {
+	for i, origStatus := range []status.Status{status.New, status.Approved, status.PartiallyPaid, status.Paid, status.CheckedIn, status.Cancelled} {
+		testcase := fmt.Sprintf("ua3b-%d", i+1)
+		token := tstValidStaffToken(t, 1) // user who registered, staff makes no difference
+		targetStatus := origStatus
+		mails := []mailservice.MailSendDto{}
+		if origStatus == status.Approved {
+			mail1 := tstNewStatusMailWithAmounts(testcase, targetStatus, 275.00, 275.00)
+			mail2 := tstNewStatusMailWithAmounts(testcase, targetStatus, 305.00, 305.00)
+			mails = append(mails, mail1, mail2)
+		} else if origStatus == status.PartiallyPaid {
+			mail1 := tstNewStatusMailWithAmounts(testcase, targetStatus, 120.00, 275.00)
+			mail2 := tstNewStatusMailWithAmounts(testcase, targetStatus, 150.00, 305.00)
+			mails = append(mails, mail1, mail2)
+		} else if origStatus == status.Paid {
+			targetStatus = status.PartiallyPaid
+			mail1 := tstNewStatusMailWithAmounts(testcase, targetStatus, 20.00, 275.00)
+			mail2 := tstNewStatusMailWithAmounts(testcase, targetStatus, 50.00, 305.00)
+			mails = append(mails, mail1, mail2)
+		}
+		t.Run(string(origStatus), func(t *testing.T) {
+			tstUpdateExistingAttendee_AddTwoPackages(t, testcase, origStatus, token, mails)
 		})
 	}
 }

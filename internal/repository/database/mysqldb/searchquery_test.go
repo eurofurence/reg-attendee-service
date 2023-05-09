@@ -200,6 +200,7 @@ WHERE (
     AND ( LOWER(a.user_comments) LIKE LOWER( @param_1_17 ) )
     AND ( IFNULL(st.status, 'new') <> 'deleted' )
     AND ( STRCMP( IFNULL(a.cache_due_date,'0000-00-00'), @param_1_18_1 ) <= 0 )
+    AND ( IFNULL(st.status, 'new') IN ('approved','partially paid') )
     AND ( ( SELECT COUNT(*) FROM att_additional_infos WHERE attendee_id = a.id AND area = @param_1_18_2 ) = 0 )
   )
   OR
@@ -225,6 +226,7 @@ WHERE (
     AND ( LOWER(a.user_comments) LIKE LOWER( @param_2_17 ) )
     AND ( IFNULL(st.status, 'new') <> 'deleted' )
     AND ( STRCMP( IFNULL(a.cache_due_date,'0000-00-00'), @param_2_18_1 ) > 0 )
+    AND ( IFNULL(st.status, 'new') IN ('approved','partially paid') )
     AND ( ( SELECT COUNT(*) FROM att_additional_infos WHERE attendee_id = a.id AND area = @param_2_18_2 ) > 0 )
   )
 ) AND a.id >= @param_0_1 AND a.id <= @param_0_2 ORDER BY CONCAT(a.first_name, ' ', a.last_name) DESC`

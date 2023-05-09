@@ -589,9 +589,14 @@ func TestAdminWrite_ManualDuesPositive_AfterApprove(t *testing.T) {
 		tstValidAttendeeDues(8000, "you still need to pay for last year"),
 	})
 
+	mail1 := tstNewStatusMail(testcase, status.Approved)
+	mail2 := tstNewStatusMail(testcase, status.Approved)
+	mail2.Variables["total_dues"] = "EUR 335.00"
+	mail2.Variables["remaining_dues"] = "EUR 335.00"
 	docs.Then("and the expected email messages were sent via the mail service")
 	tstRequireMailRequests(t, []mailservice.MailSendDto{
-		tstNewStatusMail(testcase, status.Approved),
+		mail1,
+		mail2,
 	})
 }
 
@@ -776,8 +781,13 @@ func TestAdminWrite_ManualDuesNegativePartial_AfterApprove(t *testing.T) {
 	})
 
 	docs.Then("and the expected email messages were sent via the mail service")
+	mail1 := tstNewStatusMail(testcase, status.Approved)
+	mail2 := tstNewStatusMail(testcase, status.Approved)
+	mail2.Variables["total_dues"] = "EUR 175.00"
+	mail2.Variables["remaining_dues"] = "EUR 175.00"
 	tstRequireMailRequests(t, []mailservice.MailSendDto{
-		tstNewStatusMail(testcase, status.Approved),
+		mail1,
+		mail2,
 	})
 }
 

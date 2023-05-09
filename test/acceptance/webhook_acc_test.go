@@ -189,6 +189,8 @@ func TestPaymentsChangedWebhook_PartiallyPaid_Approved(t *testing.T) {
 
 func TestPaymentsChangedWebhook_PartiallyPaid_PartialRefund(t *testing.T) {
 	testcase := "pc2a2p-"
+	mail1 := tstNewStatusMail(testcase, status.PartiallyPaid)
+	mail1.Variables["remaining_dues"] = "EUR 155.00"
 	tstStatusChange_Webhook_Success(t, testcase,
 		subcaseAdmOrApi,
 		subcaseAdmOrApiTokens,
@@ -197,7 +199,7 @@ func TestPaymentsChangedWebhook_PartiallyPaid_PartialRefund(t *testing.T) {
 			tstCreateTransaction(1, paymentservice.Payment, -5500),
 		},
 		status.PartiallyPaid,
-		nil,
+		[]mailservice.MailSendDto{mail1},
 	)
 }
 
