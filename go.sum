@@ -16,8 +16,8 @@ github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/StephanHCB/go-autumn-logging v0.3.0 h1:G0zs8xoth8i8mOeoFgG3Dvk6dIY9dPPJ7wkm6mjaPyY=
 github.com/StephanHCB/go-autumn-logging v0.3.0/go.mod h1:dPABYdECU3XrFib03uXbQFVLftUP5c4YaKSineiw37U=
-github.com/StephanHCB/go-autumn-logging-zerolog v0.3.1 h1:ZkMZhgA9XyG5UKypNPsWHhyXBZ6207megv/dr/hM1Kg=
-github.com/StephanHCB/go-autumn-logging-zerolog v0.3.1/go.mod h1:LB3tb1gP4mY17sjal55SRlxG6Cp03gxoHpFXIcebJOI=
+github.com/StephanHCB/go-autumn-logging-zerolog v0.4.0 h1:KLvVCUBxa62BoUQu9+DDya1YqKsn81/SLoDLum6dr+c=
+github.com/StephanHCB/go-autumn-logging-zerolog v0.4.0/go.mod h1:Hspu94dHAKtgjMAkqtjMDZJnVv0VjVjyq6uKHI0Q4R8=
 github.com/StephanHCB/go-autumn-restclient v0.5.0 h1:UadP+Tj8NShkaVPZWEVarYIyUeSYalZvEVi0znd9Dqo=
 github.com/StephanHCB/go-autumn-restclient v0.5.0/go.mod h1:cvpDXD4WxJuhJxJ0HIMep+teDYdRw4wakln0bFxVK0c=
 github.com/StephanHCB/go-autumn-restclient-circuitbreaker v0.4.1 h1:aRs7bVnENGiKsWyvz6d5jAb2LuRkM1AUIzMoOgjzRLs=
@@ -38,7 +38,6 @@ github.com/coreos/bbolt v1.3.2/go.mod h1:iRUV2dpdMOn7Bo10OQBFzIJO9kkE559Wcmn+qkE
 github.com/coreos/etcd v3.3.13+incompatible/go.mod h1:uF7uidLiAD3TWHmW31ZFd/JWoc32PjwdhPthX9715RE=
 github.com/coreos/go-semver v0.3.0/go.mod h1:nnelYz7RCh+5ahJtPPxZlU+153eP4D4r3EedlOD2RNk=
 github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e/go.mod h1:F5haX7vjVVG0kc13fIWeqUViNPyEJxv/OmvnBo0Yme4=
-github.com/coreos/go-systemd/v22 v22.3.3-0.20220203105225-a9a7ef127534/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
 github.com/coreos/go-systemd/v22 v22.5.0/go.mod h1:Y58oyj3AT4RCenI/lSvhwexgC+NSVTIJ3seZv2GcEnc=
 github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f/go.mod h1:E3G3o1h8I7cfcXa63jLwjI0eiQQMgzzUDFVpN/nH/eA=
 github.com/cpuguy83/go-md2man/v2 v2.0.0/go.mod h1:maD7wRr/U5Z6m/iR4s+kqSMx2CaBsrgA7czyZG/E6dU=
@@ -220,7 +219,6 @@ github.com/prometheus/tsdb v0.7.1/go.mod h1:qhTCs0VvXwvX/y3TZrWD7rabWM+ijKTux40T
 github.com/rogpeppe/fastuuid v0.0.0-20150106093220-6724a57986af/go.mod h1:XWv6SoW27p1b0cqNHllgS5HIMJraePCO15w5zCzIWYg=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
 github.com/rs/xid v1.4.0/go.mod h1:trrq9SKmegXys3aeAKXMUTdJsYXVwGY3RLcfgqegfbg=
-github.com/rs/zerolog v1.28.0/go.mod h1:NILgTygv/Uej1ra5XxGf82ZFSLk58MFGAUS2o6usyD0=
 github.com/rs/zerolog v1.29.1 h1:cO+d60CHkknCbvzEWxP0S9K6KqyTjrCNUy1LdQLCGPc=
 github.com/rs/zerolog v1.29.1/go.mod h1:Le6ESbR7hc+DP6Lt1THiV8CQSdkkNrd3R0XbEgp3ZBU=
 github.com/russross/blackfriday/v2 v2.0.1/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
