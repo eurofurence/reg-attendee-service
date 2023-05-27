@@ -112,7 +112,11 @@ func AllowedOptions() []string {
 }
 
 func AllowedPermissions() []string {
-	return []string{"regdesk", "sponsordesk"}
+	if len(Configuration().Permissions) > 0 {
+		return Configuration().Permissions
+	} else {
+		return []string{"regdesk", "sponsordesk"}
+	}
 }
 
 func AllowedTshirtSizes() []string {

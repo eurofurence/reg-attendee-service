@@ -5,11 +5,13 @@ import (
 	"errors"
 	"fmt"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/service/attendeesrv"
 	"github.com/eurofurence/reg-attendee-service/internal/web/filter"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctlutil"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/media"
+	"github.com/eurofurence/reg-attendee-service/internal/web/util/validation"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-http-utils/headers"
 	"io"
@@ -89,6 +91,16 @@ func deleteAdditionalInfoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	oldValue, err := attendeeService.GetAdditionalInfo(ctx, id, area)
+	if err != nil {
+		ctlutil.ErrorHandler(ctx, w, r, "addinfo.read.error", http.StatusInternalServerError, url.Values{})
+		return
+	}
+	if oldValue == "" {
+		ctlutil.ErrorHandler(ctx, w, r, "addinfo.notfound.error", http.StatusNotFound, url.Values{})
+		return
+	}
+
 	err = attendeeService.WriteAdditionalInfo(ctx, id, area, "")
 	if err != nil {
 		ctlutil.ErrorHandler(ctx, w, r, "addinfo.write.error", http.StatusInternalServerError, url.Values{})
@@ -144,5 +156,11 @@ func idAndAreaFromVarsValidated_MustReturn(ctx context.Context, w http.ResponseW
 		ctlutil.ErrorHandler(ctx, w, r, "addinfo.area.invalid", http.StatusBadRequest, url.Values{"area": []string{"the special value 'overdue' is used internally and is forbidden here"}})
 		return uint(id), area, errors.New("invalid additional info area")
 	}
+	if validation.NotInAllowedValues(config.AllowedPermissions(), area) {
+		aulogging.Logger.Ctx(ctx).Warn().Printf("received additional info area '%s' not listed in configuration", area)
+		ctlutil.ErrorHandler(ctx, w, r, "addinfo.area.unlisted", http.StatusBadRequest, url.Values{"area": []string{"areas must be enabled in configuration"}})
+		return uint(id), area, errors.New("unlisted additional info area")
+	}
+
 	return uint(id), area, nil
 }

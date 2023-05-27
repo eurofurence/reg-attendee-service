@@ -32,6 +32,10 @@ dues:
 birthday:
   earliest: '1901-01-01'
   latest: '2001-08-14'
+permissions:
+  - regdesk
+  - sponsordesk
+  - myarea
 choices:
   flags:
     hc:

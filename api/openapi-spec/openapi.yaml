@@ -280,7 +280,7 @@ paths:
             format: int64
         - name: area
           in: path
-          description: Area (must match [a-z]+), note that 'overdue' is used internally
+          description: Area (must match [a-z]+), note that 'overdue' is used internally. The configuration contains a list of allowed areas.
           required: true
           schema:
             type: string
@@ -293,7 +293,7 @@ paths:
                 type: object
                 additionalProperties: true
         '400':
-          description: Invalid ID or area supplied (area must match [a-z]+)
+          description: Invalid ID or area supplied (area must match [a-z]+ and be listed in the configuration)
           content:
             application/json:
               schema:
@@ -345,7 +345,7 @@ paths:
             format: int64
         - name: area
           in: path
-          description: Area (must match [a-z]+), note that 'overdue' is used internally
+          description: Area (must match [a-z]+), note that 'overdue' is used internally. The configuration contains a list of allowed areas.
           required: true
           schema:
             type: string
@@ -364,7 +364,7 @@ paths:
         '204':
           description: successful operation
         '400':
-          description: Invalid ID or area supplied (area must match [a-z]+)
+          description: Invalid ID or area supplied (area must match [a-z]+ and be listed in the configuration)
           content:
             application/json:
               schema:
@@ -414,7 +414,7 @@ paths:
             format: int64
         - name: area
           in: path
-          description: Area (must match [a-z]+), note that 'overdue' is used internally
+          description: Area (must match [a-z]+), note that 'overdue' is used internally. The configuration contains a list of allowed areas.
           required: true
           schema:
             type: string
@@ -425,7 +425,7 @@ paths:
         '204':
           description: successful operation
         '400':
-          description: Invalid ID or area supplied (area must match [a-z]+)
+          description: Invalid ID or area supplied (area must match [a-z]+ and be listed in the configuration)
           content:
             application/json:
               schema:
@@ -1961,6 +1961,7 @@ components:
             
             At this time, there are these values:
             - addinfo.area.invalid (must match [a-z]+, and can't be "overdue")
+            - addinfo.area.unlisted (area is not listed in the configuration - all usable areas must be configured)
             - addinfo.notfound.error (no value for area is present, although the attendee was found)
             - addinfo.receive.error (error receiving body - maybe too large?)
             - addinfo.read.error (database error)
