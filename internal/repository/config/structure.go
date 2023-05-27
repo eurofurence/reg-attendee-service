@@ -28,6 +28,7 @@ type (
 		Security              SecurityConfig    `yaml:"security"`
 		Logging               LoggingConfig     `yaml:"logging"`
 		Choices               FlagsPkgOptConfig `yaml:"choices"`
+		Permissions           []string          `yaml:"permissions"`
 		TShirtSizes           []string          `yaml:"tshirtsizes"`
 		Birthday              BirthdayConfig    `yaml:"birthday"`
 		GoLive                GoLiveConfig      `yaml:"go_live"`

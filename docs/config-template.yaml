@@ -66,6 +66,9 @@ dues:
 birthday:
   earliest: '1901-01-01'
   latest: '2004-08-24'
+permissions:
+  - regdesk
+  - sponsordesk
 choices:
   flags:
     hc:

@@ -135,7 +135,7 @@ func TestAdminWrite_AnonDeny(t *testing.T) {
 
 	docs.When("when they attempt to update the admin information")
 	body := admin.AdminInfoDto{
-		Permissions: "admin",
+		Permissions: "sponsordesk",
 	}
 	response := tstPerformPut(location1+"/admin", tstRenderJson(body), token)
 
@@ -160,7 +160,7 @@ func TestAdminWrite_UserDeny(t *testing.T) {
 
 	docs.When("when they attempt to update the admin information")
 	body := admin.AdminInfoDto{
-		Permissions: "admin",
+		Permissions: "sponsordesk",
 	}
 	response := tstPerformPut(location1+"/admin", tstRenderJson(body), token)
 
