@@ -46,6 +46,11 @@ type AttendeeIdList struct {
 	Ids []uint `json:"ids"`
 }
 
+type DueDate struct {
+	// The due date as an ISO date. Note that this is an accounting date, which does not have a time or a time zone.
+	DueDate string `json:"due_date"`
+}
+
 // --- search criteria ---
 
 type AttendeeSearchCriteria struct {

@@ -37,6 +37,8 @@ func Create(server chi.Router, attendeeSrv attendeesrv.AttendeeService) {
 	server.Get("/api/rest/v1/attendees/max-id", filter.WithTimeout(3*time.Second, getAttendeeMaxIdHandler))
 	server.Get("/api/rest/v1/attendees/{id}", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, getAttendeeHandler)))
 	server.Put("/api/rest/v1/attendees/{id}", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, updateAttendeeHandler)))
+	server.Get("/api/rest/v1/attendees/{id}/due-date", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, getDueDateHandler)))
+	server.Put("/api/rest/v1/attendees/{id}/due-date", filter.HasGroupOrApiToken(config.OidcAdminGroup(), filter.WithTimeout(3*time.Second, overrideDueDateHandler)))
 }
 
 func newAttendeeHandler(w http.ResponseWriter, r *http.Request) {
@@ -126,7 +128,68 @@ func updateAttendeeHandler(w http.ResponseWriter, r *http.Request) {
 		attendeeWriteErrorHandler(ctx, w, r, err)
 		return
 	}
-	w.Header().Add(headers.Location, r.RequestURI)
+	w.Header().Add(headers.Location, r.URL.Path)
+}
+
+func getDueDateHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	id, err := idFromVars(ctx, w, r)
+	if err != nil {
+		return
+	}
+	existingAttendee, err := attendeeService.GetAttendee(ctx, id)
+	if err != nil {
+		ctlutil.AttendeeNotFoundErrorHandler(ctx, w, r, id)
+		return
+	}
+
+	if err := filter.IsSubjectOrGroupOrApiToken(w, r, existingAttendee.Identity, config.OidcAdminGroup()); err != nil {
+		return
+	}
+
+	dto := attendee.DueDate{
+		DueDate: existingAttendee.CacheDueDate,
+	}
+	w.Header().Add(headers.ContentType, media.ContentTypeApplicationJson)
+	ctlutil.WriteJson(ctx, w, dto)
+}
+
+func overrideDueDateHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	id, err := idFromVars(ctx, w, r)
+	if err != nil {
+		return
+	}
+	dto, err := parseBodyToDueDate(ctx, w, r)
+	if err != nil {
+		return
+	}
+	attd, err := attendeeService.GetAttendee(ctx, id)
+	if err != nil {
+		ctlutil.AttendeeNotFoundErrorHandler(ctx, w, r, id)
+		return
+	}
+
+	validationErrs := validateDueDateChange(ctx, dto, attd)
+	if len(validationErrs) != 0 {
+		dueDateValidationErrorHandler(ctx, w, r, validationErrs)
+		return
+	}
+
+	attd.CacheDueDate = dto.DueDate
+
+	// note: even if suppressMinorUpdateEmails were false, still no emails would trigger as
+	//       there are no due date changes in the transactions, and the attendee is written before we
+	//       check for such changes.
+	err = attendeeService.UpdateAttendee(ctx, attd, true)
+	if err != nil {
+		attendeeWriteErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func getAttendeeMaxIdHandler(w http.ResponseWriter, r *http.Request) {
@@ -188,6 +251,17 @@ func parseBodyToAttendeeDto(ctx context.Context, w http.ResponseWriter, r *http.
 	return dto, err
 }
 
+func parseBodyToDueDate(ctx context.Context, w http.ResponseWriter, r *http.Request) (*attendee.DueDate, error) {
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	dto := &attendee.DueDate{}
+	err := decoder.Decode(dto)
+	if err != nil {
+		dueDateParseErrorHandler(ctx, w, r, err)
+	}
+	return dto, err
+}
+
 func obtainAttendeeLatestStatusMustReturnOnError(ctx context.Context, w http.ResponseWriter, r *http.Request, att *entity.Attendee) (status.Status, error) {
 	history, err := attendeeService.GetFullStatusHistory(ctx, att)
 	if err != nil {
@@ -235,6 +309,16 @@ func attendeeReadErrorHandler(ctx context.Context, w http.ResponseWriter, r *htt
 func attendeeMaxIdErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
 	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("could not determine max id: %s", err.Error())
 	ctlutil.ErrorHandler(ctx, w, r, "attendee.max_id.error", http.StatusInternalServerError, url.Values{})
+}
+
+func dueDateParseErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
+	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("due date body could not be parsed: %s", err.Error())
+	ctlutil.ErrorHandler(ctx, w, r, "duedate.parse.error", http.StatusBadRequest, url.Values{})
+}
+
+func dueDateValidationErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, errs url.Values) {
+	aulogging.Logger.Ctx(ctx).Warn().Printf("received due date data with validation errors: %v", errs)
+	ctlutil.ErrorHandler(ctx, w, r, "duedate.data.invalid", http.StatusBadRequest, errs)
 }
 
 func myRegsErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
