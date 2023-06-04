@@ -104,6 +104,8 @@ func updateAttendeeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	suppressMinorUpdateEmail := r.URL.Query().Get("suppressMinorUpdateEmail") == "yes"
+
 	if err := filter.IsSubjectOrGroupOrApiToken(w, r, attd.Identity, config.OidcAdminGroup()); err != nil {
 		return
 	}
@@ -119,7 +121,7 @@ func updateAttendeeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	mapDtoToAttendee(dto, attd)
-	err = attendeeService.UpdateAttendee(ctx, attd)
+	err = attendeeService.UpdateAttendee(ctx, attd, suppressMinorUpdateEmail)
 	if err != nil {
 		attendeeWriteErrorHandler(ctx, w, r, err)
 		return

@@ -1198,6 +1198,30 @@ func tstUpdateExistingAttendee_AddOnePackage(t *testing.T, testcase string, orig
 	tstRequireMailRequests(t, expectedMails)
 }
 
+func tstUpdateExistingAttendee_AddOnePackage_SuppressEmailWorks(t *testing.T, testcase string, origStatus status.Status, token string, expectedMails []mailservice.MailSendDto) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given(fmt.Sprintf("given an existing attendee in status %s", origStatus))
+	loc, att := tstRegisterAttendeeAndTransitionToStatus(t, testcase, origStatus)
+
+	docs.When("when an admin sends updated attendee info and adds a package that has associated cost (with suppressMinorUpdateEmail flag set)")
+	changedAttendee := att
+	changedAttendee.Packages = "room-none,attendance,stage,sponsor2,boat-trip" // adds boat-trip
+	response := tstPerformPut(loc+"?suppressMinorUpdateEmail=yes", tstRenderJson(changedAttendee), token)
+
+	docs.Then("then the attendee is successfully updated and the changed data can be read again")
+	require.Equal(t, http.StatusOK, response.status, "unexpected http response status for update")
+	require.Equal(t, loc, response.location, "location unexpectedly changed during update")
+	attendeeReadAgain := tstReadAttendee(t, loc)
+	require.EqualValues(t, changedAttendee, attendeeReadAgain, "attendee data read did not match updated data")
+	require.EqualValues(t, "room-none,attendance,stage,sponsor2,boat-trip", attendeeReadAgain.Packages, "attendee data read did not match expected package value")
+
+	docs.Then("and no mail messages have been sent because of the suppressMinorUpdateEmail flag")
+	tstRequireMailRequests(t, nil)
+}
+
 func TestUpdateExistingAttendee_AddOnePackage_AnyTime_UserAllowed(t *testing.T) {
 	for i, origStatus := range []status.Status{status.New, status.Approved, status.PartiallyPaid, status.Paid, status.CheckedIn, status.Cancelled} {
 		testcase := fmt.Sprintf("ua3a-%d", i+1)

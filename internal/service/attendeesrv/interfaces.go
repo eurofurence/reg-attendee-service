@@ -18,7 +18,7 @@ type AttendeeService interface {
 	// RegisterNewAttendee saves a previously unsaved attendee, assigning them a badge number.
 	RegisterNewAttendee(ctx context.Context, attendee *entity.Attendee) (uint, error)
 	GetAttendee(ctx context.Context, id uint) (*entity.Attendee, error)
-	UpdateAttendee(ctx context.Context, attendee *entity.Attendee) error
+	UpdateAttendee(ctx context.Context, attendee *entity.Attendee, suppressMinorUpdateEmails bool) error
 
 	// GetAttendeeMaxId returns the highest assigned badge number.
 	GetAttendeeMaxId(ctx context.Context) (uint, error)
@@ -31,7 +31,7 @@ type AttendeeService interface {
 	CanChangeChoiceToCurrentStatus(ctx context.Context, what string, originalChoiceStr string, newChoiceStr string, configuration map[string]config.ChoiceConfig, currentStatus status.Status) error
 
 	GetAdminInfo(ctx context.Context, attendeeId uint) (*entity.AdminInfo, error)
-	UpdateAdminInfo(ctx context.Context, attendee *entity.Attendee, adminInfo *entity.AdminInfo) error
+	UpdateAdminInfo(ctx context.Context, attendee *entity.Attendee, adminInfo *entity.AdminInfo, suppressMinorUpdateEmail bool) error
 
 	GetFullStatusHistory(ctx context.Context, attendee *entity.Attendee) ([]entity.StatusChange, error)
 	// UpdateDuesAndDoStatusChangeIfNeeded updates dues (depending on newStatus) and records a status change if appropriate.
@@ -39,7 +39,7 @@ type AttendeeService interface {
 	// If newStatus is one of approved/partially paid/paid, the actual status value written may be any of these three.
 	// This is because depending on package and flag changes (guests attend for free!), the dues may change, and
 	// so paid may turn into partially paid etc.
-	UpdateDuesAndDoStatusChangeIfNeeded(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status, statusComment string, overrideDuesComment string) error
+	UpdateDuesAndDoStatusChangeIfNeeded(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status, statusComment string, overrideDuesComment string, suppressMinorUpdateEmail bool) error
 	StatusChangeAllowed(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status) error
 	StatusChangePossible(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status) error
 	// ResendStatusMail resends the current status mail, but with dues recalculated

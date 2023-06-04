@@ -203,6 +203,12 @@ paths:
             type: integer
             minimum: 1
             format: int64
+        - name: suppressMinorUpdateEmail
+          in: query
+          description: Suppress sending emails for minor updates (dues only changes where the attendee stays in approved/partially paid/paid). The only value that does anything is "yes", all other values do not suppress.
+          schema:
+            type: string
+            example: no
       requestBody:
         content:
           application/json:
@@ -522,6 +528,12 @@ paths:
             type: integer
             minimum: 1
             format: int64
+        - name: suppressMinorUpdateEmail
+          in: query
+          description: Suppress sending emails for minor updates (dues only changes where the attendee stays in approved/partially paid/paid). The only value that does anything is "yes", all other values do not suppress.
+          schema:
+            type: string
+            example: no
       requestBody:
         content:
           application/json:

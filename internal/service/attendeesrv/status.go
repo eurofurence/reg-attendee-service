@@ -47,7 +47,7 @@ func (s *AttendeeServiceImplData) GetFullStatusHistory(ctx context.Context, atte
 	return result, nil
 }
 
-func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status, statusComment string, overrideDuesComment string) error {
+func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status, statusComment string, overrideDuesComment string, suppressMinorUpdateEmail bool) error {
 	// controller checks value validity
 	// controller checks permission via StatusChangeAllowed
 	// controller checks precondition via StatusChangePossible
@@ -88,19 +88,24 @@ func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx contex
 		}
 
 		if newStatus != status.Deleted && newStatus != status.CheckedIn {
-			err = s.sendStatusChangeNotificationEmail(ctx, attendee, adminInfo, newStatus, statusComment)
+			suppress := suppressMinorUpdateEmail && isPaymentPhaseStatus(oldStatus) && isPaymentPhaseStatus(newStatus)
+			err = s.sendStatusChangeNotificationEmail(ctx, attendee, adminInfo, newStatus, statusComment, suppress)
 			if err != nil {
 				return err
 			}
 		}
 	} else if duesInformationChanged && (newStatus == status.Approved || newStatus == status.PartiallyPaid) {
-		err = s.sendStatusChangeNotificationEmail(ctx, attendee, adminInfo, newStatus, statusComment)
+		err = s.sendStatusChangeNotificationEmail(ctx, attendee, adminInfo, newStatus, statusComment, suppressMinorUpdateEmail)
 		if err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func isPaymentPhaseStatus(st status.Status) bool {
+	return st == status.Approved || st == status.PartiallyPaid || st == status.Paid
 }
 
 func formatCurr(value int64) string {
@@ -124,7 +129,7 @@ func (s *AttendeeServiceImplData) ResendStatusMail(ctx context.Context, attendee
 	}
 
 	if currentStatus != status.Deleted && currentStatus != status.CheckedIn && currentStatus != status.New {
-		err = s.sendStatusChangeNotificationEmail(ctx, attendee, adminInfo, currentStatus, currentStatusComment)
+		err = s.sendStatusChangeNotificationEmail(ctx, attendee, adminInfo, currentStatus, currentStatusComment, false)
 		if err != nil {
 			return err
 		}
@@ -133,7 +138,7 @@ func (s *AttendeeServiceImplData) ResendStatusMail(ctx context.Context, attendee
 	return nil
 }
 
-func (s *AttendeeServiceImplData) sendStatusChangeNotificationEmail(ctx context.Context, attendee *entity.Attendee, adminInfo *entity.AdminInfo, newStatus status.Status, statusComment string) error {
+func (s *AttendeeServiceImplData) sendStatusChangeNotificationEmail(ctx context.Context, attendee *entity.Attendee, adminInfo *entity.AdminInfo, newStatus status.Status, statusComment string, suppress bool) error {
 	checkSummedId := s.badgeId(attendee.ID)
 	cancelReason := ""
 	if newStatus == status.Cancelled {
@@ -181,6 +186,9 @@ func (s *AttendeeServiceImplData) sendStatusChangeNotificationEmail(ctx context.
 		if newStatus == status.Approved || newStatus == status.PartiallyPaid || newStatus == status.Paid {
 			mailDto.CommonID = "guest"
 		}
+	} else if suppress {
+		aulogging.Logger.Ctx(ctx).Info().Printf("sending mail %s to %s suppressed", mailDto.CommonID, attendee.Email)
+		return nil
 	}
 
 	err := mailservice.Get().SendEmail(ctx, mailDto)
