@@ -52,7 +52,7 @@ func (s *AttendeeServiceImplData) GetAttendee(ctx context.Context, id uint) (*en
 	return attendee, err
 }
 
-func (s *AttendeeServiceImplData) UpdateAttendee(ctx context.Context, attendee *entity.Attendee) error {
+func (s *AttendeeServiceImplData) UpdateAttendee(ctx context.Context, attendee *entity.Attendee, suppressMinorUpdateEmails bool) error {
 	alreadyExists, err := isDuplicateAttendee(ctx, attendee.Nickname, attendee.Zip, attendee.Email, 1)
 	if err != nil {
 		return err
@@ -78,7 +78,7 @@ func (s *AttendeeServiceImplData) UpdateAttendee(ctx context.Context, attendee *
 
 	subject := ctxvalues.Subject(ctx)
 	// changing packages may change the due amount
-	err = s.UpdateDuesAndDoStatusChangeIfNeeded(ctx, attendee, currentStatus, currentStatus, fmt.Sprintf("attendee update by %s", subject), "")
+	err = s.UpdateDuesAndDoStatusChangeIfNeeded(ctx, attendee, currentStatus, currentStatus, fmt.Sprintf("attendee update by %s", subject), "", suppressMinorUpdateEmails)
 	if err != nil {
 		return err
 	}

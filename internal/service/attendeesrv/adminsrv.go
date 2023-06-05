@@ -15,7 +15,7 @@ func (s *AttendeeServiceImplData) GetAdminInfo(ctx context.Context, attendeeId u
 	return adminInfo, err
 }
 
-func (s *AttendeeServiceImplData) UpdateAdminInfo(ctx context.Context, attendee *entity.Attendee, adminInfo *entity.AdminInfo) error {
+func (s *AttendeeServiceImplData) UpdateAdminInfo(ctx context.Context, attendee *entity.Attendee, adminInfo *entity.AdminInfo, suppressMinorUpdateEmail bool) error {
 	// admin authorization is checked in the controller
 	// presence of attendeeId is checked in the controller
 	// controller has called GetAdminInfo before this, so we know ID is set
@@ -43,7 +43,7 @@ func (s *AttendeeServiceImplData) UpdateAdminInfo(ctx context.Context, attendee 
 
 	// setting admin flags such as guest may change dues, and change status
 	subject := ctxvalues.Subject(ctx)
-	err = s.UpdateDuesAndDoStatusChangeIfNeeded(ctx, attendee, currentStatus, currentStatus, fmt.Sprintf("admin info update by %s", subject), overrideDuesTransactionComment)
+	err = s.UpdateDuesAndDoStatusChangeIfNeeded(ctx, attendee, currentStatus, currentStatus, fmt.Sprintf("admin info update by %s", subject), overrideDuesTransactionComment, suppressMinorUpdateEmail)
 	if err != nil {
 		return err
 	}

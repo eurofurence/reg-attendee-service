@@ -64,6 +64,8 @@ func writeAdminInfoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	suppressMinorUpdateEmail := r.URL.Query().Get("suppressMinorUpdateEmail") == "yes"
+
 	// this will also create a blank adminInfo with id filled in
 	adminInfo, err := attendeeService.GetAdminInfo(ctx, attendee.ID)
 	if err != nil {
@@ -79,7 +81,7 @@ func writeAdminInfoHandler(w http.ResponseWriter, r *http.Request) {
 
 	mapDtoToAdminInfo(dto, adminInfo)
 
-	err = attendeeService.UpdateAdminInfo(ctx, attendee, adminInfo)
+	err = attendeeService.UpdateAdminInfo(ctx, attendee, adminInfo, suppressMinorUpdateEmail)
 	if err != nil {
 		adminInfoWriteErrorHandler(ctx, w, r, err)
 		return

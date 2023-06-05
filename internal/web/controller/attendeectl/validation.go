@@ -128,3 +128,21 @@ func validate(ctx context.Context, a *attendee.AttendeeDto, trustedOriginalState
 	}
 	return errs
 }
+
+func validateDueDateChange(ctx context.Context, d *attendee.DueDate, trustedOriginalState *entity.Attendee) url.Values {
+	errs := url.Values{}
+
+	if validation.InvalidISODate(d.DueDate) {
+		errs.Add("due_date", "due date field must be a valid ISO date, e.g. 2023-08-17")
+	}
+
+	if len(errs) != 0 {
+		if config.LoggingSeverity() == "DEBUG" {
+			logger := aulogging.Logger.Ctx(ctx).Debug()
+			for key, val := range errs {
+				logger.Printf("attendee dto validation error for key %s: %s", key, val)
+			}
+		}
+	}
+	return errs
+}

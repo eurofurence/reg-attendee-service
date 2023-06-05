@@ -97,7 +97,7 @@ func postStatusHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = attendeeService.UpdateDuesAndDoStatusChangeIfNeeded(ctx, att, latestStatusChange.Status, dto.Status, dto.Comment, "")
+	err = attendeeService.UpdateDuesAndDoStatusChangeIfNeeded(ctx, att, latestStatusChange.Status, dto.Status, dto.Comment, "", false)
 	if err != nil {
 		if errors.Is(err, paymentservice.DownstreamError) || errors.Is(err, mailservice.DownstreamError) {
 			statusChangeDownstreamError(ctx, w, r, err)
@@ -189,7 +189,7 @@ func paymentsChangedHandler(w http.ResponseWriter, r *http.Request) {
 	err = attendeeService.UpdateDuesAndDoStatusChangeIfNeeded(ctx, att,
 		latestStatusChange.Status,
 		latestStatusChange.Status,
-		"transactions changed", "")
+		"transactions changed", "", false)
 	if err != nil {
 		if errors.Is(err, paymentservice.DownstreamError) || errors.Is(err, mailservice.DownstreamError) {
 			statusChangeDownstreamError(ctx, w, r, err)

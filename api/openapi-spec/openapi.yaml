@@ -203,6 +203,12 @@ paths:
             type: integer
             minimum: 1
             format: int64
+        - name: suppressMinorUpdateEmail
+          in: query
+          description: Suppress sending emails for minor updates (dues only changes where the attendee stays in approved/partially paid/paid). The only value that does anything is "yes", all other values do not suppress.
+          schema:
+            type: string
+            example: "no"
       requestBody:
         content:
           application/json:
@@ -522,6 +528,12 @@ paths:
             type: integer
             minimum: 1
             format: int64
+        - name: suppressMinorUpdateEmail
+          in: query
+          description: Suppress sending emails for minor updates (dues only changes where the attendee stays in approved/partially paid/paid). The only value that does anything is "yes", all other values do not suppress.
+          schema:
+            type: string
+            example: "no"
       requestBody:
         content:
           application/json:
@@ -545,6 +557,132 @@ paths:
                 $ref: '#/components/schemas/Error'
         '403':
           description: You do not have permission to change privileged information for this attendee
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Attendee not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: An unexpected error occurred. This includes database errors. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+  /attendees/{id}/due-date:
+    get:
+      tags:
+        - registration
+      summary: Obtain the currently set due date
+      description: Returns the currently set due date for an attendee. Note that it may be empty.
+      operationId: getDueDateById
+      parameters:
+        - name: id
+          in: path
+          description: Badge number of attendee
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            format: int64
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DueDate'
+        '400':
+          description: Invalid ID supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: You do not have permission to see this attendee
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Attendee not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+    put:
+      tags:
+        - registration
+      summary: Override the due date for an attendee (but send no email).
+      description: |-
+        This operation overrides the due date for an attendee, setting it _no earlier_ than the supplied date.
+        
+        If the unpaid dues transactions for this attendee result in an even later due date, the due date will remain 
+        set to that date. Meaning: you can't shorten the dues period with this operation.
+        You can only extend it.
+
+        This operation never sends any emails to the attendee! If you need the attendee notified,
+        you currently need to use the re-send status notification endpoint.
+
+        Admin only operation.
+        
+        Note that payment/dues changes will never move the due date _back_ in time so you can use this to extend the time the attendee
+        has before they are considered overdue. Effectively, any later changes to dues will honour your request to keep the
+        due date _no earlier_ than the supplied date.
+
+        Note that you should never move a due date back in time, unless it's to correct a typo immediately.
+        The attendee will have received a payment email that stated the later due date, and may be relying on it.
+        To (mostly) prevent this situation, this operation will not let you adjust the due date to a value that is earlier than the
+        outstanding transactions of this attendee. Attempting to do so will simply have no effect.
+      operationId: overrideDueDateById
+      parameters:
+        - name: id
+          in: path
+          description: Badge number of attendee to update
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DueDate'
+        required: true
+      responses:
+        '204':
+          description: Successful operation
+        '400':
+          description: Invalid ID supplied or invalid data in request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: You do not have permission to change the due date for this attendee
           content:
             application/json:
               schema:
@@ -1860,6 +1998,15 @@ components:
           format: int64
           description: The number of seconds until the countdown ends (may depend on authorization, e.g. staff may register earlier than normal users). Stays at 0 if the countdown is over.
           example: 12648
+    DueDate:
+      type: object
+      required:
+        - due_date
+      properties:
+        due_date:
+          type: string
+          description: The due date as an ISO date. Note that this is an accounting date, which does not have a time or a time zone.
+          example: 2023-08-17
     StatusOnly:
       type: object
       required:

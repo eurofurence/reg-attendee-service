@@ -414,6 +414,49 @@ func TestAdminWrite_GuestAfterApprove(t *testing.T) {
 	})
 }
 
+func TestAdminWrite_GuestAfterApproveDoesNotSuppressEmail(t *testing.T) {
+	testcase := "admguest2a-"
+
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an attendee in status approved")
+	loc, _ := tstRegisterAttendee(t, testcase)
+	body2 := status.StatusChangeDto{
+		Status:  status.Approved,
+		Comment: "approve before setting to guest",
+	}
+	responseApprove := tstPerformPost(loc+"/status", tstRenderJson(body2), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, responseApprove.status)
+
+	docs.When("when an admin gives them guest status (with suppressMinorUpdateEmail set)")
+	token := tstValidAdminToken(t)
+	body := admin.AdminInfoDto{
+		Flags:         "guest",
+		AdminComments: "set to guest",
+	}
+	response := tstPerformPut(loc+"/admin?suppressMinorUpdateEmail=yes", tstRenderJson(body), token)
+	require.Equal(t, http.StatusNoContent, response.status, "unexpected http response status")
+	require.Equal(t, "", response.body, "unexpected response body")
+
+	docs.Then("then the status changes to 'paid'")
+	require.Equal(t, http.StatusNoContent, response.status)
+	tstVerifyStatus(t, loc, status.Paid)
+
+	docs.Then("and the compensating negative dues were booked in the payment service")
+	tstRequireTransactions(t, []paymentservice.Transaction{
+		tstValidAttendeeDues(25500, "dues adjustment due to change in status or selected packages"),
+		tstValidAttendeeDues(-25500, "admin info change"),
+	})
+
+	docs.Then("and the expected email messages were STILL sent via the mail service")
+	tstRequireMailRequests(t, []mailservice.MailSendDto{
+		tstNewStatusMail(testcase, status.Approved),
+		tstGuestMail(testcase),
+	})
+}
+
 func TestAdminWrite_CancelledGuest(t *testing.T) {
 	testcase := "admguest3-"
 
@@ -514,6 +557,56 @@ func TestAdminWrite_GuestMadeNormal(t *testing.T) {
 	})
 }
 
+func TestAdminWrite_GuestMadeNormalEmailSuppressWorks(t *testing.T) {
+	testcase := "admguest4a-"
+
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given a guest attendee in status paid")
+	loc, _ := tstRegisterAttendee(t, testcase)
+	bodyApprove := status.StatusChangeDto{
+		Status:  status.Approved,
+		Comment: "approve before setting to guest",
+	}
+	responseApprove := tstPerformPost(loc+"/status", tstRenderJson(bodyApprove), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, responseApprove.status)
+
+	token := tstValidAdminToken(t)
+	bodyGuest := admin.AdminInfoDto{
+		Flags:         "guest",
+		AdminComments: "set to guest",
+	}
+	response := tstPerformPut(loc+"/admin", tstRenderJson(bodyGuest), token)
+	require.Equal(t, http.StatusNoContent, response.status, "unexpected http response status")
+
+	docs.When("when an admin removes the guest admin flag and sets the suppressMinorUpdateEmail flag")
+	bodyGuestRevoke := admin.AdminInfoDto{
+		Flags:         "",
+		AdminComments: "removed guest again",
+	}
+	responseRevoke := tstPerformPut(loc+"/admin?suppressMinorUpdateEmail=yes", tstRenderJson(bodyGuestRevoke), token)
+	require.Equal(t, http.StatusNoContent, responseRevoke.status, "unexpected http response status")
+
+	docs.Then("then the status changes to 'approved'")
+	tstVerifyStatus(t, loc, status.Approved)
+
+	docs.Then("and the expected transactions were booked in the payment service")
+	tstRequireTransactions(t, []paymentservice.Transaction{
+		tstValidAttendeeDues(25500, "dues adjustment due to change in status or selected packages"),
+		tstValidAttendeeDues(-25500, "admin info change"),
+		tstValidAttendeeDues(25500, "admin info change"),
+	})
+
+	docs.Then("and the expected email messages were sent via the mail service (minus the notification for the change back to approved)")
+	tstRequireMailRequests(t, []mailservice.MailSendDto{
+		tstNewStatusMail(testcase, status.Approved),
+		tstGuestMail(testcase),
+		// tstNewStatusMail(testcase, status.Approved), -- NOT sent due to suppressMinorUpdateEmail
+	})
+}
+
 func TestAdminWrite_ManualDuesPositive_BeforeApprove(t *testing.T) {
 	testcase := "admman1-"
 
@@ -597,6 +690,47 @@ func TestAdminWrite_ManualDuesPositive_AfterApprove(t *testing.T) {
 	tstRequireMailRequests(t, []mailservice.MailSendDto{
 		mail1,
 		mail2,
+	})
+}
+
+func TestAdminWrite_ManualDuesPositive_AfterApproveSuppressEmailWorks(t *testing.T) {
+	testcase := "admman2-"
+
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an attendee in status approved")
+	loc, _ := tstRegisterAttendee(t, testcase)
+	bodyApprove := status.StatusChangeDto{
+		Status:  status.Approved,
+		Comment: "approve before setting manual dues",
+	}
+	responseApprove := tstPerformPost(loc+"/status", tstRenderJson(bodyApprove), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, responseApprove.status)
+
+	docs.When("when an admin adds manual dues (with the suppressMinorUpdateEmail flag set)")
+	bodyManual := admin.AdminInfoDto{
+		ManualDues:            8000,
+		ManualDuesDescription: "you still need to pay for last year",
+	}
+	responseManual := tstPerformPut(loc+"/admin?suppressMinorUpdateEmail=yes", tstRenderJson(bodyManual), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, responseManual.status, "unexpected http response status")
+	require.Equal(t, "", responseManual.body, "unexpected response body")
+
+	docs.Then("then the status remains on 'approved'")
+	tstVerifyStatus(t, loc, status.Approved)
+
+	docs.Then("and the expected dues were booked in the payment service")
+	tstRequireTransactions(t, []paymentservice.Transaction{
+		tstValidAttendeeDues(25500, "dues adjustment due to change in status or selected packages"),
+		tstValidAttendeeDues(8000, "you still need to pay for last year"),
+	})
+
+	mail1 := tstNewStatusMail(testcase, status.Approved)
+	docs.Then("and the expected email messages were sent via the mail service, not including the manual dues update")
+	tstRequireMailRequests(t, []mailservice.MailSendDto{
+		mail1,
 	})
 }
 
@@ -829,6 +963,46 @@ func TestAdminWrite_ManualDuesNegativeFull_AfterApprove(t *testing.T) {
 	tstRequireMailRequests(t, []mailservice.MailSendDto{
 		tstNewStatusMail(testcase, status.Approved),
 		tstNewStatusMailWithAmounts(testcase, status.Paid, -5, -5),
+	})
+}
+
+func TestAdminWrite_ManualDuesNegativeFull_AfterApproveSuppressEmailWorks(t *testing.T) {
+	testcase := "admman8a-"
+
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an attendee in status approved")
+	loc, _ := tstRegisterAttendee(t, testcase)
+	bodyApprove := status.StatusChangeDto{
+		Status:  status.Approved,
+		Comment: "approve before setting manual dues",
+	}
+	responseApprove := tstPerformPost(loc+"/status", tstRenderJson(bodyApprove), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, responseApprove.status)
+
+	docs.When("when an admin adds negative manual dues that cover their full fee (setting the suppressMinorUpdateEmail flag)")
+	bodyManual := admin.AdminInfoDto{
+		ManualDues:            -26000,
+		ManualDuesDescription: "we are so sorry",
+	}
+	responseManual := tstPerformPut(loc+"/admin?suppressMinorUpdateEmail=yes", tstRenderJson(bodyManual), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, responseManual.status, "unexpected http response status")
+	require.Equal(t, "", responseManual.body, "unexpected response body")
+
+	docs.Then("then the status goes to 'paid'")
+	tstVerifyStatus(t, loc, status.Paid)
+
+	docs.Then("and the expected dues were booked in the payment service")
+	tstRequireTransactions(t, []paymentservice.Transaction{
+		tstValidAttendeeDues(25500, "dues adjustment due to change in status or selected packages"),
+		tstValidAttendeeDues(-26000, "we are so sorry"),
+	})
+
+	docs.Then("and the expected email messages were sent via the mail service, minus the paid status email")
+	tstRequireMailRequests(t, []mailservice.MailSendDto{
+		tstNewStatusMail(testcase, status.Approved),
 	})
 }
 

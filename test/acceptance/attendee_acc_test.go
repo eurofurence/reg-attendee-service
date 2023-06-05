@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/mailservice"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/paymentservice"
 	"net/http"
 	"net/url"
 	"strings"
@@ -1280,6 +1282,41 @@ func TestUpdateExistingAttendee_AddTwoPackages_AnyTime_UserAllowed(t *testing.T)
 	}
 }
 
+func tstUpdateExistingAttendee_AddOnePackage_Admin_SuppressEmailWorks(t *testing.T, testcase string, origStatus status.Status, token string, expectedMails []mailservice.MailSendDto) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given(fmt.Sprintf("given an existing attendee in status %s", origStatus))
+	loc, att := tstRegisterAttendeeAndTransitionToStatus(t, testcase, origStatus)
+
+	docs.When("when an admin sends updated attendee info and adds a package that has associated cost (with suppressMinorUpdateEmail flag set)")
+	changedAttendee := att
+	changedAttendee.Packages = "room-none,attendance,stage,sponsor2,boat-trip" // adds boat-trip
+	response := tstPerformPut(loc+"?suppressMinorUpdateEmail=yes", tstRenderJson(changedAttendee), token)
+
+	docs.Then("then the attendee is successfully updated and the changed data can be read again")
+	require.Equal(t, http.StatusOK, response.status, "unexpected http response status for update")
+	require.Equal(t, loc, response.location, "location unexpectedly changed during update")
+	attendeeReadAgain := tstReadAttendee(t, loc)
+	require.EqualValues(t, changedAttendee, attendeeReadAgain, "attendee data read did not match updated data")
+	require.EqualValues(t, "room-none,attendance,stage,sponsor2,boat-trip", attendeeReadAgain.Packages, "attendee data read did not match expected package value")
+
+	docs.Then("and no mail messages have been sent because of the suppressMinorUpdateEmail flag")
+	tstRequireMailRequests(t, nil)
+}
+
+func TestUpdateExistingAttendee_AddOnePackage_AnyTime_AdminWithSuppressEmail(t *testing.T) {
+	for i, origStatus := range []status.Status{status.New, status.Approved, status.PartiallyPaid, status.Paid, status.CheckedIn, status.Cancelled} {
+		testcase := fmt.Sprintf("ua3c-%d", i+1)
+		token := tstValidAdminToken(t)
+		noMails := []mailservice.MailSendDto{}
+		t.Run(string(origStatus), func(t *testing.T) {
+			tstUpdateExistingAttendee_AddOnePackage_Admin_SuppressEmailWorks(t, testcase, origStatus, token, noMails)
+		})
+	}
+}
+
 // --- get attendee ---
 
 func TestDenyReadExistingAttendeeWhileNotLoggedIn(t *testing.T) {
@@ -1394,6 +1431,289 @@ func TestDenyReadExistingAttendee_Self_AccessToken_OtherAudience(t *testing.T) {
 
 	docs.Then("then the appropriate error response is returned")
 	tstRequireErrorResponse(t, readResponse, http.StatusUnauthorized, "auth.unauthorized", "invalid bearer token")
+}
+
+// --- get due date ---
+
+func tstPrepareApprovedAttendeeWithDueDate(t *testing.T, testcase string, token string) (location string, dtoWithId attendee.AttendeeDto) {
+	location, dtoWithId = tstRegisterAttendeeWithToken(t, testcase, token)
+
+	ctx := context.Background()
+	_ = database.GetRepository().AddStatusChange(ctx, tstCreateStatusChange(dtoWithId.Id, status.Approved))
+	_ = paymentMock.InjectTransaction(ctx, tstCreateTransaction(dtoWithId.Id, paymentservice.Due, 25500))
+	tstUpdateCache(ctx, dtoWithId.Id, 25500, 0, "2022-12-22")
+
+	return
+}
+
+func tstExpectDueDate(t *testing.T, responseBody string, expectedDueDate string) {
+	actualDueDateResponse := attendee.DueDate{}
+	expectedDueDateResponse := attendee.DueDate{
+		DueDate: expectedDueDate,
+	}
+	tstParseJson(responseBody, &actualDueDateResponse)
+	require.EqualValues(t, expectedDueDateResponse, actualDueDateResponse, "due date did not match expectations")
+}
+
+func TestDenyReadDueDateWhileNotLoggedIn(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee")
+	location1, _ := tstRegisterAttendee(t, "gdd1-")
+
+	docs.Given("given a user who is not logged in")
+
+	docs.When("when they attempt to read the due date while not logged in")
+	readResponse := tstPerformGet(location1+"/due-date", tstNoToken())
+
+	docs.Then("then the request is denied")
+	require.Equal(t, http.StatusUnauthorized, readResponse.status, "unexpected http response status for insecure read")
+}
+
+func TestDenyReadDueDate_Other(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given two users, the second of which has registered")
+	token1 := tstValidUserToken(t, 101)
+	location2, _ := tstRegisterAttendee(t, "gdd2-")
+
+	docs.When("when the first one attempts to read the due date of the second one, i.e. of someone else")
+	readResponse := tstPerformGet(location2+"/due-date", token1)
+
+	docs.Then("then the request is denied as unauthorized (403) and the appropriate error is returned")
+	tstRequireErrorResponse(t, readResponse, http.StatusForbidden, "auth.forbidden", "you are not authorized to access this data - the attempt has been logged")
+}
+
+func TestAllowReadDueDateAttendee_Self(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given a new existing attendee who is logged in")
+	token := tstValidUserToken(t, 101)
+	location1, _ := tstRegisterAttendeeWithToken(t, "gdd3-", token)
+
+	docs.When("when they request their own due date")
+	readResponse := tstPerformGet(location1+"/due-date", token)
+
+	docs.Then("then the due date is successfully read, but it is empty")
+	require.Equal(t, http.StatusOK, readResponse.status, "unexpected http response status")
+	tstExpectDueDate(t, readResponse.body, "")
+}
+
+func TestAllowReadDueDateAttendee_Self_HasDueDate(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an approved attendee who is logged in")
+	token := tstValidUserToken(t, 101)
+	location1, _ := tstPrepareApprovedAttendeeWithDueDate(t, "gdd4-", token)
+
+	docs.When("when they request their own due date")
+	readResponse := tstPerformGet(location1+"/due-date", token)
+
+	docs.Then("then the due date is successfully read")
+	require.Equal(t, http.StatusOK, readResponse.status, "unexpected http response status")
+	tstExpectDueDate(t, readResponse.body, "2022-12-22")
+}
+
+func TestReadDueDateAttendeeNotFound(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they try to read the due date for an attendee that does not exist")
+	response := tstPerformGet("/api/rest/v1/attendees/42/due-date", token)
+
+	docs.Then("then the appropriate error response is returned")
+	tstRequireErrorResponse(t, response, http.StatusNotFound, "attendee.id.notfound", "")
+}
+
+func TestReadDueDateInvalidAttendeeId(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they try to read an attendee with an invalid id")
+	response := tstPerformGet("/api/rest/v1/attendees/smiling/due-date", token)
+
+	docs.Then("then the appropriate error response is returned")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.id.invalid", "")
+}
+
+func TestDenyReadDueDate_Self_AccessToken_OtherAudience(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee who is logged in")
+	token := tstValidUserToken(t, 101)
+	location1, _ := tstRegisterAttendeeWithToken(t, "ga5-", token)
+
+	docs.When("when they attempt to read their due date using a token for a different audience")
+	readResponse := tstPerformGet(location1+"/due-date", "access_other_audience_101")
+
+	docs.Then("then the appropriate error response is returned")
+	tstRequireErrorResponse(t, readResponse, http.StatusUnauthorized, "auth.unauthorized", "invalid bearer token")
+}
+
+// --- override due date ---
+
+func TestOverrideDueDate_AnonDeny(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an approved attendee")
+	location1, _ := tstPrepareApprovedAttendeeWithDueDate(t, "gdw1-", tstValidUserToken(t, 101))
+
+	docs.When("when an anonymous user tries to override the due date to a later date")
+	dueDate := attendee.DueDate{DueDate: "2023-01-16"}
+	response := tstPerformPut(location1+"/due-date", tstRenderJson(dueDate), tstNoToken())
+
+	docs.Then("then the request is denied (401) and the response is as expected")
+	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "you must be logged in for this operation")
+
+	docs.Then("and the due date has not been changed")
+	readResponse := tstPerformGet(location1+"/due-date", tstValidAdminToken(t))
+	require.Equal(t, http.StatusOK, readResponse.status, "unexpected http response status")
+	tstExpectDueDate(t, readResponse.body, "2022-12-22")
+}
+
+func TestOverrideDueDate_SelfDeny(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an approved attendee")
+	token := tstValidUserToken(t, 101)
+	location1, _ := tstPrepareApprovedAttendeeWithDueDate(t, "gdw2-", token)
+
+	docs.When("when they try to override their due date to a later date")
+	dueDate := attendee.DueDate{DueDate: "2023-01-16"}
+	response := tstPerformPut(location1+"/due-date", tstRenderJson(dueDate), token)
+
+	docs.Then("then the request is denied (403) and the response is as expected")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this operation - the attempt has been logged")
+
+	docs.Then("and the due date has not been changed")
+	readResponse := tstPerformGet(location1+"/due-date", tstValidAdminToken(t))
+	require.Equal(t, http.StatusOK, readResponse.status, "unexpected http response status")
+	tstExpectDueDate(t, readResponse.body, "2022-12-22")
+}
+
+func TestOverrideDueDate_StaffDeny(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an approved attendee")
+	location1, _ := tstPrepareApprovedAttendeeWithDueDate(t, "gdw3-", tstValidUserToken(t, 101))
+
+	docs.When("when a staffer tries to override their due date to a later date")
+	token := tstValidStaffToken(t, 202)
+	dueDate := attendee.DueDate{DueDate: "2023-01-16"}
+	response := tstPerformPut(location1+"/due-date", tstRenderJson(dueDate), token)
+
+	docs.Then("then the request is denied (403) and the response is as expected")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this operation - the attempt has been logged")
+
+	docs.Then("and the due date has not been changed")
+	readResponse := tstPerformGet(location1+"/due-date", tstValidAdminToken(t))
+	require.Equal(t, http.StatusOK, readResponse.status, "unexpected http response status")
+	tstExpectDueDate(t, readResponse.body, "2022-12-22")
+}
+
+func TestOverrideDueDate_AdminAllow(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an approved attendee")
+	location1, _ := tstPrepareApprovedAttendeeWithDueDate(t, "gdw4-", tstValidUserToken(t, 101))
+
+	docs.When("when an admin overrides their due date to a later date")
+	token := tstValidAdminToken(t)
+	dueDate := attendee.DueDate{DueDate: "2023-01-16"}
+	response := tstPerformPut(location1+"/due-date", tstRenderJson(dueDate), token)
+
+	docs.Then("then the request is successful")
+	require.Equal(t, http.StatusNoContent, response.status, "unexpected http response status for override due date")
+
+	docs.Then("and the due date has been changed")
+	readResponse := tstPerformGet(location1+"/due-date", token)
+	require.Equal(t, http.StatusOK, readResponse.status, "unexpected http response status")
+	tstExpectDueDate(t, readResponse.body, "2023-01-16")
+
+	docs.Then("and no emails have been sent")
+	tstRequireMailRequests(t, nil)
+}
+
+func TestOverrideDueDate_InvalidId(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.When("when an admin tries to override a due date but specifies an invalid badge number")
+	token := tstValidAdminToken(t)
+	dueDate := attendee.DueDate{DueDate: "2023-01-16"}
+	response := tstPerformPut("/api/rest/v1/attendees/fur/due-date", tstRenderJson(dueDate), token)
+
+	docs.Then("then the request fails with the appropriate error")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.id.invalid", url.Values{})
+}
+
+func TestOverrideDueDate_InvalidJson(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an approved attendee")
+	location1, _ := tstPrepareApprovedAttendeeWithDueDate(t, "gdw6-", tstValidUserToken(t, 101))
+
+	docs.When("when an admin tries to override a due date but sends a json body with wrong fields")
+	token := tstValidAdminToken(t)
+	jsonStr := `{"due_days":24}`
+	response := tstPerformPut(location1+"/due-date", jsonStr, token)
+
+	docs.Then("then the request fails with the appropriate error")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "duedate.parse.error", url.Values{})
+}
+
+func TestOverrideDueDate_Admin_Unchanged(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an approved attendee")
+	location1, _ := tstPrepareApprovedAttendeeWithDueDate(t, "gdw7-", tstValidUserToken(t, 101))
+
+	docs.When("when an admin overrides their due date to an earlier date")
+	token := tstValidAdminToken(t)
+	dueDate := attendee.DueDate{DueDate: "2022-08-16"}
+	response := tstPerformPut(location1+"/due-date", tstRenderJson(dueDate), token)
+
+	docs.Then("then the request is successful")
+	require.Equal(t, http.StatusNoContent, response.status, "unexpected http response status for override due date")
+
+	docs.Then("and the due date is unchanged")
+	readResponse := tstPerformGet(location1+"/due-date", token)
+	require.Equal(t, http.StatusOK, readResponse.status, "unexpected http response status")
+	tstExpectDueDate(t, readResponse.body, "2022-12-22")
+
+	docs.Then("and no emails have been sent")
+	tstRequireMailRequests(t, nil)
 }
 
 // --- attendee max id ---

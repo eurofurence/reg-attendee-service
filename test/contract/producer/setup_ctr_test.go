@@ -66,7 +66,7 @@ func (s *MockAttendeeService) GetAttendee(ctx context.Context, id uint) (*entity
 	return &entity.Attendee{}, nil
 }
 
-func (s *MockAttendeeService) UpdateAttendee(ctx context.Context, attendee *entity.Attendee) error {
+func (s *MockAttendeeService) UpdateAttendee(ctx context.Context, attendee *entity.Attendee, suppressMinorUpdateEmails bool) error {
 	return nil
 }
 
@@ -94,7 +94,7 @@ func (s *MockAttendeeService) GetAdminInfo(ctx context.Context, attendeeId uint)
 	return &entity.AdminInfo{}, nil
 }
 
-func (s *MockAttendeeService) UpdateAdminInfo(ctx context.Context, attendee *entity.Attendee, adminInfo *entity.AdminInfo) error {
+func (s *MockAttendeeService) UpdateAdminInfo(ctx context.Context, attendee *entity.Attendee, adminInfo *entity.AdminInfo, suppressMinorUpdateEmail bool) error {
 	return nil
 }
 
@@ -102,7 +102,7 @@ func (s *MockAttendeeService) GetFullStatusHistory(ctx context.Context, attendee
 	return []entity.StatusChange{}, nil
 }
 
-func (s *MockAttendeeService) UpdateDuesAndDoStatusChangeIfNeeded(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status, statusComment string, overrideDuesComment string) error {
+func (s *MockAttendeeService) UpdateDuesAndDoStatusChangeIfNeeded(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status, statusComment string, overrideDuesComment string, suppressMinorUpdateEmail bool) error {
 	return nil
 }
 
