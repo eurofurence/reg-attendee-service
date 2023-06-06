@@ -90,6 +90,12 @@ choices:
     skip_ban_check:
       description: 'Bypass ban check for this attendee'
       admin_only: true
+    staff:
+      description: 'Staff'
+      admin_only: true
+    director:
+      description: 'Director'
+      admin_only: true
   packages:
     room-none:
       description: 'No Room'
@@ -181,12 +187,17 @@ choices:
       constraint_msg: 'Cannot mix dealer table packages.'
     boat-trip:
       description: 'Summerboat Boat Trip'
-      price: 2500
+      price: 3500
       vat_percent: 19
       read_only: true
     boat-vip:
       description: 'Summerboat VIP'
       price: 1500
+      vat_percent: 19
+      read_only: true
+    boat-benefactor:
+      description: 'Summerboat Benefactor'
+      price: 10000
       vat_percent: 19
       read_only: true
     artshow-table:
