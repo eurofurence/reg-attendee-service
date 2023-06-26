@@ -50,6 +50,8 @@ const invalid_access_token = "invalid-access"
 
 const valid_access_token = "valid-access"
 
+const valid_access_token_other_audience = "valid-access-other-audience"
+
 // --- test case helpers ---
 
 func tstRequire(t *testing.T, actualMsg string, actualErr error, expectedMsg string, expectedErr string) {
@@ -89,6 +91,13 @@ func tstApiTokenTestCase(t *testing.T, apiTokenHeaderValue string, expectedUserM
 func tstAuthHeaderTestCase(t *testing.T, authHeaderValue string, expectedUserMsg string, expectedLoggedErr string) context.Context {
 	ctx := ctxvalues.CreateContextWithValueMap(context.Background())
 	actualMsg, actualErr := checkAllAuthentication_MustReturnOnError(ctx, http.MethodPut, "/api/rest/v1/attendees/1/admin", "", authHeaderValue, "", "")
+	tstRequire(t, actualMsg, actualErr, expectedUserMsg, expectedLoggedErr)
+	return ctx
+}
+
+func tstAuthHeaderTestCaseIgnoreAudienceEndpoint(t *testing.T, authHeaderValue string, expectedUserMsg string, expectedLoggedErr string) context.Context {
+	ctx := ctxvalues.CreateContextWithValueMap(context.Background())
+	actualMsg, actualErr := checkAllAuthentication_MustReturnOnError(ctx, http.MethodGet, "/api/rest/v1/attendees/123918327123/status", "", authHeaderValue, "", "")
 	tstRequire(t, actualMsg, actualErr, expectedUserMsg, expectedLoggedErr)
 	return ctx
 }
@@ -185,6 +194,42 @@ func TestAccessTokenValid(t *testing.T) {
 	require.Equal(t, valid_access_token, ctxvalues.AccessToken(ctx))
 	require.True(t, ctxvalues.IsAuthorizedAsGroup(ctx, "admin"))
 	tstRequireAuthServiceCall(t, "", valid_access_token)
+}
+
+func TestAccessTokenOtherAudienceRejected(t *testing.T) {
+	docs.Description("Valid access token for another audience are rejected")
+	authServiceMock.Reset()
+	authServiceMock.Enable()
+	authServiceMock.SetupResponse("", valid_access_token_other_audience, authservice.UserInfoResponse{
+		Audiences:     []string{"kittycat"},
+		Email:         "jsquirrel_github_9a6d@packetloss.de",
+		EmailVerified: true,
+		Groups:        []string{"admin"},
+	})
+	ctx := tstAuthHeaderTestCase(t, valid_access_token_other_audience, "invalid bearer token", "token audience does not match")
+	require.False(t, ctxvalues.HasApiToken(ctx))
+	require.Equal(t, "", ctxvalues.IdToken(ctx))
+	require.Equal(t, valid_access_token_other_audience, ctxvalues.AccessToken(ctx)) // even invalid access tokens are placed in ctx
+	require.False(t, ctxvalues.IsAuthorizedAsGroup(ctx, "admin"))
+	tstRequireAuthServiceCall(t, "", valid_access_token_other_audience)
+}
+
+func TestAccessTokenOtherAudienceAcceptedStatus(t *testing.T) {
+	docs.Description("Valid access token for another audience are accepted for the status endpoint (but do not assign admin group)")
+	authServiceMock.Reset()
+	authServiceMock.Enable()
+	authServiceMock.SetupResponse("", valid_access_token_other_audience, authservice.UserInfoResponse{
+		Audiences:     []string{"kittycat"},
+		Email:         "jsquirrel_github_9a6d@packetloss.de",
+		EmailVerified: true,
+		Groups:        []string{"admin"},
+	})
+	ctx := tstAuthHeaderTestCaseIgnoreAudienceEndpoint(t, valid_access_token_other_audience, "", "")
+	require.False(t, ctxvalues.HasApiToken(ctx))
+	require.Equal(t, "", ctxvalues.IdToken(ctx))
+	require.Equal(t, valid_access_token_other_audience, ctxvalues.AccessToken(ctx))
+	require.False(t, ctxvalues.IsAuthorizedAsGroup(ctx, "admin")) // other audience tokens are not trusted to convey groups
+	tstRequireAuthServiceCall(t, "", valid_access_token_other_audience)
 }
 
 func TestCookiesValidSkipsUserinfo(t *testing.T) {

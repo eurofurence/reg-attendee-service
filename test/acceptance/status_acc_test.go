@@ -79,6 +79,27 @@ func TestStatus_UserAllowSelf(t *testing.T) {
 	require.EqualValues(t, expectedStatus, statusDto, "status did not match expected value")
 }
 
+func TestStatus_UserAllowSelf_OtherAudience(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee")
+	token := tstValidUserToken(t, 101)
+	location1, _ := tstRegisterAttendeeWithToken(t, "stat4-", token)
+
+	docs.When("when they access their own status, using a token with a different audience")
+	response := tstPerformGet(location1+"/status", "access_other_audience_101")
+
+	docs.Then("then the request is successful and status 'new' is returned")
+	statusDto := status.StatusDto{}
+	tstParseJson(response.body, &statusDto)
+	expectedStatus := status.StatusDto{
+		Status: status.New,
+	}
+	require.EqualValues(t, expectedStatus, statusDto, "status did not match expected value")
+}
+
 func TestStatus_StaffDenyOther(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
 	tstSetup(false, true, true)
