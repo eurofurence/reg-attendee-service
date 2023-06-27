@@ -64,6 +64,15 @@ func checkApiToken_MustReturnOnError(ctx context.Context, apiTokenValue string) 
 	return false, nil
 }
 
+func audienceMatchesOrNotConfigured(userInfo authservice.UserInfoResponse) bool {
+	if config.OidcAllowedAudience() != "" {
+		if len(userInfo.Audiences) != 1 || userInfo.Audiences[0] != config.OidcAllowedAudience() {
+			return false
+		}
+	}
+	return true
+}
+
 func checkAccessToken_MustReturnOnError(ctx context.Context, accessTokenValue string, verifyAudience bool) (success bool, err error) {
 	if accessTokenValue != "" {
 		if authservice.Get().IsEnabled() {
@@ -74,10 +83,9 @@ func checkAccessToken_MustReturnOnError(ctx context.Context, accessTokenValue st
 				return false, fmt.Errorf("request failed access token check, denying: %s", err.Error())
 			}
 
-			if verifyAudience && config.OidcAllowedAudience() != "" {
-				if len(userInfo.Audiences) != 1 || userInfo.Audiences[0] != config.OidcAllowedAudience() {
-					return false, errors.New("token audience does not match")
-				}
+			audienceOk := audienceMatchesOrNotConfigured(userInfo)
+			if verifyAudience && !audienceOk {
+				return false, errors.New("token audience does not match")
 			}
 
 			ctxvalues.SetName(ctx, userInfo.Name)
@@ -87,8 +95,11 @@ func checkAccessToken_MustReturnOnError(ctx context.Context, accessTokenValue st
 
 			// rebuild groups list just in case (removes groups the user doesn't actually have)
 			ctxvalues.ClearAuthorizedGroups(ctx)
-			for _, group := range userInfo.Groups {
-				ctxvalues.SetAuthorizedAsGroup(ctx, group)
+			if audienceOk {
+				// only add groups if audience matches - we do not fully trust tokens for other audiences
+				for _, group := range userInfo.Groups {
+					ctxvalues.SetAuthorizedAsGroup(ctx, group)
+				}
 			}
 
 			return true, nil
@@ -167,6 +178,10 @@ func allow(actualMethod string, actualUrlPath string, allowedMethod string, allo
 	return actualMethod == allowedMethod && actualUrlPath == allowedUrlPath
 }
 
+func allowPrefixSuffix(actualMethod string, actualUrlPath string, allowedMethod string, allowedPrefix string, allowedSuffix string) bool {
+	return actualMethod == allowedMethod && strings.HasPrefix(actualUrlPath, allowedPrefix) && strings.HasSuffix(actualUrlPath, allowedSuffix)
+}
+
 func canSkipAccessTokenCheckWithCookieAuth(method string, urlPath string) bool {
 	// positive list for request URLs and Methods where the access token check may be skipped
 	// (performance critical + cannot be used for data extraction only!)
@@ -176,7 +191,11 @@ func canSkipAccessTokenCheckWithCookieAuth(method string, urlPath string) bool {
 }
 
 func canSkipAudienceCheckWithAccessToken(method string, urlPath string) bool {
-	return allow(method, urlPath, http.MethodGet, "/api/rest/v1/attendees")
+	// positive list for request URLs and Methods where valid tokens for any audience are accepted,
+	// meaning the identity provider signed them for another client, such as the dealer system.
+	// (should not be set for endpoints that allow extraction of personal data!)
+	return allow(method, urlPath, http.MethodGet, "/api/rest/v1/attendees") || // list my badge numbers
+		allowPrefixSuffix(method, urlPath, http.MethodGet, "/api/rest/v1/attendees/", "/status") // current status value only
 }
 
 // --- top level ---

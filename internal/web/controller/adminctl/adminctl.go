@@ -3,14 +3,17 @@ package adminctl
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/admin"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/service/attendeesrv"
 	"github.com/eurofurence/reg-attendee-service/internal/web/filter"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctlutil"
+	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/media"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-http-utils/headers"
@@ -26,7 +29,7 @@ func Create(server chi.Router, attendeeSrv attendeesrv.AttendeeService) {
 
 	server.Get("/api/rest/v1/attendees/{id}/admin", filter.HasGroupOrApiToken(config.OidcAdminGroup(), filter.WithTimeout(3*time.Second, getAdminInfoHandler)))
 	server.Put("/api/rest/v1/attendees/{id}/admin", filter.HasGroupOrApiToken(config.OidcAdminGroup(), filter.WithTimeout(3*time.Second, writeAdminInfoHandler)))
-	server.Post("/api/rest/v1/attendees/find", filter.HasGroupOrApiToken(config.OidcAdminGroup(), filter.WithTimeout(60*time.Second, findAttendeesHandler)))
+	server.Post("/api/rest/v1/attendees/find", filter.LoggedInOrApiToken(filter.WithTimeout(60*time.Second, findAttendeesHandler)))
 }
 
 // --- handlers ---
@@ -93,9 +96,32 @@ func writeAdminInfoHandler(w http.ResponseWriter, r *http.Request) {
 func findAttendeesHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
+	limitedAccess := true
+	if ctxvalues.HasApiToken(ctx) || ctxvalues.IsAuthorizedAsGroup(ctx, config.OidcAdminGroup()) {
+		limitedAccess = false
+	} else {
+		allowed, err := attendeeService.CanAccessAdditionalInfoArea(ctx, "regdesk", "sponsordesk")
+		if err != nil || !allowed {
+			culprit := ctxvalues.Subject(ctx)
+			ctlutil.UnauthorizedError(ctx, w, r, "you are not authorized for this operation - the attempt has been logged", fmt.Sprintf("unauthorized access attempt to find endpoint by %s", culprit))
+			return
+		}
+	}
+
 	criteria, err := parseBodyToAttendeeSearchCriteria(ctx, w, r)
 	if err != nil {
 		return
+	}
+
+	if limitedAccess {
+		criteria.FillFields = []string{"id", "nickname", "first_name", "last_name", "country",
+			"spoken_languages", "registration_language", "birthday", "pronouns", "tshirt_size",
+			"flags", "options", "packages", "status",
+			"total_dues", "payment_balance", "current_dues",
+		}
+		for i := range criteria.MatchAny {
+			criteria.MatchAny[i].Status = limitToAttendingStatus(criteria.MatchAny[i].Status)
+		}
 	}
 
 	results, err := attendeeService.FindAttendees(ctx, criteria)
@@ -106,6 +132,20 @@ func findAttendeesHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add(headers.ContentType, media.ContentTypeApplicationJson)
 	ctlutil.WriteJson(ctx, w, results)
+}
+
+func limitToAttendingStatus(desired []status.Status) []status.Status {
+	if len(desired) == 0 {
+		return []status.Status{status.Approved, status.PartiallyPaid, status.Paid, status.CheckedIn}
+	} else {
+		result := make([]status.Status, 0)
+		for _, s := range desired {
+			if s == status.Approved || s == status.PartiallyPaid || s == status.Paid || s == status.CheckedIn {
+				result = append(result, s)
+			}
+		}
+		return result
+	}
 }
 
 // --- helpers ---

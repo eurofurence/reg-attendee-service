@@ -26,7 +26,7 @@ tags:
   - name: status
     description: Status progression
   - name: privileged
-    description: Privileged (admin only) functionality
+    description: Privileged functionality
   - name: webhook
     description: Webhook notifications
   - name: info
@@ -1028,7 +1028,12 @@ paths:
       tags:
         - privileged
       summary: Find attendees by criteria sets
-      description: Returns all matching attendees (privileged operation)
+      description: |-
+        Returns all matching attendees.
+        
+        This is a privileged operation, subject must either have the admin group or 
+        have "regdesk" or "sponsordesk" permission in their admin info. In the latter case,
+        only a suitable subset of fields are returned and non-attending registrations are always omitted.
       operationId: findAttendees
       requestBody:
         content:

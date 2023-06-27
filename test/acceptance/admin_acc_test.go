@@ -1054,6 +1054,137 @@ func TestSearch_UserDeny(t *testing.T) {
 	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this operation - the attempt has been logged")
 }
 
+func TestSearch_RegdeskOk(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee who has been given the regdesk permission")
+	loc, att := tstRegisterAttendeeAndTransitionToStatus(t, "search2a-", status.Approved)
+	permBody := admin.AdminInfoDto{
+		Permissions: "regdesk",
+	}
+	permissionResponse := tstPerformPut(loc+"/admin", tstRenderJson(permBody), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, permissionResponse.status)
+
+	docs.When("when they search for attendees")
+	token := tstValidUserToken(t, att.Id)
+	searchAll := attendee.AttendeeSearchCriteria{
+		MatchAny: []attendee.AttendeeSearchSingleCriterion{
+			{},
+		},
+		FillFields: []string{"all"},
+	}
+	response := tstPerformPost("/api/rest/v1/attendees/find", tstRenderJson(searchAll), token)
+
+	docs.Then("then the request is successful and the list of attendees is returned, but they get a limited set of fields")
+	require.Equal(t, http.StatusOK, response.status, "unexpected http response status")
+	expected := `{
+  "attendees": [
+    {
+      "id": 1,
+      "badge_id": "1C",
+      "nickname": "BlackCheetah",
+      "first_name": "Hans",
+      "last_name": "Mustermann",
+      "country": "DE",
+      "birthday": "1998-11-23",
+      "pronouns": "he/him",
+      "tshirt_size": "XXL",
+      "spoken_languages": "de-DE,en-US",
+      "registration_language": "en-US",
+      "flags": "anon,hc,terms-accepted",
+      "options": "music,suit",
+      "packages": "room-none,attendance,stage,sponsor2",
+      "status": "approved",
+      "total_dues": 25500,
+      "payment_balance": 0,
+      "current_dues": 25500
+    }
+  ]
+}`
+	tstRequireSearchResultMatches(t, expected, response.body)
+}
+
+func TestSearch_SponsordeskOk(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee who has been given the sponsordesk permission")
+	loc, att := tstRegisterAttendeeAndTransitionToStatus(t, "search2b-", status.Paid)
+	permBody := admin.AdminInfoDto{
+		Permissions: "sponsordesk",
+	}
+	permissionResponse := tstPerformPut(loc+"/admin", tstRenderJson(permBody), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, permissionResponse.status)
+
+	docs.When("when they search for attendees")
+	token := tstValidUserToken(t, att.Id)
+	searchAll := attendee.AttendeeSearchCriteria{
+		MatchAny: []attendee.AttendeeSearchSingleCriterion{
+			{},
+		},
+		FillFields: []string{"all"},
+	}
+	response := tstPerformPost("/api/rest/v1/attendees/find", tstRenderJson(searchAll), token)
+
+	docs.Then("then the request is successful and the list of attendees is returned, but they get a limited set of fields")
+	require.Equal(t, http.StatusOK, response.status, "unexpected http response status")
+	expected := `{
+  "attendees": [
+    {
+      "id": 1,
+      "badge_id": "1C",
+      "nickname": "BlackCheetah",
+      "first_name": "Hans",
+      "last_name": "Mustermann",
+      "country": "DE",
+      "birthday": "1998-11-23",
+      "pronouns": "he/him",
+      "tshirt_size": "XXL",
+      "spoken_languages": "de-DE,en-US",
+      "registration_language": "en-US",
+      "flags": "anon,hc,terms-accepted",
+      "options": "music,suit",
+      "packages": "room-none,attendance,stage,sponsor2",
+      "status": "paid",
+      "total_dues": 25500,
+      "payment_balance": 25500,
+      "current_dues": 0
+    }
+  ]
+}`
+	tstRequireSearchResultMatches(t, expected, response.body)
+}
+
+func TestSearch_OtherPermissionsDeny(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee who has been given the myarea permission")
+	loc, att := tstRegisterAttendee(t, "search2c-")
+	permBody := admin.AdminInfoDto{
+		Permissions: "myarea",
+	}
+	permissionResponse := tstPerformPut(loc+"/admin", tstRenderJson(permBody), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, permissionResponse.status)
+
+	docs.When("when they attempt to search for attendees")
+	token := tstValidUserToken(t, att.Id)
+	searchAll := attendee.AttendeeSearchCriteria{
+		MatchAny: []attendee.AttendeeSearchSingleCriterion{
+			{},
+		},
+		FillFields: []string{"all"},
+	}
+	response := tstPerformPost("/api/rest/v1/attendees/find", tstRenderJson(searchAll), token)
+
+	docs.Then("then the request is denied as unauthorized (403) and the correct error is returned")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this operation - the attempt has been logged")
+}
+
 func TestSearch_StaffDeny(t *testing.T) {
 	docs.Given("given the configuration for staff registration")
 	tstSetup(false, true, true)
