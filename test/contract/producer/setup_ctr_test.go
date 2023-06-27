@@ -160,6 +160,6 @@ func (s *MockAttendeeService) WriteAdditionalInfo(ctx context.Context, attendeeI
 	return nil
 }
 
-func (s *MockAttendeeService) CanAccessAdditionalInfoArea(ctx context.Context, area string) (bool, error) {
+func (s *MockAttendeeService) CanAccessAdditionalInfoArea(ctx context.Context, area ...string) (bool, error) {
 	return false, nil
 }

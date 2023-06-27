@@ -23,12 +23,12 @@ func (s *AttendeeServiceImplData) WriteAdditionalInfo(ctx context.Context, atten
 	return database.GetRepository().WriteAdditionalInfo(ctx, existing)
 }
 
-func (s *AttendeeServiceImplData) CanAccessAdditionalInfoArea(ctx context.Context, area string) (bool, error) {
+func (s *AttendeeServiceImplData) CanAccessAdditionalInfoArea(ctx context.Context, area ...string) (bool, error) {
 	if ctxvalues.HasApiToken(ctx) || ctxvalues.IsAuthorizedAsGroup(ctx, config.OidcAdminGroup()) {
 		return true, nil
 	}
 
 	loggedInSubject := ctxvalues.Subject(ctx)
-	allowed, err := s.subjectHasAdminPermissionEntry(ctx, loggedInSubject, area)
+	allowed, err := s.subjectHasAdminPermissionEntry(ctx, loggedInSubject, area...)
 	return allowed, err
 }
