@@ -95,11 +95,8 @@ func checkAccessToken_MustReturnOnError(ctx context.Context, accessTokenValue st
 
 			// rebuild groups list just in case (removes groups the user doesn't actually have)
 			ctxvalues.ClearAuthorizedGroups(ctx)
-			if audienceOk {
-				// only add groups if audience matches - we do not fully trust tokens for other audiences
-				for _, group := range userInfo.Groups {
-					ctxvalues.SetAuthorizedAsGroup(ctx, group)
-				}
+			for _, group := range userInfo.Groups {
+				ctxvalues.SetAuthorizedAsGroup(ctx, group)
 			}
 
 			return true, nil
