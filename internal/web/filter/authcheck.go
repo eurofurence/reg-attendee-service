@@ -78,3 +78,8 @@ func IsSubjectOrGroupOrApiToken(w http.ResponseWriter, r *http.Request, subject 
 		return errors.New("neither api token nor subject match - unauthorized")
 	}
 }
+
+func IsGroupOrApiTokenCond(r *http.Request, group string) bool {
+	ctx := r.Context()
+	return ctxvalues.HasApiToken(ctx) || (ctxvalues.IsAuthorizedAsGroup(ctx, group) && checkInternalAdminRequestHeaderForGroup(ctx, r, group))
+}

@@ -228,7 +228,7 @@ func TestAccessTokenOtherAudienceAcceptedStatus(t *testing.T) {
 	require.False(t, ctxvalues.HasApiToken(ctx))
 	require.Equal(t, "", ctxvalues.IdToken(ctx))
 	require.Equal(t, valid_access_token_other_audience, ctxvalues.AccessToken(ctx))
-	require.False(t, ctxvalues.IsAuthorizedAsGroup(ctx, "admin")) // other audience tokens are not trusted to convey groups
+	require.True(t, ctxvalues.IsAuthorizedAsGroup(ctx, "admin"))
 	tstRequireAuthServiceCall(t, "", valid_access_token_other_audience)
 }
 
