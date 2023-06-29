@@ -97,7 +97,7 @@ func findAttendeesHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	limitedAccess := true
-	if ctxvalues.HasApiToken(ctx) || ctxvalues.IsAuthorizedAsGroup(ctx, config.OidcAdminGroup()) {
+	if filter.IsGroupOrApiTokenCond(r, config.OidcAdminGroup()) {
 		limitedAccess = false
 	} else {
 		allowed, err := attendeeService.CanAccessAdditionalInfoArea(ctx, "regdesk", "sponsordesk")
