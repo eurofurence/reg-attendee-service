@@ -41,25 +41,6 @@ or manually run
 go test -covermode=atomic -coverpkg=./internal/... ./...
 ```
 
-## Contract Testing
-
-This microservice uses [pact-go](https://github.com/pact-foundation/pact-go#installation) for contract tests.
-
-Before you can run the contract tests in this repository, you need to run the client side contract tests
-in the [reg-attendee-transferclient](https://github.com/eurofurence/reg-attendee-transferclient) to generate
-the contract specification. 
-
-You are expected to clone that repository into a directory called `reg-attendee-transferclient`
-right next to this repository. If you wish to place your contract specs somewhere else, simply change the
-path or URL in `test/contract/producer/setup_ctr_test.go`.
-
 ## Open Issues and Ideas
 
 We track open issues as GitHub issues on this repository once it becomes clear what exactly needs to be done.
-
-### plans for later
-
-- self cancellation if no payments made and before a grace period
-- more fine-grained permissions using JWT
-  - viewAttendees, changeAttendees, viewAttendeeAdmininfo, changeAttendeeAdmininfo rights
-- container build and associated changes
