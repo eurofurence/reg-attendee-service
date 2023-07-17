@@ -1,0 +1,22 @@
+name: Create and publish Docker image
+
+on:
+  push:
+    branches:
+      - 'main'
+
+jobs:
+  call_build-and-push-image:
+    permissions:
+      contents: read
+      packages: write
+    uses: eurofurence/reg-workflows/.github/workflows/docker-build-push.yml@main
+    with:
+      image-name: ${{ github.repository }}
+      image-tags: latest
+      full-repo-url: https://github.com/${{ github.repository }}
+      branch-or-tag-name: ${{ github.ref_name }}
+      commit-hash: ${{ github.sha }}
+      registry-user: ${{ github.actor }}
+    secrets:
+      registry-pass: ${{ secrets.GITHUB_TOKEN }}
