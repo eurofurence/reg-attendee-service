@@ -702,6 +702,192 @@ paths:
       security:
         - BearerAuth: []
         - ApiKeyAuth: []
+  /attendees/{id}/flags/{flag}:
+    get:
+      tags:
+        - registration
+      summary: Obtain the current state of a flag
+      description: |-
+        Returns the current state of a flag for the given attendee, if your permissions and flag visibility allows.
+        
+        Flags are used to store yes/no-style information about an attendee, typically displayed as checkboxes.
+        
+        There are both admin-only and user level flags, depending on who can set them. Flag configuration
+        also determines who can see the value of a flag. Some admin-only flags such as "staff" may be available
+        to the user, others such as "skip_ban_check" may not be.
+      operationId: getFlagState
+      parameters:
+        - name: id
+          in: path
+          description: Badge number of attendee
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            format: int64
+        - name: flag
+          in: path
+          description: Code of the flag, as set in the service configuration
+          required: true
+          schema:
+            type: string
+            example: anon
+      responses:
+        '200':
+          description: successful operation. The response body will tell you whether the attendee has the flag or not.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChoiceState'
+        '400':
+          description: Invalid ID supplied, or invalid flag code supplied.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: You do not have permission to see this attendee or flag.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Attendee not found. Note, if the attendee does not have the flag set, this endpoint will return status 200.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+  /attendees/{id}/options/{option}:
+    get:
+      tags:
+        - registration
+      summary: Obtain the current state of an option
+      description: |-
+        Returns the current state of an option for the given attendee, if your permissions and option visibility allows.
+        
+        Options are used to store yes/no-style choices an attendee makes that do not cost money, and displayed as checkboxes.
+        The difference to flags is that flags are things an admin may conceivably change, while options are personal choices
+        made by the attendee. Therefore, admin-only options are not a thing.
+      operationId: getOptionState
+      parameters:
+        - name: id
+          in: path
+          description: Badge number of attendee
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            format: int64
+        - name: option
+          in: path
+          description: Code of the option, as set in the service configuration
+          required: true
+          schema:
+            type: string
+            example: music
+      responses:
+        '200':
+          description: successful operation. The response body will tell you whether the attendee has the option or not.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChoiceState'
+        '400':
+          description: Invalid ID supplied, or invalid option code supplied.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: You do not have permission to see this attendee or option.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Attendee not found. Note, if the attendee does not have the option set, this endpoint will return status 200.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+  /attendees/{id}/packages/{package}:
+    get:
+      tags:
+        - registration
+      summary: Obtain the current state of a package
+      description: |-
+        Returns the current state of a package for the given attendee, if your permissions and package visibility allows.
+        
+        Packages represent things that cost money.
+      operationId: getPackageState
+      parameters:
+        - name: id
+          in: path
+          description: Badge number of attendee
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            format: int64
+        - name: package
+          in: path
+          description: Code of the package, as set in the service configuration
+          required: true
+          schema:
+            type: string
+            example: artshow-table
+      responses:
+        '200':
+          description: successful operation. The response body will tell you whether the attendee has the package or not.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChoiceState'
+        '400':
+          description: Invalid ID supplied, or invalid package code supplied.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: You do not have permission to see this attendee or package.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Attendee not found. Note, if the attendee does not have the package set, this endpoint will return status 200.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
   /attendees/{id}/payments-changed:
     post:
       tags:
@@ -1716,7 +1902,7 @@ components:
             - descending
     AttendeeSearchSingleCriterion:
       type: object
-      description: a set of search criteria. All criteria are optional, but if you set multiple ones, they are connected by AND.
+      description: a single set of search criteria. All criteria are optional, but if you set multiple ones, they are connected by AND.
       properties:
         ids:
           type: array
@@ -1744,6 +1930,20 @@ components:
           maxLength: 2
           description: 2 letter ISO-3166-1 country code for the address (Alpha-2 code), for example DE for Germany.
           example: DE
+        birthday_from:
+          type: string
+          format: date
+          description: find only attendees who were born no earlier than the provided date (inclusive, that is an attendee born on this exact day will match). ISO date (yyyy-mm-dd).
+          minLength: 10
+          maxLength: 10
+          example: 1983-10-24
+        birthday_to:
+          type: string
+          format: date
+          description: find only attendees who were born no later than the provided date (inclusive, that is an attendee born on this exact day will match). ISO date (yyyy-mm-dd).
+          minLength: 10
+          maxLength: 10
+          example: 2003-10-24
         email:
           type: string
           description: full match on email, case insensitive, use * as a wildcard for substring matches
@@ -1831,6 +2031,14 @@ components:
       maximum: 1
       description: desired state of choice, 0 = must be no, 1 = must be yes. Leave missing to pose no condition.
       example: 1
+    ChoiceState:
+      type: object
+      required:
+        - present
+      properties:
+        present:
+          type: boolean
+          description: Whether the attendee has this flag enabled or not.
     AttendeeFieldSelection:
       type: array
       description: |-
