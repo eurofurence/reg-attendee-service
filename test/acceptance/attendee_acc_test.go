@@ -3,6 +3,7 @@ package acceptance
 import (
 	"context"
 	"fmt"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/admin"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
@@ -1954,6 +1955,441 @@ func TestMyRegistrations_AccessToken_OtherAudience(t *testing.T) {
 	require.Equal(t, 1, len(actualResult.Ids))
 	actualLocation := fmt.Sprintf("/api/rest/v1/attendees/%d", actualResult.Ids[0])
 	require.Equal(t, reg2response.location, actualLocation, "unexpected id returned")
+}
+
+// --- flags, options, packages, admin-only flags ---
+
+func tstGetChoice_Anon(t *testing.T, testcase string, what string, endpoint string) {
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given there are registrations")
+	loc1, _ := tstRegisterAttendee(t, testcase+"-")
+
+	docs.Given("given an anonymous user")
+
+	docs.When("when they request " + what)
+	response := tstPerformGet(loc1+endpoint, tstNoToken())
+
+	docs.Then("then the request fails (401) and the error is as expected")
+	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "you must be logged in for this operation")
+}
+
+func tstGetChoice_Self(t *testing.T, testcase string, what string, endpoint string, expectAllow bool, expectValue bool) {
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given a registered attendee")
+	loc1, _ := tstRegisterAttendee(t, testcase+"-")
+	token := tstValidUserToken(t, 1)
+
+	docs.When("when they request " + what)
+	response := tstPerformGet(loc1+endpoint, token)
+
+	if expectAllow {
+		docs.Then("then the request is successful and the response is as expected")
+		require.Equal(t, http.StatusOK, response.status, "unexpected http response status")
+		actualResult := attendee.ChoiceState{}
+		tstParseJson(response.body, &actualResult)
+		require.Equal(t, expectValue, actualResult.Present)
+	} else {
+		docs.Then("then the request fails (403) and the error is as expected")
+		tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this operation - the attempt has been logged")
+	}
+}
+
+func tstGetChoice_Other(t *testing.T, testcase string, what string, endpoint string, permissions string, expectAllow bool, expectValue bool) {
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given there are registrations")
+	loc1, _ := tstRegisterAttendee(t, testcase+"a-")
+
+	if permissions == "" {
+		docs.Given("given another registered attendee, who has no permissions set")
+	} else {
+		docs.Given("given another registered attendee, who has permissions set to " + permissions)
+	}
+	token := tstValidUserToken(t, 101)
+	loc2, _ := tstRegisterAttendeeWithToken(t, testcase+"b-", token)
+	if permissions != "" {
+		body := admin.AdminInfoDto{
+			Permissions: permissions,
+		}
+		response := tstPerformPut(loc2+"/admin", tstRenderJson(body), tstValidAdminToken(t))
+		require.Equal(t, http.StatusNoContent, response.status, "unexpected http response status")
+	}
+
+	docs.When("when they request " + what)
+	response := tstPerformGet(loc1+endpoint, token)
+
+	if expectAllow {
+		docs.Then("then the request is successful and the response is as expected")
+		require.Equal(t, http.StatusOK, response.status, "unexpected http response status")
+		actualResult := attendee.ChoiceState{}
+		tstParseJson(response.body, &actualResult)
+		require.Equal(t, expectValue, actualResult.Present)
+	} else {
+		docs.Then("then the request fails (403) and the error is as expected")
+		tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this operation - the attempt has been logged")
+	}
+}
+
+func tstGetChoice_Admin(t *testing.T, testcase string, what string, endpoint string, expectValue bool) {
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given there are registrations")
+	loc1, _ := tstRegisterAttendee(t, testcase+"a-")
+
+	docs.Given("given an admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they request " + what)
+	response := tstPerformGet(loc1+endpoint, token)
+
+	docs.Then("then the request is successful and the response is as expected")
+	require.Equal(t, http.StatusOK, response.status, "unexpected http response status")
+	actualResult := attendee.ChoiceState{}
+	tstParseJson(response.body, &actualResult)
+	require.Equal(t, expectValue, actualResult.Present)
+}
+
+func tstGetChoice_ApiToken(t *testing.T, testcase string, what string, endpoint string, expectValue bool) {
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given there are registrations")
+	loc1, _ := tstRegisterAttendee(t, testcase+"a-")
+
+	docs.Given("given a system authenticating by api token")
+	token := tstValidApiToken()
+
+	docs.When("when it requests " + what)
+	response := tstPerformGet(loc1+endpoint, token)
+
+	docs.Then("then the request is successful and the response is as expected")
+	require.Equal(t, http.StatusOK, response.status, "unexpected http response status")
+	actualResult := attendee.ChoiceState{}
+	tstParseJson(response.body, &actualResult)
+	require.Equal(t, expectValue, actualResult.Present)
+}
+
+func TestGetFlags_Anon(t *testing.T) {
+	tstGetChoice_Anon(t, "flg1", "a flag", "/flags/ev")
+}
+
+func TestGetFlagsUnset_Self(t *testing.T) {
+	tstGetChoice_Self(t, "flg2", "a visible regular flag from their own registration, which is not set",
+		"/flags/ev", true, false)
+}
+
+func TestGetFlagsSet_Self(t *testing.T) {
+	tstGetChoice_Self(t, "flg3", "a visible regular flag from their own registration, which is set",
+		"/flags/hc", true, true)
+}
+
+func TestGetAdminFlagsUnset_Self(t *testing.T) {
+	tstGetChoice_Self(t, "flg4", "a visible admin flag from their own registration, which is not set",
+		"/flags/guest", true, false)
+}
+
+func TestGetAdminFlagsInvisible_Self(t *testing.T) {
+	tstGetChoice_Self(t, "flg5", "an invisible admin flag from their own registration",
+		"/flags/skip_ban_check", false, false)
+}
+
+func TestGetFlags_Other_NoPerm(t *testing.T) {
+	tstGetChoice_Other(t, "flg6", "a visible regular flag from another registration",
+		"/flags/ev", "", false, false)
+}
+
+func TestGetAdminFlags_Other_NoPerm(t *testing.T) {
+	tstGetChoice_Other(t, "flg7", "a visible admin flag from another registration",
+		"/flags/guest", "", false, false)
+}
+
+func TestGetAdminFlagsInvisible_Other_NoPerm(t *testing.T) {
+	tstGetChoice_Other(t, "flg8", "an invisible admin flag from another registration",
+		"/flags/skip_ban_check", "", false, false)
+}
+
+func TestGetFlags_Other_PermNonMatch(t *testing.T) {
+	tstGetChoice_Other(t, "flg9", "a visible regular flag from another registration (non-matching permission)",
+		"/flags/ev", "sponsordesk", false, false)
+}
+
+func TestGetFlags_Other_PermMatch_Unset(t *testing.T) {
+	tstGetChoice_Other(t, "flg10", "a visible regular flag from another registration (matching permission)",
+		"/flags/ev", "regdesk", true, false)
+}
+
+func TestGetFlags_Other_PermMatch_Set(t *testing.T) {
+	tstGetChoice_Other(t, "flg11", "a visible regular flag from another registration (matching permission)",
+		"/flags/anon", "regdesk", true, true)
+}
+
+func TestGetAdminFlags_Other_Perm(t *testing.T) {
+	tstGetChoice_Other(t, "flg12", "a visible admin flag from another registration",
+		"/flags/guest", "sponsordesk", true, false)
+}
+
+func TestGetAdminFlagsInvisible_Other_Perm(t *testing.T) {
+	tstGetChoice_Other(t, "flg13", "an invisible admin flag from another registration",
+		"/flags/skip_ban_check", "sponsordesk", false, false)
+}
+
+func TestGetFlags_Admin_Unset(t *testing.T) {
+	tstGetChoice_Admin(t, "flg14", "a regular flag which is unset",
+		"/flags/ev", false)
+}
+
+func TestGetFlags_Admin_Set(t *testing.T) {
+	tstGetChoice_Admin(t, "flg15", "a regular flag which is set",
+		"/flags/anon", true)
+}
+
+func TestGetAdminFlags_Admin(t *testing.T) {
+	tstGetChoice_Admin(t, "flg16", "a visible admin flag",
+		"/flags/guest", false)
+}
+
+func TestGetAdminFlagsInvisible_Admin(t *testing.T) {
+	tstGetChoice_Admin(t, "flg17", "an invisible admin flag",
+		"/flags/skip_ban_check", false)
+}
+
+func TestGetFlags_ApiToken_Set(t *testing.T) {
+	tstGetChoice_ApiToken(t, "flg18", "a regular flag which is set",
+		"/flags/anon", true)
+}
+
+func TestGetAdminFlags_ApiToken(t *testing.T) {
+	tstGetChoice_ApiToken(t, "flg19", "a visible admin flag",
+		"/flags/guest", false)
+}
+
+func TestGetFlags_InvalidId(t *testing.T) {
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they request a flag, but provide an invalid attendee id")
+	response := tstPerformGet("/api/rest/v1/attendees/THIS-is-nonsense/flags/hc", token)
+
+	docs.Then("then the request fails (400) and the error is as expected")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.id.invalid", url.Values{})
+}
+
+func TestGetFlags_FlagDoesNotExist(t *testing.T) {
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given there are registrations")
+	loc1, _ := tstRegisterAttendee(t, "flg21-")
+
+	docs.Given("given an admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they request a flag that does not exist")
+	response := tstPerformGet(loc1+"/flags/does_not_exist", token)
+
+	docs.Then("then the request fails (400) and the error is as expected")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.param.invalid", url.Values{})
+}
+
+func TestGetFlags_AttendeeDoesNotExist(t *testing.T) {
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they request a flag for an attendee that does not exist")
+	response := tstPerformGet("/api/rest/v1/attendees/42/flags/guest", token)
+
+	docs.Then("then the request fails (404) and the error is as expected")
+	tstRequireErrorResponse(t, response, http.StatusNotFound, "attendee.id.notfound", url.Values{})
+}
+
+func TestGetOptions_Anon(t *testing.T) {
+	tstGetChoice_Anon(t, "opt1", "an option", "/options/art")
+}
+
+func TestGetOptionsUnset_Self(t *testing.T) {
+	tstGetChoice_Self(t, "opt2", "an option from their own registration, which is not set",
+		"/options/art", true, false)
+}
+
+func TestGetOptionsSet_Self(t *testing.T) {
+	tstGetChoice_Self(t, "opt3", "an option from their own registration, which is set",
+		"/options/music", true, true)
+}
+
+func TestGetOptions_Other_NoPerm(t *testing.T) {
+	tstGetChoice_Other(t, "opt4", "an option from another registration",
+		"/options/music", "", false, false)
+}
+
+func TestGetOptions_Other_PermNonMatch(t *testing.T) {
+	tstGetChoice_Other(t, "opt5", "an option from another registration (non-matching permission)",
+		"/options/music", "regdesk", false, false)
+}
+
+func TestGetOptions_Other_PermMatch_Set(t *testing.T) {
+	tstGetChoice_Other(t, "opt6", "an option from another registration (matching permission)",
+		"/options/music", "sponsordesk", true, true)
+}
+
+func TestGetOptions_Admin_Unset(t *testing.T) {
+	tstGetChoice_Admin(t, "opt7", "an option, which is not set",
+		"/options/anim", false)
+}
+
+func TestGetOptions_Admin_Set(t *testing.T) {
+	tstGetChoice_Admin(t, "opt8", "an option, which is set",
+		"/options/music", true)
+}
+
+func TestGetOptions_ApiToken_Set(t *testing.T) {
+	tstGetChoice_ApiToken(t, "opt9", "an option, which is set",
+		"/options/suit", true)
+}
+
+func TestGetOptions_InvalidId(t *testing.T) {
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they request an option, but provide an invalid attendee id")
+	response := tstPerformGet("/api/rest/v1/attendees/nonSENse/options/suit", token)
+
+	docs.Then("then the request fails (400) and the error is as expected")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.id.invalid", url.Values{})
+}
+
+func TestGetOptions_OptionDoesNotExist(t *testing.T) {
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given there are registrations")
+	loc1, _ := tstRegisterAttendee(t, "opt11-")
+
+	docs.Given("given an admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they request an option that does not exist")
+	response := tstPerformGet(loc1+"/options/does_not_exist", token)
+
+	docs.Then("then the request fails (400) and the error is as expected")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.param.invalid", url.Values{})
+}
+
+func TestGetOptions_AttendeeDoesNotExist(t *testing.T) {
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they request an option for an attendee that does not exist")
+	response := tstPerformGet("/api/rest/v1/attendees/42/options/suit", token)
+
+	docs.Then("then the request fails (404) and the error is as expected")
+	tstRequireErrorResponse(t, response, http.StatusNotFound, "attendee.id.notfound", url.Values{})
+}
+
+func TestGetPackages_Anon(t *testing.T) {
+	tstGetChoice_Anon(t, "pkg1", "a package", "/packages/sponsor")
+}
+
+func TestGetPackagesUnset_Self(t *testing.T) {
+	tstGetChoice_Self(t, "pkg2", "a package from their own registration, which is not set",
+		"/packages/sponsor", true, false)
+}
+
+func TestGetPackagesSet_Self(t *testing.T) {
+	tstGetChoice_Self(t, "pkg3", "a package from their own registration, which is set",
+		"/packages/sponsor2", true, true)
+}
+
+func TestGetPackages_Other_NoPerm(t *testing.T) {
+	tstGetChoice_Other(t, "pkg4", "a package from another registration",
+		"/packages/sponsor", "", false, false)
+}
+
+func TestGetPackages_Other_PermNonMatch(t *testing.T) {
+	tstGetChoice_Other(t, "pkg5", "a package from another registration (non-matching permission)",
+		"/packages/sponsor2", "regdesk", false, false)
+}
+
+func TestGetPackages_Other_PermMatch_Set(t *testing.T) {
+	tstGetChoice_Other(t, "pkg6", "a package from another registration (matching permission)",
+		"/packages/sponsor2", "sponsordesk", true, true)
+}
+
+func TestGetPackages_Admin_Unset(t *testing.T) {
+	tstGetChoice_Admin(t, "pkg7", "a package, which is not set",
+		"/packages/sponsor", false)
+}
+
+func TestGetPackages_Admin_Set(t *testing.T) {
+	tstGetChoice_Admin(t, "pkg8", "a package, which is set",
+		"/packages/sponsor2", true)
+}
+
+func TestGetPackages_ApiToken_Set(t *testing.T) {
+	tstGetChoice_ApiToken(t, "pkg9", "a package, which is set",
+		"/packages/sponsor2", true)
+}
+
+func TestGetPackages_InvalidId(t *testing.T) {
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they request a package, but provide an invalid attendee id")
+	response := tstPerformGet("/api/rest/v1/attendees/___fun___/packages/sponsor2", token)
+
+	docs.Then("then the request fails (400) and the error is as expected")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.id.invalid", url.Values{})
+}
+
+func TestGetPackages_PackageDoesNotExist(t *testing.T) {
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given there are registrations")
+	loc1, _ := tstRegisterAttendee(t, "pkg21-")
+
+	docs.Given("given an admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they request a package that does not exist")
+	response := tstPerformGet(loc1+"/packages/does_not_exist", token)
+
+	docs.Then("then the request fails (400) and the error is as expected")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.param.invalid", url.Values{})
+}
+
+func TestGetPackages_AttendeeDoesNotExist(t *testing.T) {
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they request a valid package for an attendee that does not exist")
+	response := tstPerformGet("/api/rest/v1/attendees/42/packages/sponsor2", token)
+
+	docs.Then("then the request fails (404) and the error is as expected")
+	tstRequireErrorResponse(t, response, http.StatusNotFound, "attendee.id.notfound", url.Values{})
 }
 
 // helper functions

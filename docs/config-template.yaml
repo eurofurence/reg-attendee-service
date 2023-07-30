@@ -77,9 +77,11 @@ choices:
       description: 'Legal Name is Confidential'
     digi-book:
       description: 'Digital only convention booklet'
+      visible_for: regdesk
     ev:
       description: 'Eurofurence e.V. Member'
       admin_only: true
+      visible_for: regdesk
     terms-accepted:
       description: 'Accepted the terms'
       default: true
@@ -87,15 +89,18 @@ choices:
     guest:
       description: 'Guest of the Convention'
       admin_only: true
+      visible_for: self,regdesk,sponsordesk
     skip_ban_check:
       description: 'Bypass ban check for this attendee'
       admin_only: true
     staff:
       description: 'Staff'
       admin_only: true
+      visible_for: self,regdesk,sponsordesk
     director:
       description: 'Director'
       admin_only: true
+      visible_for: self,regdesk,sponsordesk
   packages:
     room-none:
       description: 'No Room'
@@ -108,27 +113,32 @@ choices:
       vat_percent: 19
       default: true
       at-least-one-mandatory: true
+      visible_for: regdesk
     stage:
       description: 'Entrance Fee (Stage Ticket)'
       price: 500
       vat_percent: 19
       default: true
+      visible_for: regdesk
     sponsor:
       description: 'Sponsor Upgrade'
       price: 8000
       vat_percent: 19
+      visible_for: regdesk,sponsordesk
     sponsor2:
       description: 'Supersponsor Upgrade'
       price: 19000
       vat_percent: 19
       constraint: '!sponsor'
       constraint_msg: 'Please choose only one of Sponsor or Supersponsor.'
+      visible_for: regdesk,sponsordesk
     tshirt:
       description: 'Paid T-Shirt (non-sponsor)'
       price: 2000
       vat_percent: 19
       constraint: '!sponsor,!sponsor2'
       constraint_msg: 'Sponsors and supersponsors get their T-Shirt for free.'
+      visible_for: sponsordesk
     day-sun:
       description: 'Day Guest (Sunday)'
       price: 7000
@@ -136,6 +146,7 @@ choices:
       at-least-one-mandatory: true
       constraint: '!attendance,!stage'
       constraint_msg: 'Must disable Convention Ticket and Stage Ticket for Day Guests.'
+      visible_for: regdesk
     day-mon:
       description: 'Day Guest (Monday)'
       price: 7000
@@ -143,6 +154,7 @@ choices:
       at-least-one-mandatory: true
       constraint: '!attendance,!stage'
       constraint_msg: 'Must disable Convention Ticket and Stage Ticket for Day Guests.'
+      visible_for: regdesk
     day-tue:
       description: 'Day Guest (Tuesday)'
       price: 7000
@@ -150,6 +162,7 @@ choices:
       at-least-one-mandatory: true
       constraint: '!attendance,!stage'
       constraint_msg: 'Must disable Convention Ticket and Stage Ticket for Day Guests.'
+      visible_for: regdesk
     day-wed:
       description: 'Day Guest (Wednesday)'
       price: 7000
@@ -157,6 +170,7 @@ choices:
       at-least-one-mandatory: true
       constraint: '!attendance,!stage'
       constraint_msg: 'Must disable Convention Ticket and Stage Ticket for Day Guests.'
+      visible_for: regdesk
     dealer-half:
       description: 'Dealer Table Fee (Half)'
       price: 5000

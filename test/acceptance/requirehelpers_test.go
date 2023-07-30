@@ -9,6 +9,11 @@ import (
 	"testing"
 )
 
+func tstRequireSuccessResponse(t *testing.T, response tstWebResponse, expectedStatus int, resultBodyPtr interface{}) {
+	require.Equal(t, expectedStatus, response.status, "unexpected http response status")
+	tstParseJson(response.body, resultBodyPtr)
+}
+
 func tstRequireErrorResponse(t *testing.T, response tstWebResponse, expectedStatus int, expectedMessage string, expectedDetails interface{}) {
 	require.Equal(t, expectedStatus, response.status, "unexpected http response status")
 	errorDto := errorapi.ErrorDto{}

@@ -124,3 +124,9 @@ type AttendeeSearchResult struct {
 	Registered           *string        `json:"registered,omitempty"`
 	AdminComments        *string        `json:"admin_comments,omitempty"`
 }
+
+// --- flags/options/packages result ---
+
+type ChoiceState struct {
+	Present bool `json:"present"`
+}

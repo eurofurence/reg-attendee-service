@@ -13,6 +13,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/service/attendeesrv"
 	"github.com/eurofurence/reg-attendee-service/internal/web/filter"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctlutil"
+	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/media"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-http-utils/headers"
@@ -20,6 +21,7 @@ import (
 	"net/url"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -39,6 +41,10 @@ func Create(server chi.Router, attendeeSrv attendeesrv.AttendeeService) {
 	server.Put("/api/rest/v1/attendees/{id}", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, updateAttendeeHandler)))
 	server.Get("/api/rest/v1/attendees/{id}/due-date", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, getDueDateHandler)))
 	server.Put("/api/rest/v1/attendees/{id}/due-date", filter.HasGroupOrApiToken(config.OidcAdminGroup(), filter.WithTimeout(3*time.Second, overrideDueDateHandler)))
+
+	server.Get("/api/rest/v1/attendees/{id}/flags/{flag}", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, getFlagHandler)))
+	server.Get("/api/rest/v1/attendees/{id}/options/{option}", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, getOptionHandler)))
+	server.Get("/api/rest/v1/attendees/{id}/packages/{package}", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, getPackageHandler)))
 }
 
 func newAttendeeHandler(w http.ResponseWriter, r *http.Request) {
@@ -231,6 +237,119 @@ func myRegsHandler(w http.ResponseWriter, r *http.Request) {
 	ctlutil.WriteJson(ctx, w, dto)
 }
 
+func getFlagHandler(w http.ResponseWriter, r *http.Request) {
+	getChoiceHandler(w, r,
+		"flag",
+		config.Configuration().Choices.Flags,
+		func(ctx context.Context, w http.ResponseWriter, r *http.Request, attendee *entity.Attendee, code string, choice config.ChoiceConfig) (string, error) {
+			if choice.AdminOnly {
+				adminInfo, err := attendeeService.GetAdminInfo(ctx, attendee.ID)
+				if err != nil {
+					choiceErrorHandler(ctx, w, r, "flag", code, err)
+					return "", err
+				}
+				return adminInfo.Flags, nil
+			} else {
+				return attendee.Flags, nil
+			}
+		},
+	)
+}
+
+func getOptionHandler(w http.ResponseWriter, r *http.Request) {
+	getChoiceHandler(w, r,
+		"option",
+		config.Configuration().Choices.Options,
+		func(_ context.Context, _ http.ResponseWriter, _ *http.Request, attendee *entity.Attendee, _ string, _ config.ChoiceConfig) (string, error) {
+			return attendee.Options, nil
+		},
+	)
+}
+
+func getPackageHandler(w http.ResponseWriter, r *http.Request) {
+	getChoiceHandler(w, r,
+		"package",
+		config.Configuration().Choices.Packages,
+		func(_ context.Context, _ http.ResponseWriter, _ *http.Request, attendee *entity.Attendee, _ string, _ config.ChoiceConfig) (string, error) {
+			return attendee.Packages, nil
+		},
+	)
+}
+
+func getChoiceHandler(w http.ResponseWriter, r *http.Request, choiceType string,
+	choiceConfigMap map[string]config.ChoiceConfig,
+	commaSeparatedValueGetter func(ctx context.Context, w http.ResponseWriter, r *http.Request, attendee *entity.Attendee, code string, choice config.ChoiceConfig) (string, error),
+) {
+	ctx := r.Context()
+
+	id, err := idFromVars(ctx, w, r)
+	if err != nil {
+		return
+	}
+
+	code, choice, err := choiceFromVars(ctx, w, r, choiceType, choiceConfigMap)
+	if err != nil {
+		return
+	}
+
+	requestedAttendee, err := attendeeService.GetAttendee(ctx, id)
+	if err != nil {
+		ctlutil.AttendeeNotFoundErrorHandler(ctx, w, r, id)
+		return
+	}
+
+	err = choiceVisibilityCheckMustReturnOnError(ctx, w, r, requestedAttendee, choiceType, code, choice)
+	if err != nil {
+		return
+	}
+
+	value, err := commaSeparatedValueGetter(ctx, w, r, requestedAttendee, code, choice)
+	if err != nil {
+		return
+	}
+
+	dto := attendee.ChoiceState{
+		Present: commaSeparatedContains(value, code),
+	}
+
+	w.Header().Add(headers.ContentType, media.ContentTypeApplicationJson)
+	ctlutil.WriteJson(ctx, w, dto)
+}
+
+func choiceVisibilityCheckMustReturnOnError(ctx context.Context, w http.ResponseWriter, r *http.Request, requestedAttendee *entity.Attendee, choiceType string, code string, choice config.ChoiceConfig) (err error) {
+	if ctxvalues.HasApiToken(ctx) || ctxvalues.IsAuthorizedAsGroup(ctx, config.OidcAdminGroup()) {
+		// admin rights, all flags visible
+		return nil
+	} else if ctxvalues.Subject(ctx) == requestedAttendee.Identity {
+		// self
+		if choiceType == "flag" {
+			if choice.AdminOnly {
+				if !commaSeparatedContains(choice.VisibleFor, "self") {
+					choiceNotAccessibleHandler(ctx, w, r, choiceType, code)
+					return errors.New("not accessible")
+				}
+			}
+		}
+		return nil
+	} else {
+		// by area
+		allowed := false
+		if choice.VisibleFor != "" {
+			flagVisibleFor := strings.Split(choice.VisibleFor, ",")
+			allowed, err = attendeeService.CanAccessAdditionalInfoArea(ctx, flagVisibleFor...)
+			if err != nil {
+				choiceErrorHandler(ctx, w, r, choiceType, code, err)
+				return errors.New("internal error")
+			}
+		}
+		if !allowed {
+			choiceNotAccessibleHandler(ctx, w, r, choiceType, code)
+			return errors.New("not accessible")
+		}
+		return nil
+	}
+}
+
 func idFromVars(ctx context.Context, w http.ResponseWriter, r *http.Request) (uint, error) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
@@ -238,6 +357,16 @@ func idFromVars(ctx context.Context, w http.ResponseWriter, r *http.Request) (ui
 		ctlutil.InvalidAttendeeIdErrorHandler(ctx, w, r, idStr)
 	}
 	return uint(id), err
+}
+
+func choiceFromVars(ctx context.Context, w http.ResponseWriter, r *http.Request, paramName string, choiceConfig map[string]config.ChoiceConfig) (string, config.ChoiceConfig, error) {
+	code := chi.URLParam(r, paramName)
+	choice, ok := choiceConfig[code]
+	if !ok {
+		choiceNotFoundErrorHandler(ctx, w, r, paramName, code)
+		return code, config.ChoiceConfig{}, fmt.Errorf("invalid %s %s requested", paramName, url.QueryEscape(code))
+	}
+	return code, choice, nil
 }
 
 func parseBodyToAttendeeDto(ctx context.Context, w http.ResponseWriter, r *http.Request) (*attendee.AttendeeDto, error) {
@@ -329,4 +458,19 @@ func myRegsErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Requ
 func myRegsNotFoundErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	aulogging.Logger.Ctx(ctx).Debug().Printf("found no registrations owned by logged in subject")
 	ctlutil.ErrorHandler(ctx, w, r, "attendee.owned.notfound", http.StatusNotFound, url.Values{})
+}
+
+func choiceNotFoundErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, paramName string, code string) {
+	aulogging.Logger.Ctx(ctx).Warn().Printf("found no %s %s in configuration", paramName, url.QueryEscape(code))
+	ctlutil.ErrorHandler(ctx, w, r, "attendee.param.invalid", http.StatusBadRequest, url.Values{})
+}
+
+func choiceNotAccessibleHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, paramName string, code string) {
+	culprit := ctxvalues.Subject(ctx)
+	ctlutil.UnauthorizedError(ctx, w, r, "you are not authorized for this operation - the attempt has been logged", fmt.Sprintf("unauthorized access attempt for %s %s by %s", paramName, url.QueryEscape(code), culprit))
+}
+
+func choiceErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, paramName string, code string, err error) {
+	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("failed to check visibility for %s %s: %s", paramName, url.QueryEscape(code), err.Error())
+	ctlutil.ErrorHandler(ctx, w, r, "attendee.param.error", http.StatusInternalServerError, url.Values{})
 }

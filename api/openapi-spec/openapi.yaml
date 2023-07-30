@@ -85,7 +85,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
       security:
-        - BearerAuth: []
+        - AnyAudienceBearerAuth: []
     post:
       tags:
         - registration
@@ -764,7 +764,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
       security:
-        - BearerAuth: []
+        - AnyAudienceBearerAuth: []
         - ApiKeyAuth: []
   /attendees/{id}/options/{option}:
     get:
@@ -826,7 +826,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
       security:
-        - BearerAuth: []
+        - AnyAudienceBearerAuth: []
         - ApiKeyAuth: []
   /attendees/{id}/packages/{package}:
     get:
@@ -886,7 +886,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
       security:
-        - BearerAuth: []
+        - AnyAudienceBearerAuth: []
         - ApiKeyAuth: []
   /attendees/{id}/payments-changed:
     post:
@@ -995,7 +995,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
       security:
-        - BearerAuth: []
+        - AnyAudienceBearerAuth: []
         - ApiKeyAuth: []
     post:
       tags:
@@ -1547,6 +1547,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
 components:
   schemas:
     Attendee:
@@ -2335,6 +2338,8 @@ components:
             - attendee.data.duplicate (duplicate registration - nickname + email + zip)
             - attendee.user.duplicate (this identity already has a registration, and it isn't deleted)
             - attendee.write.error (database error)
+            - attendee.param.invalid (invalid flag/option/package code used in request parameters)
+            - attendee.param.error (technical failure during flag/option/package visibility check)
             - attendee.payment.error (payment service failure while updating attendee)
             - attendee.id.notfound (no such badge number in the database)
             - attendee.id.invalid (syntactically invalid badge number, must be positive integer)
@@ -2378,6 +2383,10 @@ components:
               - email address does not match the regular expression
               - you need to refill the flux capacitor before the operation can succeed
   securitySchemes:
+    AnyAudienceBearerAuth:
+      type: http
+      scheme: bearer
+      description: An access token obtained from the identity provider directly, for any audience. Some endpoints intentionally leave out the audience check so other systems can query them if they have a valid user token for their audience.
     BearerAuth:
       type: http
       scheme: bearer

@@ -124,6 +124,7 @@ type (
 		Default       bool    `yaml:"default"`                // if set to true, is added to flags by default. Not available for admin only flags!
 		AdminOnly     bool    `yaml:"admin_only"`             // this flag is kept under the adminInfo structure, so it is not visible to users
 		ReadOnly      bool    `yaml:"read_only"`              // this flag is kept under the normal flags, thus visible to end user, but only admin can change it
+		VisibleFor    string  `yaml:"visible_for"`            // comma separated list of permissions which allow seeing the flag/option/package. Admin can always see everything, "self" can always see non-admin_only, but you can add it for admin_only fields. This field also controls who else can see the info based on their permissions admin field. Example: "self,sponsordesk"
 		Mandatory     bool    `yaml:"at-least-one-mandatory"` // one of these MUST be chosen (no constraint if not set on any choices)
 		Constraint    string  `yaml:"constraint"`
 		ConstraintMsg string  `yaml:"constraint_msg"`
