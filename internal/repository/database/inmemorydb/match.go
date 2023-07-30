@@ -45,7 +45,8 @@ func (r *InMemoryRepository) matches(cond *attendee.AttendeeSearchSingleCriterio
 		choiceMatch(cond.Permissions, adm.Permissions) &&
 		matchesSubstringGlobOrEmpty(cond.AdminComments, adm.AdminComments) &&
 		matchesAddInfoPresence(cond.AddInfo, addInf) &&
-		matchesOverdue(cond.AddInfo, a.CacheDueDate, r.Now().Format(config.IsoDateFormat), st.Status)
+		matchesOverdue(cond.AddInfo, a.CacheDueDate, r.Now().Format(config.IsoDateFormat), st.Status) &&
+		matchesIsoDateRange(cond.BirthdayFrom, cond.BirthdayTo, a.Birthday)
 }
 
 func matchesUintSliceOrEmpty(cond []uint, value uint) bool {
@@ -132,4 +133,18 @@ func matchesOverdue(addInfoConds map[string]int8, dueDate string, currDate strin
 	} else {
 		return false
 	}
+}
+
+func matchesIsoDateRange(condFrom string, condTo string, value string) bool {
+	if value != "" && condFrom != "" {
+		if value < condFrom {
+			return false
+		}
+	}
+	if value != "" && condTo != "" {
+		if value > condTo {
+			return false
+		}
+	}
+	return true
 }
