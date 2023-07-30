@@ -69,6 +69,8 @@ type AttendeeSearchSingleCriterion struct {
 	Name                 string          `json:"name"`
 	Address              string          `json:"address"`
 	Country              string          `json:"country"`
+	BirthdayFrom         string          `json:"birthday_from"`
+	BirthdayTo           string          `json:"birthday_to"`
 	Email                string          `json:"email"`
 	Telegram             string          `json:"telegram"`
 	SpokenLanguages      map[string]int8 `json:"spoken_languages"`
@@ -121,4 +123,10 @@ type AttendeeSearchResult struct {
 	DueDate              *string        `json:"due_date,omitempty"`
 	Registered           *string        `json:"registered,omitempty"`
 	AdminComments        *string        `json:"admin_comments,omitempty"`
+}
+
+// --- flags/options/packages result ---
+
+type ChoiceState struct {
+	Present bool `json:"present"`
 }

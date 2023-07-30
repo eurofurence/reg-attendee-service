@@ -255,6 +255,12 @@ func (r *MysqlRepository) addSingleCondition(cond *attendee.AttendeeSearchSingle
 	if len(cond.AddInfo) > 0 {
 		query.WriteString(r.addInfoConditions(cond.AddInfo, params, paramBaseName, &paramNo))
 	}
+	if cond.BirthdayFrom != "" {
+		query.WriteString(stringGreaterThanOrEqual("a.birthday", cond.BirthdayFrom, params, paramBaseName, &paramNo))
+	}
+	if cond.BirthdayTo != "" {
+		query.WriteString(stringLessThanOrEqual("a.birthday", cond.BirthdayTo, params, paramBaseName, &paramNo))
+	}
 
 	return query.String()
 }
@@ -326,6 +332,20 @@ func stringExact(field string, condition string, params map[string]interface{}, 
 	params[pName] = condition
 	*idx++
 	return fmt.Sprintf("    AND ( LOWER(%s) = LOWER( @%s ) )\n", field, pName)
+}
+
+func stringLessThanOrEqual(field string, condition string, params map[string]interface{}, paramBaseName string, idx *int) string {
+	pName := fmt.Sprintf("%s_%d", paramBaseName, *idx)
+	params[pName] = condition
+	*idx++
+	return fmt.Sprintf("    AND ( STRCMP(%s,@%s) <= 0 )\n", field, pName)
+}
+
+func stringGreaterThanOrEqual(field string, condition string, params map[string]interface{}, paramBaseName string, idx *int) string {
+	pName := fmt.Sprintf("%s_%d", paramBaseName, *idx)
+	params[pName] = condition
+	*idx++
+	return fmt.Sprintf("    AND ( STRCMP(%s,@%s) >= 0 )\n", field, pName)
 }
 
 func choiceMatch(field string, condition map[string]int8, params map[string]interface{}, paramBaseName string, idx *int) string {

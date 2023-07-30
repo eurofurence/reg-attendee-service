@@ -83,3 +83,13 @@ func addWrappingCommas(v string) string {
 	}
 	return v
 }
+
+func commaSeparatedContains(commaSeparated string, singleValue string) bool {
+	list := strings.Split(removeWrappingCommas(commaSeparated), ",")
+	for _, e := range list {
+		if e == singleValue {
+			return true
+		}
+	}
+	return false
+}

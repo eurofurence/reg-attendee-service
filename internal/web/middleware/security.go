@@ -179,6 +179,10 @@ func allowPrefixSuffix(actualMethod string, actualUrlPath string, allowedMethod 
 	return actualMethod == allowedMethod && strings.HasPrefix(actualUrlPath, allowedPrefix) && strings.HasSuffix(actualUrlPath, allowedSuffix)
 }
 
+func allowPrefixContains(actualMethod string, actualUrlPath string, allowedMethod string, allowedPrefix string, mustContain string) bool {
+	return actualMethod == allowedMethod && strings.HasPrefix(actualUrlPath, allowedPrefix) && strings.Contains(actualUrlPath, mustContain)
+}
+
 func canSkipAccessTokenCheckWithCookieAuth(method string, urlPath string) bool {
 	// positive list for request URLs and Methods where the access token check may be skipped
 	// (performance critical + cannot be used for data extraction only!)
@@ -192,7 +196,10 @@ func canSkipAudienceCheckWithAccessToken(method string, urlPath string) bool {
 	// meaning the identity provider signed them for another client, such as the dealer system.
 	// (should not be set for endpoints that allow extraction of personal data!)
 	return allow(method, urlPath, http.MethodGet, "/api/rest/v1/attendees") || // list my badge numbers
-		allowPrefixSuffix(method, urlPath, http.MethodGet, "/api/rest/v1/attendees/", "/status") // current status value only
+		allowPrefixSuffix(method, urlPath, http.MethodGet, "/api/rest/v1/attendees/", "/status") || // current status value only
+		allowPrefixContains(method, urlPath, http.MethodGet, "/api/rest/v1/attendees/", "/flags/") || // yes/no only
+		allowPrefixContains(method, urlPath, http.MethodGet, "/api/rest/v1/attendees/", "/options/") || // yes/no only
+		allowPrefixContains(method, urlPath, http.MethodGet, "/api/rest/v1/attendees/", "/packages/") // yes/no only
 }
 
 // --- top level ---

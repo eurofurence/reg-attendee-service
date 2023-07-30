@@ -110,6 +110,8 @@ func TestTwoFullSearchQueries(t *testing.T) {
 					"overdue":       1,
 					"sponsor-items": 1,
 				},
+				BirthdayFrom: "1970-10-24",
+				BirthdayTo:   "1980-12-24",
 			},
 		},
 		MinId:      1,
@@ -153,6 +155,7 @@ func TestTwoFullSearchQueries(t *testing.T) {
 		"param_1_18_2":                      "sponsor-items",
 		"param_2_1":                         "small%bird",
 		"param_2_2":                         "Johnny",
+		"param_2_20":                        "1980-12-24",
 		"param_2_3":                         "%Berlin%",
 		"param_2_4":                         "CH",
 		"param_2_5":                         "%gg@hh%",
@@ -170,6 +173,7 @@ func TestTwoFullSearchQueries(t *testing.T) {
 		"param_2_17":                        "%more user comments%",
 		"param_2_18_1":                      "2020-12-23",
 		"param_2_18_2":                      "sponsor-items",
+		"param_2_19":                        "1970-10-24",
 	}
 	expectedQuery := `SELECT IFNULL(ad.flags, '') as admin_flags, IFNULL(st.status, 'new') as status, a.cache_due_date as cache_due_date, a.cache_open_balance as cache_open_balance, a.cache_payment_balance as cache_payment_balance, a.cache_total_dues as cache_total_dues, a.flags as flags, a.id as id, a.options as options, a.packages as packages, a.pronouns as pronouns, a.registration_language as registration_language 
 FROM att_attendees AS a 
@@ -228,6 +232,8 @@ WHERE (
     AND ( STRCMP( IFNULL(a.cache_due_date,'9999-99-99'), @param_2_18_1 ) < 0 )
     AND ( IFNULL(st.status, 'new') IN ('approved','partially paid') )
     AND ( ( SELECT COUNT(*) FROM att_additional_infos WHERE attendee_id = a.id AND area = @param_2_18_2 ) > 0 )
+    AND ( STRCMP(a.birthday,@param_2_19) >= 0 )
+    AND ( STRCMP(a.birthday,@param_2_20) <= 0 )
   )
 ) AND a.id >= @param_0_1 AND a.id <= @param_0_2 ORDER BY CONCAT(a.first_name, ' ', a.last_name) DESC`
 
