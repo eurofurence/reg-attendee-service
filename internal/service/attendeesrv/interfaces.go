@@ -78,6 +78,11 @@ type AttendeeService interface {
 	// Normal users (loaded by identity) need a matching permissions entry in their admin info.
 	// Admins and Api Token can see all areas.
 	CanAccessAdditionalInfoArea(ctx context.Context, area ...string) (bool, error)
+
+	// GenerateFakeRegistrations creates the specified number of fake registrations in the database.
+	//
+	// Only for use on test systems.
+	GenerateFakeRegistrations(ctx context.Context, count uint) error
 }
 
 var (

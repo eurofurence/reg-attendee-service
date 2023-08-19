@@ -14,6 +14,10 @@ func UseEcsLogging() bool {
 	return ecsLogging
 }
 
+func GenerateCount() uint {
+	return generateCount
+}
+
 func ServerAddr() string {
 	c := Configuration()
 	return fmt.Sprintf("%s:%s", c.Server.Address, c.Server.Port)

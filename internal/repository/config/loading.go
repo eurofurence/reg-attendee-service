@@ -19,6 +19,7 @@ var (
 	configurationFilename string
 	dbMigrate             bool
 	ecsLogging            bool
+	generateCount         uint
 
 	parsedKeySet []*rsa.PublicKey
 )
@@ -35,6 +36,7 @@ func init() {
 	flag.StringVar(&configurationFilename, "config", "", "config file path")
 	flag.BoolVar(&dbMigrate, "migrate-database", false, "migrate database on startup")
 	flag.BoolVar(&ecsLogging, "ecs-json-logging", false, "switch to structured json logging")
+	flag.UintVar(&generateCount, "generate-count", 0, "number of fake registrations to generate (separate generator binary only)")
 }
 
 // ParseCommandLineFlags is exposed separately so you can skip it for tests

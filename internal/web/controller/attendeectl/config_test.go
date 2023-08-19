@@ -151,6 +151,10 @@ func (s *MockAttendeeService) CanAccessAdditionalInfoArea(ctx context.Context, a
 	return false, nil
 }
 
+func (s *MockAttendeeService) GenerateFakeRegistrations(ctx context.Context, count uint) error {
+	return nil
+}
+
 func tstSetupServiceMocks() {
 	attendeeService = &MockAttendeeService{}
 }
