@@ -37,7 +37,7 @@ func Create(server chi.Router, attendeeSrv attendeesrv.AttendeeService) {
 }
 
 func getAdditionalInfoHandler(w http.ResponseWriter, r *http.Request) {
-	ctx, id, area, err := ctxIdAreaAllowedAndExists_MustReturn(w, r)
+	ctx, id, area, err := ctxIdAreaAllowedAndExists_MustReturn(w, r, false)
 	if err != nil {
 		return
 	}
@@ -60,7 +60,7 @@ func getAdditionalInfoHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func writeAdditionalInfoHandler(w http.ResponseWriter, r *http.Request) {
-	ctx, id, area, err := ctxIdAreaAllowedAndExists_MustReturn(w, r)
+	ctx, id, area, err := ctxIdAreaAllowedAndExists_MustReturn(w, r, true)
 	if err != nil {
 		return
 	}
@@ -86,7 +86,7 @@ func writeAdditionalInfoHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func deleteAdditionalInfoHandler(w http.ResponseWriter, r *http.Request) {
-	ctx, id, area, err := ctxIdAreaAllowedAndExists_MustReturn(w, r)
+	ctx, id, area, err := ctxIdAreaAllowedAndExists_MustReturn(w, r, true)
 	if err != nil {
 		return
 	}
@@ -110,7 +110,7 @@ func deleteAdditionalInfoHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func ctxIdAreaAllowedAndExists_MustReturn(w http.ResponseWriter, r *http.Request) (context.Context, uint, string, error) {
+func ctxIdAreaAllowedAndExists_MustReturn(w http.ResponseWriter, r *http.Request, wantWriteAccess bool) (context.Context, uint, string, error) {
 	ctx := r.Context()
 
 	id, area, err := idAndAreaFromVarsValidated_MustReturn(ctx, w, r)
@@ -124,9 +124,16 @@ func ctxIdAreaAllowedAndExists_MustReturn(w http.ResponseWriter, r *http.Request
 		return ctx, id, area, err
 	}
 	if !allowed {
-		culprit := ctxvalues.Subject(ctx)
-		ctlutil.UnauthorizedError(ctx, w, r, "you are not authorized for this additional info area - the attempt has been logged", fmt.Sprintf("unauthorized access attempt for add info area %s by %s", area, culprit))
-		return ctx, id, area, errors.New("forbidden")
+		allowed, err = attendeeService.CanAccessOwnAdditionalInfoArea(ctx, id, wantWriteAccess, area)
+		if err != nil {
+			ctlutil.ErrorHandler(ctx, w, r, "addinfo.read.error", http.StatusInternalServerError, url.Values{})
+			return ctx, id, area, err
+		}
+		if !allowed {
+			culprit := ctxvalues.Subject(ctx)
+			ctlutil.UnauthorizedError(ctx, w, r, "you are not authorized for this additional info area - the attempt has been logged", fmt.Sprintf("unauthorized access attempt for add info area %s by %s", area, culprit))
+			return ctx, id, area, errors.New("forbidden")
+		}
 	}
 
 	_, err = attendeeService.GetAttendee(ctx, id)
@@ -156,7 +163,7 @@ func idAndAreaFromVarsValidated_MustReturn(ctx context.Context, w http.ResponseW
 		ctlutil.ErrorHandler(ctx, w, r, "addinfo.area.invalid", http.StatusBadRequest, url.Values{"area": []string{"the special value 'overdue' is used internally and is forbidden here"}})
 		return uint(id), area, errors.New("invalid additional info area")
 	}
-	if validation.NotInAllowedValues(config.AllowedPermissions(), area) {
+	if validation.NotInAllowedValues(config.AdditionalInfoFieldNames(), area) {
 		aulogging.Logger.Ctx(ctx).Warn().Printf("received additional info area '%s' not listed in configuration", area)
 		ctlutil.ErrorHandler(ctx, w, r, "addinfo.area.unlisted", http.StatusBadRequest, url.Values{"area": []string{"areas must be enabled in configuration"}})
 		return uint(id), area, errors.New("unlisted additional info area")

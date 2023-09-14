@@ -79,6 +79,25 @@ func TestGetAdditionalInfo_UserWithPermissionAllow(t *testing.T) {
 	require.Equal(t, `{"air3":"something"}`, response.body)
 }
 
+func TestGetAdditionalInfo_UserSelfAllow(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee with an additional info field set")
+	location1, att1 := tstRegisterAttendee(t, "air3a-")
+	created := tstPerformPost(location1+"/additional-info/selfread", `{"air3a":"something"}`, tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, created.status)
+
+	docs.When("when they attempt to access an additional info field with self read permissions")
+	token := tstValidUserToken(t, att1.Id)
+	response := tstPerformGet(location1+"/additional-info/selfread", token)
+
+	docs.Then("then the request is successful and they can retrieve the additional info again")
+	require.Equal(t, http.StatusOK, response.status)
+	require.Equal(t, `{"air3a":"something"}`, response.body)
+}
+
 func TestGetAdditionalInfo_AdminAllow(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
 	tstSetup(false, false, true)
@@ -247,6 +266,26 @@ func TestWriteAdditionalInfo_UserWithPermissionAllow(t *testing.T) {
 	require.Equal(t, `{"aiw3":"new-value"}`, readAgain.body)
 }
 
+func TestWriteAdditionalInfo_UserSelfWriteAllow(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee with an additional info field set")
+	location1, att1 := tstRegisterAttendee(t, "aiw3a-")
+	created := tstPerformPost(location1+"/additional-info/selfwrite", `{"aiw3a":"original-value"}`, tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, created.status)
+
+	docs.When("when they attempt to overwrite an additional info that has self write permissions configured")
+	token := tstValidUserToken(t, att1.Id)
+	response := tstPerformPost(location1+"/additional-info/selfwrite", `{"aiw3a":"new-value"}`, token)
+
+	docs.Then("then the request is successful and they can retrieve the additional info again")
+	require.Equal(t, http.StatusNoContent, response.status)
+	readAgain := tstPerformGet(location1+"/additional-info/selfwrite", tstValidAdminToken(t))
+	require.Equal(t, `{"aiw3a":"new-value"}`, readAgain.body)
+}
+
 func TestWriteAdditionalInfo_AdminAllow(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
 	tstSetup(false, false, true)
@@ -399,6 +438,26 @@ func TestDeleteAdditionalInfo_UserWithPermissionAllow(t *testing.T) {
 	docs.Then("then the request is successful and the entry has been deleted")
 	require.Equal(t, http.StatusNoContent, response.status)
 	readAgain := tstPerformGet(location1+"/additional-info/myarea", tstValidAdminToken(t))
+	require.Equal(t, http.StatusNotFound, readAgain.status)
+}
+
+func TestDeleteAdditionalInfo_UserSelfWriteAllow(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee with an additional info field set")
+	location1, att1 := tstRegisterAttendee(t, "aid3a-")
+	created := tstPerformPost(location1+"/additional-info/selfwrite", `{"aid3a":"something"}`, tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, created.status)
+
+	docs.When("when they attempt to delete the additional info entry for a field that has self write permission configured")
+	token := tstValidUserToken(t, att1.Id)
+	response := tstPerformDelete(location1+"/additional-info/selfwrite", token)
+
+	docs.Then("then the request is successful and the entry has been deleted")
+	require.Equal(t, http.StatusNoContent, response.status)
+	readAgain := tstPerformGet(location1+"/additional-info/selfwrite", tstValidAdminToken(t))
 	require.Equal(t, http.StatusNotFound, readAgain.status)
 }
 

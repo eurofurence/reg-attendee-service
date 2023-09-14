@@ -32,3 +32,24 @@ func (s *AttendeeServiceImplData) CanAccessAdditionalInfoArea(ctx context.Contex
 	allowed, err := s.subjectHasAdminPermissionEntry(ctx, loggedInSubject, area...)
 	return allowed, err
 }
+
+func (s *AttendeeServiceImplData) CanAccessOwnAdditionalInfoArea(ctx context.Context, attendeeId uint, wantWriteAccess bool, area string) (bool, error) {
+	att, err := database.GetRepository().GetAttendeeById(ctx, attendeeId)
+	if err != nil {
+		// attendee does not exist is checked later in order to not expose information
+		return false, nil
+	}
+
+	loggedInSubject := ctxvalues.Subject(ctx)
+	if loggedInSubject != "" && loggedInSubject == att.Identity {
+		conf := config.AdditionalInfoConfiguration(area)
+		if wantWriteAccess && conf.SelfWrite {
+			return true, nil
+		}
+		if !wantWriteAccess && conf.SelfRead {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
