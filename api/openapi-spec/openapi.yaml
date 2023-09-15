@@ -273,7 +273,11 @@ paths:
       tags:
         - additional
       summary: obtain the current additional info for an area
-      description: Returns the current additional info for an area (e.g. regdesk, sponsordesk, overdue, ...). User will need to have permission called {area} to access it.
+      description: | 
+        Returns the current additional info for an area (e.g. regdesk, sponsordesk, overdue, ...).
+        
+        User will need to have permissions on any of their registrations as set in configuration to access it.
+        If configuration allows self_read, then a user can also read this area on their own registration.
       operationId: getAdditionalInfo
       parameters:
         - name: id
@@ -336,9 +340,12 @@ paths:
         - additional
       summary: set the current additional info for an area
       description: |
-        Set the current additional info for an area (e.g. regdesk, sponsordesk, overdue, ...). User will need to have permission "area" to access it.
+        Set the current additional info for an area (e.g. regdesk, sponsordesk, overdue, ...).
         
         You can store an arbitrary json object here, but the length is limited to 1024 characters.
+        
+        User will need to have permissions on any of their registrations as set in configuration to access it. 
+        If configuration allows self_write, then a user can also read the given area on their own registration.
       operationId: setAdditionalInfo
       parameters:
         - name: id
@@ -407,7 +414,10 @@ paths:
         - additional
       summary: remove the current additional info for an area
       description: |
-        Remove the current additional info for an area (e.g. regdesk, sponsordesk, overdue, ...). User will need to have permission "area" to do this.
+        Remove the current additional info for an area (e.g. regdesk, sponsordesk, overdue, ...).
+
+        User will need to have permissions on any of their registrations as set in configuration to access it. 
+        If configuration allows self_write, then a user can also read the given area on their own registration.
       operationId: deleteAdditionalInfo
       parameters:
         - name: id

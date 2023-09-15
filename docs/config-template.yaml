@@ -66,9 +66,22 @@ dues:
 birthday:
   earliest: '1901-01-01'
   latest: '2004-08-24'
-permissions:
-  - regdesk
-  - sponsordesk
+additional_info_areas:
+  # the key is the "area" parameter in the API url (/attendees/{id}/additional-info/{area}).
+  # Key must be [a-z]+. The key "overdue" is reserved for internal use and thus not allowed here.
+  regdesk:
+    permissions:
+      - regdesk
+  sponsordesk:
+    permissions:
+      - sponsordesk
+  shipping:
+    self_read: true # allow a user to read this additional info area on their own registration
+    self_write: true # allow a user to write/delete this additional info area on their own registration
+    # a user needs to have any of the values listed under permissions: in the "permissions" field on their registration
+    # to have read and write access to this area for ALL registrations, not just their own
+    permissions:
+      - sponsordesk
 choices:
   flags:
     hc:

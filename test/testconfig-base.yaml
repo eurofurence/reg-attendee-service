@@ -32,10 +32,24 @@ dues:
 birthday:
   earliest: '1901-01-01'
   latest: '2001-08-14'
-permissions:
-  - regdesk
-  - sponsordesk
-  - myarea
+additional_info_areas:
+  regdesk:
+    permissions:
+      - regdesk
+  sponsordesk:
+    permissions:
+      - sponsordesk
+  myarea:
+    self_read: false
+    self_write: false
+    permissions:
+      - myarea
+  selfread:
+    self_read: true
+    self_write: false
+  selfwrite:
+    self_read: true
+    self_write: true
 choices:
   flags:
     hc:

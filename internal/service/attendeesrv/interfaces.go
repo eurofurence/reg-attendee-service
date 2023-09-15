@@ -73,11 +73,16 @@ type AttendeeService interface {
 	// If value is the empty string, the entry is deleted instead.
 	WriteAdditionalInfo(ctx context.Context, attendeeId uint, area string, value string) error
 
-	// CanAccessAdditionalInfoArea checks permission to access additional info for area.
+	// CanAccessAdditionalInfoArea checks permission to access additional info for a whole area.
 	//
 	// Normal users (loaded by identity) need a matching permissions entry in their admin info.
 	// Admins and Api Token can see all areas.
 	CanAccessAdditionalInfoArea(ctx context.Context, area ...string) (bool, error)
+
+	// CanAccessOwnAdditionalInfoArea checks permission to access ones own additional info for a given area
+	//
+	// This is only allowed for areas which have self_read or self_write configured.
+	CanAccessOwnAdditionalInfoArea(ctx context.Context, attendeeId uint, wantWriteAccess bool, area string) (bool, error)
 
 	// GenerateFakeRegistrations creates the specified number of fake registrations in the database.
 	//

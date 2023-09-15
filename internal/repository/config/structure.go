@@ -22,22 +22,22 @@ const HumanDateFormat = "02.01.2006"
 type (
 	// Application is the root configuration type
 	Application struct {
-		Service               ServiceConfig     `yaml:"service"`
-		Server                ServerConfig      `yaml:"server"`
-		Database              DatabaseConfig    `yaml:"database"`
-		Security              SecurityConfig    `yaml:"security"`
-		Logging               LoggingConfig     `yaml:"logging"`
-		Choices               FlagsPkgOptConfig `yaml:"choices"`
-		Permissions           []string          `yaml:"permissions"`
-		TShirtSizes           []string          `yaml:"tshirtsizes"`
-		Birthday              BirthdayConfig    `yaml:"birthday"`
-		GoLive                GoLiveConfig      `yaml:"go_live"`
-		Dues                  DuesConfig        `yaml:"dues"`
-		Countries             []string          `yaml:"countries"`
-		SpokenLanguages       []string          `yaml:"spoken_languages"`
-		RegistrationLanguages []string          `yaml:"registration_languages"`
-		Currency              string            `yaml:"currency"`
-		VatPercent            float64           `yaml:"vat_percent"` // used for manual dues
+		Service               ServiceConfig            `yaml:"service"`
+		Server                ServerConfig             `yaml:"server"`
+		Database              DatabaseConfig           `yaml:"database"`
+		Security              SecurityConfig           `yaml:"security"`
+		Logging               LoggingConfig            `yaml:"logging"`
+		Choices               FlagsPkgOptConfig        `yaml:"choices"`
+		AdditionalInfo        map[string]AddInfoConfig `yaml:"additional_info_areas"` // field name -> config
+		TShirtSizes           []string                 `yaml:"tshirtsizes"`
+		Birthday              BirthdayConfig           `yaml:"birthday"`
+		GoLive                GoLiveConfig             `yaml:"go_live"`
+		Dues                  DuesConfig               `yaml:"dues"`
+		Countries             []string                 `yaml:"countries"`
+		SpokenLanguages       []string                 `yaml:"spoken_languages"`
+		RegistrationLanguages []string                 `yaml:"registration_languages"`
+		Currency              string                   `yaml:"currency"`
+		VatPercent            float64                  `yaml:"vat_percent"` // used for manual dues
 	}
 
 	// ServiceConfig contains configuration values
@@ -128,6 +128,14 @@ type (
 		Mandatory     bool    `yaml:"at-least-one-mandatory"` // one of these MUST be chosen (no constraint if not set on any choices)
 		Constraint    string  `yaml:"constraint"`
 		ConstraintMsg string  `yaml:"constraint_msg"`
+	}
+
+	// AddInfoConfig configures access permissions to an additional info field
+	AddInfoConfig struct {
+		SelfRead    bool     `yaml:"self_read"`
+		SelfWrite   bool     `yaml:"self_write"`
+		Permissions []string `yaml:"permissions"` // name of permission (in admin info) to grant access
+		// could later also add groups
 	}
 
 	// BirthdayConfig is used for validation of attendee supplied birthday

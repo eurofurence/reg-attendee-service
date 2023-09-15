@@ -6,6 +6,7 @@ import (
 	"crypto/rsa"
 	"fmt"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
+	"sort"
 	"strings"
 	"time"
 )
@@ -115,11 +116,43 @@ func AllowedOptions() []string {
 	return sortedKeys(Configuration().Choices.Options)
 }
 
+func AdditionalInfoFieldNames() []string {
+	result := make([]string, 0)
+	for k := range Configuration().AdditionalInfo {
+		result = append(result, k)
+	}
+	sort.Strings(result)
+	return result
+}
+
+// AllowedPermissions returns a sorted unique map of all permissions referenced in
+// additional info configurations.
 func AllowedPermissions() []string {
-	if len(Configuration().Permissions) > 0 {
-		return Configuration().Permissions
+	resultMap := make(map[string]bool)
+	for _, v := range Configuration().AdditionalInfo {
+		for _, perm := range v.Permissions {
+			resultMap[perm] = true
+		}
+	}
+
+	result := make([]string, 0)
+	for k := range resultMap {
+		result = append(result, k)
+	}
+	sort.Strings(result)
+	return result
+}
+
+func AdditionalInfoConfiguration(fieldName string) AddInfoConfig {
+	v, ok := Configuration().AdditionalInfo[fieldName]
+	if ok {
+		return v
 	} else {
-		return []string{"regdesk", "sponsordesk"}
+		return AddInfoConfig{
+			SelfRead:    false,
+			SelfWrite:   false,
+			Permissions: []string{},
+		}
 	}
 }
 
