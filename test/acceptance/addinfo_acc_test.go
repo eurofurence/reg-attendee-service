@@ -98,6 +98,27 @@ func TestGetAdditionalInfo_UserSelfAllow(t *testing.T) {
 	require.Equal(t, `{"air3a":"something"}`, response.body)
 }
 
+func TestGetAdditionalInfo_UserOtherDeny(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee with an additional info field set")
+	location1, _ := tstRegisterAttendee(t, "air3b-")
+	created := tstPerformPost(location1+"/additional-info/selfread", `{"air3b":"something"}`, tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, created.status)
+
+	docs.Given("given another attendee with a different identity and no special permissions")
+	token := tstValidUserToken(t, 101)
+	_, _ = tstRegisterAttendeeWithToken(t, "air3b1-", token)
+
+	docs.When("when they attempt to access a self readable additional info field of another attendee")
+	response := tstPerformGet(location1+"/additional-info/selfread", token)
+
+	docs.Then("then the request is denied as unauthenticated (401) and the correct error is returned")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this additional info area - the attempt has been logged")
+}
+
 func TestGetAdditionalInfo_AdminAllow(t *testing.T) {
 	docs.Given("given the configuration for standard registration")
 	tstSetup(false, false, true)

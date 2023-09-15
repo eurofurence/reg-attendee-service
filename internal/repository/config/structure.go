@@ -28,7 +28,7 @@ type (
 		Security              SecurityConfig           `yaml:"security"`
 		Logging               LoggingConfig            `yaml:"logging"`
 		Choices               FlagsPkgOptConfig        `yaml:"choices"`
-		AdditionalInfo        map[string]AddInfoConfig `yaml:"additional_info"` // field name -> config
+		AdditionalInfo        map[string]AddInfoConfig `yaml:"additional_info_areas"` // field name -> config
 		TShirtSizes           []string                 `yaml:"tshirtsizes"`
 		Birthday              BirthdayConfig           `yaml:"birthday"`
 		GoLive                GoLiveConfig             `yaml:"go_live"`

@@ -32,7 +32,7 @@ dues:
 birthday:
   earliest: '1901-01-01'
   latest: '2001-08-14'
-additional_info:
+additional_info_areas:
   regdesk:
     permissions:
       - regdesk
