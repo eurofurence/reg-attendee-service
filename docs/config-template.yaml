@@ -127,16 +127,19 @@ choices:
       default: true
       at-least-one-mandatory: true
       visible_for: regdesk
-    late:
-      description: 'Late Fee'
-      price: 1000
+    early:
+      description: 'Early Bird Discount'
+      price: -500
       vat_percent: 19
       visible_for: regdesk
+      default: true
+      read_only: true
     door:
       description: 'At The Door Fee'
       price: 1000
       vat_percent: 19
       visible_for: regdesk
+      read_only: true
     stage:
       description: 'Entrance Fee (Stage Ticket)'
       price: 500
