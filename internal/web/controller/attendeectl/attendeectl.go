@@ -21,7 +21,6 @@ import (
 	"net/url"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -324,7 +323,7 @@ func choiceVisibilityCheckMustReturnOnError(ctx context.Context, w http.Response
 		// self
 		if choiceType == "flag" {
 			if choice.AdminOnly {
-				if !commaSeparatedContains(choice.VisibleFor, "self") {
+				if !sliceContains(choice.VisibleFor, "self") {
 					choiceNotAccessibleHandler(ctx, w, r, choiceType, code)
 					return errors.New("not accessible")
 				}
@@ -334,9 +333,8 @@ func choiceVisibilityCheckMustReturnOnError(ctx context.Context, w http.Response
 	} else {
 		// by area
 		allowed := false
-		if choice.VisibleFor != "" {
-			flagVisibleFor := strings.Split(choice.VisibleFor, ",")
-			allowed, err = attendeeService.CanAccessAdditionalInfoArea(ctx, flagVisibleFor...)
+		if len(choice.VisibleFor) > 0 {
+			allowed, err = attendeeService.CanAccessAdditionalInfoArea(ctx, choice.VisibleFor...)
 			if err != nil {
 				choiceErrorHandler(ctx, w, r, choiceType, code, err)
 				return errors.New("internal error")

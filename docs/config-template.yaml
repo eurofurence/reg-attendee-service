@@ -90,11 +90,13 @@ choices:
       description: 'Legal Name is Confidential'
     digi-book:
       description: 'Digital only convention booklet'
-      visible_for: regdesk
+      visible_for:
+        - regdesk
     ev:
       description: 'Eurofurence e.V. Member'
       admin_only: true
-      visible_for: regdesk
+      visible_for:
+        - regdesk
     terms-accepted:
       description: 'Accepted the terms'
       default: true
@@ -102,18 +104,27 @@ choices:
     guest:
       description: 'Guest of the Convention'
       admin_only: true
-      visible_for: self,regdesk,sponsordesk
+      visible_for:
+        - self
+        - regdesk
+        - sponsordesk
     skip_ban_check:
       description: 'Bypass ban check for this attendee'
       admin_only: true
     staff:
       description: 'Staff'
       admin_only: true
-      visible_for: self,regdesk,sponsordesk
+      visible_for:
+        - self
+        - regdesk
+        - sponsordesk
     director:
       description: 'Director'
       admin_only: true
-      visible_for: self,regdesk,sponsordesk
+      visible_for:
+        - self
+        - regdesk
+        - sponsordesk
   packages:
     room-none:
       description: 'No Room'
@@ -126,45 +137,54 @@ choices:
       vat_percent: 19
       default: true
       at-least-one-mandatory: true
-      visible_for: regdesk
+      visible_for:
+        - regdesk
     early:
       description: 'Early Bird Discount'
       price: -500
       vat_percent: 19
-      visible_for: regdesk
+      visible_for:
+        - regdesk
       default: true
       read_only: true
     door:
       description: 'At The Door Fee'
       price: 1000
       vat_percent: 19
-      visible_for: regdesk
+      visible_for:
+        - regdesk
       read_only: true
     stage:
       description: 'Entrance Fee (Stage Ticket)'
       price: 500
       vat_percent: 19
       default: true
-      visible_for: regdesk
+      visible_for:
+        - regdesk
     sponsor:
       description: 'Sponsor Upgrade'
       price: 8000
       vat_percent: 19
-      visible_for: regdesk,sponsordesk
+      visible_for:
+        - regdesk
+        - sponsordesk
     sponsor2:
       description: 'Supersponsor Upgrade'
       price: 19000
       vat_percent: 19
       constraint: '!sponsor'
       constraint_msg: 'Please choose only one of Sponsor or Supersponsor.'
-      visible_for: regdesk,sponsordesk
+      visible_for:
+        - regdesk
+        - sponsordesk
     tshirt:
       description: 'Paid T-Shirt (non-sponsor)'
       price: 2000
       vat_percent: 19
       constraint: '!sponsor,!sponsor2'
       constraint_msg: 'Sponsors and supersponsors get their T-Shirt for free.'
-      visible_for: sponsordesk
+      visible_for:
+        - sponsordesk
     day-wed:
       description: 'Day Guest (Wednesday)'
       price: 7000
@@ -172,7 +192,8 @@ choices:
       at-least-one-mandatory: true
       constraint: '!attendance,!stage'
       constraint_msg: 'Must disable Convention Ticket and Stage Ticket for Day Guests.'
-      visible_for: regdesk
+      visible_for:
+        - regdesk
     day-thu:
       description: 'Day Guest (Thursday)'
       price: 7000
@@ -180,7 +201,8 @@ choices:
       at-least-one-mandatory: true
       constraint: '!attendance,!stage'
       constraint_msg: 'Must disable Convention Ticket and Stage Ticket for Day Guests.'
-      visible_for: regdesk
+      visible_for:
+        - regdesk
     day-fri:
       description: 'Day Guest (Friday)'
       price: 7000
@@ -188,7 +210,8 @@ choices:
       at-least-one-mandatory: true
       constraint: '!attendance,!stage'
       constraint_msg: 'Must disable Convention Ticket and Stage Ticket for Day Guests.'
-      visible_for: regdesk
+      visible_for:
+        - regdesk
     day-sat:
       description: 'Day Guest (Saturday)'
       price: 7000
@@ -196,7 +219,8 @@ choices:
       at-least-one-mandatory: true
       constraint: '!attendance,!stage'
       constraint_msg: 'Must disable Convention Ticket and Stage Ticket for Day Guests.'
-      visible_for: regdesk
+      visible_for:
+        - regdesk
     dealer-half:
       description: 'Dealer Table Fee (Half)'
       price: 5000

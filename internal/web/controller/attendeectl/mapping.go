@@ -86,7 +86,11 @@ func addWrappingCommas(v string) string {
 
 func commaSeparatedContains(commaSeparated string, singleValue string) bool {
 	list := strings.Split(removeWrappingCommas(commaSeparated), ",")
-	for _, e := range list {
+	return sliceContains(list, singleValue)
+}
+
+func sliceContains(slice []string, singleValue string) bool {
+	for _, e := range slice {
 		if e == singleValue {
 			return true
 		}
