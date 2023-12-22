@@ -13,7 +13,7 @@ func AddRequestIdToContextAndResponse(next http.Handler) http.Handler {
 		ctx := r.Context()
 
 		reqIdStr := r.Header.Get(TraceIdHeader)
-		if reqIdStr == "" {
+		if reqIdStr == "" || len(reqIdStr) > 8 {
 			reqUuid, err := uuid.NewRandom()
 			if err == nil {
 				reqIdStr = reqUuid.String()[:8]
