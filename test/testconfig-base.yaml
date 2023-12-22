@@ -56,11 +56,13 @@ choices:
       description: 'Wheelchair'
     anon:
       description: 'Legal Name is Confidential'
-      visible_for: regdesk
+      visible_for:
+        - regdesk
     ev:
       description: 'Eurofurence e.V. Member'
       read_only: true
-      visible_for: regdesk
+      visible_for:
+        - regdesk
     terms-accepted:
       description: 'Accepted the terms'
       default: true
@@ -68,7 +70,10 @@ choices:
     guest:
       description: 'Guest of the Convention'
       admin_only: true
-      visible_for: self,sponsordesk,regdesk
+      visible_for:
+        - self
+        - sponsordesk
+        - regdesk
     skip_ban_check:
       description: 'Bypass ban check for this attendee'
       admin_only: true
@@ -97,19 +102,22 @@ choices:
       description: 'Sponsor Upgrade'
       price: 6500
       vat_percent: 19
-      visible_for: sponsordesk
+      visible_for:
+        - sponsordesk
     sponsor2:
       description: 'Supersponsor Upgrade'
       price: 16000
       vat_percent: 19
       constraint: '!sponsor'
       constraint_msg: 'Please choose only one of Sponsor or Supersponsor.'
-      visible_for: sponsordesk
+      visible_for:
+        - sponsordesk
     boat-trip:
       description: 'Boat Trip'
       price: 2000
       vat_percent: 19
-      visible_for: regdesk
+      visible_for:
+        - regdesk
     mountain-trip:
       description: 'Mountain Trip'
       price: 3000
@@ -141,12 +149,14 @@ choices:
   options:
     art:
       description: 'Artist'
-      visible_for: sponsordesk
+      visible_for:
+        - sponsordesk
     anim:
       description: 'Animator'
     music:
       description: 'Musician'
-      visible_for: sponsordesk
+      visible_for:
+        - sponsordesk
     suit:
       description: 'Fursuiter'
 tshirtsizes:

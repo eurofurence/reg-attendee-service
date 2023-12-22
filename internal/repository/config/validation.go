@@ -6,6 +6,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/validation"
 	"github.com/golang-jwt/jwt/v4"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 )
@@ -52,6 +53,20 @@ func setConfigurationDefaults(c *Application) {
 	}
 	if c.Dues.DueDays == 0 {
 		c.Dues.DueDays = 14
+	}
+}
+
+const (
+	envDbPassword = "REG_SECRET_DB_PASSWORD"
+	envApiToken   = "REG_SECRET_API_TOKEN"
+)
+
+func applyEnvVarOverrides(c *Application) {
+	if dbPassword := os.Getenv(envDbPassword); dbPassword != "" {
+		c.Database.Password = dbPassword
+	}
+	if apiToken := os.Getenv(envApiToken); apiToken != "" {
+		c.Security.Fixed.Api = apiToken
 	}
 }
 
