@@ -63,6 +63,7 @@ choices:
       read_only: true
       visible_for:
         - regdesk
+      group: 'ev'
     terms-accepted:
       description: 'Accepted the terms'
       default: true

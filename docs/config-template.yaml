@@ -94,7 +94,9 @@ choices:
         - regdesk
     ev:
       description: 'Eurofurence e.V. Member'
-      admin_only: true
+      read_only: true
+      # auto-set this field during initial reg if group id 'ev' is present in token
+      group: ev
       visible_for:
         - regdesk
     terms-accepted:

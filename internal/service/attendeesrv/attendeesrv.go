@@ -43,8 +43,23 @@ func (s *AttendeeServiceImplData) RegisterNewAttendee(ctx context.Context, atten
 		}
 	}
 
+	attendee.Flags = s.setAutoFlags(ctx, attendee.Flags)
+
 	id, err := database.GetRepository().AddAttendee(ctx, attendee)
 	return id, err
+}
+
+func (s *AttendeeServiceImplData) setAutoFlags(ctx context.Context, flags string) string {
+	for key, conf := range config.FlagsConfigNoAdmin() {
+		if conf.Group != "" {
+			if ctxvalues.IsAuthorizedAsGroup(ctx, conf.Group) {
+				if !strings.Contains(flags, ","+key+",") {
+					flags += key + ","
+				}
+			}
+		}
+	}
+	return flags
 }
 
 func (s *AttendeeServiceImplData) GetAttendee(ctx context.Context, id uint) (*entity.Attendee, error) {
