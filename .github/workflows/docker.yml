@@ -3,7 +3,7 @@ name: Create and publish Docker image
 on:
   push:
     branches:
-      - 'main'
+      - 'issue-188-preps'
 
 jobs:
   call_build-and-push-image:
