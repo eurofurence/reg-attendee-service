@@ -140,13 +140,12 @@ choices:
       constraint: '!attendance,!stage'
       constraint_msg: 'Must disable Convention Ticket and Stage Ticket for Day Guests.'
     day-sat:
-      description: 'Day Guest (Saturday)'
+      description: 'Day Guest (Saturday) Self Booking Allowed due to constraints'
       price: 6000
       vat_percent: 19
-      read_only: true
       at-least-one-mandatory: true
-      constraint: '!attendance,!stage'
-      constraint_msg: 'Must disable Convention Ticket and Stage Ticket for Day Guests.'
+      constraint: '!stage,!attendance'
+      constraint_msg: 'Must disable Stage Ticket for Saturday Day Guests.'
   options:
     art:
       description: 'Artist'

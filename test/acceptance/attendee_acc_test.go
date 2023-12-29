@@ -763,6 +763,43 @@ func TestCreateNewAttendee_AutomaticGroupFlag_CannotSet(t *testing.T) {
 	})
 }
 
+func TestCreateNewAttendee_ReadonlyDefaultPackageWithConstraintRemovable(t *testing.T) {
+	docs.Given("given the configuration for login-only registration after normal reg is open")
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given a logged in user")
+	token := tstValidUserToken(t, 101)
+
+	docs.When("when they create a new attendee and remove a read-only default package with matching constraint (stage)")
+	attendeeSent := tstBuildValidAttendee("na63-")
+	attendeeSent.Packages = "room-none,day-sat,boat-trip"
+	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), token)
+
+	docs.Then("then the attendee is successfully created")
+	require.Equal(t, http.StatusCreated, response.status, "unexpected http response status")
+	require.Regexp(t, "^\\/api\\/rest\\/v1\\/attendees\\/[1-9][0-9]*$", response.location, "invalid location header in response")
+}
+
+func TestCreateNewAttendee_ReadonlyDefaultPackageNoConstraintNotRemovable(t *testing.T) {
+	docs.Given("given the configuration for login-only registration after normal reg is open")
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given a logged in user")
+	token := tstValidUserToken(t, 101)
+
+	docs.When("when they create a new attendee and try to remove a read-only default package with no matching constraint (room-none)")
+	attendeeSent := tstBuildValidAttendee("na65-")
+	attendeeSent.Packages = "day-sat"
+	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), token)
+
+	docs.Then("then the attempt is rejected as invalid (400) with an appropriate error response")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
+		"packages": []string{"forbidden select or deselect of package room-none - only an admin can do that"},
+	})
+}
+
 // --- update attendee ---
 
 func TestUpdateExistingAttendee_Self(t *testing.T) {

@@ -143,19 +143,23 @@ choices:
         - regdesk
     early:
       description: 'Early Bird Discount'
-      price: -500
+      price: -1500
       vat_percent: 19
       visible_for:
         - regdesk
       default: true
       read_only: true
-    door:
-      description: 'At The Door Fee'
-      price: 1000
+      constraint: '!day-wed,!day-thu,!day-fri,!day-sat'
+      constraint_msg: 'Early Bird Discount does not apply to Day Tickets'
+    late:
+      description: 'Late Fee'
+      price: 1500
       vat_percent: 19
       visible_for:
         - regdesk
       read_only: true
+      constraint: '!day-wed,!day-thu,!day-fri,!day-sat'
+      constraint_msg: 'Late Fee does not apply to Day Tickets'
     stage:
       description: 'Entrance Fee (Stage Ticket)'
       price: 500
