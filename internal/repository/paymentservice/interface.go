@@ -28,6 +28,7 @@ type PaymentMethod string
 const (
 	Credit   PaymentMethod = "credit"
 	Paypal   PaymentMethod = "paypal"
+	Cash     PaymentMethod = "cash"
 	Transfer PaymentMethod = "transfer"
 	Internal PaymentMethod = "internal"
 	Gift     PaymentMethod = "gift"
