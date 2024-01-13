@@ -94,7 +94,9 @@ choices:
         - regdesk
     ev:
       description: 'Eurofurence e.V. Member'
-      admin_only: true
+      read_only: true
+      # auto-set this field during initial reg if group id 'ev' is present in token
+      group: ev
       visible_for:
         - regdesk
     terms-accepted:
@@ -133,7 +135,7 @@ choices:
       read_only: true
     attendance:
       description: 'Entrance Fee (Convention Ticket)'
-      price: 12000
+      price: 16000
       vat_percent: 19
       default: true
       at-least-one-mandatory: true
@@ -141,19 +143,23 @@ choices:
         - regdesk
     early:
       description: 'Early Bird Discount'
-      price: -500
+      price: -1500
       vat_percent: 19
       visible_for:
         - regdesk
       default: true
       read_only: true
-    door:
-      description: 'At The Door Fee'
-      price: 1000
+      constraint: '!day-wed,!day-thu,!day-fri,!day-sat'
+      constraint_msg: 'Early Bird Discount does not apply to Day Tickets'
+    late:
+      description: 'Late Fee'
+      price: 1500
       vat_percent: 19
       visible_for:
         - regdesk
       read_only: true
+      constraint: '!day-wed,!day-thu,!day-fri,!day-sat'
+      constraint_msg: 'Late Fee does not apply to Day Tickets'
     stage:
       description: 'Entrance Fee (Stage Ticket)'
       price: 500
@@ -163,14 +169,14 @@ choices:
         - regdesk
     sponsor:
       description: 'Sponsor Upgrade'
-      price: 8000
+      price: 10000
       vat_percent: 19
       visible_for:
         - regdesk
         - sponsordesk
     sponsor2:
       description: 'Supersponsor Upgrade'
-      price: 19000
+      price: 20000
       vat_percent: 19
       constraint: '!sponsor'
       constraint_msg: 'Please choose only one of Sponsor or Supersponsor.'
@@ -187,7 +193,7 @@ choices:
         - sponsordesk
     day-wed:
       description: 'Day Guest (Wednesday)'
-      price: 7000
+      price: 9000
       vat_percent: 19
       at-least-one-mandatory: true
       constraint: '!attendance,!stage'
@@ -196,7 +202,7 @@ choices:
         - regdesk
     day-thu:
       description: 'Day Guest (Thursday)'
-      price: 7000
+      price: 9000
       vat_percent: 19
       at-least-one-mandatory: true
       constraint: '!attendance,!stage'
@@ -205,7 +211,7 @@ choices:
         - regdesk
     day-fri:
       description: 'Day Guest (Friday)'
-      price: 7000
+      price: 9000
       vat_percent: 19
       at-least-one-mandatory: true
       constraint: '!attendance,!stage'
@@ -214,7 +220,7 @@ choices:
         - regdesk
     day-sat:
       description: 'Day Guest (Saturday)'
-      price: 7000
+      price: 9000
       vat_percent: 19
       at-least-one-mandatory: true
       constraint: '!attendance,!stage'
@@ -434,7 +440,7 @@ spoken_languages:
   - nb
   - ne
   - nl
-  - no
+  - 'no'
   - oc
   - pa
   - pl
@@ -637,7 +643,7 @@ countries:
   - NG
   - NI
   - NL
-  - NO
+  - 'NO'
   - NP
   - NR
   - NU

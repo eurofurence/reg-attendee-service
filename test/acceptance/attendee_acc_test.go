@@ -717,6 +717,89 @@ func TestCreateNewAttendee_LoginRequired_Admin_MayUseDifferentEmail(t *testing.T
 	require.Regexp(t, "^\\/api\\/rest\\/v1\\/attendees\\/[1-9][0-9]*$", response.location, "invalid location header in response")
 }
 
+func TestCreateNewAttendee_AutomaticGroupFlag(t *testing.T) {
+	docs.Given("given the configuration for login-only registration after normal reg is open")
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given a logged in user who has the 'ev' group")
+	token := tstValidUserToken(t, 102)
+
+	docs.When("when they create a new attendee")
+	attendeeSent := tstBuildValidAttendee("na62-")
+	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), token)
+
+	docs.Then("then the attendee is successfully created")
+	require.Equal(t, http.StatusCreated, response.status, "unexpected http response status")
+	require.Regexp(t, "^\\/api\\/rest\\/v1\\/attendees\\/[1-9][0-9]*$", response.location, "invalid location header in response")
+
+	docs.Then("and it has been automatically assigned the 'ev' flag even though it was not provided")
+	readAgainResponse := tstPerformGet(response.location, token)
+	attendeeReadAgain := attendee.AttendeeDto{}
+	tstParseJson(readAgainResponse.body, &attendeeReadAgain)
+	// difference in id is ok, so copy it over to expected
+	attendeeSent.Id = attendeeReadAgain.Id
+	// we expect the 'ev' flag added
+	attendeeSent.Flags += ",ev"
+	require.EqualValues(t, attendeeSent, attendeeReadAgain, "attendee data read did not match expected data")
+}
+
+func TestCreateNewAttendee_AutomaticGroupFlag_CannotSet(t *testing.T) {
+	docs.Given("given the configuration for login-only registration after normal reg is open")
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given a logged in user who has the 'ev' group")
+	token := tstValidUserToken(t, 102)
+
+	docs.When("when they attempt to create a new attendee with the automatic 'ev' flag")
+	attendeeSent := tstBuildValidAttendee("na63-")
+	attendeeSent.Flags += ",ev"
+	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), token)
+
+	docs.Then("then the attempt is rejected as invalid (400) with an appropriate error response")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
+		"flags": []string{"forbidden select or deselect of flag ev - only an admin can do that"},
+	})
+}
+
+func TestCreateNewAttendee_ReadonlyDefaultPackageWithConstraintRemovable(t *testing.T) {
+	docs.Given("given the configuration for login-only registration after normal reg is open")
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given a logged in user")
+	token := tstValidUserToken(t, 101)
+
+	docs.When("when they create a new attendee and remove a read-only default package with matching constraint (stage)")
+	attendeeSent := tstBuildValidAttendee("na63-")
+	attendeeSent.Packages = "room-none,day-sat,boat-trip"
+	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), token)
+
+	docs.Then("then the attendee is successfully created")
+	require.Equal(t, http.StatusCreated, response.status, "unexpected http response status")
+	require.Regexp(t, "^\\/api\\/rest\\/v1\\/attendees\\/[1-9][0-9]*$", response.location, "invalid location header in response")
+}
+
+func TestCreateNewAttendee_ReadonlyDefaultPackageNoConstraintNotRemovable(t *testing.T) {
+	docs.Given("given the configuration for login-only registration after normal reg is open")
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given a logged in user")
+	token := tstValidUserToken(t, 101)
+
+	docs.When("when they create a new attendee and try to remove a read-only default package with no matching constraint (room-none)")
+	attendeeSent := tstBuildValidAttendee("na65-")
+	attendeeSent.Packages = "day-sat"
+	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), token)
+
+	docs.Then("then the attempt is rejected as invalid (400) with an appropriate error response")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
+		"packages": []string{"forbidden select or deselect of package room-none - only an admin can do that"},
+	})
+}
+
 // --- update attendee ---
 
 func TestUpdateExistingAttendee_Self(t *testing.T) {

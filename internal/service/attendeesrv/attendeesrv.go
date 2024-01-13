@@ -43,8 +43,23 @@ func (s *AttendeeServiceImplData) RegisterNewAttendee(ctx context.Context, atten
 		}
 	}
 
+	attendee.Flags = s.setAutoFlags(ctx, attendee.Flags)
+
 	id, err := database.GetRepository().AddAttendee(ctx, attendee)
 	return id, err
+}
+
+func (s *AttendeeServiceImplData) setAutoFlags(ctx context.Context, flags string) string {
+	for key, conf := range config.FlagsConfigNoAdmin() {
+		if conf.Group != "" {
+			if ctxvalues.IsAuthorizedAsGroup(ctx, conf.Group) {
+				if !strings.Contains(flags, ","+key+",") {
+					flags += key + ","
+				}
+			}
+		}
+	}
+	return flags
 }
 
 func (s *AttendeeServiceImplData) GetAttendee(ctx context.Context, id uint) (*entity.Attendee, error) {
@@ -202,14 +217,39 @@ func userAlreadyHasAnotherRegistration(ctx context.Context, identity string, exp
 }
 
 func checkNoForbiddenChanges(ctx context.Context, what string, key string, choiceConfig config.ChoiceConfig, originalChoices map[string]bool, newChoices map[string]bool) error {
-	if choiceConfig.AdminOnly || choiceConfig.ReadOnly {
-		if originalChoices[key] != newChoices[key] {
+	if originalChoices[key] != newChoices[key] {
+		// tolerate removing a read-only choice that has a constraint that forbids it anyway
+		if choiceConfig.ReadOnly {
+			if originalChoices[key] && !newChoices[key] {
+				if canAllowRemovalDueToConstraint(ctx, what, key, choiceConfig, originalChoices, newChoices) {
+					return nil
+				}
+			}
+		}
+		if choiceConfig.AdminOnly || choiceConfig.ReadOnly {
 			if !ctxvalues.HasApiToken(ctx) && !ctxvalues.IsAuthorizedAsGroup(ctx, config.OidcAdminGroup()) {
 				return fmt.Errorf("forbidden select or deselect of %s %s - only an admin can do that", what, key)
 			}
 		}
 	}
 	return nil
+}
+
+func canAllowRemovalDueToConstraint(ctx context.Context, what string, key string, choiceConfig config.ChoiceConfig, originalChoices map[string]bool, newChoices map[string]bool) bool {
+	if choiceConfig.Constraint != "" {
+		constraints := strings.Split(choiceConfig.Constraint, ",")
+		for _, cn := range constraints {
+			constraintK := cn
+			if strings.HasPrefix(cn, "!") {
+				constraintK = strings.TrimPrefix(cn, "!")
+				if newChoices[constraintK] {
+					aulogging.Logger.Ctx(ctx).Info().Printf("can allow removal of read only %s %s - it would violate a constraint for %s anyway", what, key, constraintK)
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
 
 func checkNoForbiddenChangesAfterPayment(ctx context.Context, what string, key string, choiceConfig config.ChoiceConfig, configuration map[string]config.ChoiceConfig, originalChoices map[string]bool, newChoices map[string]bool, currentStatus status.Status) error {

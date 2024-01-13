@@ -4,9 +4,12 @@ on:
   push:
     branches:
       - 'main'
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
 
 jobs:
-  call_build-and-push-image:
+  call_build-and-push-image_latest:
+    if: startsWith(github.ref, 'refs/heads/')
     permissions:
       contents: read
       packages: write
@@ -14,6 +17,22 @@ jobs:
     with:
       image-name: ${{ github.repository }}
       image-tags: latest
+      full-repo-url: https://github.com/${{ github.repository }}
+      branch-or-tag-name: ${{ github.ref_name }}
+      commit-hash: ${{ github.sha }}
+      registry-user: ${{ github.actor }}
+    secrets:
+      registry-pass: ${{ secrets.GITHUB_TOKEN }}
+
+  call_build-and-push-image_versioned:
+    if: startsWith(github.ref, 'refs/tags/v0.1.')
+    permissions:
+      contents: read
+      packages: write
+    uses: eurofurence/reg-workflows/.github/workflows/docker-build-push.yml@main
+    with:
+      image-name: ${{ github.repository }}
+      image-tags: ${{ github.ref_name }} v0.1
       full-repo-url: https://github.com/${{ github.repository }}
       branch-or-tag-name: ${{ github.ref_name }}
       commit-hash: ${{ github.sha }}
