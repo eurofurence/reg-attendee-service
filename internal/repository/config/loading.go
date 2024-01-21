@@ -19,7 +19,13 @@ var (
 	configurationFilename string
 	dbMigrate             bool
 	ecsLogging            bool
-	generateCount         uint
+
+	generateCount uint
+	parallel      uint
+	baseUrl       string
+	cookieDomain  string
+	idToken       string
+	accessToken   string
 
 	parsedKeySet []*rsa.PublicKey
 )
@@ -36,7 +42,15 @@ func init() {
 	flag.StringVar(&configurationFilename, "config", "", "config file path")
 	flag.BoolVar(&dbMigrate, "migrate-database", false, "migrate database on startup")
 	flag.BoolVar(&ecsLogging, "ecs-json-logging", false, "switch to structured json logging")
-	flag.UintVar(&generateCount, "generate-count", 0, "number of fake registrations to generate (separate generator binary only)")
+}
+
+func AdditionalGeneratorCommandLineFlags() {
+	flag.UintVar(&generateCount, "generate-count", 0, "total number of fake registrations to generate (separate generator/loadtest binaries only)")
+	flag.UintVar(&parallel, "parallel", 0, "number of parallel goroutines to use (separate generator/loadtest binaries only)")
+	flag.StringVar(&baseUrl, "base-url", "", "base url of target attendee service (separate generator/loadtest binaries only)")
+	flag.StringVar(&cookieDomain, "cookie-domain", "", "domain for cookies (separate generator/loadtest binaries only)")
+	flag.StringVar(&idToken, "id-token", "", "id token to use (separate generator/loadtest binaries only)")
+	flag.StringVar(&accessToken, "access-token", "", "access token to use (separate generator/loadtest binaries only)")
 }
 
 // ParseCommandLineFlags is exposed separately so you can skip it for tests

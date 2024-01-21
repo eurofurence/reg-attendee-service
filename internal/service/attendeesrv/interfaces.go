@@ -88,6 +88,13 @@ type AttendeeService interface {
 	//
 	// Only for use on test systems.
 	GenerateFakeRegistrations(ctx context.Context, count uint) error
+
+	// SendFakeRegistrationToAPI sends a fake registration via the API.
+	//
+	// Only for use on test systems.
+	//
+	// Must configure identity_anonymize on the receiver.
+	SendFakeRegistrationToAPI(ctx context.Context) (string, error)
 }
 
 var (

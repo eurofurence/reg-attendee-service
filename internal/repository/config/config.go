@@ -15,8 +15,28 @@ func UseEcsLogging() bool {
 	return ecsLogging
 }
 
-func GenerateCount() uint {
+func GeneratorGenerateCount() uint {
 	return generateCount
+}
+
+func GeneratorParallel() uint {
+	return parallel
+}
+
+func GeneratorBaseUrl() string {
+	return baseUrl
+}
+
+func GeneratorCookieDomain() string {
+	return cookieDomain
+}
+
+func GeneratorIdToken() string {
+	return idToken
+}
+
+func GeneratorAccessToken() string {
+	return accessToken
 }
 
 func ServerAddr() string {
@@ -267,6 +287,10 @@ func CorsAllowOrigin() string {
 
 func RequireLoginForReg() bool {
 	return Configuration().Security.RequireLogin
+}
+
+func AnonymizeIdentity() bool {
+	return Configuration().Security.AnonymizeIdentity
 }
 
 func PaymentServiceBaseUrl() string {

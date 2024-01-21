@@ -29,8 +29,13 @@ func (s *AttendeeServiceImplData) RegisterNewAttendee(ctx context.Context, atten
 		return 0, errors.New("duplicate attendee data - you are already registered")
 	}
 
-	// record which user owns this attendee
-	attendee.Identity = ctxvalues.Subject(ctx)
+	if config.AnonymizeIdentity() {
+		// used for testing with generated fake regs
+		attendee.Identity = randomString(10, 12, 0) + "_gen"
+	} else {
+		// record which user owns this attendee
+		attendee.Identity = ctxvalues.Subject(ctx)
+	}
 
 	if config.RequireLoginForReg() {
 		alreadyHasRegistration, err := userAlreadyHasAnotherRegistration(ctx, attendee.Identity, 0)
