@@ -52,6 +52,8 @@ security:
     allow_origin: 'http://localhost:8000'
   # set this to true to require a valid oidc token for initial reg. This allow the service to store the subject of the token and use it for authorization
   require_login_for_reg: true
+  # set this to true temporarily to use the load testing command with constant tokens. Never use in production.
+  # anonymize_identity: true
 logging:
   severity: INFO
   style: plain # or ecs (elastic common schema), the default

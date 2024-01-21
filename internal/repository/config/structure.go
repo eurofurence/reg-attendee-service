@@ -71,10 +71,11 @@ type (
 
 	// SecurityConfig configures everything related to security
 	SecurityConfig struct {
-		Fixed        FixedTokenConfig    `yaml:"fixed_token"`
-		Oidc         OpenIdConnectConfig `yaml:"oidc"`
-		Cors         CorsConfig          `yaml:"cors"`
-		RequireLogin bool                `yaml:"require_login_for_reg"`
+		Fixed             FixedTokenConfig    `yaml:"fixed_token"`
+		Oidc              OpenIdConnectConfig `yaml:"oidc"`
+		Cors              CorsConfig          `yaml:"cors"`
+		RequireLogin      bool                `yaml:"require_login_for_reg"`
+		AnonymizeIdentity bool                `yaml:"anonymize_identity"`
 	}
 
 	FixedTokenConfig struct {

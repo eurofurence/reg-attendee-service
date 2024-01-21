@@ -159,6 +159,10 @@ func (s *MockAttendeeService) GenerateFakeRegistrations(ctx context.Context, cou
 	return nil
 }
 
+func (s *MockAttendeeService) SendFakeRegistrationToAPI(ctx context.Context) (string, error) {
+	return "", nil
+}
+
 func tstSetupServiceMocks() {
 	attendeeService = &MockAttendeeService{}
 }
