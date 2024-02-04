@@ -84,6 +84,11 @@ additional_info_areas:
     # to have read and write access to this area for ALL registrations, not just their own
     permissions:
       - sponsordesk
+  dealerreg:
+    self_read: true
+    permissions:
+      - regdesk
+      - sponsordesk
 choices:
   flags:
     hc:
@@ -234,28 +239,35 @@ choices:
       price: 5000
       vat_percent: 19
       read_only: true
-      constraint: '!dealer-full,!dealer-double,!dealer-quad'
+      constraint: '!dealer-full,!dealer-fullplus,!dealer-double,!dealer-quad'
       constraint_msg: 'Cannot mix dealer table packages.'
     dealer-full:
       description: 'Dealer Table Fee (Full)'
       price: 10000
       vat_percent: 19
       read_only: true
-      constraint: '!dealer-half,!dealer-double,!dealer-quad'
+      constraint: '!dealer-half,!dealer-fullplus,!dealer-double,!dealer-quad'
+      constraint_msg: 'Cannot mix dealer table packages.'
+    dealer-fullplus:
+      description: 'Dealer Table Fee (Full Plus)'
+      price: 15000
+      vat_percent: 19
+      read_only: true
+      constraint: '!dealer-half,!dealer-full,!dealer-double,!dealer-quad'
       constraint_msg: 'Cannot mix dealer table packages.'
     dealer-double:
       description: 'Dealer Table Fee (Double)'
       price: 20000
       vat_percent: 19
       read_only: true
-      constraint: '!dealer-half,!dealer-full,!dealer-quad'
+      constraint: '!dealer-half,!dealer-full,!dealer-fullplus,!dealer-quad'
       constraint_msg: 'Cannot mix dealer table packages.'
     dealer-quad:
       description: 'Dealer Table Fee (Quad)'
       price: 40000
       vat_percent: 19
       read_only: true
-      constraint: '!dealer-half,!dealer-full,!dealer-double'
+      constraint: '!dealer-half,!dealer-full,!dealer-fullplus,!dealer-double'
       constraint_msg: 'Cannot mix dealer table packages.'
     boat-trip:
       description: 'Summerboat Boat Trip'
