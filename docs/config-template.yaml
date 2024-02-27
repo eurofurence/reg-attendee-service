@@ -154,7 +154,7 @@ choices:
       vat_percent: 19
       visible_for:
         - regdesk
-      default: true
+      default: false
       read_only: true
       constraint: '!day-wed,!day-thu,!day-fri,!day-sat'
       constraint_msg: 'Early Bird Discount does not apply to Day Tickets'
@@ -164,6 +164,7 @@ choices:
       vat_percent: 19
       visible_for:
         - regdesk
+      default: false
       read_only: true
       constraint: '!day-wed,!day-thu,!day-fri,!day-sat'
       constraint_msg: 'Late Fee does not apply to Day Tickets'
