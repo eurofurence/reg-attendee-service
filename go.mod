@@ -6,7 +6,7 @@ require (
 	github.com/StephanHCB/go-autumn-logging v0.4.0
 	github.com/StephanHCB/go-autumn-logging-zerolog v0.6.0
 	github.com/StephanHCB/go-autumn-restclient v0.8.1
-	github.com/StephanHCB/go-autumn-restclient-circuitbreaker v0.4.1
+	github.com/StephanHCB/go-autumn-restclient-circuitbreaker v0.5.0
 	github.com/d4l3k/messagediff v1.2.1
 	github.com/go-chi/chi/v5 v5.1.0
 	github.com/go-http-utils/headers v0.0.0-20181008091004-fed159eddc2a
@@ -29,7 +29,7 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/sony/gobreaker v0.5.0 // indirect
+	github.com/sony/gobreaker v1.0.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	golang.org/x/sys v0.12.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
