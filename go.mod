@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/StephanHCB/go-autumn-logging v0.4.0
 	github.com/StephanHCB/go-autumn-logging-zerolog v0.6.0
-	github.com/StephanHCB/go-autumn-restclient v0.8.0
+	github.com/StephanHCB/go-autumn-restclient v0.8.1
 	github.com/StephanHCB/go-autumn-restclient-circuitbreaker v0.4.1
 	github.com/d4l3k/messagediff v1.2.1
 	github.com/go-chi/chi/v5 v5.1.0
