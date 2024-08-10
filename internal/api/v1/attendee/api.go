@@ -111,10 +111,14 @@ type AttendeeSearchResult struct {
 	Pronouns             *string        `json:"pronouns,omitempty"`
 	TshirtSize           *string        `json:"tshirt_size,omitempty"`
 	SpokenLanguages      *string        `json:"spoken_languages,omitempty"`
+	SpokenLanguagesList  []string       `json:"spoken_languages_list,omitempty"`
 	RegistrationLanguage *string        `json:"registration_language,omitempty"`
 	Flags                *string        `json:"flags,omitempty"`
+	FlagsList            []string       `json:"flags_list,omitempty"`
 	Options              *string        `json:"options,omitempty"`
+	OptionsList          []string       `json:"options_list,omitempty"`
 	Packages             *string        `json:"packages,omitempty"`
+	PackagesList         []PackageState `json:"packages_list,omitempty"`
 	UserComments         *string        `json:"user_comments,omitempty"`
 	Status               *status.Status `json:"status,omitempty"`
 	TotalDues            *int64         `json:"total_dues,omitempty"`
@@ -129,4 +133,9 @@ type AttendeeSearchResult struct {
 
 type ChoiceState struct {
 	Present bool `json:"present"`
+}
+
+type PackageState struct {
+	Name  string `json:"name"`
+	Count int    `json:"count"`
 }

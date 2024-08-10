@@ -7,6 +7,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
+	"sort"
 	"strings"
 )
 
@@ -35,6 +36,10 @@ func (s *AttendeeServiceImplData) mapToAttendeeSearchResult(att *entity.Attendee
 
 	var currentDues = att.CacheTotalDues - att.CachePaymentBalance
 	var registered = att.CreatedAt.Format(config.IsoDateFormat)
+	spokenLanguages := removeWrappingCommas(att.SpokenLanguages)
+	mergedFlags := removeWrappingCommasJoin(att.Flags, att.AdminFlags)
+	options := removeWrappingCommas(att.Options)
+	packages := removeWrappingCommas(att.Packages)
 	return attendee.AttendeeSearchResult{
 		Id:                   att.ID,
 		BadgeId:              s.badgeId(att.ID),
@@ -54,11 +59,15 @@ func (s *AttendeeServiceImplData) mapToAttendeeSearchResult(att *entity.Attendee
 		Gender:               contains(n(att.Gender), fillFields, "all", "gender"),
 		Pronouns:             contains(n(att.Pronouns), fillFields, "all", "pronouns"),
 		TshirtSize:           contains(n(att.TshirtSize), fillFields, "all", "tshirt_size"),
-		SpokenLanguages:      contains(p(removeWrappingCommas(att.SpokenLanguages)), fillFields, "all", "contact", "spoken_languages"),
+		SpokenLanguages:      contains(p(spokenLanguages), fillFields, "all", "contact", "spoken_languages"),
+		SpokenLanguagesList:  containsSlice(listFromCommaSeparated(spokenLanguages), fillFields, "all", "contact", "spoken_languages"),
 		RegistrationLanguage: contains(p(removeWrappingCommas(att.RegistrationLanguage)), fillFields, "all", "configuration", "registration_language"),
-		Flags:                contains(p(removeWrappingCommasJoin(att.Flags, att.AdminFlags)), fillFields, "all", "configuration", "flags"),
-		Options:              contains(p(removeWrappingCommas(att.Options)), fillFields, "all", "configuration", "options"),
-		Packages:             contains(p(removeWrappingCommas(att.Packages)), fillFields, "all", "configuration", "packages"),
+		Flags:                contains(p(mergedFlags), fillFields, "all", "configuration", "flags"),
+		FlagsList:            containsSlice(sortedListFromCommaSeparated(mergedFlags), fillFields, "all", "configuration", "flags"),
+		Options:              contains(p(options), fillFields, "all", "configuration", "options"),
+		OptionsList:          containsSlice(sortedListFromCommaSeparated(options), fillFields, "all", "configuration", "options"),
+		Packages:             contains(p(packages), fillFields, "all", "configuration", "packages"),
+		PackagesList:         containsSlice(sortedPackageListFromCommaSeparated(packages), fillFields, "all", "configuration", "packages"),
 		UserComments:         contains(n(att.UserComments), fillFields, "all", "user_comments"),
 		Status:               contains(&att.Status, fillFields, "all", "status"),
 		TotalDues:            contains(&att.CacheTotalDues, fillFields, "all", "balances", "total_dues"),
@@ -107,6 +116,42 @@ func removeWrappingCommasJoin(v1 string, v2 string) string {
 	return removeWrappingCommas(v)
 }
 
+func listFromCommaSeparated(v string) []string {
+	if v == "" {
+		return nil
+	}
+
+	result := strings.Split(v, ",")
+	return result
+}
+
+func sortedListFromCommaSeparated(v string) []string {
+	if v == "" {
+		return nil
+	}
+
+	result := strings.Split(v, ",")
+	sort.Strings(result)
+	return result
+}
+
+func sortedPackageListFromCommaSeparated(v string) []attendee.PackageState {
+	if v == "" {
+		return nil
+	}
+
+	pkgs := strings.Split(v, ",")
+	sort.Strings(pkgs)
+	result := make([]attendee.PackageState, len(pkgs))
+	for i, name := range pkgs {
+		result[i] = attendee.PackageState{
+			Name:  name,
+			Count: 1,
+		}
+	}
+	return result
+}
+
 // n formats an optional field (rendered as missing if unset)
 func n(v string) *string {
 	if v == "" {
@@ -122,6 +167,17 @@ func p(v string) *string {
 }
 
 func contains[T any](v *T, selected []string, matches ...string) *T {
+	for _, m := range matches {
+		for _, s := range selected {
+			if m == s {
+				return v
+			}
+		}
+	}
+	return nil
+}
+
+func containsSlice[T any](v []T, selected []string, matches ...string) []T {
 	for _, m := range matches {
 		for _, s := range selected {
 			if m == s {
