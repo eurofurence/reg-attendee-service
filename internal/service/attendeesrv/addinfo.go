@@ -29,7 +29,7 @@ func (s *AttendeeServiceImplData) CanAccessAdditionalInfoArea(ctx context.Contex
 	}
 
 	loggedInSubject := ctxvalues.Subject(ctx)
-	allowed, err := s.subjectHasAdminPermissionEntry(ctx, loggedInSubject, area...)
+	allowed, err := s.subjectHasAreaPermissionEntry(ctx, loggedInSubject, area...)
 	return allowed, err
 }
 
@@ -52,4 +52,15 @@ func (s *AttendeeServiceImplData) CanAccessOwnAdditionalInfoArea(ctx context.Con
 	}
 
 	return false, nil
+}
+
+func (s *AttendeeServiceImplData) CanUseFindAttendee(ctx context.Context) (bool, error) {
+	if ctxvalues.HasApiToken(ctx) || ctxvalues.IsAuthorizedAsGroup(ctx, config.OidcAdminGroup()) {
+		return true, nil
+	}
+
+	permissions := config.PermissionsAllowingFindAttendees()
+	loggedInSubject := ctxvalues.Subject(ctx)
+	allowed, err := s.subjectHasDirectPermissionEntry(ctx, loggedInSubject, permissions...)
+	return allowed, err
 }

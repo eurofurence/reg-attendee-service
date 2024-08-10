@@ -235,7 +235,7 @@ func (s *AttendeeServiceImplData) StatusChangeAllowed(ctx context.Context, atten
 	// others
 
 	if oldStatus == status.Paid && newStatus == status.CheckedIn {
-		allowed, err := s.subjectHasAdminPermissionEntry(ctx, subject, "regdesk")
+		allowed, err := s.subjectHasAreaPermissionEntry(ctx, subject, "regdesk")
 		if err != nil {
 			return err
 		}
