@@ -100,7 +100,7 @@ func findAttendeesHandler(w http.ResponseWriter, r *http.Request) {
 	if filter.IsGroupOrApiTokenCond(r, config.OidcAdminGroup()) {
 		limitedAccess = false
 	} else {
-		allowed, err := attendeeService.CanAccessAdditionalInfoArea(ctx, "regdesk", "sponsordesk")
+		allowed, err := attendeeService.CanUseFindAttendee(ctx)
 		if err != nil || !allowed {
 			culprit := ctxvalues.Subject(ctx)
 			ctlutil.UnauthorizedError(ctx, w, r, "you are not authorized for this operation - the attempt has been logged", fmt.Sprintf("unauthorized access attempt to find endpoint by %s", culprit))

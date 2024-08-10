@@ -1091,11 +1091,32 @@ func TestSearch_RegdeskOk(t *testing.T) {
       "birthday": "1998-11-23",
       "pronouns": "he/him",
       "tshirt_size": "XXL",
-      "spoken_languages": "de-DE,en-US",
+      "spoken_languages": "de,en",
+      "spoken_languages_list": ["de","en"],
       "registration_language": "en-US",
       "flags": "anon,hc,terms-accepted",
+      "flags_list": ["anon","hc","terms-accepted"],
       "options": "music,suit",
+      "options_list": ["music","suit"],
       "packages": "room-none,attendance,stage,sponsor2",
+      "packages_list": [
+        {
+          "name": "attendance",
+          "count": 1
+        },
+        {
+          "name": "room-none",
+          "count": 1
+        },
+        {
+          "name": "sponsor2",
+          "count": 1
+        },
+        {
+          "name": "stage",
+          "count": 1
+        }
+      ],
       "status": "approved",
       "total_dues": 25500,
       "payment_balance": 0,
@@ -1143,11 +1164,32 @@ func TestSearch_SponsordeskOk(t *testing.T) {
       "birthday": "1998-11-23",
       "pronouns": "he/him",
       "tshirt_size": "XXL",
-      "spoken_languages": "de-DE,en-US",
+      "spoken_languages": "de,en",
+      "spoken_languages_list": ["de","en"],
       "registration_language": "en-US",
       "flags": "anon,hc,terms-accepted",
+      "flags_list": ["anon","hc","terms-accepted"],
       "options": "music,suit",
+      "options_list": ["music","suit"],
       "packages": "room-none,attendance,stage,sponsor2",
+      "packages_list": [
+        {
+          "name": "attendance",
+          "count": 1
+        },
+        {
+          "name": "room-none",
+          "count": 1
+        },
+        {
+          "name": "sponsor2",
+          "count": 1
+        },
+        {
+          "name": "stage",
+          "count": 1
+        }
+      ],
       "status": "paid",
       "total_dues": 25500,
       "payment_balance": 25500,
@@ -1248,11 +1290,32 @@ func TestSearch_AdminOk(t *testing.T) {
       "gender": "other",
       "pronouns": "he/him",
       "tshirt_size": "XXL",
-      "spoken_languages": "de-DE,en-US",
+      "spoken_languages": "de,en",
+      "spoken_languages_list": ["de","en"],
       "registration_language": "en-US",
       "flags": "anon,hc,terms-accepted",
+      "flags_list": ["anon","hc","terms-accepted"],
       "options": "music,suit",
+      "options_list": ["music","suit"],
       "packages": "room-none,attendance,stage,sponsor2",
+      "packages_list": [
+        {
+          "name": "attendance",
+          "count": 1
+        },
+        {
+          "name": "room-none",
+          "count": 1
+        },
+        {
+          "name": "sponsor2",
+          "count": 1
+        },
+        {
+          "name": "stage",
+          "count": 1
+        }
+      ],
       "status": "new",
       "total_dues": 0,
       "payment_balance": 0,

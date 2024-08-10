@@ -145,14 +145,18 @@ func AdditionalInfoFieldNames() []string {
 	return result
 }
 
-// AllowedPermissions returns a sorted unique map of all permissions referenced in
-// additional info configurations.
+// AllowedPermissions returns a sorted unique list of all permissions referenced in
+// additional info configurations or configured to have access to the find api.
 func AllowedPermissions() []string {
 	resultMap := make(map[string]bool)
 	for _, v := range Configuration().AdditionalInfo {
 		for _, perm := range v.Permissions {
 			resultMap[perm] = true
 		}
+	}
+
+	for _, perm := range Configuration().Security.FindApiAccess.Permissions {
+		resultMap[perm] = true
 	}
 
 	result := make([]string, 0)
@@ -174,6 +178,10 @@ func AdditionalInfoConfiguration(fieldName string) AddInfoConfig {
 			Permissions: []string{},
 		}
 	}
+}
+
+func PermissionsAllowingFindAttendees() []string {
+	return Configuration().Security.FindApiAccess.Permissions
 }
 
 func AllowedTshirtSizes() []string {

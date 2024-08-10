@@ -26,7 +26,7 @@ type AttendeeDto struct {
 	Gender               string `json:"gender"`   // optional, one of male,female,other,notprovided
 	Pronouns             string `json:"pronouns"` // optional
 	TshirtSize           string `json:"tshirt_size"`
-	SpokenLanguages      string `json:"spoken_languages"`      // configurable subset of RFC 5646 locales, comma separated (de-DE,en-US)
+	SpokenLanguages      string `json:"spoken_languages"`      // configurable subset of configured language codes, comma separated (de,en)
 	RegistrationLanguage string `json:"registration_language"` // one out of configurable subset of RFC 5646 locales (default en-US)
 
 	// comma separated lists, allowed choices are convention dependent
@@ -111,10 +111,14 @@ type AttendeeSearchResult struct {
 	Pronouns             *string        `json:"pronouns,omitempty"`
 	TshirtSize           *string        `json:"tshirt_size,omitempty"`
 	SpokenLanguages      *string        `json:"spoken_languages,omitempty"`
+	SpokenLanguagesList  []string       `json:"spoken_languages_list,omitempty"`
 	RegistrationLanguage *string        `json:"registration_language,omitempty"`
 	Flags                *string        `json:"flags,omitempty"`
+	FlagsList            []string       `json:"flags_list,omitempty"`
 	Options              *string        `json:"options,omitempty"`
+	OptionsList          []string       `json:"options_list,omitempty"`
 	Packages             *string        `json:"packages,omitempty"`
+	PackagesList         []PackageState `json:"packages_list,omitempty"`
 	UserComments         *string        `json:"user_comments,omitempty"`
 	Status               *status.Status `json:"status,omitempty"`
 	TotalDues            *int64         `json:"total_dues,omitempty"`
@@ -129,4 +133,9 @@ type AttendeeSearchResult struct {
 
 type ChoiceState struct {
 	Present bool `json:"present"`
+}
+
+type PackageState struct {
+	Name  string `json:"name"`
+	Count int    `json:"count"`
 }

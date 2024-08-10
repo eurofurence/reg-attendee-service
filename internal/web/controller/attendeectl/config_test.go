@@ -155,6 +155,10 @@ func (s *MockAttendeeService) CanAccessOwnAdditionalInfoArea(ctx context.Context
 	return false, nil
 }
 
+func (s *MockAttendeeService) CanUseFindAttendee(ctx context.Context) (bool, error) {
+	return false, nil
+}
+
 func (s *MockAttendeeService) GenerateFakeRegistrations(ctx context.Context, count uint) error {
 	return nil
 }

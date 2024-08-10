@@ -76,6 +76,7 @@ type (
 		Cors              CorsConfig          `yaml:"cors"`
 		RequireLogin      bool                `yaml:"require_login_for_reg"`
 		AnonymizeIdentity bool                `yaml:"anonymize_identity"`
+		FindApiAccess     FindApiAccessConfig `yaml:"find_api_access"`
 	}
 
 	FixedTokenConfig struct {
@@ -95,6 +96,10 @@ type (
 	CorsConfig struct {
 		DisableCors bool   `yaml:"disable"`
 		AllowOrigin string `yaml:"allow_origin"`
+	}
+
+	FindApiAccessConfig struct {
+		Permissions []string `yaml:"permissions"` // the list of permissions that grant access to the FindAttendees endpoint
 	}
 
 	// LoggingConfig configures logging

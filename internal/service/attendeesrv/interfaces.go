@@ -77,12 +77,24 @@ type AttendeeService interface {
 	//
 	// Normal users (loaded by identity) need a matching permissions entry in their admin info.
 	// Admins and Api Token can see all areas.
+	//
+	// Returns true if access is allowed, and an error if the check could not be performed.
 	CanAccessAdditionalInfoArea(ctx context.Context, area ...string) (bool, error)
 
 	// CanAccessOwnAdditionalInfoArea checks permission to access ones own additional info for a given area
 	//
 	// This is only allowed for areas which have self_read or self_write configured.
+	//
+	// Returns true if access is allowed, and an error if the check could not be performed.
 	CanAccessOwnAdditionalInfoArea(ctx context.Context, attendeeId uint, wantWriteAccess bool, area string) (bool, error)
+
+	// CanUseFindAttendee checks permission to use the find attendees API
+	//
+	// Normal users (loaded by identity) need a permissions entry in their admin info that is listed in the security configuration,
+	// Admins and Api Token can always use find attendee.
+	//
+	// Returns true if access is allowed, and an error if the check could not be performed.
+	CanUseFindAttendee(ctx context.Context) (bool, error)
 
 	// GenerateFakeRegistrations creates the specified number of fake registrations in the database.
 	//

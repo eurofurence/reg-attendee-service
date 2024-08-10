@@ -173,7 +173,7 @@ func tstBuildValidAttendee(testcase string) attendee.AttendeeDto {
 		Birthday:             "1998-11-23",
 		Gender:               "other",
 		Pronouns:             "he/him",
-		SpokenLanguages:      "de-DE,en-US",
+		SpokenLanguages:      "de,en",
 		RegistrationLanguage: "en-US",
 		Flags:                "anon,hc,terms-accepted",
 		Packages:             "room-none,attendance,stage,sponsor2",

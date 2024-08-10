@@ -54,6 +54,9 @@ func setConfigurationDefaults(c *Application) {
 	if c.Dues.DueDays == 0 {
 		c.Dues.DueDays = 14
 	}
+	if len(c.Security.FindApiAccess.Permissions) == 0 {
+		c.Security.FindApiAccess.Permissions = []string{"regdesk", "sponsordesk"}
+	}
 }
 
 const (
@@ -100,6 +103,12 @@ func validateSecurityConfiguration(errs url.Values, c SecurityConfig) {
 			errs.Add(fmt.Sprintf("security.oidc.token_public_keys_PEM[%d]", i), fmt.Sprintf("failed to parse RSA public key in PEM format: %s", err.Error()))
 		} else {
 			parsedKeySet = append(parsedKeySet, publicKeyPtr)
+		}
+	}
+
+	for _, perm := range c.FindApiAccess.Permissions {
+		if validation.ViolatesPattern(attendeePermissionPattern, perm) {
+			errs.Add("security.find_api_access.permissions", "permissions for find api access must match [a-z]+, no other characters allowed")
 		}
 	}
 }
@@ -250,5 +259,24 @@ func validateServiceConfiguration(errs url.Values, c ServiceConfig) {
 	}
 	if validation.ViolatesPattern(downstreamPattern, c.MailService) {
 		errs.Add("service.mail_service", "base url must be empty (enables in-memory simulator) or start with http:// or https:// and may not end in a /")
+	}
+}
+
+const addInfoAreaPattern = "^[a-z]+$"
+const attendeePermissionPattern = "^[a-z]+$"
+
+func validateAdditionalInfoConfiguration(errs url.Values, areas map[string]AddInfoConfig) {
+	for area, config := range areas {
+		if validation.ViolatesPattern(addInfoAreaPattern, area) {
+			errs.Add("additional_info_areas", "keys for additional info fields must match [a-z]+, no other characters allowed")
+		}
+		if area == "overdue" {
+			errs.Add("additional_info_areas.overdue", "this key is reserved for internal use by the admin frontend, you may not configure it")
+		}
+		for _, perm := range config.Permissions {
+			if validation.ViolatesPattern(attendeePermissionPattern, perm) {
+				errs.Add(fmt.Sprintf("additional_info_areas.%s.permissions", perm), "permissions for additional info access must match [a-z]+, no other characters allowed")
+			}
+		}
 	}
 }
