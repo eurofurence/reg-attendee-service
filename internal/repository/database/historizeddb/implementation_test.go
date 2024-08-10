@@ -29,7 +29,7 @@ func tstBuildValidAttendee() *entity.Attendee {
 		Telegram:             "@ihopethisuserdoesnotexist",
 		Birthday:             "1998-11-23",
 		Gender:               "other",
-		SpokenLanguages:      ",de-DE,en-US,",
+		SpokenLanguages:      ",de,en,",
 		RegistrationLanguage: ",en-US,",
 		Flags:                ",anon,ev,",
 		Packages:             ",room-none,attendance,stage,sponsor2,",

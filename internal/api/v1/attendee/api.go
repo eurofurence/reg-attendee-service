@@ -26,7 +26,7 @@ type AttendeeDto struct {
 	Gender               string `json:"gender"`   // optional, one of male,female,other,notprovided
 	Pronouns             string `json:"pronouns"` // optional
 	TshirtSize           string `json:"tshirt_size"`
-	SpokenLanguages      string `json:"spoken_languages"`      // configurable subset of RFC 5646 locales, comma separated (de-DE,en-US)
+	SpokenLanguages      string `json:"spoken_languages"`      // configurable subset of configured language codes, comma separated (de,en)
 	RegistrationLanguage string `json:"registration_language"` // one out of configurable subset of RFC 5646 locales (default en-US)
 
 	// comma separated lists, allowed choices are convention dependent

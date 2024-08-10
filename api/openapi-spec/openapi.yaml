@@ -1670,7 +1670,7 @@ components:
             according to the IANA language registry (https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry).
             
             The list of allowed values is specified in the service configuration, and is used to select email language templates as well as represented on the badge.
-          example: 'de-DE,en-US'
+          example: 'de,en'
         registration_language:
           type: string
           description: |-
@@ -1803,7 +1803,7 @@ components:
             according to the IANA language registry (https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry).
             
             The list of allowed values is specified in the service configuration, and is used to select email language templates as well as represented on the badge.
-          example: 'de-DE,en-US'
+          example: 'de,en'
         spoken_languages_list:
           type: array
           items:
@@ -1814,8 +1814,8 @@ components:
             
             The list of allowed values is specified in the service configuration, and is used to select email language templates as well as represented on the badge.
           example:
-            - 'de-DE'
-            - 'en-US'
+            - 'de'
+            - 'en'
         registration_language:
           type: string
           description: |-
@@ -2026,8 +2026,8 @@ components:
           additionalProperties:
             $ref: '#/components/schemas/ChoiceStateCondition'
           example:
-            de-DE: 1
-            en-US: 0
+            de: 1
+            en: 0
         registration_language:
           description: desired state of registration language locales (as declared in configuration). If specified at all, locale must be present the given number of times (0 or 1). Example would select all attendees that use the non-English registration ui.
           type: object

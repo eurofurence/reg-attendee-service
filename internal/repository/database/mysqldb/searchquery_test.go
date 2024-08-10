@@ -52,8 +52,8 @@ func TestTwoFullSearchQueries(t *testing.T) {
 				Email:    "ee*ee@ff*ff",
 				Telegram: "@abc",
 				SpokenLanguages: map[string]int8{
-					"en-US": 0,
-					"de-DE": 1,
+					"en": 0,
+					"de": 1,
 				},
 				RegistrationLanguage: map[string]int8{
 					"en-US": 0,
@@ -86,8 +86,8 @@ func TestTwoFullSearchQueries(t *testing.T) {
 				Email:    "gg@hh",
 				Telegram: "@def",
 				SpokenLanguages: map[string]int8{
-					"en-GB": 0,
-					"de-AT": 1,
+					"fr": 0,
+					"en": 1,
 				},
 				RegistrationLanguage: map[string]int8{
 					"en-GB": 0,
@@ -140,8 +140,8 @@ func TestTwoFullSearchQueries(t *testing.T) {
 		"param_1_4":                         "DE",
 		"param_1_5":                         "%ee%ee@ff%ff%",
 		"param_1_6":                         "%@abc%",
-		"param_1_7":                         "%,de-DE,%",
-		"param_1_8":                         "%,en-US,%",
+		"param_1_7":                         "%,de,%",
+		"param_1_8":                         "%,en,%",
 		"param_1_9":                         "%,de-DE,%",
 		"param_1_10":                        "%,en-US,%",
 		"param_1_11":                        "%,flagone,%",
@@ -160,8 +160,8 @@ func TestTwoFullSearchQueries(t *testing.T) {
 		"param_2_4":                         "CH",
 		"param_2_5":                         "%gg@hh%",
 		"param_2_6":                         "%@def%",
-		"param_2_7":                         "%,de-AT,%",
-		"param_2_8":                         "%,en-GB,%",
+		"param_2_7":                         "%,en,%",
+		"param_2_8":                         "%,fr,%",
 		"param_2_9":                         "%,de-AT,%",
 		"param_2_10":                        "%,en-GB,%",
 		"param_2_11":                        "%,fone,%",

@@ -181,8 +181,8 @@ tshirtsizes:
   - '4XL'
   - 'w4XL'
 spoken_languages:
-  - 'en-US'
-  - 'de-DE'
+  - 'en'
+  - 'de'
 registration_languages:
   - 'en-US'
 countries:
