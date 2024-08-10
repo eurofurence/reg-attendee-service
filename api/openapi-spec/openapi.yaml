@@ -1228,8 +1228,10 @@ paths:
         Returns all matching attendees.
         
         This is a privileged operation, subject must either have the admin group or 
-        have "regdesk" or "sponsordesk" permission in their admin info. In the latter case,
+        have one of the configured permissions in their admin info. In the latter case,
         only a suitable subset of fields are returned and non-attending registrations are always omitted.
+        
+        The list of permissions is configured under "security.find_api_access.permissions".
       operationId: findAttendees
       requestBody:
         content:

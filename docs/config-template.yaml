@@ -54,6 +54,12 @@ security:
   require_login_for_reg: true
   # set this to true temporarily to use the load testing command with constant tokens. Never use in production.
   # anonymize_identity: true
+  find_api_access:
+    # the list of permissions in the "permissions" field that grant access to the (limited) findAttendees API
+    permissions:
+      - regdesk
+      - sponsordesk
+      - staffradio
 logging:
   severity: INFO
   style: plain # or ecs (elastic common schema), the default
@@ -89,6 +95,13 @@ additional_info_areas:
     permissions:
       - regdesk
       - sponsordesk
+  fursuitbadge:
+    self_read: true
+    permissions:
+      - fursuitbadge
+  staffradio:
+    permissions:
+      - staffradio
 choices:
   flags:
     hc:

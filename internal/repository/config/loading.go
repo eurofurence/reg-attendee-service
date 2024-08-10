@@ -83,6 +83,7 @@ func parseAndOverwriteConfig(yamlFile []byte) error {
 	validateBirthdayConfiguration(errs, newConfigurationData.Birthday)
 	validateRegistrationStartTime(errs, newConfigurationData.GoLive, newConfigurationData.Security)
 	validateDuesConfiguration(errs, newConfigurationData.Dues)
+	validateAdditionalInfoConfiguration(errs, newConfigurationData.AdditionalInfo)
 
 	if len(errs) != 0 {
 		var keys []string

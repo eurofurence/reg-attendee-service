@@ -21,6 +21,10 @@ security:
     admin_group: 'admin'
     early_reg_group: ''
     audience: "14d9f37a-1eec-47c9-a949-5f1ebdf9c8e5"
+  find_api_access:
+    permissions:
+      - regdesk
+      - sponsordesk
 logging:
   severity: DEBUG
 go_live:
