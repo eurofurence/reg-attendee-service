@@ -2126,13 +2126,17 @@ components:
       
         For a detailed description of the fields, please see the AttendeeSearchResult schema.
       
-        Keep in mind that your permissions may limit field visibility.
+        Keep in mind that your permissions may limit field visibility. 
+        
+        Non-Admins cannot use field sets, are limited to attending statuses, and are limited to these fields:
+        id, nickname, first_name, last_name, country, spoken_languages, registration_language, birthday, pronouns, 
+        tshirt_size, flags, options, packages, status, total_dues, payment_balance, current_dues.
       
         Also remember that even if you don't list the id field, you will still get it.
       
         You will not get fields that you don't have permission to see even if you request them.
         
-        If you do not specify any fields, only the id will be returned.
+        If you do not specify any fields, a default set of fields will be returned that depends on your permissions.
       items:
         type: string
         enum:
