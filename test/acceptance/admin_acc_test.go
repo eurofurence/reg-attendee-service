@@ -1227,6 +1227,82 @@ func TestSearch_OtherPermissionsDeny(t *testing.T) {
 	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this operation - the attempt has been logged")
 }
 
+func TestSearch_PermissionAllowedFields_Ok(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee who has been given the sponsordesk permission")
+	loc, att := tstRegisterAttendeeAndTransitionToStatus(t, "search2d-", status.Paid)
+	permBody := admin.AdminInfoDto{
+		Permissions: "sponsordesk",
+	}
+	permissionResponse := tstPerformPut(loc+"/admin", tstRenderJson(permBody), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, permissionResponse.status)
+
+	docs.When("when they search for attendees and limit the fields to allowed fields")
+	token := tstValidUserToken(t, att.Id)
+	searchAll := attendee.AttendeeSearchCriteria{
+		MatchAny: []attendee.AttendeeSearchSingleCriterion{
+			{},
+		},
+		FillFields: []string{"id", "nickname", "spoken_languages"},
+	}
+	response := tstPerformPost("/api/rest/v1/attendees/find", tstRenderJson(searchAll), token)
+
+	docs.Then("then the request is successful and the list of attendees is returned with only the desired fields")
+	require.Equal(t, http.StatusOK, response.status, "unexpected http response status")
+	expected := `{
+  "attendees": [
+    {
+      "id": 1,
+      "badge_id": "1C",
+      "nickname": "BlackCheetah",
+      "spoken_languages": "de,en",
+      "spoken_languages_list": ["de","en"]
+    }
+  ]
+}`
+	tstRequireSearchResultMatches(t, expected, response.body)
+}
+
+func TestSearch_PermissionAllowedFields_Filtered(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee who has been given the sponsordesk permission")
+	loc, att := tstRegisterAttendeeAndTransitionToStatus(t, "search2d-", status.Paid)
+	permBody := admin.AdminInfoDto{
+		Permissions: "sponsordesk",
+	}
+	permissionResponse := tstPerformPut(loc+"/admin", tstRenderJson(permBody), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, permissionResponse.status)
+
+	docs.When("when they search for attendees and ask for forbidden fields")
+	token := tstValidUserToken(t, att.Id)
+	searchAll := attendee.AttendeeSearchCriteria{
+		MatchAny: []attendee.AttendeeSearchSingleCriterion{
+			{},
+		},
+		FillFields: []string{"id", "nickname", "email", "phone"},
+	}
+	response := tstPerformPost("/api/rest/v1/attendees/find", tstRenderJson(searchAll), token)
+
+	docs.Then("then the request is successful and the list of attendees is returned, but with the field list filtered to allowed fields")
+	require.Equal(t, http.StatusOK, response.status, "unexpected http response status")
+	expected := `{
+  "attendees": [
+    {
+      "id": 1,
+      "badge_id": "1C",
+      "nickname": "BlackCheetah"
+    }
+  ]
+}`
+	tstRequireSearchResultMatches(t, expected, response.body)
+}
+
 func TestSearch_StaffDeny(t *testing.T) {
 	docs.Given("given the configuration for staff registration")
 	tstSetup(false, true, true)
@@ -1268,7 +1344,7 @@ func TestSearch_AdminOk(t *testing.T) {
 	}
 	response := tstPerformPost("/api/rest/v1/attendees/find", tstRenderJson(searchAll), token)
 
-	docs.Then("then the request is successful and the list of attendees is returned")
+	docs.Then("then the request is successful and the list of attendees is returned with all fields")
 	require.Equal(t, http.StatusOK, response.status, "unexpected http response status")
 	expected := `{
   "attendees": [

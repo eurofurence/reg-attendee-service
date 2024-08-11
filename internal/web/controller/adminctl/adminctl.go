@@ -114,11 +114,7 @@ func findAttendeesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if limitedAccess {
-		criteria.FillFields = []string{"id", "nickname", "first_name", "last_name", "country",
-			"spoken_languages", "registration_language", "birthday", "pronouns", "tshirt_size",
-			"flags", "options", "packages", "status",
-			"total_dues", "payment_balance", "current_dues",
-		}
+		criteria.FillFields = limitToAllowedFields(criteria.FillFields)
 		for i := range criteria.MatchAny {
 			criteria.MatchAny[i].Status = limitToAttendingStatus(criteria.MatchAny[i].Status)
 		}
@@ -132,6 +128,29 @@ func findAttendeesHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add(headers.ContentType, media.ContentTypeApplicationJson)
 	ctlutil.WriteJson(ctx, w, results)
+}
+
+func limitToAllowedFields(desired []string) []string {
+	allowed := []string{"id", "nickname", "first_name", "last_name", "country",
+		"spoken_languages", "registration_language", "birthday", "pronouns", "tshirt_size",
+		"flags", "options", "packages", "status",
+		"total_dues", "payment_balance", "current_dues",
+	}
+
+	result := make([]string, 0)
+	for _, d := range desired {
+		for _, a := range allowed {
+			if d == a {
+				result = append(result, d)
+			}
+		}
+	}
+
+	if len(result) == 0 {
+		return allowed
+	} else {
+		return result
+	}
 }
 
 func limitToAttendingStatus(desired []status.Status) []status.Status {
