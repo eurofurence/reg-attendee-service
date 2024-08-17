@@ -345,6 +345,10 @@ func (s *AttendeeServiceImplData) checkPaidInFull(ctx context.Context, attendee 
 
 func (s *AttendeeServiceImplData) IsOwnerFor(ctx context.Context) ([]*entity.Attendee, error) {
 	identity := ctxvalues.Subject(ctx)
+	return s.IsOwnedByIdentity(ctx, identity)
+}
+
+func (s *AttendeeServiceImplData) IsOwnedByIdentity(ctx context.Context, identity string) ([]*entity.Attendee, error) {
 	if identity != "" {
 		return database.GetRepository().FindByIdentity(ctx, identity)
 	} else {
