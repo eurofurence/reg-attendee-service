@@ -109,6 +109,10 @@ func (s *MockAttendeeService) IsOwnerFor(ctx context.Context) ([]*entity.Attende
 	return make([]*entity.Attendee, 0), nil
 }
 
+func (s *MockAttendeeService) IsOwnedByIdentity(ctx context.Context, identity string) ([]*entity.Attendee, error) {
+	return make([]*entity.Attendee, 0), nil
+}
+
 func (s *MockAttendeeService) FindAttendees(ctx context.Context, criteria *attendee.AttendeeSearchCriteria) (*attendee.AttendeeSearchResultList, error) {
 	return &attendee.AttendeeSearchResultList{
 		Attendees: make([]attendee.AttendeeSearchResult, 0),

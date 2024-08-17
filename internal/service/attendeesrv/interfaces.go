@@ -52,6 +52,13 @@ type AttendeeService interface {
 	// using this account.
 	IsOwnerFor(ctx context.Context) ([]*entity.Attendee, error)
 
+	// IsOwnedByIdentity returns the list of attendees (registrations) that are owned by the
+	// given identity.
+	//
+	// Unless an admin has made changes to the database, this essentially means their registration was made
+	// using this account.
+	IsOwnedByIdentity(ctx context.Context, identity string) ([]*entity.Attendee, error)
+
 	// FindAttendees runs the search by criteria in the database, then filters and converts the result.
 	FindAttendees(ctx context.Context, criteria *attendee.AttendeeSearchCriteria) (*attendee.AttendeeSearchResultList, error)
 

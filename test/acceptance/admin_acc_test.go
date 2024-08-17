@@ -1,6 +1,7 @@
 package acceptance
 
 import (
+	"fmt"
 	"github.com/eurofurence/reg-attendee-service/docs"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/admin"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
@@ -1447,6 +1448,135 @@ func TestSearch_InvalidJson(t *testing.T) {
 
 	docs.Then("then the request fails with the appropriate error")
 	tstRequireErrorResponse(t, response, http.StatusBadRequest, "search.parse.error", url.Values{})
+}
+
+// -- registration ids by identity
+
+func TestRegsByIdentity_Anon(t *testing.T) {
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given there are registrations")
+	token1 := tstValidUserToken(t, 1)
+	reg1 := tstBuildValidAttendee("bi1a-")
+	reg1response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(reg1), token1)
+	require.Equal(t, http.StatusCreated, reg1response.status, "unexpected http response status")
+
+	docs.Given("given an anonymous user")
+
+	docs.When("when they request the list of registrations owned by the registered identity")
+	response := tstPerformGet("/api/rest/v1/attendees/identity/1234567890", tstNoToken())
+
+	docs.Then("then the request fails (401) and the error is as expected")
+	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "you must be logged in for this operation")
+}
+
+func TestRegsByIdentity_User(t *testing.T) {
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given there are registrations")
+	token1 := tstValidUserToken(t, 1)
+	reg1 := tstBuildValidAttendee("bi10a-")
+	reg1response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(reg1), token1)
+	require.Equal(t, http.StatusCreated, reg1response.status, "unexpected http response status")
+
+	docs.Given("given a regular user")
+	token101 := tstValidUserToken(t, 101)
+
+	docs.When("when they request the list of registrations owned by the registered identity")
+	response := tstPerformGet("/api/rest/v1/attendees/identity/1234567890", token101)
+
+	docs.Then("then the request fails (403) and the error is as expected")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this operation - the attempt has been logged")
+}
+
+func TestRegsByIdentity_Admin_Success(t *testing.T) {
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given there are registrations")
+	token101 := tstValidUserToken(t, 101)
+	reg1 := tstBuildValidAttendee("bi12a-")
+	reg1response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(reg1), token101)
+	require.Equal(t, http.StatusCreated, reg1response.status, "unexpected http response status")
+
+	docs.When("when an admin requests the list of registrations owned by a registered user")
+	response := tstPerformGet("/api/rest/v1/attendees/identity/101", tstValidAdminToken(t))
+
+	docs.Then("then the request is successful and returns that registration number")
+	require.Equal(t, http.StatusOK, response.status, "unexpected http response status")
+	actualResult := attendee.AttendeeIdList{}
+	tstParseJson(response.body, &actualResult)
+	require.Equal(t, 1, len(actualResult.Ids))
+	actualLocation := fmt.Sprintf("/api/rest/v1/attendees/%d", actualResult.Ids[0])
+	require.Equal(t, reg1response.location, actualLocation, "unexpected id returned")
+}
+
+func TestRegsByIdentity_Admin_Deleted(t *testing.T) {
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	testcase := "bi11f-"
+
+	docs.Given("given a user, who has made a single registration")
+	token101 := tstValidUserToken(t, 101)
+	reg1 := tstBuildValidAttendee(testcase)
+	reg1response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(reg1), token101)
+	require.Equal(t, http.StatusCreated, reg1response.status, "unexpected http response status")
+
+	docs.Given("given that registration has been deleted by an admin")
+	body := status.StatusChangeDto{
+		Status:  status.Deleted,
+		Comment: testcase,
+	}
+	statusResponse := tstPerformPost(reg1response.location+"/status", tstRenderJson(body), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, statusResponse.status)
+
+	docs.When("when an admin requests the list of registrations owned by the identity of the user")
+	response := tstPerformGet("/api/rest/v1/attendees/identity/101", tstValidAdminToken(t))
+
+	docs.Then("then the request fails (404) and the error is as expected")
+	tstRequireErrorResponse(t, response, http.StatusNotFound, "attendee.owned.notfound", "")
+}
+
+func TestRegsByIdentity_Admin_Other(t *testing.T) {
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given there are registrations")
+	token101 := tstValidUserToken(t, 101)
+	reg1 := tstBuildValidAttendee("bi12a-")
+	reg1response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(reg1), token101)
+	require.Equal(t, http.StatusCreated, reg1response.status, "unexpected http response status")
+
+	docs.When("when an admin requests the list of registrations for a different user")
+	response := tstPerformGet("/api/rest/v1/attendees/identity/202", tstValidAdminToken(t))
+
+	docs.Then("then the request fails with the appropriate error message")
+	tstRequireErrorResponse(t, response, http.StatusNotFound, "attendee.owned.notfound", "")
+}
+
+func TestRegsByIdentity_ApiToken(t *testing.T) {
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given there are registrations")
+	token1 := tstValidUserToken(t, 1)
+	reg1 := tstBuildValidAttendee("bi20a-")
+	reg1response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(reg1), token1)
+	require.Equal(t, http.StatusCreated, reg1response.status, "unexpected http response status")
+
+	docs.When("when an api requests the list of registrations owned by the registered identity")
+	response := tstPerformGet("/api/rest/v1/attendees/identity/1234567890", tstValidApiToken())
+
+	docs.Then("then the request is successful and returns that registration number")
+	require.Equal(t, http.StatusOK, response.status, "unexpected http response status")
+	actualResult := attendee.AttendeeIdList{}
+	tstParseJson(response.body, &actualResult)
+	require.Equal(t, 1, len(actualResult.Ids))
+	actualLocation := fmt.Sprintf("/api/rest/v1/attendees/%d", actualResult.Ids[0])
+	require.Equal(t, reg1response.location, actualLocation, "unexpected id returned")
 }
 
 // helper functions

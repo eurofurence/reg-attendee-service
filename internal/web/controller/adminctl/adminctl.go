@@ -19,10 +19,14 @@ import (
 	"github.com/go-http-utils/headers"
 	"net/http"
 	"net/url"
+	"regexp"
+	"sort"
 	"time"
 )
 
 var attendeeService attendeesrv.AttendeeService
+
+var identityRegexp *regexp.Regexp
 
 func Create(server chi.Router, attendeeSrv attendeesrv.AttendeeService) {
 	attendeeService = attendeeSrv
@@ -30,6 +34,9 @@ func Create(server chi.Router, attendeeSrv attendeesrv.AttendeeService) {
 	server.Get("/api/rest/v1/attendees/{id}/admin", filter.HasGroupOrApiToken(config.OidcAdminGroup(), filter.WithTimeout(3*time.Second, getAdminInfoHandler)))
 	server.Put("/api/rest/v1/attendees/{id}/admin", filter.HasGroupOrApiToken(config.OidcAdminGroup(), filter.WithTimeout(3*time.Second, writeAdminInfoHandler)))
 	server.Post("/api/rest/v1/attendees/find", filter.LoggedInOrApiToken(filter.WithTimeout(60*time.Second, findAttendeesHandler)))
+	server.Get("/api/rest/v1/attendees/identity/{identity}", filter.HasGroupOrApiToken(config.OidcAdminGroup(), filter.WithTimeout(3*time.Second, regsByIdentityHandler)))
+
+	identityRegexp = regexp.MustCompile("^[a-zA-Z0-9]+$")
 }
 
 // --- handlers ---
@@ -167,6 +174,37 @@ func limitToAttendingStatus(desired []status.Status) []status.Status {
 	}
 }
 
+func regsByIdentityHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	identity := chi.URLParam(r, "identity")
+	if !identityRegexp.MatchString(identity) {
+		regsByIdentityInvalidErrorHandler(ctx, w, r, identity)
+		return
+	}
+
+	atts, err := attendeeService.IsOwnedByIdentity(ctx, identity)
+	if err != nil {
+		regsByIdentityErrorHandler(ctx, w, r, identity, err)
+		return
+	}
+	if len(atts) == 0 {
+		regsByIdentityNotFoundErrorHandler(ctx, w, r, identity)
+		return
+	}
+
+	dto := attendee.AttendeeIdList{
+		Ids: make([]uint, len(atts)),
+	}
+	for i, _ := range atts {
+		dto.Ids[i] = atts[i].ID
+	}
+	sort.Slice(dto.Ids, func(i, j int) bool { return dto.Ids[i] < dto.Ids[j] })
+
+	w.Header().Add(headers.ContentType, media.ContentTypeApplicationJson)
+	ctlutil.WriteJson(ctx, w, dto)
+}
+
 // --- helpers ---
 
 func attendeeByIdMustReturnOnError(ctx context.Context, w http.ResponseWriter, r *http.Request) (*entity.Attendee, error) {
@@ -234,4 +272,19 @@ func searchCriteriaParseErrorHandler(ctx context.Context, w http.ResponseWriter,
 func searchReadErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
 	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("attendee search failed: %s", err.Error())
 	ctlutil.ErrorHandler(ctx, w, r, "search.read.error", http.StatusInternalServerError, url.Values{})
+}
+
+func regsByIdentityInvalidErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, identity string) {
+	aulogging.Logger.Ctx(ctx).Warn().Printf("received invalid identity %s", url.QueryEscape(identity))
+	ctlutil.ErrorHandler(ctx, w, r, "attendee.owned.invalid", http.StatusBadRequest, url.Values{"identity": []string{"identity id can only consist of A-Z, a-z, 0-9"}})
+}
+
+func regsByIdentityErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, identity string, err error) {
+	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("could not read registrations for identity %s: %s", identity, err.Error())
+	ctlutil.ErrorHandler(ctx, w, r, "attendee.owned.error", http.StatusInternalServerError, url.Values{})
+}
+
+func regsByIdentityNotFoundErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, identity string) {
+	aulogging.Logger.Ctx(ctx).Debug().Printf("found no registrations owned by identity %s", identity)
+	ctlutil.ErrorHandler(ctx, w, r, "attendee.owned.notfound", http.StatusNotFound, url.Values{})
 }

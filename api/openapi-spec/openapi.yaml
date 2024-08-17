@@ -1273,6 +1273,62 @@ paths:
       security:
         - BearerAuth: []
         - ApiKeyAuth: []
+  /attendees/identity/{identity}:
+    get:
+      tags:
+        - privileged
+      summary: List registration ids for an identity
+      description: |-
+        List attendee registrations that are owned by a given identity, provided they are still visible to them.
+        
+        When a registration is first made, the currently logged in user is recorded in the registration,
+        and thus assigned as the 'owner' of the registration. 
+
+        Note that allowing multiple registrations per user id is configuration dependant. If the configuration
+        is set to allow only a single registration per user id, this endpoint will always return at most a single
+        registration.
+      operationId: listRegistrationsByIdentity
+      parameters:
+        - name: identity
+          in: path
+          description: identity provider id to look for
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttendeeIdList'
+        '400':
+          description: Invalid identity (must be nonempty and be alphanumeric)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No matching attendees found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: An unexpected error occurred. This includes database errors. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
   /bans:
     get:
       tags:
