@@ -7,3 +7,4 @@ attendee-service
 main
 
 api-generator
+**/config.yaml
