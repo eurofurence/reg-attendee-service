@@ -4,6 +4,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"log"
 	"os"
+	"sort"
 )
 
 var AutoApply = false
@@ -40,13 +41,38 @@ func main() {
 		os.Exit(4)
 	}
 
+	log.Printf("we now have %d directors and %d staff (still includes cancelled) and %d attendees", len(badgeLookupResult.DirectorBadges), len(badgeLookupResult.StaffBadges), len(findResult))
+
+	// sort by badgeNo
+	badgeNumbers := make([]uint, 0, len(findResult))
+	for badgeNo, _ := range findResult {
+		badgeNumbers = append(badgeNumbers, badgeNo)
+	}
+	sort.Slice(badgeNumbers, func(i, j int) bool { return badgeNumbers[i] < badgeNumbers[j] })
+
+	// remove cancelled in separate pre-processing step
+	for _, badgeNo := range badgeNumbers {
+		infos := findResult[badgeNo]
+
+		regStatus, present := badgeLookupResult.StaffBadges[badgeNo]
+		if present && regStatus == status.Cancelled {
+			log.Printf("cancelled staff id %d nick %s", badgeNo, infos.Nickname)
+			delete(badgeLookupResult.StaffBadges, badgeNo)
+		}
+
+		regStatus, present = badgeLookupResult.DirectorBadges[badgeNo]
+		if present && regStatus == status.Cancelled {
+			log.Printf("cancelled director id %d nick %s", badgeNo, infos.Nickname)
+			delete(badgeLookupResult.DirectorBadges, badgeNo)
+		}
+	}
+
 	log.Printf("we now have %d directors and %d staff and %d attendees", len(badgeLookupResult.DirectorBadges), len(badgeLookupResult.StaffBadges), len(findResult))
 
-	for badgeNo, infos := range findResult {
+	for _, badgeNo := range badgeNumbers {
+		infos := findResult[badgeNo]
+
 		regStatus, shouldBeStaff := badgeLookupResult.StaffBadges[badgeNo]
-		if regStatus == status.Cancelled {
-			shouldBeStaff = false
-		}
 		if shouldBeStaff && !infos.Staff {
 			log.Printf("id %d nick %s status %s should be staff", badgeNo, infos.Nickname, regStatus)
 			if AutoApply {
@@ -55,15 +81,13 @@ func main() {
 					log.Printf("failed to add staff flag: %s", err.Error())
 					os.Exit(5)
 				}
+				log.Printf("added staff flag for id %d nick %s", badgeNo, infos.Nickname)
 			}
 		} else if !shouldBeStaff && infos.Staff {
-			log.Printf("id %d nick %s status %s should NOT be staff", badgeNo, infos.Nickname, regStatus)
+			log.Printf("id %d nick %s status %s should NOT be staff - removal is manual", badgeNo, infos.Nickname, regStatus)
 		}
 
 		regStatus, shouldBeDirector := badgeLookupResult.DirectorBadges[badgeNo]
-		if regStatus == status.Cancelled {
-			shouldBeDirector = false
-		}
 		if shouldBeDirector && !infos.Director {
 			log.Printf("id %d nick %s status %s should be director", badgeNo, infos.Nickname, regStatus)
 			if AutoApply {
@@ -72,9 +96,10 @@ func main() {
 					log.Printf("failed to add director flag: %s", err.Error())
 					os.Exit(5)
 				}
+				log.Printf("added director flag for id %d nick %s", badgeNo, infos.Nickname)
 			}
 		} else if !shouldBeDirector && infos.Director {
-			log.Printf("id %d nick %s status %s should NOT be director", badgeNo, infos.Nickname, regStatus)
+			log.Printf("id %d nick %s status %s should NOT be director - removal is manual", badgeNo, infos.Nickname, regStatus)
 		}
 	}
 }
