@@ -2,6 +2,7 @@ package acceptance
 
 import (
 	"github.com/eurofurence/reg-attendee-service/docs"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/addinfo"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/admin"
 	"github.com/stretchr/testify/require"
 	"net/http"
@@ -578,4 +579,181 @@ func TestDeleteAdditionalInfo_Unset(t *testing.T) {
 
 	docs.Then("then the request fails and the correct error is returned")
 	tstRequireErrorResponse(t, response, http.StatusNotFound, "addinfo.notfound.error", url.Values{})
+}
+
+// getAllAdditionalInfo
+
+func TestGetAllAdditionalInfo_AnonDeny(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee with an additional info field set")
+	location1, _ := tstRegisterAttendee(t, "aia1-")
+	created := tstPerformPost(location1+"/additional-info/myarea", `{"aia1":"something"}`, tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, created.status)
+
+	docs.Given("given an unauthenticated user")
+	token := tstNoToken()
+
+	docs.When("when they attempt to read the additional info area for all attendees")
+	response := tstPerformGet("/api/rest/v1/additional-info/myarea", token)
+
+	docs.Then("then the request is denied as unauthenticated (401) and the correct error is returned")
+	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "you must be logged in for this operation")
+}
+
+func TestGetAllAdditionalInfo_UserDeny(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee with an additional info field set")
+	location1, att1 := tstRegisterAttendee(t, "aia2-")
+	created := tstPerformPost(location1+"/additional-info/myarea", `{"aia2":"something"}`, tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, created.status)
+
+	docs.When("when they attempt to access the additional info area for all attendees but do not have access")
+	token := tstValidUserToken(t, att1.Id)
+	response := tstPerformGet("/api/rest/v1/additional-info/myarea", token)
+
+	docs.Then("then the request is denied as unauthorized (403) and the correct error is returned")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this additional info area - the attempt has been logged")
+}
+
+func TestGetAllAdditionalInfo_UserWithPermissionAllow(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given three existing attendees, two of which have an additional info field set")
+	location1, att1 := tstRegisterAttendee(t, "aia3a-")
+	created1 := tstPerformPost(location1+"/additional-info/myarea", `{"aia3a":"something"}`, tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, created1.status)
+
+	location2, _ := tstRegisterAttendeeWithToken(t, "aia3b-", tstValidUserToken(t, 101))
+	created2 := tstPerformPost(location2+"/additional-info/myarea", `{"aia3b":"something else"}`, tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, created2.status)
+
+	_, _ = tstRegisterAttendeeWithToken(t, "aia3c-", tstValidUserToken(t, 102))
+
+	docs.Given("given the first attendee has been granted access to the additional info area")
+	body := admin.AdminInfoDto{
+		Permissions: "myarea",
+	}
+	accessGranted := tstPerformPut(location1+"/admin", tstRenderJson(body), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, accessGranted.status)
+
+	docs.When("when they attempt to access the additional info area for all attendees")
+	token := tstValidUserToken(t, att1.Id)
+	response := tstPerformGet("/api/rest/v1/additional-info/myarea", token)
+
+	docs.Then("then the request is successful and they can retrieve the additional info again")
+	expectedValues := map[string]string{
+		"1": "{\"aia3a\":\"something\"}",
+		"4": "{\"aia3b\":\"something else\"}", // ids in-memory are a global sequence
+	}
+	expected := addinfo.AdditionalInfoFullArea{
+		Area:   "myarea",
+		Values: expectedValues,
+	}
+	actual := addinfo.AdditionalInfoFullArea{}
+	tstRequireSuccessResponse(t, response, http.StatusOK, &actual)
+	require.Equal(t, expected.Area, actual.Area)
+	require.EqualValues(t, expected.Values, actual.Values)
+}
+
+func TestGetAllAdditionalInfo_UserSelfDeny(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee with an additional info field set")
+	location1, att1 := tstRegisterAttendee(t, "aia3a-")
+	created := tstPerformPost(location1+"/additional-info/selfread", `{"aia3a":"something"}`, tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, created.status)
+
+	docs.When("when they attempt to access the additional info area with self read permissions")
+	token := tstValidUserToken(t, att1.Id)
+	response := tstPerformGet("/api/rest/v1/additional-info/selfread", token)
+
+	docs.Then("then the request is denied as unauthorized (403) and the correct error is returned")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this additional info area - the attempt has been logged")
+}
+
+func TestGetAllAdditionalInfo_AdminAllow(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee with an additional info field set")
+	location1, _ := tstRegisterAttendee(t, "aia4-")
+	created := tstPerformPost(location1+"/additional-info/myarea", `{"aia4":"something"}`, tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, created.status)
+
+	docs.When("when an admin attempts to access the additional info")
+	token := tstValidAdminToken(t)
+	response := tstPerformGet("/api/rest/v1/additional-info/myarea", token)
+
+	docs.Then("then the request is successful and the response is as expected")
+	expectedValues := map[string]string{
+		"1": "{\"aia4\":\"something\"}",
+	}
+	expected := addinfo.AdditionalInfoFullArea{
+		Area:   "myarea",
+		Values: expectedValues,
+	}
+	actual := addinfo.AdditionalInfoFullArea{}
+	tstRequireSuccessResponse(t, response, http.StatusOK, &actual)
+	require.Equal(t, expected.Area, actual.Area)
+	require.EqualValues(t, expected.Values, actual.Values)
+}
+
+func TestGetAllAdditionalInfo_InvalidArea(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.When("when an admin attempts to access additional info but supplies an invalid area")
+	token := tstValidAdminToken(t)
+	response := tstPerformGet("/api/rest/v1/additional-info/area-cannot-contain-dashes", token)
+
+	docs.Then("then the request fails and the correct error is returned")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "addinfo.area.invalid", url.Values{"area": []string{"must match [a-z]+"}})
+}
+
+func TestGetAllAdditionalInfo_NotConfiguredArea(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.When("when an admin attempts to access all additional info but asks for an area that is not listed in the configuration")
+	token := tstValidAdminToken(t)
+	response := tstPerformGet("/api/rest/v1/additional-info/unlisted", token)
+
+	docs.Then("then the request fails and the correct error is returned")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "addinfo.area.unlisted", url.Values{"area": []string{"areas must be enabled in configuration"}})
+}
+
+func TestGetAllAdditionalInfo_Unset(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee")
+	_, _ = tstRegisterAttendee(t, "aia7-")
+
+	docs.When("when an admin reads all additional info for a valid area that has no values assigned")
+	token := tstValidAdminToken(t)
+	response := tstPerformGet("/api/rest/v1/additional-info/myarea", token)
+
+	docs.Then("then the request is successful with an appropriate response with an empty values object, which is not missing")
+	expected := addinfo.AdditionalInfoFullArea{
+		Area:   "myarea",
+		Values: map[string]string{},
+	}
+	actual := addinfo.AdditionalInfoFullArea{}
+	tstRequireSuccessResponse(t, response, http.StatusOK, &actual)
+	require.Equal(t, expected.Area, actual.Area)
+	require.EqualValues(t, expected.Values, actual.Values)
 }

@@ -232,6 +232,10 @@ func (r *HistorizingRepository) DeleteBan(ctx context.Context, b *entity.Ban) er
 
 // --- additional info ---
 
+func (r *HistorizingRepository) GetAllAdditionalInfoForArea(ctx context.Context, area string) ([]*entity.AdditionalInfo, error) {
+	return r.wrappedRepository.GetAllAdditionalInfoForArea(ctx, area)
+}
+
 func (r *HistorizingRepository) GetAdditionalInfoFor(ctx context.Context, attendeeId uint, area string) (*entity.AdditionalInfo, error) {
 	return r.wrappedRepository.GetAdditionalInfoFor(ctx, attendeeId, area)
 }
