@@ -147,6 +147,10 @@ func (s *MockAttendeeService) GetAdditionalInfo(ctx context.Context, attendeeId 
 	return "", nil
 }
 
+func (s *MockAttendeeService) GetFullAdditionalInfoArea(ctx context.Context, area string) (map[string]string, error) {
+	return map[string]string{}, nil
+}
+
 func (s *MockAttendeeService) WriteAdditionalInfo(ctx context.Context, attendeeId uint, area string, value string) error {
 	return nil
 }

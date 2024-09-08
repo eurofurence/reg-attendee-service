@@ -377,6 +377,22 @@ func (r *InMemoryRepository) GetAllAdditionalInfoOrEmptyMap(ctx context.Context,
 	return byAttendeeId
 }
 
+func (r *InMemoryRepository) GetAllAdditionalInfoForArea(ctx context.Context, area string) ([]*entity.AdditionalInfo, error) {
+	result := make([]*entity.AdditionalInfo, 0)
+	for attendeeId, areaMap := range r.addInfo {
+		areaValue, ok := areaMap[area]
+		if ok {
+			entry := &entity.AdditionalInfo{
+				AttendeeId: attendeeId,
+				Area:       area,
+				JsonValue:  areaValue.JsonValue,
+			}
+			result = append(result, entry)
+		}
+	}
+	return result, nil
+}
+
 func (r *InMemoryRepository) GetAdditionalInfoFor(ctx context.Context, attendeeId uint, area string) (*entity.AdditionalInfo, error) {
 	byAttendeeId := r.GetAllAdditionalInfoOrEmptyMap(ctx, attendeeId)
 	ai, ok := byAttendeeId[area]

@@ -386,6 +386,36 @@ func (r *MysqlRepository) DeleteBan(ctx context.Context, b *entity.Ban) error {
 
 // --- additional info ---
 
+func (r *MysqlRepository) GetAllAdditionalInfoForArea(ctx context.Context, area string) ([]*entity.AdditionalInfo, error) {
+	result := make([]*entity.AdditionalInfo, 0)
+	addInfoBuffer := entity.AdditionalInfo{}
+	queryBuffer := entity.AdditionalInfo{Area: area}
+
+	rows, err := r.db.Model(&entity.AdditionalInfo{}).Where(&queryBuffer).Order("attendee_id").Rows()
+	if err != nil {
+		aulogging.Logger.Ctx(ctx).Error().WithErr(err).Printf("error reading additional infos for area %s: %s", area, err.Error())
+		return result, err
+	}
+	defer func() {
+		err2 := rows.Close()
+		if err2 != nil {
+			aulogging.Logger.Ctx(ctx).Warn().WithErr(err2).Printf("secondary error closing recordset during additional info read: %s", err2.Error())
+		}
+	}()
+
+	for rows.Next() {
+		err = r.db.ScanRows(rows, &addInfoBuffer)
+		if err != nil {
+			aulogging.Logger.Ctx(ctx).Error().WithErr(err).Printf("error reading additional info during find for area %s: %s", area, err.Error())
+			return result, err
+		}
+		copiedAddInfo := addInfoBuffer
+		result = append(result, &copiedAddInfo)
+	}
+
+	return result, nil
+}
+
 func (r *MysqlRepository) GetAdditionalInfoFor(ctx context.Context, attendeeId uint, area string) (*entity.AdditionalInfo, error) {
 	var ai entity.AdditionalInfo
 	err := r.db.Model(&entity.AdditionalInfo{}).Where(&entity.AdditionalInfo{AttendeeId: attendeeId, Area: area}).Last(&ai).Error

@@ -2,10 +2,26 @@ package attendeesrv
 
 import (
 	"context"
+	"fmt"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
 )
+
+func (s *AttendeeServiceImplData) GetFullAdditionalInfoArea(ctx context.Context, area string) (map[string]string, error) {
+	entries, err := database.GetRepository().GetAllAdditionalInfoForArea(ctx, area)
+	if err != nil {
+		return make(map[string]string), err
+	}
+	result := make(map[string]string)
+	for _, entry := range entries {
+		if entry != nil {
+			key := fmt.Sprintf("%d", entry.AttendeeId)
+			result[key] = entry.JsonValue
+		}
+	}
+	return result, nil
+}
 
 func (s *AttendeeServiceImplData) GetAdditionalInfo(ctx context.Context, attendeeId uint, area string) (string, error) {
 	existing, err := database.GetRepository().GetAdditionalInfoFor(ctx, attendeeId, area)

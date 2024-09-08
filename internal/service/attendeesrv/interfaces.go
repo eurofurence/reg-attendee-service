@@ -70,6 +70,11 @@ type AttendeeService interface {
 	GetBan(ctx context.Context, id uint) (*entity.Ban, error)
 	GetAllBans(ctx context.Context) ([]*entity.Ban, error)
 
+	// GetFullAdditionalInfoArea obtains all additional info values for an area.
+	//
+	// May return an empty map if no entries found. This is not an error.
+	GetFullAdditionalInfoArea(ctx context.Context, area string) (map[string]string, error)
+
 	// GetAdditionalInfo obtains additional info for a given attendeeId and area.
 	//
 	// If this returns an empty string, then no value existed.

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/addinfo"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/service/attendeesrv"
 	"github.com/eurofurence/reg-attendee-service/internal/web/filter"
@@ -32,6 +33,8 @@ func Create(server chi.Router, attendeeSrv attendeesrv.AttendeeService) {
 	server.Get("/api/rest/v1/attendees/{id}/additional-info/{area}", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, getAdditionalInfoHandler)))
 	server.Post("/api/rest/v1/attendees/{id}/additional-info/{area}", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, writeAdditionalInfoHandler)))
 	server.Delete("/api/rest/v1/attendees/{id}/additional-info/{area}", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, deleteAdditionalInfoHandler)))
+
+	server.Get("/api/rest/v1/additional-info/{area}", filter.LoggedInOrApiToken(filter.WithTimeout(60*time.Second, getAllAdditionalInfoHandler)))
 
 	areaRegexp = regexp.MustCompile("^[a-z]+$")
 }
@@ -110,6 +113,26 @@ func deleteAdditionalInfoHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func getAllAdditionalInfoHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, area, err := ctxFullAreaReadAllowedAndExists_MustReturn(w, r)
+	if err != nil {
+		return
+	}
+
+	values, err := attendeeService.GetFullAdditionalInfoArea(ctx, area)
+	if err != nil {
+		ctlutil.ErrorHandler(ctx, w, r, "addinfo.read.error", http.StatusInternalServerError, url.Values{})
+		return
+	}
+
+	result := addinfo.AdditionalInfoFullArea{
+		Area:   area,
+		Values: values,
+	}
+	w.Header().Add(headers.ContentType, media.ContentTypeApplicationJson)
+	ctlutil.WriteJson(ctx, w, &result)
+}
+
 func ctxIdAreaAllowedAndExists_MustReturn(w http.ResponseWriter, r *http.Request, wantWriteAccess bool) (context.Context, uint, string, error) {
 	ctx := r.Context()
 
@@ -145,6 +168,28 @@ func ctxIdAreaAllowedAndExists_MustReturn(w http.ResponseWriter, r *http.Request
 	return ctx, id, area, nil
 }
 
+func ctxFullAreaReadAllowedAndExists_MustReturn(w http.ResponseWriter, r *http.Request) (context.Context, string, error) {
+	ctx := r.Context()
+
+	area, err := areaFromVarsValidated_MustReturn(ctx, w, r)
+	if err != nil {
+		return ctx, area, err
+	}
+
+	allowed, err := attendeeService.CanAccessAdditionalInfoArea(ctx, area)
+	if err != nil {
+		ctlutil.ErrorHandler(ctx, w, r, "addinfo.read.error", http.StatusInternalServerError, url.Values{})
+		return ctx, area, err
+	}
+	if !allowed {
+		culprit := ctxvalues.Subject(ctx)
+		ctlutil.UnauthorizedError(ctx, w, r, "you are not authorized for this additional info area - the attempt has been logged", fmt.Sprintf("unauthorized access attempt for add info area %s by %s", area, culprit))
+		return ctx, area, errors.New("forbidden")
+	}
+
+	return ctx, area, nil
+}
+
 func idAndAreaFromVarsValidated_MustReturn(ctx context.Context, w http.ResponseWriter, r *http.Request) (uint, string, error) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
@@ -152,22 +197,27 @@ func idAndAreaFromVarsValidated_MustReturn(ctx context.Context, w http.ResponseW
 		ctlutil.InvalidAttendeeIdErrorHandler(ctx, w, r, idStr)
 		return uint(id), "", err
 	}
+	area, err := areaFromVarsValidated_MustReturn(ctx, w, r)
+	return uint(id), area, err
+}
+
+func areaFromVarsValidated_MustReturn(ctx context.Context, w http.ResponseWriter, r *http.Request) (string, error) {
 	area := chi.URLParam(r, "area")
 	if !areaRegexp.MatchString(area) {
 		aulogging.Logger.Ctx(ctx).Warn().Printf("received invalid additional info area '%s'", area)
 		ctlutil.ErrorHandler(ctx, w, r, "addinfo.area.invalid", http.StatusBadRequest, url.Values{"area": []string{"must match [a-z]+"}})
-		return uint(id), area, errors.New("invalid additional info area")
+		return area, errors.New("invalid additional info area")
 	}
 	if area == "overdue" {
 		aulogging.Logger.Ctx(ctx).Warn().Printf("received invalid additional info area '%s'", area)
 		ctlutil.ErrorHandler(ctx, w, r, "addinfo.area.invalid", http.StatusBadRequest, url.Values{"area": []string{"the special value 'overdue' is used internally and is forbidden here"}})
-		return uint(id), area, errors.New("invalid additional info area")
+		return area, errors.New("invalid additional info area")
 	}
 	if validation.NotInAllowedValues(config.AdditionalInfoFieldNames(), area) {
 		aulogging.Logger.Ctx(ctx).Warn().Printf("received additional info area '%s' not listed in configuration", area)
 		ctlutil.ErrorHandler(ctx, w, r, "addinfo.area.unlisted", http.StatusBadRequest, url.Values{"area": []string{"areas must be enabled in configuration"}})
-		return uint(id), area, errors.New("unlisted additional info area")
+		return area, errors.New("unlisted additional info area")
 	}
 
-	return uint(id), area, nil
+	return area, nil
 }

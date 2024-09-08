@@ -32,6 +32,60 @@ tags:
   - name: info
     description: Health and other public status information
 paths:
+  /additional-info/{area}:
+    get:
+      tags:
+        - additional
+      summary: obtain all current additional info for an area
+      description: |
+        Returns the current additional info for an area (e.g. regdesk, sponsordesk, overdue, ...) for all attendees.
+        
+        User will need to have permissions on any of their registrations as set in configuration to access it
+        (self-read permission is not sufficient).
+
+        Additional infos are returned as json objects encoded in strings.
+      operationId: getAllAdditionalInfo
+      parameters:
+        - name: area
+          in: path
+          description: Area (must match [a-z]+), note that 'overdue' is used internally. The configuration contains a list of allowed areas.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdditionalInfoFullArea'
+        '400':
+          description: Invalid area supplied (area must match [a-z]+), or is not listed in the configuration and is thus also invalid. Note that area 'overdue' will also lead to this response, this area is used for internal purposes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: You do not have permission to see this attendee or area
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: An unexpected error occurred. This includes database errors. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
   /attendees:
     get:
       tags:
@@ -1620,6 +1674,23 @@ paths:
         - ApiKeyAuth: []
 components:
   schemas:
+    AdditionalInfoFullArea:
+      type: object
+      required:
+        - area
+        - values
+      properties:
+        area:
+          type: string
+          example: myarea
+          description: the area that was requested
+        values:
+          additionalProperties: true
+          description: a map of attendee ids to additional info values, encoded as strings. Note that contents of the values may need to be unquoted to extract json values. Also note there is no guarantee the string values will contain valid json, it fully depends on what the tool using this additional info area has written.
+          example:
+            '1': '{"hello":"you"}'
+            '2': '{"you":"too"}'
+            '3': 'not a json value'
     Attendee:
       type: object
       required:
