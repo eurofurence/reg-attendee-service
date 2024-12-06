@@ -30,9 +30,10 @@ type AttendeeDto struct {
 	RegistrationLanguage string `json:"registration_language"` // one out of configurable subset of RFC 5646 locales (default en-US)
 
 	// comma separated lists, allowed choices are convention dependent
-	Flags    string `json:"flags"`    // hc,anon,ev
-	Packages string `json:"packages"` // room-none,attendance,stage,sponsor,sponsor2
-	Options  string `json:"options"`  // art,anim,music,suit
+	Flags        string         `json:"flags"`    // hc,anon,ev
+	Packages     string         `json:"packages"` // room-none,attendance,stage,sponsor,sponsor2
+	PackagesList []PackageState `json:"packages_list"`
+	Options      string         `json:"options"` // art,anim,music,suit
 
 	// comments
 	UserComments string `json:"user_comments"`
@@ -137,5 +138,5 @@ type ChoiceState struct {
 
 type PackageState struct {
 	Name  string `json:"name"`
-	Count int    `json:"count"`
+	Count int    `json:"count"` // defaults to 1 if unset in requests
 }

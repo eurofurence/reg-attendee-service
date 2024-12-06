@@ -45,6 +45,12 @@ func setConfigurationDefaults(c *Application) {
 	if c.Security.Cors.AllowOrigin == "" {
 		c.Security.Cors.AllowOrigin = "*"
 	}
+	for name, pkgConf := range c.Choices.Packages {
+		if pkgConf.MaxCount == 0 {
+			pkgConf.MaxCount = 1
+			c.Choices.Packages[name] = pkgConf
+		}
+	}
 	if len(c.SpokenLanguages) == 0 {
 		c.SpokenLanguages = []string{"en-US"}
 	}

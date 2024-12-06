@@ -32,9 +32,27 @@ func tstCreateValidAttendee() attendee.AttendeeDto {
 		SpokenLanguages:      "de,en",
 		RegistrationLanguage: "en-US",
 		Flags:                "anon,ev",
-		Packages:             "room-none,attendance,stage,sponsor2",
-		Options:              "music,suit",
-		TshirtSize:           "XXL",
+		Packages:             "attendance,room-none,sponsor2,stage", // must be sorted for tests to work
+		PackagesList: []attendee.PackageState{
+			{
+				Name:  "attendance",
+				Count: 1,
+			},
+			{
+				Name:  "room-none",
+				Count: 1,
+			},
+			{
+				Name:  "sponsor2",
+				Count: 1,
+			},
+			{
+				Name:  "stage",
+				Count: 1,
+			},
+		},
+		Options:    "music,suit",
+		TshirtSize: "XXL",
 	}
 }
 

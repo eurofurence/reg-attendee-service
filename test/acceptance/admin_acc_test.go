@@ -1099,7 +1099,7 @@ func TestSearch_RegdeskOk(t *testing.T) {
       "flags_list": ["anon","hc","terms-accepted"],
       "options": "music,suit",
       "options_list": ["music","suit"],
-      "packages": "room-none,attendance,stage,sponsor2",
+      "packages": "attendance,room-none,sponsor2,stage",
       "packages_list": [
         {
           "name": "attendance",
@@ -1172,7 +1172,7 @@ func TestSearch_SponsordeskOk(t *testing.T) {
       "flags_list": ["anon","hc","terms-accepted"],
       "options": "music,suit",
       "options_list": ["music","suit"],
-      "packages": "room-none,attendance,stage,sponsor2",
+      "packages": "attendance,room-none,sponsor2,stage",
       "packages_list": [
         {
           "name": "attendance",
@@ -1374,7 +1374,7 @@ func TestSearch_AdminOk(t *testing.T) {
       "flags_list": ["anon","hc","terms-accepted"],
       "options": "music,suit",
       "options_list": ["music","suit"],
-      "packages": "room-none,attendance,stage,sponsor2",
+      "packages": "attendance,room-none,sponsor2,stage",
       "packages_list": [
         {
           "name": "attendance",

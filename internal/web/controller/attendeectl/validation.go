@@ -2,11 +2,13 @@ package attendeectl
 
 import (
 	"context"
+	"fmt"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/validation"
 	"net/url"
+	"sort"
 	"strings"
 	"unicode"
 
@@ -94,7 +96,8 @@ func validate(ctx context.Context, a *attendee.AttendeeDto, trustedOriginalState
 		errs.Add("registration_language", "registration_language field must be one of "+strings.Join(config.AllowedRegistrationLanguages(), ",")+" or it can be left blank, which counts as "+config.DefaultRegistrationLanguage())
 	}
 	validation.CheckCombinationOfAllowedValues(&errs, config.AllowedFlagsNoAdmin(), "flags", a.Flags)
-	validation.CheckCombinationOfAllowedValues(&errs, config.AllowedPackages(), "packages", a.Packages)
+	checkPackagesValid(&errs, config.PackagesConfig(), a.Packages)
+	checkPackagesListValid(&errs, config.PackagesConfig(), a.PackagesList)
 	validation.CheckCombinationOfAllowedValues(&errs, config.AllowedOptions(), "options", a.Options)
 	if a.TshirtSize != "" && validation.NotInAllowedValues(config.AllowedTshirtSizes(), a.TshirtSize) {
 		errs.Add("tshirt_size", "optional tshirt_size field must be empty or one of "+strings.Join(config.AllowedTshirtSizes(), ","))
@@ -145,4 +148,49 @@ func validateDueDateChange(ctx context.Context, d *attendee.DueDate, trustedOrig
 		}
 	}
 	return errs
+}
+
+func checkPackagesList(errs *url.Values, cfg map[string]config.ChoiceConfig, key string, pkgList []attendee.PackageState) {
+	namesOk := true
+
+	for _, v := range pkgList {
+		c, ok := cfg[v.Name]
+		if !ok {
+			namesOk = false
+		} else {
+			if v.Count > c.MaxCount {
+				errs.Add(key, fmt.Sprintf("package %s occurs too many times, can occur at most %d times", v.Name, c.MaxCount))
+			}
+		}
+	}
+
+	if !namesOk {
+		allowedCommaSeparated := strings.Join(sortedKeys(cfg), ",")
+		if key == "packages" {
+			// different error message for packages field
+			errs.Add(key, fmt.Sprintf("%s field must be a comma separated combination of any of %s", key, allowedCommaSeparated))
+		} else {
+			errs.Add(key, fmt.Sprintf("%s can only contain package names %s", key, allowedCommaSeparated))
+		}
+	}
+}
+
+func checkPackagesListValid(errs *url.Values, cfg map[string]config.ChoiceConfig, pkgList []attendee.PackageState) {
+	checkPackagesList(errs, cfg, "packages_list", pkgList)
+}
+
+func checkPackagesValid(errs *url.Values, cfg map[string]config.ChoiceConfig, commaSeparatedValue string) {
+	asList := packageListFromCommaSeparated(commaSeparatedValue)
+	checkPackagesList(errs, cfg, "packages", asList)
+}
+
+func sortedKeys(choiceMap map[string]config.ChoiceConfig) []string {
+	keys := make([]string, len(choiceMap))
+	i := 0
+	for k := range choiceMap {
+		keys[i] = k
+		i++
+	}
+	sort.Strings(keys)
+	return keys
 }
