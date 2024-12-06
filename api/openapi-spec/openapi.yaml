@@ -1704,7 +1704,6 @@ components:
         - email
         - phone
         - birthday
-        - packages
       properties:
         id:
           type: integer
@@ -1818,8 +1817,26 @@ components:
           example: art,anim,music,suit
         packages:
           type: string
-          description: A comma separated list of packages as declared in configuration. Packages are the things that cost money, like being a supersponsor or a day guest for a certain day. They can be configured with respect to who may add / remove them, if they are on by default, and whether they are visible if not selected (admin only, normal user, completely disabled). There is also configuration as to which packages are mutually exclusive, such as sponsor and supersponsor.
-          example: room-none,attendance,sponsor
+          description: |-
+            A comma separated list of packages as declared in configuration.
+            
+            Packages are the things that cost money, like being a supersponsor or a day guest for a certain day. They can be
+            configured with respect to who may add / remove them, if they are on by default, and whether they are visible if
+            not selected (admin only, normal user, completely disabled). There is also configuration as to which packages are
+            mutually exclusive, such as sponsor and supersponsor.
+            
+            If configured with a max_count greater than 1, certain packages may occur multiple times in this list.
+            
+            Any order of packages is accepted in requests, but in responses the list of packages will always be sorted
+            in alphabetical order.
+            
+            Note: If packages_list is also specified in a request, it takes precedence over this field. In responses,
+            both fields will always be present and filled.
+            
+            DEPRECATED - see packages_list
+          example: attendance,room-none,sponsor
+        packages_list:
+          $ref: '#/components/schemas/PackagesList'
         user_comments:
           type: string
           description: Optional comments the attendee wishes to make regarding their registration. Not processed in any way.
@@ -1981,32 +1998,20 @@ components:
             - suit
         packages:
           type: string
-          description: DEPRECATED - use packages_list for new implementations. A comma separated list of packages as declared in configuration. Packages are the things that cost money, like being a supersponsor or a day guest for a certain day. They can be configured with respect to who may add / remove them, if they are on by default, and whether they are visible if not selected (admin only, normal user, completely disabled). There is also configuration as to which packages are mutually exclusive, such as sponsor and supersponsor.
+          description: |-
+            DEPRECATED - use packages_list for new implementations.
+            
+            A comma separated list of packages as declared in configuration, sorted alphabetically by package name.
+            
+            Packages are the things that cost money, like being a supersponsor or a day guest for a certain day. They can be
+            configured with respect to who may add / remove them, if they are on by default, and whether they are visible if
+            not selected (admin only, normal user, completely disabled). There is also configuration as to which packages are
+            mutually exclusive, such as sponsor and supersponsor.
+
+            If configured with a max_count greater than 1, certain packages may occur multiple times in this list.
           example: room-none,attendance,sponsor
         packages_list:
-          type: array
-          items:
-            type: object
-            required:
-              - name
-              - count
-            properties:
-              name:
-                type: string
-                example: attendance
-                description: the code for the package
-              count:
-                type: integer
-                example: 1
-                description: the number of times the package was purchased (at the moment, only the value 1 is supported, but this may change in the future).
-          description: A sorted list of packages as declared in configuration. Packages are the things that cost money, like being a supersponsor or a day guest for a certain day. They can be configured with respect to who may add / remove them, if they are on by default, and whether they are visible if not selected (admin only, normal user, completely disabled). There is also configuration as to which packages are mutually exclusive, such as sponsor and supersponsor.
-          example:
-            - name: attendance
-              count: 1
-            - name: room-none
-              count: 1
-            - name: sponsor
-              count: 1
+          $ref: '#/components/schemas/PackagesList'
         user_comments:
           type: string
           description: Optional comments the attendee wishes to make regarding their registration. Not processed in any way.
@@ -2305,6 +2310,41 @@ components:
           - configuration
           - balances
           - all
+    PackagesList:
+      type: array
+      items:
+        type: object
+        required:
+          - name
+          - count
+        properties:
+          name:
+            type: string
+            example: attendance
+            description: the code for the package
+          count:
+            type: integer
+            example: 1
+            description: the number of times the package was purchased (at the moment, only the value 1 is supported, but this may change in the future).
+      description: |-
+        A sorted list of packages as declared in configuration. 
+        
+        Packages are the things that cost money, like being a supersponsor or a day guest for a certain day. They can be
+        configured with respect to who may add / remove them, if they are on by default, and whether they are visible if
+        not selected (admin only, normal user, completely disabled). There is also configuration as to which packages are mutually exclusive, such as sponsor and supersponsor.
+        
+        It is an error to specify a package multiple times in the list. Requests need not sort the package list by name,
+        but responses sent by this service always have the package list sorted by package name.
+        
+        The count field can be left unspecified when sending this data structure, that means a count of 1, but it will always be present
+        and filled in responses sent by this service.
+      example:
+        - name: attendance
+          count: 1
+        - name: room-none
+          count: 1
+        - name: sponsor
+          count: 1
     AdminInfo:
       type: object
       required:
