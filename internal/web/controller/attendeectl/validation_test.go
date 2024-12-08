@@ -32,11 +32,15 @@ func tstCreateValidAttendee() attendee.AttendeeDto {
 		SpokenLanguages:      "de,en",
 		RegistrationLanguage: "en-US",
 		Flags:                "anon,ev",
-		Packages:             "attendance,room-none,sponsor2,stage", // must be sorted for tests to work
+		Packages:             "attendance,mountain-trip,mountain-trip,room-none,sponsor2,stage", // must be sorted for tests to work
 		PackagesList: []attendee.PackageState{
 			{
 				Name:  "attendance",
 				Count: 1,
+			},
+			{
+				Name:  "mountain-trip",
+				Count: 2,
 			},
 			{
 				Name:  "room-none",
@@ -210,7 +214,17 @@ func TestValidateChoiceFieldsAndId(t *testing.T) {
 	a.Gender = "348trhkuth4uihgkj4h89"
 	a.Options = "music,awoo"
 	a.Flags = "hc,noflag"
-	a.Packages = "helicopterflight,boattour,room-none"
+	a.Packages = "helicopterflight,boattour,room-none,room-none"
+	a.PackagesList = []attendee.PackageState{
+		{
+			Name:  "helicopterflight",
+			Count: 1,
+		},
+		{
+			Name:  "room-none",
+			Count: 2,
+		},
+	}
 	a.TshirtSize = "micro"
 	a.Telegram = "iforgotthe_at_atthebeginning"
 	a.Country = "XX" // not in ISO-3166-1
@@ -218,10 +232,17 @@ func TestValidateChoiceFieldsAndId(t *testing.T) {
 	a.RegistrationLanguage = "not_a_LANG"
 
 	expected := url.Values{
-		"gender":                []string{"optional gender field must be one of male, female, other, notprovided, or it can be left blank, which counts as notprovided"},
-		"options":               []string{"options field must be a comma separated combination of any of anim,art,music,suit"},
-		"flags":                 []string{"flags field must be a comma separated combination of any of anon,ev,hc,terms-accepted"},
-		"packages":              []string{"packages field must be a comma separated combination of any of attendance,boat-trip,day-fri,day-sat,day-thu,mountain-trip,room-none,sponsor,sponsor2,stage"},
+		"gender":  []string{"optional gender field must be one of male, female, other, notprovided, or it can be left blank, which counts as notprovided"},
+		"options": []string{"options field must be a comma separated combination of any of anim,art,music,suit"},
+		"flags":   []string{"flags field must be a comma separated combination of any of anon,ev,hc,terms-accepted"},
+		"packages": []string{
+			"package room-none occurs too many times, can occur at most 1 times",
+			"packages field must be a comma separated combination of any of attendance,boat-trip,day-fri,day-sat,day-thu,mountain-trip,room-none,sponsor,sponsor2,stage",
+		},
+		"packages_list": []string{
+			"package room-none occurs too many times, can occur at most 1 times",
+			"packages_list can only contain package names attendance,boat-trip,day-fri,day-sat,day-thu,mountain-trip,room-none,sponsor,sponsor2,stage",
+		},
 		"registration_language": []string{"registration_language field must be one of en-US or it can be left blank, which counts as en-US"},
 		"spoken_languages":      []string{"spoken_languages field must be a comma separated combination of any of en,de"},
 		"telegram":              []string{"optional telegram field must contain your @username from telegram, or it can be left blank"},
