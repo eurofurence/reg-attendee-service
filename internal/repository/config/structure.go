@@ -133,6 +133,7 @@ type (
 		VisibleFor    []string `yaml:"visible_for"`            // list of permissions which allow seeing the flag/option/package. Admin can always see everything, "self" can always see non-admin_only, but you can add it for admin_only fields. This field also controls who else can see the info based on their permissions admin field. Example: "self,sponsordesk"
 		Group         string   `yaml:"group"`                  // set if attendee has this group during initial registration
 		Mandatory     bool     `yaml:"at-least-one-mandatory"` // one of these MUST be chosen (no constraint if not set on any choices)
+		MaxCount      int      `yaml:"max_count"`              // only supported for packages, 0 means 1 so can be left out of config
 		Constraint    string   `yaml:"constraint"`
 		ConstraintMsg string   `yaml:"constraint_msg"`
 	}

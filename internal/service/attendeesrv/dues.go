@@ -158,8 +158,8 @@ func (s *AttendeeServiceImplData) packageDuesByVAT(ctx context.Context, attendee
 	}
 
 	packageConfigs := config.PackagesConfig()
-	for key, selected := range choiceStrToMap(attendee.Packages, packageConfigs) {
-		if selected {
+	for key, count := range choiceStrToMap(attendee.Packages, packageConfigs) {
+		if count > 0 {
 			packageConfig, ok := packageConfigs[key]
 			if !ok {
 				aulogging.Logger.Ctx(ctx).Warn().Printf("attendee id %d has unknown package %s in db - ignoring during dues calculation", attendee.ID, key)
@@ -167,7 +167,7 @@ func (s *AttendeeServiceImplData) packageDuesByVAT(ctx context.Context, attendee
 				vatStr := fmt.Sprintf("%.6f", packageConfig.VatPercent)
 
 				previous, _ := result[vatStr]
-				result[vatStr] = previous + packageConfig.Price
+				result[vatStr] = previous + packageConfig.Price*int64(count)
 			}
 		}
 	}
@@ -180,7 +180,7 @@ func (s *AttendeeServiceImplData) considerGuest(ctx context.Context, adminInfo *
 	if !ok {
 		aulogging.Logger.Ctx(ctx).Warn().Print("admin only flag 'guest' not configured, skipping")
 	}
-	return isGuest
+	return isGuest > 0
 }
 
 func (s *AttendeeServiceImplData) oldDuesByVAT(transactionHistory []paymentservice.Transaction) map[string]int64 {

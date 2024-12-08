@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
@@ -140,12 +141,18 @@ func (s *AttendeeServiceImplData) CanChangeEmailTo(ctx context.Context, original
 }
 
 func (s *AttendeeServiceImplData) CanChangeChoiceTo(ctx context.Context, what string, originalChoiceStr string, newChoiceStr string, configuration map[string]config.ChoiceConfig) error {
-	return s.CanChangeChoiceToCurrentStatus(ctx, what, originalChoiceStr, newChoiceStr, configuration, "irrelevant")
+	originalChoicesMap := choiceStrToMap(originalChoiceStr, configuration)
+	newChoicesMap := choiceStrToMap(newChoiceStr, configuration)
+	return s.canChangeChoiceLowlevel(ctx, what, originalChoicesMap, newChoicesMap, configuration, "irrelevant")
 }
 
-func (s *AttendeeServiceImplData) CanChangeChoiceToCurrentStatus(ctx context.Context, what string, originalChoiceStr string, newChoiceStr string, configuration map[string]config.ChoiceConfig, currentStatus status.Status) error {
-	originalChoices := choiceStrToMap(originalChoiceStr, configuration)
-	newChoices := choiceStrToMap(newChoiceStr, configuration)
+func (s *AttendeeServiceImplData) CanChangeChoiceToCurrentStatus(ctx context.Context, what string, originalChoice []attendee.PackageState, newChoice []attendee.PackageState, configuration map[string]config.ChoiceConfig, currentStatus status.Status) error {
+	originalChoicesMap := choiceListToMap(originalChoice, configuration)
+	newChoicesMap := choiceListToMap(newChoice, configuration)
+	return s.canChangeChoiceLowlevel(ctx, what, originalChoicesMap, newChoicesMap, configuration, currentStatus)
+}
+
+func (s *AttendeeServiceImplData) canChangeChoiceLowlevel(ctx context.Context, what string, originalChoices map[string]int, newChoices map[string]int, configuration map[string]config.ChoiceConfig, currentStatus status.Status) error {
 	oneIsMandatory := false
 	satisfiesOneIsMandatory := false
 	mandatoryList := make([]string, 0)
@@ -164,7 +171,7 @@ func (s *AttendeeServiceImplData) CanChangeChoiceToCurrentStatus(ctx context.Con
 		if v.Mandatory {
 			oneIsMandatory = true
 			mandatoryList = append(mandatoryList, k)
-			if newChoices[k] {
+			if newChoices[k] > 0 {
 				satisfiesOneIsMandatory = true
 			}
 		}
@@ -221,11 +228,11 @@ func userAlreadyHasAnotherRegistration(ctx context.Context, identity string, exp
 	return count != expectedCount, nil
 }
 
-func checkNoForbiddenChanges(ctx context.Context, what string, key string, choiceConfig config.ChoiceConfig, originalChoices map[string]bool, newChoices map[string]bool) error {
+func checkNoForbiddenChanges(ctx context.Context, what string, key string, choiceConfig config.ChoiceConfig, originalChoices map[string]int, newChoices map[string]int) error {
 	if originalChoices[key] != newChoices[key] {
 		// tolerate removing a read-only choice that has a constraint that forbids it anyway
 		if choiceConfig.ReadOnly {
-			if originalChoices[key] && !newChoices[key] {
+			if originalChoices[key] > 0 && newChoices[key] == 0 {
 				if canAllowRemovalDueToConstraint(ctx, what, key, choiceConfig, originalChoices, newChoices) {
 					return nil
 				}
@@ -240,14 +247,14 @@ func checkNoForbiddenChanges(ctx context.Context, what string, key string, choic
 	return nil
 }
 
-func canAllowRemovalDueToConstraint(ctx context.Context, what string, key string, choiceConfig config.ChoiceConfig, originalChoices map[string]bool, newChoices map[string]bool) bool {
+func canAllowRemovalDueToConstraint(ctx context.Context, what string, key string, choiceConfig config.ChoiceConfig, originalChoices map[string]int, newChoices map[string]int) bool {
 	if choiceConfig.Constraint != "" {
 		constraints := strings.Split(choiceConfig.Constraint, ",")
 		for _, cn := range constraints {
 			constraintK := cn
 			if strings.HasPrefix(cn, "!") {
 				constraintK = strings.TrimPrefix(cn, "!")
-				if newChoices[constraintK] {
+				if newChoices[constraintK] > 0 {
 					aulogging.Logger.Ctx(ctx).Info().Printf("can allow removal of read only %s %s - it would violate a constraint for %s anyway", what, key, constraintK)
 					return true
 				}
@@ -257,13 +264,13 @@ func canAllowRemovalDueToConstraint(ctx context.Context, what string, key string
 	return false
 }
 
-func checkNoForbiddenChangesAfterPayment(ctx context.Context, what string, key string, choiceConfig config.ChoiceConfig, configuration map[string]config.ChoiceConfig, originalChoices map[string]bool, newChoices map[string]bool, currentStatus status.Status) error {
+func checkNoForbiddenChangesAfterPayment(ctx context.Context, what string, key string, choiceConfig config.ChoiceConfig, configuration map[string]config.ChoiceConfig, originalChoices map[string]int, newChoices map[string]int, currentStatus status.Status) error {
 	if ctxvalues.HasApiToken(ctx) || ctxvalues.IsAuthorizedAsGroup(ctx, config.OidcAdminGroup()) {
 		return nil
 	}
 
 	if currentStatus == status.PartiallyPaid || currentStatus == status.Paid || currentStatus == status.CheckedIn {
-		if originalChoices[key] && !newChoices[key] && choiceConfig.Price > 0 {
+		if originalChoices[key] > 0 && newChoices[key] == 0 && choiceConfig.Price > 0 {
 			oldDues := calcTotalDuesHelper(configuration, originalChoices)
 			newDues := calcTotalDuesHelper(configuration, newChoices)
 
@@ -276,28 +283,28 @@ func checkNoForbiddenChangesAfterPayment(ctx context.Context, what string, key s
 	return nil
 }
 
-func calcTotalDuesHelper(configuration map[string]config.ChoiceConfig, choices map[string]bool) (dues int64) {
-	for k, selected := range choices {
+func calcTotalDuesHelper(configuration map[string]config.ChoiceConfig, choices map[string]int) (dues int64) {
+	for k, count := range choices {
 		choiceConfig, ok := configuration[k]
-		if ok && selected {
-			dues += choiceConfig.Price
+		if ok && count > 0 {
+			dues += choiceConfig.Price * int64(count)
 		}
 	}
 	return dues
 }
 
-func checkNoConstraintViolation(key string, choiceConfig config.ChoiceConfig, newChoices map[string]bool) error {
+func checkNoConstraintViolation(key string, choiceConfig config.ChoiceConfig, newChoices map[string]int) error {
 	if choiceConfig.Constraint != "" {
 		constraints := strings.Split(choiceConfig.Constraint, ",")
 		for _, cn := range constraints {
 			constraintK := cn
 			if strings.HasPrefix(cn, "!") {
 				constraintK = strings.TrimPrefix(cn, "!")
-				if newChoices[key] && newChoices[constraintK] {
+				if newChoices[key] > 0 && newChoices[constraintK] > 0 {
 					return errors.New("cannot pick both " + key + " and " + constraintK + " - constraint violated")
 				}
 			} else {
-				if newChoices[key] && !newChoices[constraintK] {
+				if newChoices[key] > 0 && newChoices[constraintK] == 0 {
 					return errors.New("when picking " + key + ", must also pick " + constraintK + " - constraint violated")
 				}
 			}
@@ -306,31 +313,69 @@ func checkNoConstraintViolation(key string, choiceConfig config.ChoiceConfig, ne
 	return nil
 }
 
-func choiceStrToMap(choiceStr string, configuration map[string]config.ChoiceConfig) map[string]bool {
-	result := make(map[string]bool)
+// choiceStrToMap converts a choice representation in the entity to a map of counts
+//
+// Can be used for packages, flags, options.
+func choiceStrToMap(choiceStr string, configuration map[string]config.ChoiceConfig) map[string]int {
+	result := make(map[string]int)
 	// ensure all available keys present
 	for k, _ := range configuration {
-		result[k] = false
+		result[k] = 0
 	}
 	if choiceStr != "" {
 		choices := strings.Split(choiceStr, ",")
 		for _, pickedKey := range choices {
 			if pickedKey != "" {
-				result[pickedKey] = true
+				currentValue, present := result[pickedKey]
+				if present {
+					result[pickedKey] = currentValue + 1
+				} else {
+					aulogging.Logger.NoCtx().Warn().Printf("encountered non-configured choice key %s - maybe configuration changed after initial reg? This needs fixing! - continuing", pickedKey)
+					result[pickedKey] = 1
+				}
 			}
 		}
 	}
 	return result
 }
 
-func commaSeparatedStrToMap(choiceStr string, allowedValues []string) map[string]bool {
+// choiceListToMap converts a choice list to a map of counts
+//
+// Can be used for packages, flags, options.
+func choiceListToMap(choiceList []attendee.PackageState, configuration map[string]config.ChoiceConfig) map[string]int {
+	result := make(map[string]int)
+	// ensure all available keys present
+	for k, _ := range configuration {
+		result[k] = 0
+	}
+	for _, entry := range choiceList {
+		currentValue, present := result[entry.Name]
+		if present {
+			if entry.Count == 0 {
+				entry.Count = 1
+			}
+			result[entry.Name] = currentValue + entry.Count
+		} else {
+			aulogging.Logger.NoCtx().Warn().Printf("encountered non-configured choice key '%s' - maybe configuration changed after initial reg? This needs fixing! - continuing", entry.Name)
+			result[entry.Name] = 1
+		}
+	}
+	return result
+}
+
+// commaSeparatedStrToMap converts a comma separated string representation in the entity to a map of booleans
+//
+// Can be used for permissions, languages, etc.
+//
+// IMPORTANT: do not use for choices (packages, flags, options), use choiceStrToMap instead to achieve better validation
+func commaSeparatedStrToMap(commaSeparatedStr string, allowedValues []string) map[string]bool {
 	result := make(map[string]bool)
 	// ensure all available values present
 	for _, k := range allowedValues {
 		result[k] = false
 	}
-	if choiceStr != "" {
-		choices := strings.Split(choiceStr, ",")
+	if commaSeparatedStr != "" {
+		choices := strings.Split(commaSeparatedStr, ",")
 		for _, pickedKey := range choices {
 			if pickedKey != "" {
 				result[pickedKey] = true

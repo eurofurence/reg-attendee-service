@@ -127,6 +127,7 @@ choices:
       description: 'Mountain Trip'
       price: 3000
       vat_percent: 19
+      max_count: 2
     day-thu:
       description: 'Day Guest (Thursday)'
       price: 6000
