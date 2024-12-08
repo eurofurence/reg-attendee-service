@@ -36,8 +36,31 @@ func TestCreateNewAttendeeInvalid(t *testing.T) {
 	docs.When("when they create a new attendee with invalid data")
 	attendeeSent := tstBuildValidAttendee("nav1-")
 	attendeeSent.Nickname = "$%&^@!$"
-	attendeeSent.Packages = attendeeSent.Packages + ",sponsor" // a constraint violation
-	attendeeSent.Birthday = "2004-11-23"                       // too young
+	tstAddPackages(&attendeeSent, "sponsor") // a constraint violation
+	attendeeSent.Birthday = "2004-11-23"     // too young
+	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), tstNoToken())
+
+	docs.Then("then the attendee is rejected with an appropriate error response")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
+		"birthday": []string{"birthday must be no earlier than 1901-01-01 and no later than 2001-08-14"},
+		"nickname": []string{"nickname field must contain at least one alphanumeric character", "nickname field must not contain more than two non-alphanumeric characters (not counting spaces)"},
+		"packages": []string{"cannot pick both sponsor2 and sponsor - constraint violated"},
+	})
+}
+
+func TestCreateNewAttendeeInvalidPackagesList(t *testing.T) {
+	docs.Given("given the configuration for public standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an unauthenticated user")
+
+	docs.When("when they create a new attendee with invalid data")
+	attendeeSent := tstBuildValidAttendee("nav1-")
+	attendeeSent.Nickname = "$%&^@!$"
+	attendeeSent.Packages = ""                                                                            // should be ignored, so let's produce a different error if used
+	attendeeSent.PackagesList = append(attendeeSent.PackagesList, attendee.PackageState{Name: "sponsor"}) // constraint violation, also tests that Count: 0 means Count: 1
+	attendeeSent.Birthday = "2004-11-23"                                                                  // too young
 	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), tstNoToken())
 
 	docs.Then("then the attendee is rejected with an appropriate error response")
@@ -57,7 +80,7 @@ func TestCreateNewAttendeeInvalid_NoMandatoryPackage(t *testing.T) {
 
 	docs.When("when they create a new attendee, but pick none of the at-least-one-mandatory packages")
 	attendeeSent := tstBuildValidAttendee("nav1b-")
-	attendeeSent.Packages = "room-none,sponsor"
+	tstOverridePackages(&attendeeSent, "room-none,sponsor")
 	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), tstNoToken())
 
 	docs.Then("then the attendee is rejected with an appropriate error response")
@@ -165,7 +188,7 @@ func TestCreateNewAttendeeDefaultReadOnlyPackage(t *testing.T) {
 
 	docs.When("when they send a new attendee and attempt to leave out a read only default package (room-none)")
 	attendeeSent := tstBuildValidAttendee("nav6-")
-	attendeeSent.Packages = "attendance,stage,sponsor"
+	tstOverridePackages(&attendeeSent, "attendance,stage,sponsor")
 	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), staffToken)
 
 	docs.Then("then the attendee is rejected with an error response")
@@ -367,8 +390,6 @@ func TestCreateNewAttendee_NoLoginRequired_After_Anon(t *testing.T) {
 	attendeeReadAgain := tstReadAttendee(t, response.location)
 	// difference in id is ok, so copy it over to expected
 	attendeeSent.Id = attendeeReadAgain.Id
-	// TODO #239 for now we test for the classic package field - remove and send list instead later
-	attendeeReadAgain.PackagesList = nil
 	require.EqualValues(t, attendeeSent, attendeeReadAgain, "attendee data read did not match sent data")
 }
 
@@ -394,8 +415,6 @@ func TestCreateNewAttendee_NoLoginRequired_After_User(t *testing.T) {
 	tstParseJson(readAgainResponse.body, &attendeeReadAgain)
 	// difference in id is ok, so copy it over to expected
 	attendeeSent.Id = attendeeReadAgain.Id
-	// TODO #239 for now we test for the classic package field - remove and send list instead later
-	attendeeReadAgain.PackagesList = nil
 	require.EqualValues(t, attendeeSent, attendeeReadAgain, "attendee data read did not match sent data")
 }
 
@@ -745,8 +764,6 @@ func TestCreateNewAttendee_AutomaticGroupFlag(t *testing.T) {
 	attendeeSent.Id = attendeeReadAgain.Id
 	// we expect the 'ev' flag added
 	attendeeSent.Flags += ",ev"
-	// TODO #239 for now we test for the classic package field - remove and send list instead later
-	attendeeReadAgain.PackagesList = nil
 	require.EqualValues(t, attendeeSent, attendeeReadAgain, "attendee data read did not match expected data")
 }
 
@@ -779,7 +796,7 @@ func TestCreateNewAttendee_ReadonlyDefaultPackageWithConstraintRemovable(t *test
 
 	docs.When("when they create a new attendee and remove a read-only default package with matching constraint (stage)")
 	attendeeSent := tstBuildValidAttendee("na63-")
-	attendeeSent.Packages = "room-none,day-sat,boat-trip"
+	tstOverridePackages(&attendeeSent, "room-none,day-sat,boat-trip")
 	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), token)
 
 	docs.Then("then the attendee is successfully created")
@@ -797,7 +814,7 @@ func TestCreateNewAttendee_ReadonlyDefaultPackageNoConstraintNotRemovable(t *tes
 
 	docs.When("when they create a new attendee and try to remove a read-only default package with no matching constraint (room-none)")
 	attendeeSent := tstBuildValidAttendee("na65-")
-	attendeeSent.Packages = "day-sat"
+	tstOverridePackages(&attendeeSent, "day-sat")
 	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), token)
 
 	docs.Then("then the attempt is rejected as invalid (400) with an appropriate error response")
@@ -861,7 +878,7 @@ func TestUpdateExistingAttendee_Self_NoMandatoryPackages(t *testing.T) {
 
 	docs.When("when they attempt to change the selected packages, and pick none of the at-least-one-mandatory packages")
 	changedAttendee := attendee1
-	changedAttendee.Packages = "room-none,sponsor"
+	tstOverridePackages(&changedAttendee, "room-none,sponsor")
 	updateResponse := tstPerformPut(location1, tstRenderJson(changedAttendee), token)
 
 	docs.Then("then the request fails with the appropriate error")
@@ -921,9 +938,9 @@ func TestUpdateExistingAttendeeDataInvalid(t *testing.T) {
 
 	docs.When("when they try to update the information with invalid data")
 	changedAttendee := attendee1
-	changedAttendee.Nickname = "$%&^@!$"                             // not allowed
-	changedAttendee.Packages = changedAttendee.Packages + ",sponsor" // a constraint violation
-	changedAttendee.Birthday = "2004-11-23"                          // too young
+	changedAttendee.Nickname = "$%&^@!$"        // not allowed
+	tstAddPackages(&changedAttendee, "sponsor") // a constraint violation
+	changedAttendee.Birthday = "2004-11-23"     // too young
 	response := tstPerformPut(location1, tstRenderJson(changedAttendee), token)
 
 	docs.Then("then the update is rejected with an appropriate error response")
@@ -1169,7 +1186,7 @@ func tstUpdateExistingAttendee_RemovePackage_Forbidden(t *testing.T, testcase st
 
 	docs.When("when they send updated attendee info and change their packages in a way that reduces total dues")
 	changedAttendee := att
-	changedAttendee.Packages = "room-none,attendance,stage" // removes sponsor2
+	tstOverridePackages(&changedAttendee, "room-none,attendance,stage") // removes sponsor2
 	response := tstPerformPut(loc, tstRenderJson(changedAttendee), token)
 
 	docs.Then("then the update is rejected with the corresponding error message")
@@ -1187,26 +1204,20 @@ func tstUpdateExistingAttendee_RemovePackage_NoCostReduce_Allowed(t *testing.T, 
 	loc, att := tstRegisterAttendeeAndTransitionToStatus(t, testcase, targetStatus)
 	// update to prepare test case
 	changedAttendee := att
-	changedAttendee.Packages = "attendance,boat-trip,room-none,sponsor2,stage" // adds boat-trip
-	// TODO #239 for now we test for the classic package field - remove and send list instead later
-	changedAttendee.PackagesList = nil
+	tstAddPackages(&changedAttendee, "boat-trip")
 	response := tstPerformPut(loc, tstRenderJson(changedAttendee), token)
 	require.Equal(t, http.StatusOK, response.status, "unexpected http response status for update")
 	require.Equal(t, loc, response.location, "location unexpectedly changed during update")
 
 	docs.When("when they send updated attendee info and change packages in a way that does not reduce total dues")
 	changedAttendee2 := att
-	changedAttendee2.Packages = "attendance,mountain-trip,room-none,sponsor2,stage" // removes boat-trip, but adds mountain-trip which is more expensive
-	// TODO #239 for now we test for the classic package field - remove and send list instead later
-	changedAttendee2.PackagesList = nil
+	tstOverridePackages(&changedAttendee2, "attendance,mountain-trip,room-none,sponsor2,stage") // removes boat-trip, but adds mountain-trip which is more expensive
 	response2 := tstPerformPut(loc, tstRenderJson(changedAttendee2), token)
 
 	docs.Then("then the attendee is successfully updated and the changed data can be read again")
 	require.Equal(t, http.StatusOK, response2.status, "unexpected http response status for update")
 	require.Equal(t, loc, response2.location, "location unexpectedly changed during update")
 	attendeeReadAgain := tstReadAttendee(t, loc)
-	// TODO #239 for now we test for the classic package field - remove and check list instead later
-	attendeeReadAgain.PackagesList = nil
 	require.EqualValues(t, changedAttendee2, attendeeReadAgain, "attendee data read did not match updated data")
 	require.EqualValues(t, "attendance,mountain-trip,room-none,sponsor2,stage", attendeeReadAgain.Packages, "attendee data read did not match expected package value")
 }
@@ -1221,17 +1232,13 @@ func tstUpdateExistingAttendee_RemovePackage_Allowed(t *testing.T, testcase stri
 
 	docs.When("when they send updated attendee info and remove a package that has associated cost")
 	changedAttendee := att
-	changedAttendee.Packages = "attendance,room-none,stage" // removes sponsor2
-	// TODO #239 for now we test for the classic package field - remove and send changed list instead later
-	changedAttendee.PackagesList = nil
+	tstOverridePackages(&changedAttendee, "attendance,room-none,stage") // removes sponsor2
 	response := tstPerformPut(loc, tstRenderJson(changedAttendee), token)
 
 	docs.Then("then the attendee is successfully updated and the changed data can be read again")
 	require.Equal(t, http.StatusOK, response.status, "unexpected http response status for update")
 	require.Equal(t, loc, response.location, "location unexpectedly changed during update")
 	attendeeReadAgain := tstReadAttendee(t, loc)
-	// TODO #239 for now we test for the classic package field - remove and check changed list instead later
-	attendeeReadAgain.PackagesList = nil
 	require.EqualValues(t, changedAttendee, attendeeReadAgain, "attendee data read did not match updated data")
 	require.EqualValues(t, "attendance,room-none,stage", attendeeReadAgain.Packages, "attendee data read did not match expected package value")
 }
@@ -1287,7 +1294,7 @@ func tstUpdateExistingAttendee_AddOnePackage(t *testing.T, testcase string, orig
 	docs.When("when they send updated attendee info and add a package that has associated cost")
 	changedAttendee := att
 	changedAttendee.Packages = "room-none,attendance,stage,sponsor2,boat-trip" // adds boat-trip (and tests automatic reordering)
-	// TODO #239 for now we test for the classic package field - remove and send list instead later
+	// let's also test that the package List is populated from sending classic packages, so clear the list in this request
 	changedAttendee.PackagesList = nil
 	response := tstPerformPut(loc, tstRenderJson(changedAttendee), token)
 
@@ -1295,10 +1302,10 @@ func tstUpdateExistingAttendee_AddOnePackage(t *testing.T, testcase string, orig
 	require.Equal(t, http.StatusOK, response.status, "unexpected http response status for update")
 	require.Equal(t, loc, response.location, "location unexpectedly changed during update")
 	attendeeReadAgain := tstReadAttendee(t, loc)
-	// TODO #239 for now we test for the classic package field - remove and check list instead later
-	attendeeReadAgain.PackagesList = nil
 	// test automatic reordering of packages to alphabetical order
 	changedAttendee.Packages = "attendance,boat-trip,room-none,sponsor2,stage"
+	// and test that package list is also sent in responses, also sorted alphabetically by names
+	changedAttendee.PackagesList = tstPackagesListFromPackages(changedAttendee.Packages)
 	require.EqualValues(t, changedAttendee, attendeeReadAgain, "attendee data read did not match updated data")
 	require.EqualValues(t, "attendance,boat-trip,room-none,sponsor2,stage", attendeeReadAgain.Packages, "attendee data read did not match expected package value")
 
@@ -1340,24 +1347,18 @@ func tstUpdateExistingAttendee_AddTwoPackages(t *testing.T, testcase string, ori
 
 	docs.When("when they send updated attendee info and add a package that has associated cost")
 	changedAttendee := att
-	changedAttendee.Packages = "attendance,boat-trip,room-none,sponsor2,stage" // adds boat-trip
-	// TODO #239 for now we test for the classic package field - remove and send list instead later
-	changedAttendee.PackagesList = nil
+	tstAddPackages(&changedAttendee, "boat-trip")
 	response := tstPerformPut(loc, tstRenderJson(changedAttendee), token)
 
 	docs.When("and then send updated attendee info and add a second package that has associated cost")
 	changedAttendee2 := att
-	changedAttendee2.Packages = "attendance,boat-trip,mountain-trip,room-none,sponsor2,stage" // adds mountain-trip
-	// TODO #239 for now we test for the classic package field - remove and send list instead later
-	changedAttendee2.PackagesList = nil
+	tstAddPackages(&changedAttendee2, "boat-trip,mountain-trip")
 	response2 := tstPerformPut(loc, tstRenderJson(changedAttendee2), token)
 
 	docs.Then("then the attendee is successfully updated both times and the final data can be read again")
 	require.Equal(t, http.StatusOK, response.status, "unexpected http response status for update")
 	require.Equal(t, http.StatusOK, response2.status, "unexpected http response status for update")
 	attendeeReadAgain := tstReadAttendee(t, loc)
-	// TODO #239 for now we test for the classic package field - remove and check list instead later
-	attendeeReadAgain.PackagesList = nil
 	require.EqualValues(t, changedAttendee2, attendeeReadAgain, "attendee data read did not match final updated data")
 	require.EqualValues(t, "attendance,boat-trip,mountain-trip,room-none,sponsor2,stage", attendeeReadAgain.Packages, "attendee data read did not match expected package value")
 
@@ -1404,17 +1405,13 @@ func tstUpdateExistingAttendee_AddOnePackage_Admin_SuppressEmailWorks(t *testing
 
 	docs.When("when an admin sends updated attendee info and adds a package that has associated cost (with suppressMinorUpdateEmail flag set)")
 	changedAttendee := att
-	changedAttendee.Packages = "attendance,boat-trip,room-none,sponsor2,stage" // adds boat-trip
-	// TODO #239 for now we test for the classic package field - remove and send list instead later
-	changedAttendee.PackagesList = nil
+	tstAddPackages(&changedAttendee, "boat-trip")
 	response := tstPerformPut(loc+"?suppressMinorUpdateEmail=yes", tstRenderJson(changedAttendee), token)
 
 	docs.Then("then the attendee is successfully updated and the changed data can be read again")
 	require.Equal(t, http.StatusOK, response.status, "unexpected http response status for update")
 	require.Equal(t, loc, response.location, "location unexpectedly changed during update")
 	attendeeReadAgain := tstReadAttendee(t, loc)
-	// TODO #239 for now we test for the classic package field - remove and check list instead later
-	attendeeReadAgain.PackagesList = nil
 	require.EqualValues(t, changedAttendee, attendeeReadAgain, "attendee data read did not match updated data")
 	require.EqualValues(t, "attendance,boat-trip,room-none,sponsor2,stage", attendeeReadAgain.Packages, "attendee data read did not match expected package value")
 

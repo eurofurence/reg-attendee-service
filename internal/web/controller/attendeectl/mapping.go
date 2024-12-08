@@ -101,14 +101,11 @@ func sliceContains(slice []string, singleValue string) bool {
 }
 
 func packagesFromDto(commaSeparated string, asList []attendee.PackageState) string {
-	// only use commaSeparated if no list is supplied
-	if len(asList) == 0 {
-		asList = packageListFromCommaSeparated(commaSeparated)
-	}
+	alwaysAsList := packagesListWithPrecedence(commaSeparated, asList)
 
 	var result strings.Builder
 	result.WriteString(",")
-	for _, item := range asList {
+	for _, item := range alwaysAsList {
 		// item.Count = 0 should be interpreted as 1 (allows omitting Count in requests)
 		for i := 0; i == 0 || i < item.Count; i++ {
 			result.WriteString(item.Name + ",")
@@ -125,6 +122,15 @@ func packagesListFromEntity(entityPackages string) []attendee.PackageState {
 	unwrapped := removeWrappingCommas(entityPackages)
 	asList := packageListFromCommaSeparated(unwrapped)
 	return asList
+}
+
+func packagesListWithPrecedence(commaSeparated string, asList []attendee.PackageState) []attendee.PackageState {
+	// only use commaSeparated if no list is supplied
+	if len(asList) == 0 {
+		return packageListFromCommaSeparated(commaSeparated)
+	} else {
+		return asList
+	}
 }
 
 // packageListFromCommaSeparated takes a comma separated list, without leading and trailing commas, and converts

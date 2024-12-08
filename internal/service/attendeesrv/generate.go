@@ -168,7 +168,7 @@ func mapAttendeeToDto(a *entity.Attendee, dto *attendee.AttendeeDto) {
 	dto.SpokenLanguages = removeWrappingCommas(a.SpokenLanguages)
 	dto.RegistrationLanguage = removeWrappingCommas(a.RegistrationLanguage)
 	dto.Flags = removeWrappingCommas(a.Flags)
-	dto.Packages = removeWrappingCommas(a.Packages)
+	dto.PackagesList = sortedPackageListFromCommaSeparated(removeWrappingCommas(a.Packages))
 	dto.Options = removeWrappingCommas(a.Options)
 	dto.UserComments = a.UserComments
 }

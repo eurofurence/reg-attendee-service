@@ -14,6 +14,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -158,6 +159,7 @@ func tstPerformDelete(relativeUrlWithLeadingSlash string, token string) tstWebRe
 }
 
 func tstBuildValidAttendee(testcase string) attendee.AttendeeDto {
+	packages := "attendance,room-none,sponsor2,stage"
 	return attendee.AttendeeDto{
 		Nickname:             "BlackCheetah",
 		FirstName:            "Hans",
@@ -176,10 +178,62 @@ func tstBuildValidAttendee(testcase string) attendee.AttendeeDto {
 		SpokenLanguages:      "de,en",
 		RegistrationLanguage: "en-US",
 		Flags:                "anon,hc,terms-accepted",
-		Packages:             "attendance,room-none,sponsor2,stage",
+		Packages:             packages, // ignored because PackagesList is set and takes precedence
+		PackagesList:         tstPackagesListFromPackages(packages),
 		Options:              "music,suit",
 		TshirtSize:           "XXL",
 	}
+}
+
+func tstOverridePackages(att *attendee.AttendeeDto, packages string) {
+	att.Packages = packages
+	att.PackagesList = tstPackagesListFromPackages(packages)
+}
+
+func tstAddPackages(att *attendee.AttendeeDto, additionalCommaSeparated string) {
+	att.Packages = att.Packages + "," + additionalCommaSeparated
+	att.PackagesList = tstPackagesListFromPackages(att.Packages)
+	// now ensure packages is still sorted
+	att.Packages = tstPackagesFromPackagesList(att.PackagesList)
+}
+
+func tstPackagesListFromPackages(commaSeparated string) []attendee.PackageState {
+	counts := make(map[string]int)
+	names := strings.Split(commaSeparated, ",")
+	for _, name := range names {
+		if name != "" {
+			oldCount, _ := counts[name]
+			counts[name] = oldCount + 1
+		}
+	}
+
+	result := make([]attendee.PackageState, 0)
+	for name, count := range counts {
+		result = append(result, attendee.PackageState{
+			Name:  name,
+			Count: count,
+		})
+	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Name < result[j].Name
+	})
+
+	return result
+}
+
+func tstPackagesFromPackagesList(asList []attendee.PackageState) string {
+	resultList := make([]string, 0)
+	for _, entry := range asList {
+		if entry.Count == 0 {
+			entry.Count = 1
+		}
+		for i := 0; i < entry.Count; i++ {
+			resultList = append(resultList, entry.Name)
+		}
+	}
+	sort.Strings(resultList)
+	return strings.Join(resultList, ",")
 }
 
 func tstBuildValidBanRule(testcase string) bans.BanRule {

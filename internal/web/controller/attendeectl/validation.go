@@ -107,7 +107,8 @@ func validate(ctx context.Context, a *attendee.AttendeeDto, trustedOriginalState
 	if err := attendeeService.CanChangeChoiceTo(ctx, "flag", trustedOriginalState.Flags, a.Flags, config.FlagsConfigNoAdmin()); err != nil {
 		errs.Add("flags", err.Error())
 	}
-	if err := attendeeService.CanChangeChoiceToCurrentStatus(ctx, "package", trustedOriginalState.Packages, a.Packages, config.PackagesConfig(), currentStatus); err != nil {
+	newPackagesList := packagesListWithPrecedence(a.Packages, a.PackagesList)
+	if err := attendeeService.CanChangeChoiceToCurrentStatus(ctx, "package", packagesListFromEntity(trustedOriginalState.Packages), newPackagesList, config.PackagesConfig(), currentStatus); err != nil {
 		errs.Add("packages", err.Error())
 	}
 	if err := attendeeService.CanChangeChoiceTo(ctx, "option", trustedOriginalState.Options, a.Options, config.OptionsConfig()); err != nil {

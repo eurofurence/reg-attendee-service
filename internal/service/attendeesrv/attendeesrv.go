@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
@@ -140,12 +141,18 @@ func (s *AttendeeServiceImplData) CanChangeEmailTo(ctx context.Context, original
 }
 
 func (s *AttendeeServiceImplData) CanChangeChoiceTo(ctx context.Context, what string, originalChoiceStr string, newChoiceStr string, configuration map[string]config.ChoiceConfig) error {
-	return s.CanChangeChoiceToCurrentStatus(ctx, what, originalChoiceStr, newChoiceStr, configuration, "irrelevant")
+	originalChoicesMap := choiceStrToMap(originalChoiceStr, configuration)
+	newChoicesMap := choiceStrToMap(newChoiceStr, configuration)
+	return s.canChangeChoiceLowlevel(ctx, what, originalChoicesMap, newChoicesMap, configuration, "irrelevant")
 }
 
-func (s *AttendeeServiceImplData) CanChangeChoiceToCurrentStatus(ctx context.Context, what string, originalChoiceStr string, newChoiceStr string, configuration map[string]config.ChoiceConfig, currentStatus status.Status) error {
-	originalChoices := choiceStrToMap(originalChoiceStr, configuration)
-	newChoices := choiceStrToMap(newChoiceStr, configuration)
+func (s *AttendeeServiceImplData) CanChangeChoiceToCurrentStatus(ctx context.Context, what string, originalChoice []attendee.PackageState, newChoice []attendee.PackageState, configuration map[string]config.ChoiceConfig, currentStatus status.Status) error {
+	originalChoicesMap := choiceListToMap(originalChoice, configuration)
+	newChoicesMap := choiceListToMap(newChoice, configuration)
+	return s.canChangeChoiceLowlevel(ctx, what, originalChoicesMap, newChoicesMap, configuration, currentStatus)
+}
+
+func (s *AttendeeServiceImplData) canChangeChoiceLowlevel(ctx context.Context, what string, originalChoices map[string]int, newChoices map[string]int, configuration map[string]config.ChoiceConfig, currentStatus status.Status) error {
 	oneIsMandatory := false
 	satisfiesOneIsMandatory := false
 	mandatoryList := make([]string, 0)
@@ -327,6 +334,30 @@ func choiceStrToMap(choiceStr string, configuration map[string]config.ChoiceConf
 					result[pickedKey] = 1
 				}
 			}
+		}
+	}
+	return result
+}
+
+// choiceListToMap converts a choice list to a map of counts
+//
+// Can be used for packages, flags, options.
+func choiceListToMap(choiceList []attendee.PackageState, configuration map[string]config.ChoiceConfig) map[string]int {
+	result := make(map[string]int)
+	// ensure all available keys present
+	for k, _ := range configuration {
+		result[k] = 0
+	}
+	for _, entry := range choiceList {
+		currentValue, present := result[entry.Name]
+		if present {
+			if entry.Count == 0 {
+				entry.Count = 1
+			}
+			result[entry.Name] = currentValue + entry.Count
+		} else {
+			aulogging.Logger.NoCtx().Warn().Printf("encountered non-configured choice key '%s' - maybe configuration changed after initial reg? This needs fixing! - continuing", entry.Name)
+			result[entry.Name] = 1
 		}
 	}
 	return result
