@@ -48,6 +48,25 @@ func TestCreateNewAttendeeInvalid(t *testing.T) {
 	})
 }
 
+func TestCreateNewAttendeeInvalidClassicPackages(t *testing.T) {
+	docs.Given("given the configuration for public standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an unauthenticated user")
+
+	docs.When("when they create a new attendee with invalid data using a packages list")
+	attendeeSent := tstBuildValidAttendee("nav1b-")
+	attendeeSent.Packages = attendeeSent.Packages + ",sponsor" // constraint violation
+	attendeeSent.PackagesList = nil                            // make packages field actually count
+	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), tstNoToken())
+
+	docs.Then("then the attendee is rejected with an appropriate error response, and the packages field was used")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
+		"packages": []string{"cannot pick both sponsor2 and sponsor - constraint violated"},
+	})
+}
+
 func TestCreateNewAttendeeInvalidPackagesList(t *testing.T) {
 	docs.Given("given the configuration for public standard registration")
 	tstSetup(false, false, true)
@@ -55,18 +74,14 @@ func TestCreateNewAttendeeInvalidPackagesList(t *testing.T) {
 
 	docs.Given("given an unauthenticated user")
 
-	docs.When("when they create a new attendee with invalid data")
-	attendeeSent := tstBuildValidAttendee("nav1-")
-	attendeeSent.Nickname = "$%&^@!$"
+	docs.When("when they create a new attendee with invalid data using a packages list with omitted count field")
+	attendeeSent := tstBuildValidAttendee("nav1c-")
 	attendeeSent.Packages = ""                                                                            // should be ignored, so let's produce a different error if used
 	attendeeSent.PackagesList = append(attendeeSent.PackagesList, attendee.PackageState{Name: "sponsor"}) // constraint violation, also tests that Count: 0 means Count: 1
-	attendeeSent.Birthday = "2004-11-23"                                                                  // too young
 	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), tstNoToken())
 
-	docs.Then("then the attendee is rejected with an appropriate error response")
+	docs.Then("then the attendee is rejected with an appropriate error response, the packages field was ignored, and count was interpreted correctly")
 	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
-		"birthday": []string{"birthday must be no earlier than 1901-01-01 and no later than 2001-08-14"},
-		"nickname": []string{"nickname field must contain at least one alphanumeric character", "nickname field must not contain more than two non-alphanumeric characters (not counting spaces)"},
 		"packages": []string{"cannot pick both sponsor2 and sponsor - constraint violated"},
 	})
 }
@@ -79,7 +94,7 @@ func TestCreateNewAttendeeInvalid_NoMandatoryPackage(t *testing.T) {
 	docs.Given("given an unauthenticated user")
 
 	docs.When("when they create a new attendee, but pick none of the at-least-one-mandatory packages")
-	attendeeSent := tstBuildValidAttendee("nav1b-")
+	attendeeSent := tstBuildValidAttendee("nav1d-")
 	tstOverridePackages(&attendeeSent, "room-none,sponsor")
 	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), tstNoToken())
 
@@ -948,6 +963,52 @@ func TestUpdateExistingAttendeeDataInvalid(t *testing.T) {
 		"nickname": []string{"nickname field must contain at least one alphanumeric character", "nickname field must not contain more than two non-alphanumeric characters (not counting spaces)"},
 		"packages": []string{"cannot pick both sponsor2 and sponsor - constraint violated"},
 		"birthday": []string{"birthday must be no earlier than 1901-01-01 and no later than 2001-08-14"},
+	})
+}
+
+func TestUpdateExistingAttendeeClassicPackagesInvalid(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee who is logged in")
+	location1, attendee1 := tstRegisterAttendee(t, "ua4b-")
+
+	docs.Given("given an admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they try to update the information with invalid data")
+	changedAttendee := attendee1
+	changedAttendee.Packages = changedAttendee.Packages + ",sponsor" // constraint violation
+	changedAttendee.PackagesList = nil                               // make packages field actually count
+	response := tstPerformPut(location1, tstRenderJson(changedAttendee), token)
+
+	docs.Then("then the update is rejected with an appropriate error response, and the packages field was used")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
+		"packages": []string{"cannot pick both sponsor2 and sponsor - constraint violated"},
+	})
+}
+
+func TestUpdateExistingAttendeePackagesListInvalid(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee who is logged in")
+	location1, attendee1 := tstRegisterAttendee(t, "ua4c-")
+
+	docs.Given("given an admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they try to update the information with invalid data")
+	changedAttendee := attendee1
+	changedAttendee.Packages = ""                                                                               // should be ignored, so let's produce a different error if used
+	changedAttendee.PackagesList = append(changedAttendee.PackagesList, attendee.PackageState{Name: "sponsor"}) // constraint violation, also tests that Count: 0 means Count: 1
+	response := tstPerformPut(location1, tstRenderJson(changedAttendee), token)
+
+	docs.Then("then the update is rejected with an appropriate error response, the packages field was ignored, and count was interpreted correctly")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
+		"packages": []string{"cannot pick both sponsor2 and sponsor - constraint violated"},
 	})
 }
 
