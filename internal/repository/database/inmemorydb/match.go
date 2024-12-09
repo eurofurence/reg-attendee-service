@@ -1,12 +1,14 @@
 package inmemorydb
 
 import (
+	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/validation"
 	"github.com/ryanuber/go-glob"
+	"strconv"
 	"strings"
 )
 
@@ -65,27 +67,60 @@ func matchesExactOrEmpty(cond string, value string) bool {
 	return cond == "" || cond == value
 }
 
-func choiceMatch(cond map[string]int8, rawValues ...string) bool {
-	combined := ""
-	for _, rawValue := range rawValues {
-		value := strings.TrimPrefix(rawValue, ",")
-		value = strings.TrimSuffix(value, ",")
-		combined = combined + value + ","
-	}
-	combined = strings.TrimSuffix(combined, ",")
-
-	chosen := strings.Split(combined, ",")
+func choiceMatch(cond map[string]int8, selectedValues ...string) bool {
+	chosen := choiceCountMap(selectedValues...)
 
 	for k, v := range cond {
-		contained := validation.SliceContains(chosen, k)
-		if v == 1 && !contained {
+		count, _ := chosen[k]
+		if v == 1 && count == 0 {
 			return false
 		}
-		if v == 0 && contained {
+		if v == 0 && count > 0 {
 			return false
 		}
 	}
 	return true
+}
+
+// choiceCountMap allows passing in multiple dbRepresentations that are
+// combined into a single count map.
+//
+// Used to combine flags and admin flags into a single map.
+//
+// Each parameter is a comma separated list of choice names, possibly followed
+// by :count, where count is a positive integer. If the :count postfix is missing,
+// it is treated as a count of 1.
+//
+// The :count postfix is currently only in use for packages.
+func choiceCountMap(dbRepresentations ...string) map[string]int {
+	result := make(map[string]int)
+
+	for _, dbRepr := range dbRepresentations {
+		value := strings.TrimPrefix(dbRepr, ",")
+		value = strings.TrimSuffix(value, ",")
+
+		chosen := strings.Split(value, ",")
+
+		for _, entry := range chosen {
+			if entry != "" {
+				nameAndPossiblyCount := strings.Split(entry, ":")
+				name := nameAndPossiblyCount[0]
+				count := 1
+				if len(nameAndPossiblyCount) > 1 {
+					var err error
+					count, err = strconv.Atoi(nameAndPossiblyCount[1])
+					if err != nil {
+						aulogging.Logger.NoCtx().Warn().Printf("encountered invalid choice entry '%s' in database - ignoring", entry)
+						continue
+					}
+				}
+				currentCount, _ := result[name]
+				result[name] = currentCount + count
+			}
+		}
+	}
+
+	return result
 }
 
 func matchesStatus(wanted []status.Status, value status.Status) bool {

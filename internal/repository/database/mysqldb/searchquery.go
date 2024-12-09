@@ -239,7 +239,7 @@ func (r *MysqlRepository) addSingleCondition(cond *attendee.AttendeeSearchSingle
 	query.WriteString(choiceMatch("a.registration_language", cond.RegistrationLanguage, params, paramBaseName, &paramNo))
 	query.WriteString(choiceMatch("CONCAT(a.flags,IFNULL(ad.flags, ''))", cond.Flags, params, paramBaseName, &paramNo))
 	query.WriteString(choiceMatch("a.options", cond.Options, params, paramBaseName, &paramNo))
-	query.WriteString(choiceMatch("a.packages", cond.Packages, params, paramBaseName, &paramNo))
+	query.WriteString(packageMatch("a.packages", cond.Packages, params, paramBaseName, &paramNo))
 	if cond.UserComments != "" {
 		query.WriteString(substringMatch("a.user_comments", cond.UserComments, params, paramBaseName, &paramNo))
 	}
@@ -359,6 +359,25 @@ func choiceMatch(field string, condition map[string]int8, params map[string]inte
 			query.WriteString(fmt.Sprintf("    AND ( %s LIKE @%s )\n", field, pName))
 		} else if condition[k] == 0 {
 			query.WriteString(fmt.Sprintf("    AND ( %s NOT LIKE @%s )\n", field, pName))
+		}
+		*idx++
+	}
+	return query.String()
+}
+
+func packageMatch(field string, condition map[string]int8, params map[string]interface{}, paramBaseName string, idx *int) string {
+	query := strings.Builder{}
+	keys := sortedKeySet(condition)
+
+	for _, k := range keys {
+		pName := fmt.Sprintf("%s_%d_nc", paramBaseName, *idx)
+		params[pName] = "%," + k + ",%" // version without a count postfix
+		pName2 := fmt.Sprintf("%s_%d", paramBaseName, *idx)
+		params[pName2] = "%," + k + ":%" // version with a count postfix
+		if condition[k] == 1 {
+			query.WriteString(fmt.Sprintf("    AND ( ( %s LIKE @%s ) OR ( %s LIKE @%s ) )\n", field, pName, field, pName2))
+		} else if condition[k] == 0 {
+			query.WriteString(fmt.Sprintf("    AND ( %s NOT LIKE @%s ) AND ( %s NOT LIKE @%s )\n", field, pName, field, pName2))
 		}
 		*idx++
 	}
