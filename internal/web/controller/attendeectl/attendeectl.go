@@ -270,7 +270,7 @@ func getPackageHandler(w http.ResponseWriter, r *http.Request) {
 		"package",
 		config.Configuration().Choices.Packages,
 		func(_ context.Context, _ http.ResponseWriter, _ *http.Request, attendee *entity.Attendee, _ string, _ config.ChoiceConfig) (string, error) {
-			return attendee.Packages, nil
+			return packagesFromEntity(attendee.Packages), nil
 		},
 	)
 }

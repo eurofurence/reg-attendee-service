@@ -12,6 +12,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -316,23 +317,64 @@ func checkNoConstraintViolation(key string, choiceConfig config.ChoiceConfig, ne
 // choiceStrToMap converts a choice representation in the entity to a map of counts
 //
 // Can be used for packages, flags, options.
+//
+// choiceStr is a comma separated list of choice names, each possibly followed
+// by :count, where count is a positive integer. If the :count postfix is missing,
+// it is treated as a count of 1.
+//
+// The :count postfix is currently only in use for packages.
+//
+// It is ok for the same choice name to occur multiple times in the list. This is in order to
+// remain backwards compatible when processing requests not using the new packages_list field,
+// and in order to allow adding packages directly in the database by just appending "packagename,",
+// which is sometimes incredibly useful.
 func choiceStrToMap(choiceStr string, configuration map[string]config.ChoiceConfig) map[string]int {
-	result := make(map[string]int)
+	result := choiceStrToMapWithoutChecks(choiceStr)
 	// ensure all available keys present
 	for k, _ := range configuration {
-		result[k] = 0
+		if _, ok := result[k]; !ok {
+			result[k] = 0
+		}
 	}
+	// warn for counts exceeding MaxCount
+	for name, count := range result {
+		conf, ok := configuration[name]
+		if !ok {
+			aulogging.Logger.NoCtx().Warn().Printf("encountered non-configured choice key %s - maybe configuration changed after initial reg? This needs fixing! - continuing", name)
+		}
+		if conf.MaxCount == 0 {
+			conf.MaxCount = 1
+		}
+		if count > conf.MaxCount {
+			aulogging.Logger.NoCtx().Warn().Printf("encountered choice key %s with excessive count %d - maybe configuration changed after initial reg? This needs fixing! - continuing", name, count)
+		}
+	}
+	return result
+}
+
+// choiceStrToMapWithoutChecks converts a choice representation in the entity to a map of counts.
+//
+// Low level version without validation against a choice configuration.
+func choiceStrToMapWithoutChecks(choiceStr string) map[string]int {
+	result := make(map[string]int)
 	if choiceStr != "" {
 		choices := strings.Split(choiceStr, ",")
-		for _, pickedKey := range choices {
-			if pickedKey != "" {
-				currentValue, present := result[pickedKey]
-				if present {
-					result[pickedKey] = currentValue + 1
-				} else {
-					aulogging.Logger.NoCtx().Warn().Printf("encountered non-configured choice key %s - maybe configuration changed after initial reg? This needs fixing! - continuing", pickedKey)
-					result[pickedKey] = 1
+		for _, entry := range choices {
+			if entry != "" {
+				nameAndPossiblyCount := strings.Split(entry, ":")
+				name := nameAndPossiblyCount[0]
+				count := 1
+				if len(nameAndPossiblyCount) > 1 {
+					var err error
+					count, err = strconv.Atoi(nameAndPossiblyCount[1])
+					if err != nil {
+						aulogging.Logger.NoCtx().Warn().Printf("encountered invalid choice entry '%s' in database - ignoring (please fix!)", entry)
+						continue
+					}
 				}
+
+				currentValue, _ := result[name]
+				result[name] = currentValue + count
 			}
 		}
 	}
@@ -349,15 +391,16 @@ func choiceListToMap(choiceList []attendee.PackageState, configuration map[strin
 		result[k] = 0
 	}
 	for _, entry := range choiceList {
+		if entry.Count == 0 {
+			entry.Count = 1
+		}
+
 		currentValue, present := result[entry.Name]
 		if present {
-			if entry.Count == 0 {
-				entry.Count = 1
-			}
 			result[entry.Name] = currentValue + entry.Count
 		} else {
 			aulogging.Logger.NoCtx().Warn().Printf("encountered non-configured choice key '%s' - maybe configuration changed after initial reg? This needs fixing! - continuing", entry.Name)
-			result[entry.Name] = 1
+			result[entry.Name] = entry.Count
 		}
 	}
 	return result

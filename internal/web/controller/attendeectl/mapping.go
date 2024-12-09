@@ -1,10 +1,13 @@
 package attendeectl
 
 import (
+	"fmt"
+	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -100,28 +103,82 @@ func sliceContains(slice []string, singleValue string) bool {
 	return false
 }
 
+// packages conversion from attendee entity (NOT dto)
+//
+// Note: here, the :count postfixes are supported.
+
+func packagesFromEntity(entityPackages string) string {
+	asList := packagesListFromEntity(entityPackages)
+
+	var result []string
+	for _, entry := range asList {
+		for i := 0; i < entry.Count; i++ {
+			result = append(result, entry.Name)
+		}
+	}
+	return strings.Join(result, ",")
+}
+
+func packagesListFromEntity(entityPackages string) []attendee.PackageState {
+	unwrapped := removeWrappingCommas(entityPackages)
+
+	result := make([]attendee.PackageState, 0)
+
+	if unwrapped == "" {
+		return result
+	}
+
+	counts := make(map[string]int)
+	entries := strings.Split(unwrapped, ",")
+	for _, entry := range entries {
+		nameAndPossiblyCount := strings.Split(entry, ":")
+		name := nameAndPossiblyCount[0]
+		count := 1
+		if len(nameAndPossiblyCount) > 1 {
+			var err error
+			count, err = strconv.Atoi(nameAndPossiblyCount[1])
+			if err != nil {
+				aulogging.Logger.NoCtx().Warn().Printf("encountered invalid choice entry '%s' in database - ignoring (please fix!)", entry)
+				continue
+			}
+		}
+
+		currentCount, _ := counts[name]
+		counts[name] = currentCount + count
+	}
+
+	for name, count := range counts {
+		result = append(result, attendee.PackageState{
+			Name:  name,
+			Count: count,
+		})
+	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Name < result[j].Name
+	})
+
+	return result
+}
+
+// packages conversion from dto
+//
+// Note: in dtos, the :count postfixes are not supported (internal database format only)
+
 func packagesFromDto(commaSeparated string, asList []attendee.PackageState) string {
 	alwaysAsList := packagesListWithPrecedence(commaSeparated, asList)
 
 	var result strings.Builder
 	result.WriteString(",")
 	for _, item := range alwaysAsList {
-		// item.Count = 0 should be interpreted as 1 (allows omitting Count in requests)
-		for i := 0; i == 0 || i < item.Count; i++ {
-			result.WriteString(item.Name + ",")
+		if item.Count == 0 {
+			// item.Count = 0 should be interpreted as 1 (allows omitting Count in requests)
+			item.Count = 1
 		}
+
+		result.WriteString(fmt.Sprintf("%s:%d,", item.Name, item.Count))
 	}
 	return result.String()
-}
-
-func packagesFromEntity(entityPackages string) string {
-	return removeWrappingCommas(entityPackages)
-}
-
-func packagesListFromEntity(entityPackages string) []attendee.PackageState {
-	unwrapped := removeWrappingCommas(entityPackages)
-	asList := packageListFromCommaSeparated(unwrapped)
-	return asList
 }
 
 func packagesListWithPrecedence(commaSeparated string, asList []attendee.PackageState) []attendee.PackageState {
@@ -135,6 +192,8 @@ func packagesListWithPrecedence(commaSeparated string, asList []attendee.Package
 
 // packageListFromCommaSeparated takes a comma separated list, without leading and trailing commas, and converts
 // it into a sorted package_list
+//
+// This version does not support :count postfixes, that only occurs in entities.
 func packageListFromCommaSeparated(commaSeparatedValue string) []attendee.PackageState {
 	result := make([]attendee.PackageState, 0)
 

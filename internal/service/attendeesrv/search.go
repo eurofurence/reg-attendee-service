@@ -39,7 +39,8 @@ func (s *AttendeeServiceImplData) mapToAttendeeSearchResult(att *entity.Attendee
 	spokenLanguages := removeWrappingCommas(att.SpokenLanguages)
 	mergedFlags := removeWrappingCommasJoin(att.Flags, att.AdminFlags)
 	options := removeWrappingCommas(att.Options)
-	packages := removeWrappingCommas(att.Packages)
+	packagesList := sortedPackageListFromCommaSeparatedWithCounts(removeWrappingCommas(att.Packages))
+	packages := packagesFromPackagesList(packagesList)
 	return attendee.AttendeeSearchResult{
 		Id:                   att.ID,
 		BadgeId:              s.badgeId(att.ID),
@@ -67,7 +68,7 @@ func (s *AttendeeServiceImplData) mapToAttendeeSearchResult(att *entity.Attendee
 		Options:              contains(p(options), fillFields, "all", "configuration", "options"),
 		OptionsList:          containsSlice(sortedListFromCommaSeparated(options), fillFields, "all", "configuration", "options"),
 		Packages:             contains(p(packages), fillFields, "all", "configuration", "packages"),
-		PackagesList:         containsSlice(sortedPackageListFromCommaSeparated(packages), fillFields, "all", "configuration", "packages"),
+		PackagesList:         containsSlice(packagesList, fillFields, "all", "configuration", "packages"),
 		UserComments:         contains(n(att.UserComments), fillFields, "all", "user_comments"),
 		Status:               contains(&att.Status, fillFields, "all", "status"),
 		TotalDues:            contains(&att.CacheTotalDues, fillFields, "all", "balances", "total_dues"),
@@ -135,21 +136,37 @@ func sortedListFromCommaSeparated(v string) []string {
 	return result
 }
 
-func sortedPackageListFromCommaSeparated(v string) []attendee.PackageState {
+func sortedPackageListFromCommaSeparatedWithCounts(v string) []attendee.PackageState {
 	if v == "" {
 		return nil
 	}
 
-	pkgs := strings.Split(v, ",")
-	sort.Strings(pkgs)
-	result := make([]attendee.PackageState, len(pkgs))
-	for i, name := range pkgs {
-		result[i] = attendee.PackageState{
-			Name:  name,
-			Count: 1,
+	result := make([]attendee.PackageState, 0)
+
+	pkgMap := choiceStrToMapWithoutChecks(v)
+	for name, count := range pkgMap {
+		if count > 0 {
+			result = append(result, attendee.PackageState{
+				Name:  name,
+				Count: count,
+			})
 		}
 	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Name < result[j].Name
+	})
 	return result
+}
+
+func packagesFromPackagesList(asList []attendee.PackageState) string {
+	var result []string
+	for _, entry := range asList {
+		for i := 0; i < entry.Count; i++ {
+			result = append(result, entry.Name)
+		}
+	}
+	return strings.Join(result, ",")
 }
 
 // n formats an optional field (rendered as missing if unset)

@@ -148,8 +148,10 @@ func TestTwoFullSearchQueries(t *testing.T) {
 		"param_1_12":                        "%,flagzero,%",
 		"param_1_13":                        "%,optone,%",
 		"param_1_14":                        "%,optzero,%",
-		"param_1_15":                        "%,pkgone,%",
-		"param_1_16":                        "%,pkgzero,%",
+		"param_1_15_nc":                     "%,pkgone,%",
+		"param_1_15":                        "%,pkgone:%",
+		"param_1_16_nc":                     "%,pkgzero,%",
+		"param_1_16":                        "%,pkgzero:%",
 		"param_1_17":                        "%user%comments%",
 		"param_1_18_1":                      "2020-12-23",
 		"param_1_18_2":                      "sponsor-items",
@@ -168,8 +170,10 @@ func TestTwoFullSearchQueries(t *testing.T) {
 		"param_2_12":                        "%,fzero,%",
 		"param_2_13":                        "%,oone,%",
 		"param_2_14":                        "%,ozero,%",
-		"param_2_15":                        "%,pone,%",
-		"param_2_16":                        "%,pzero,%",
+		"param_2_15_nc":                     "%,pone,%",
+		"param_2_15":                        "%,pone:%",
+		"param_2_16_nc":                     "%,pzero,%",
+		"param_2_16":                        "%,pzero:%",
 		"param_2_17":                        "%more user comments%",
 		"param_2_18_1":                      "2020-12-23",
 		"param_2_18_2":                      "sponsor-items",
@@ -199,8 +203,8 @@ WHERE (
     AND ( CONCAT(a.flags,IFNULL(ad.flags, '')) NOT LIKE @param_1_12 )
     AND ( a.options LIKE @param_1_13 )
     AND ( a.options NOT LIKE @param_1_14 )
-    AND ( a.packages LIKE @param_1_15 )
-    AND ( a.packages NOT LIKE @param_1_16 )
+    AND ( ( a.packages LIKE @param_1_15_nc ) OR ( a.packages LIKE @param_1_15 ) )
+    AND ( a.packages NOT LIKE @param_1_16_nc ) AND ( a.packages NOT LIKE @param_1_16 )
     AND ( LOWER(a.user_comments) LIKE LOWER( @param_1_17 ) )
     AND ( IFNULL(st.status, 'new') <> 'deleted' )
     AND ( STRCMP( IFNULL(a.cache_due_date,'9999-99-99'), @param_1_18_1 ) >= 0 )
@@ -225,8 +229,8 @@ WHERE (
     AND ( CONCAT(a.flags,IFNULL(ad.flags, '')) NOT LIKE @param_2_12 )
     AND ( a.options LIKE @param_2_13 )
     AND ( a.options NOT LIKE @param_2_14 )
-    AND ( a.packages LIKE @param_2_15 )
-    AND ( a.packages NOT LIKE @param_2_16 )
+    AND ( ( a.packages LIKE @param_2_15_nc ) OR ( a.packages LIKE @param_2_15 ) )
+    AND ( a.packages NOT LIKE @param_2_16_nc ) AND ( a.packages NOT LIKE @param_2_16 )
     AND ( LOWER(a.user_comments) LIKE LOWER( @param_2_17 ) )
     AND ( IFNULL(st.status, 'new') <> 'deleted' )
     AND ( STRCMP( IFNULL(a.cache_due_date,'9999-99-99'), @param_2_18_1 ) < 0 )

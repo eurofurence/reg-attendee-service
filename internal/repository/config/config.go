@@ -214,6 +214,7 @@ func DefaultFlags() string {
 }
 
 func DefaultPackages() string {
+	// this is ok because all our parsing implementations can deal with a simple comma separated list
 	return defaultChoiceStr(Configuration().Choices.Packages)
 }
 

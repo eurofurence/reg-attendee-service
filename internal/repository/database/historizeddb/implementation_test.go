@@ -32,7 +32,7 @@ func tstBuildValidAttendee() *entity.Attendee {
 		SpokenLanguages:      ",de,en,",
 		RegistrationLanguage: ",en-US,",
 		Flags:                ",anon,ev,",
-		Packages:             ",room-none,attendance,stage,sponsor2,",
+		Packages:             ",room-none:1,attendance:1,stage:1,sponsor2:1,",
 		Options:              ",music,suit,",
 		TshirtSize:           "XXL",
 		UserComments:         "this is a comment",
