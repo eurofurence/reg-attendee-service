@@ -68,6 +68,7 @@ type Transaction struct {
 	DueDate               string            `json:"due_date"`
 	CreationDate          time.Time         `json:"creation_date"`
 	StatusHistory         []StatusHistory   `json:"status_history"`
+	Reason                string            `json:"reason"`
 }
 
 type TransactionResponse struct {

@@ -2,9 +2,11 @@ package attendeesrv
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	aulogging "github.com/StephanHCB/go-autumn-logging"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
@@ -27,12 +29,12 @@ func (s *AttendeeServiceImplData) UpdateDuesTransactions(ctx context.Context, at
 
 	updated := false
 	if newStatus == status.New || newStatus == status.Deleted || newStatus == status.Waiting {
-		updated, err = s.compensateAllDues(ctx, attendee, newStatus, transactionHistory)
+		updated, err = s.compensateAllDues(ctx, attendee, adminInfo, newStatus, transactionHistory)
 		if err != nil {
 			return transactionHistory, adminInfo, err
 		}
 	} else if newStatus == status.Cancelled {
-		updated, err = s.compensateUnpaidDuesOnCancel(ctx, attendee, transactionHistory)
+		updated, err = s.compensateUnpaidDuesOnCancel(ctx, attendee, adminInfo, transactionHistory)
 		if err != nil {
 			return transactionHistory, adminInfo, err
 		}
@@ -54,7 +56,7 @@ func (s *AttendeeServiceImplData) UpdateDuesTransactions(ctx context.Context, at
 	return updatedTransactionHistory, adminInfo, nil
 }
 
-func (s *AttendeeServiceImplData) compensateAllDues(ctx context.Context, attendee *entity.Attendee, newStatus status.Status, transactionHistory []paymentservice.Transaction) (bool, error) {
+func (s *AttendeeServiceImplData) compensateAllDues(ctx context.Context, attendee *entity.Attendee, adminInfo *entity.AdminInfo, newStatus status.Status, transactionHistory []paymentservice.Transaction) (bool, error) {
 	oldDuesByVAT := s.oldDuesByVAT(transactionHistory)
 	updated := false
 
@@ -63,7 +65,7 @@ func (s *AttendeeServiceImplData) compensateAllDues(ctx context.Context, attende
 	for vatStr, duesBalance := range oldDuesByVAT {
 		if duesBalance != 0 {
 			updated = true
-			compensatingTx := s.duesTransactionForAttendee(attendee, -duesBalance, vatStr, comment)
+			compensatingTx := s.duesTransactionForAttendee(attendee, adminInfo, -duesBalance, vatStr, comment)
 			err := paymentservice.Get().AddTransaction(ctx, compensatingTx)
 			if err != nil {
 				return updated, err
@@ -73,7 +75,7 @@ func (s *AttendeeServiceImplData) compensateAllDues(ctx context.Context, attende
 	return updated, nil
 }
 
-func (s *AttendeeServiceImplData) compensateUnpaidDuesOnCancel(ctx context.Context, attendee *entity.Attendee, transactionHistory []paymentservice.Transaction) (bool, error) {
+func (s *AttendeeServiceImplData) compensateUnpaidDuesOnCancel(ctx context.Context, attendee *entity.Attendee, adminInfo *entity.AdminInfo, transactionHistory []paymentservice.Transaction) (bool, error) {
 	_, paid, _, _ := s.balances(transactionHistory)
 	paid += s.pseudoPaymentsFromNegativeDues(transactionHistory)
 	updated := false
@@ -90,7 +92,7 @@ func (s *AttendeeServiceImplData) compensateUnpaidDuesOnCancel(ctx context.Conte
 					paid -= tx.Amount.GrossCent
 				} else if paid > 0 {
 					// payments partially cover the dues transaction, book compensating tx for remainder
-					remainderCompensatingTx := s.duesTransactionForAttendee(attendee, -(tx.Amount.GrossCent - paid), vatStr, "void unpaid dues on cancel")
+					remainderCompensatingTx := s.duesTransactionForAttendee(attendee, adminInfo, -(tx.Amount.GrossCent - paid), vatStr, "void unpaid dues on cancel")
 					err := paymentservice.Get().AddTransaction(ctx, remainderCompensatingTx)
 					if err != nil {
 						return updated, err
@@ -98,7 +100,7 @@ func (s *AttendeeServiceImplData) compensateUnpaidDuesOnCancel(ctx context.Conte
 					paid = 0
 				} else {
 					// no payments left, compensate completely
-					compensatingTx := s.duesTransactionForAttendee(attendee, -tx.Amount.GrossCent, vatStr, "void unpaid dues on cancel")
+					compensatingTx := s.duesTransactionForAttendee(attendee, adminInfo, -tx.Amount.GrossCent, vatStr, "void unpaid dues on cancel")
 					err := paymentservice.Get().AddTransaction(ctx, compensatingTx)
 					if err != nil {
 						return updated, err
@@ -132,7 +134,7 @@ func (s *AttendeeServiceImplData) adjustDuesAccordingToSelectedPackages(ctx cont
 		currentBalance, _ := oldDuesByVAT[vatStr]
 		if currentBalance != desiredBalance {
 			updated = true
-			diffTx := s.duesTransactionForAttendee(attendee, desiredBalance-currentBalance, vatStr, comment)
+			diffTx := s.duesTransactionForAttendee(attendee, adminInfo, desiredBalance-currentBalance, vatStr, comment)
 			err := paymentservice.Get().AddTransaction(ctx, diffTx)
 			if err != nil {
 				return updated, err
@@ -325,7 +327,7 @@ func (s *AttendeeServiceImplData) pseudoPaymentsFromNegativeDues(transactionHist
 	return
 }
 
-func (s *AttendeeServiceImplData) duesTransactionForAttendee(attendee *entity.Attendee, amount int64, vatStr string, comment string) paymentservice.Transaction {
+func (s *AttendeeServiceImplData) duesTransactionForAttendee(attendee *entity.Attendee, adminInfo *entity.AdminInfo, amount int64, vatStr string, comment string) paymentservice.Transaction {
 	vat, _ := strconv.ParseFloat(vatStr, 64)
 
 	return paymentservice.Transaction{
@@ -341,7 +343,43 @@ func (s *AttendeeServiceImplData) duesTransactionForAttendee(attendee *entity.At
 		Status:        paymentservice.Valid,
 		EffectiveDate: s.duesEffectiveDate(),
 		DueDate:       s.duesDueDate(),
+		Reason:        s.duesReason(attendee, adminInfo),
 	}
+}
+
+type ManualDues struct {
+	Amount      int64  `json:"amount"`
+	Description string `json:"description"`
+}
+
+type DuesReason struct {
+	Packages   []attendee.PackageState `json:"packages_list"`
+	ManualDues map[string]ManualDues   `json:"manual_dues"`
+	Error      bool                    `json:"error,omitempty"`
+}
+
+func (s *AttendeeServiceImplData) duesReason(attendee *entity.Attendee, adminInfo *entity.AdminInfo) string {
+	manualDues := make(map[string]ManualDues)
+	if adminInfo.ManualDues != 0 {
+		manualDues["admin"] = ManualDues{
+			Amount:      adminInfo.ManualDues,
+			Description: adminInfo.ManualDuesDescription,
+		}
+	}
+
+	reason := DuesReason{
+		Packages:   sortedPackageListFromCommaSeparatedWithCounts(attendee.Packages),
+		ManualDues: manualDues,
+	}
+
+	reasonBytes, err := json.Marshal(reason)
+	if err != nil {
+		// not really a problem
+		aulogging.Logger.NoCtx().Info().WithErr(err).Printf("failed to encode transaction reason to json - leaving blank and proceeding: %s", err.Error())
+		reasonBytes = []byte(`{"error":true}`)
+	}
+
+	return string(reasonBytes)
 }
 
 func (s *AttendeeServiceImplData) duesEffectiveDate() string {
