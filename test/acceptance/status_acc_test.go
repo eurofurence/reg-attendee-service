@@ -1904,8 +1904,11 @@ func tstCreateTransaction(attid uint, ty paymentservice.TransactionType, amount 
 
 func tstCreateMatcherTransaction(attid uint, ty paymentservice.TransactionType, amount int64, comment string) paymentservice.Transaction {
 	method := paymentservice.Internal
+	reason := ""
 	if ty == paymentservice.Payment {
 		method = paymentservice.Credit
+	} else {
+		reason = tstGuessDuesReason(amount, comment)
 	}
 	return paymentservice.Transaction{
 		TransactionIdentifier: "",
@@ -1922,6 +1925,7 @@ func tstCreateMatcherTransaction(attid uint, ty paymentservice.TransactionType, 
 		DueDate:       "2022-12-22",
 		StatusHistory: nil, // TODO
 		Comment:       comment,
+		Reason:        reason,
 	}
 }
 

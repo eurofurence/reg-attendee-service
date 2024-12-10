@@ -278,6 +278,43 @@ func tstParseJson(body string, dto interface{}) {
 }
 
 func tstValidAttendeeDues(amount int64, comment string) paymentservice.Transaction {
+	reason := tstGuessDuesReason(amount, comment)
+	return tstValidAttendeeDuesWithReason(amount, comment, reason)
+}
+
+func tstGuessDuesReason(amount int64, comment string) string {
+	// try to guess package list and manual dues based on amount (since we keep re-using the same package combinations with unique prices)
+	// for the few test cases where this doesn't work, must specify the reason yourself
+	pkgList := ""
+	switch amount {
+	default:
+		pkgList = `{"name":"attendance","count":1},{"name":"room-none","count":1},{"name":"sponsor2","count":1},{"name":"stage","count":1}`
+	}
+
+	reason := ""
+	if comment == "dues adjustment due to change in status or selected packages" ||
+		comment == "void unpaid dues on cancel" ||
+		comment == "admin info change" ||
+		comment == "remove dues balance - status changed to deleted" ||
+		comment == "remove dues balance - status changed to new" ||
+		comment == "remove dues balance - status changed to waiting" {
+		// normal package change or cancellation/deletion
+		switch amount {
+		case 13500:
+			reason = fmt.Sprintf(`{"packages_list":[%s],"manual_dues":{"admin":{"amount":-12000,"description":"we owe you this from last year"}}}`, pkgList)
+		case 33500:
+			reason = fmt.Sprintf(`{"packages_list":[%s],"manual_dues":{"admin":{"amount":8000,"description":"you still need to pay for last year"}}}`, pkgList)
+		default:
+			reason = fmt.Sprintf(`{"packages_list":[%s],"manual_dues":{}}`, pkgList)
+		}
+	} else {
+		// assume manual admin dues with provided comment
+		reason = fmt.Sprintf(`{"packages_list":[%s],"manual_dues":{"admin":{"amount":%d,"description":"%s"}}}`, pkgList, amount, comment)
+	}
+	return reason
+}
+
+func tstValidAttendeeDuesWithReason(amount int64, comment string, reason string) paymentservice.Transaction {
 	return paymentservice.Transaction{
 		TransactionIdentifier: "",
 		DebitorID:             1,
@@ -293,6 +330,7 @@ func tstValidAttendeeDues(amount int64, comment string) paymentservice.Transacti
 		EffectiveDate: "2022-12-08",
 		DueDate:       "2022-12-22",
 		StatusHistory: nil, // TODO
+		Reason:        reason,
 	}
 }
 
