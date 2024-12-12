@@ -32,7 +32,7 @@ func tstCreateValidAttendee() attendee.AttendeeDto {
 		SpokenLanguages:      "de,en",
 		RegistrationLanguage: "en-US",
 		Flags:                "anon,ev",
-		Packages:             "attendance,mountain-trip,mountain-trip,room-none,sponsor2,stage", // must be sorted for tests to work
+		Packages:             "attendance,mountain-trip,mountain-trip,mountain-trip,room-none,sponsor2,stage", // must be sorted for tests to work
 		PackagesList: []attendee.PackageState{
 			{
 				Name:  "attendance",
@@ -40,7 +40,7 @@ func tstCreateValidAttendee() attendee.AttendeeDto {
 			},
 			{
 				Name:  "mountain-trip",
-				Count: 2,
+				Count: 3,
 			},
 			{
 				Name:  "room-none",

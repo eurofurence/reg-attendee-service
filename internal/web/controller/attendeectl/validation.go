@@ -8,6 +8,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/validation"
 	"net/url"
+	"slices"
 	"sort"
 	"strings"
 	"unicode"
@@ -161,6 +162,10 @@ func checkPackagesList(errs *url.Values, cfg map[string]config.ChoiceConfig, key
 		} else {
 			if v.Count > c.MaxCount {
 				errs.Add(key, fmt.Sprintf("package %s occurs too many times, can occur at most %d times", v.Name, c.MaxCount))
+			} else if v.Count > 0 && len(c.AllowedCounts) > 0 {
+				if !slices.Contains(c.AllowedCounts, v.Count) {
+					errs.Add(key, fmt.Sprintf("package %s occurs %d times, but this is not allowed due to allowed_counts configuration, which only allows %v", v.Name, v.Count, c.AllowedCounts))
+				}
 			}
 		}
 	}

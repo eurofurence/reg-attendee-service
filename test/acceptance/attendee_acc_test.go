@@ -848,7 +848,7 @@ func TestCreateNewAttendee_MultiPackage(t *testing.T) {
 
 	docs.When("when they attempt to create a new attendee, validly adding a package multiple times")
 	attendeeSent := tstBuildValidAttendee("na66-")
-	tstAddPackages(&attendeeSent, "mountain-trip,mountain-trip")
+	tstAddPackages(&attendeeSent, "mountain-trip,mountain-trip,mountain-trip")
 	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), token)
 
 	docs.Then("then the attendee is successfully created and can be read again")
@@ -876,6 +876,26 @@ func TestCreateNewAttendee_MultiPackageTooMany(t *testing.T) {
 	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
 		"packages":      []string{"package mountain-trip occurs too many times, can occur at most 3 times"},
 		"packages_list": []string{"package mountain-trip occurs too many times, can occur at most 3 times"},
+	})
+}
+
+func TestCreateNewAttendee_MultiPackageWrongNumberOfTimes(t *testing.T) {
+	docs.Given("given the configuration for login-only registration after normal reg is open")
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given a logged in user")
+	token := tstValidUserToken(t, 1)
+
+	docs.When("when they attempt to create a new attendee, adding a package the wrong number of times")
+	attendeeSent := tstBuildValidAttendee("na68-")
+	tstAddPackages(&attendeeSent, "mountain-trip,mountain-trip")
+	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), token)
+
+	docs.Then("then the attempt is rejected as invalid (400) with an appropriate error response")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
+		"packages":      []string{"package mountain-trip occurs 2 times, but this is not allowed due to allowed_counts configuration, which only allows [1 3]"},
+		"packages_list": []string{"package mountain-trip occurs 2 times, but this is not allowed due to allowed_counts configuration, which only allows [1 3]"},
 	})
 }
 
@@ -1542,14 +1562,14 @@ func tstUpdateExistingAttendee_AddPackageMultipleTimes(t *testing.T, testcase st
 
 	docs.When("when they send updated attendee info and add a package multiple times")
 	changedAttendee := att
-	tstAddPackages(&changedAttendee, "mountain-trip,mountain-trip")
+	tstAddPackages(&changedAttendee, "mountain-trip,mountain-trip,mountain-trip")
 	response := tstPerformPut(loc, tstRenderJson(changedAttendee), token)
 
 	docs.Then("then the attendee is successfully updated and can be read again")
 	require.Equal(t, http.StatusOK, response.status, "unexpected http response status for update")
 	attendeeReadAgain := tstReadAttendee(t, loc)
 	require.EqualValues(t, changedAttendee, attendeeReadAgain, "attendee data read did not match")
-	require.EqualValues(t, "attendance,mountain-trip,mountain-trip,room-none,sponsor2,stage", attendeeReadAgain.Packages, "attendee data read did not match expected package value")
+	require.EqualValues(t, "attendance,mountain-trip,mountain-trip,mountain-trip,room-none,sponsor2,stage", attendeeReadAgain.Packages, "attendee data read did not match expected package value")
 
 	docs.Then("and the expected mail messages have been sent")
 	tstRequireMailRequests(t, expectedMails)
@@ -1562,14 +1582,14 @@ func TestUpdateExistingAttendee_AddPackageMultipleTimes_UserAllowed(t *testing.T
 		targetStatus := origStatus
 		mails := []mailservice.MailSendDto{}
 		if origStatus == status.Approved {
-			mail := tstNewStatusMailWithAmounts(testcase, targetStatus, 315.00, 315.00)
+			mail := tstNewStatusMailWithAmounts(testcase, targetStatus, 345.00, 345.00)
 			mails = append(mails, mail)
 		} else if origStatus == status.PartiallyPaid {
-			mail := tstNewStatusMailWithAmounts(testcase, targetStatus, 160.00, 315.00)
+			mail := tstNewStatusMailWithAmounts(testcase, targetStatus, 190.00, 345.00)
 			mails = append(mails, mail)
 		} else if origStatus == status.Paid {
 			targetStatus = status.PartiallyPaid
-			mail := tstNewStatusMailWithAmounts(testcase, targetStatus, 60.00, 315.00)
+			mail := tstNewStatusMailWithAmounts(testcase, targetStatus, 90.00, 345.00)
 			mails = append(mails, mail)
 		}
 		t.Run(string(origStatus), func(t *testing.T) {
@@ -1596,6 +1616,27 @@ func TestUpdateExistingAttendee_AddPackageTooManyTimes(t *testing.T) {
 	docs.Then("then the request fails with the expected error")
 	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
 		"packages_list": []string{"package mountain-trip occurs too many times, can occur at most 3 times"},
+	})
+}
+
+func TestUpdateExistingAttendee_AddPackageWrongNumberOfTimes(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee in status paid")
+	loc, att := tstRegisterAttendeeAndTransitionToStatus(t, "ua4e", status.Paid)
+	token := tstValidUserToken(t, 1)
+
+	docs.When("when they send updated attendee info and try to add a package the wrong number of times")
+	changedAttendee := att
+	tstAddPackages(&changedAttendee, "mountain-trip,mountain-trip")
+	changedAttendee.Packages = att.Packages // should be ignored, so let's make it produce no error if used
+	response := tstPerformPut(loc, tstRenderJson(changedAttendee), token)
+
+	docs.Then("then the request fails with the expected error")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
+		"packages_list": []string{"package mountain-trip occurs 2 times, but this is not allowed due to allowed_counts configuration, which only allows [1 3]"},
 	})
 }
 
