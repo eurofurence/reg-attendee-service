@@ -54,11 +54,15 @@ func TestCheckFlags(t *testing.T) {
 func TestCheckPackages(t *testing.T) {
 	c := make(map[string]ChoiceConfig)
 	c["myadmin"] = ChoiceConfig{Default: true, AdminOnly: true, Description: "admin only package - invalid"}
+	c["counttoohigh"] = ChoiceConfig{AllowedCounts: []int{1, 17, 34}, Description: "allowed_counts higher than max_count", MaxCount: 17}
+	c["maxcountunset"] = ChoiceConfig{AllowedCounts: []int{1, 17, 34}, Description: "allowed_counts but no max_count"}
 
 	actualErrors := url.Values{}
 	validatePackagesConfiguration(actualErrors, c)
 	expectedErrors := url.Values{
-		"choices.packages.myadmin.admin": []string{"packages cannot be admin_only (they cost money). Try read_only instead."},
+		"choices.packages.myadmin.admin":                []string{"packages cannot be admin_only (they cost money). Try read_only instead."},
+		"choices.packages.counttoohigh.allowed_counts":  []string{"maximum allowed_counts value cannot be larger than max_count for package"},
+		"choices.packages.maxcountunset.allowed_counts": []string{"can only list allowed counts if max_count is set to at least 2"},
 	}
 	prettyprintedActualErrors, _ := json.MarshalIndent(actualErrors, "", "  ")
 	prettyprintedExpectedErrors, _ := json.MarshalIndent(expectedErrors, "", "  ")

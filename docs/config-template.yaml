@@ -104,289 +104,329 @@ additional_info_areas:
       - staffradio
 choices:
   flags:
-    hc:
-      description: 'Wheelchair'
     anon:
-      description: 'Legal Name is Confidential'
+      description: Legal Name is Confidential
     digi-book:
-      description: 'Digital only convention booklet'
+      description: Digital only convention booklet
       visible_for:
         - regdesk
-    ev:
-      description: 'Eurofurence e.V. Member'
-      read_only: true
-      # auto-set this field during initial reg if group id 'ev' is present in token
-      group: ev
-      visible_for:
-        - regdesk
-    terms-accepted:
-      description: 'Accepted the terms'
-      default: true
-      read_only: true
-    guest:
-      description: 'Guest of the Convention'
-      admin_only: true
-      visible_for:
-        - self
-        - regdesk
-        - sponsordesk
-    skip_ban_check:
-      description: 'Bypass ban check for this attendee'
-      admin_only: true
-    staff:
-      description: 'Staff'
-      admin_only: true
-      visible_for:
-        - self
-        - regdesk
-        - sponsordesk
     director:
-      description: 'Director'
       admin_only: true
+      description: Director
       visible_for:
         - self
         - regdesk
         - sponsordesk
-  packages:
-    room-none:
-      description: 'No Room'
-      vat_percent: 7
-      default: true
+    ev:
+      description: Eurofurence e.V. Member
+      group: OE7QZN2R7Q29KWML
       read_only: true
+      visible_for:
+        - regdesk
+    guest:
+      admin_only: true
+      description: Guest of the Convention
+      visible_for:
+        - self
+        - regdesk
+        - sponsordesk
+    hc:
+      description: Wheelchair
+    skip_ban_check:
+      admin_only: true
+      description: Bypass ban check for this attendee
+    staff:
+      admin_only: true
+      description: Staff
+      visible_for:
+        - self
+        - regdesk
+        - sponsordesk
+    terms-accepted:
+      default: true
+      description: Accepted the terms
+      read_only: true
+  packages:
+    addfursuit:
+      constraint: 'fursuit'
+      constraint_msg: Please select the free fursuit badge first, otherwise you'll pay too much.
+      description: Additional Fursuit Badge
+      price: 200
+      vat_percent: 19
+      max_count: 10
+      visible_for:
+        - regdesk
+        - sponsordesk
+    artshow-panel-four:
+      description: Artshow (4 Panels)
+      price: 8000
+      read_only: true
+      vat_percent: 19
+    artshow-panel-half:
+      description: Artshow (Half Panel)
+      price: 1000
+      read_only: true
+      vat_percent: 19
+    artshow-panel-one:
+      description: Artshow (1 Panel)
+      price: 2000
+      read_only: true
+      vat_percent: 19
+    artshow-panel-oneandhalf:
+      description: Artshow (1.5 Panels)
+      price: 3000
+      read_only: true
+      vat_percent: 19
+    artshow-panel-three:
+      description: Artshow (3 Panels)
+      price: 6000
+      read_only: true
+      vat_percent: 19
+    artshow-panel-threeandhalf:
+      description: Artshow (3.5 Panels)
+      price: 7000
+      read_only: true
+      vat_percent: 19
+    artshow-panel-two:
+      description: Artshow (2 Panels)
+      price: 4000
+      read_only: true
+      vat_percent: 19
+    artshow-panel-twoandhalf:
+      description: Artshow (2.5 Panels)
+      price: 5000
+      read_only: true
+      vat_percent: 19
+    artshow-table-four:
+      description: Artshow (4 Tables)
+      price: 4000
+      read_only: true
+      vat_percent: 19
+    artshow-table-half:
+      description: Artshow (Half Table)
+      price: 500
+      read_only: true
+      vat_percent: 19
+    artshow-table-one:
+      description: Artshow (1 Table)
+      price: 1000
+      read_only: true
+      vat_percent: 19
+    artshow-table-oneandhalf:
+      description: Artshow (1.5 Tables)
+      price: 1500
+      read_only: true
+      vat_percent: 19
+    artshow-table-three:
+      description: Artshow (3 Tables)
+      price: 3000
+      read_only: true
+      vat_percent: 19
+    artshow-table-threeandhalf:
+      description: Artshow (3.5 Tables)
+      price: 3500
+      read_only: true
+      vat_percent: 19
+    artshow-table-two:
+      description: Artshow (2 Tables)
+      price: 2000
+      read_only: true
+      vat_percent: 19
+    artshow-table-twoandhalf:
+      description: Artshow (2.5 Tables)
+      price: 2500
+      read_only: true
+      vat_percent: 19
     attendance:
-      description: 'Entrance Fee (Convention Ticket)'
+      at-least-one-mandatory: true
+      default: true
+      description: Entrance Fee (Convention Ticket)
       price: 16000
       vat_percent: 19
-      default: true
+      visible_for:
+        - regdesk
+    boat-benefactor:
+      description: Summerboat Benefactor
+      price: 10000
+      read_only: true
+      vat_percent: 19
+    boat-trip:
+      description: Summerboat Boat Trip
+      price: 4000
+      read_only: true
+      vat_percent: 19
+    boat-vip:
+      description: Summerboat VIP
+      price: 2500
+      read_only: true
+      vat_percent: 19
+    day-fri:
       at-least-one-mandatory: true
+      constraint: '!attendance,!stage'
+      constraint_msg: Must disable Convention Ticket and Stage Ticket for Day Guests.
+      description: Day Guest (Friday)
+      price: 9000
+      vat_percent: 19
       visible_for:
         - regdesk
+    day-sat:
+      at-least-one-mandatory: true
+      constraint: '!attendance,!stage'
+      constraint_msg: Must disable Convention Ticket and Stage Ticket for Day Guests.
+      description: Day Guest (Saturday)
+      price: 9000
+      vat_percent: 19
+      visible_for:
+        - regdesk
+    day-thu:
+      at-least-one-mandatory: true
+      constraint: '!attendance,!stage'
+      constraint_msg: Must disable Convention Ticket and Stage Ticket for Day Guests.
+      description: Day Guest (Thursday)
+      price: 9000
+      vat_percent: 19
+      visible_for:
+        - regdesk
+    day-wed:
+      at-least-one-mandatory: true
+      constraint: '!attendance,!stage'
+      constraint_msg: Must disable Convention Ticket and Stage Ticket for Day Guests.
+      description: Day Guest (Wednesday)
+      price: 9000
+      vat_percent: 19
+      visible_for:
+        - regdesk
+    dealer-double:
+      constraint: '!dealer-half,!dealer-full,!dealer-fullplus,!dealer-quad'
+      constraint_msg: Cannot mix dealer table packages.
+      description: Dealer Table Fee (Double)
+      price: 20000
+      read_only: true
+      vat_percent: 19
+    dealer-full:
+      constraint: '!dealer-half,!dealer-fullplus,!dealer-double,!dealer-quad'
+      constraint_msg: Cannot mix dealer table packages.
+      description: Dealer Table Fee (Full)
+      price: 10000
+      read_only: true
+      vat_percent: 19
+    dealer-fullplus:
+      constraint: '!dealer-half,!dealer-full,!dealer-double,!dealer-quad'
+      constraint_msg: Cannot mix dealer table packages.
+      description: Dealer Table Fee (Full Plus)
+      price: 15000
+      read_only: true
+      vat_percent: 19
+    dealer-half:
+      constraint: '!dealer-full,!dealer-fullplus,!dealer-double,!dealer-quad'
+      constraint_msg: Cannot mix dealer table packages.
+      description: Dealer Table Fee (Half)
+      price: 5000
+      read_only: true
+      vat_percent: 19
+    dealer-quad:
+      constraint: '!dealer-half,!dealer-full,!dealer-fullplus,!dealer-double'
+      constraint_msg: Cannot mix dealer table packages.
+      description: Dealer Table Fee (Quad)
+      price: 40000
+      read_only: true
+      vat_percent: 19
     early:
-      description: 'Early Bird Discount'
+      constraint: '!day-wed,!day-thu,!day-fri,!day-sat'
+      constraint_msg: Early Bird Discount does not apply to Day Tickets
+      description: Early Bird Discount
       price: -1500
+      read_only: true
       vat_percent: 19
       visible_for:
         - regdesk
-      default: false
-      read_only: true
-      constraint: '!day-wed,!day-thu,!day-fri,!day-sat'
-      constraint_msg: 'Early Bird Discount does not apply to Day Tickets'
+    fursuit:
+      description: First Fursuit Badge
+      price: 0
+      vat_percent: 19
+      visible_for:
+        - regdesk
+        - sponsordesk
     late:
-      description: 'Late Fee'
-      price: 1500
-      vat_percent: 19
-      visible_for:
-        - regdesk
-      default: false
-      read_only: true
       constraint: '!day-wed,!day-thu,!day-fri,!day-sat'
-      constraint_msg: 'Late Fee does not apply to Day Tickets'
-    stage:
-      description: 'Entrance Fee (Stage Ticket)'
-      price: 500
-      vat_percent: 19
+      constraint_msg: Late Fee does not apply to Day Tickets
       default: true
+      description: Late Fee
+      price: 1500
+      read_only: true
+      vat_percent: 19
       visible_for:
         - regdesk
+    room-none:
+      default: true
+      description: No Room
+      read_only: true
+      vat_percent: 7
     sponsor:
-      description: 'Sponsor Upgrade'
+      description: Sponsor Upgrade
       price: 10000
       vat_percent: 19
       visible_for:
         - regdesk
         - sponsordesk
     sponsor2:
-      description: 'Supersponsor Upgrade'
-      price: 20000
-      vat_percent: 19
       constraint: '!sponsor'
-      constraint_msg: 'Please choose only one of Sponsor or Supersponsor.'
-      visible_for:
-        - regdesk
-        - sponsordesk
-    tshirt:
-      description: 'Paid T-Shirt (non-sponsor)'
-      price: 2000
-      vat_percent: 19
-      constraint: '!sponsor,!sponsor2'
-      constraint_msg: 'Sponsors and supersponsors get their T-Shirt for free.'
-      visible_for:
-        - sponsordesk
-    day-wed:
-      description: 'Day Guest (Wednesday)'
-      price: 9000
-      vat_percent: 19
-      at-least-one-mandatory: true
-      constraint: '!attendance,!stage'
-      constraint_msg: 'Must disable Convention Ticket and Stage Ticket for Day Guests.'
-      visible_for:
-        - regdesk
-    day-thu:
-      description: 'Day Guest (Thursday)'
-      price: 9000
-      vat_percent: 19
-      at-least-one-mandatory: true
-      constraint: '!attendance,!stage'
-      constraint_msg: 'Must disable Convention Ticket and Stage Ticket for Day Guests.'
-      visible_for:
-        - regdesk
-    day-fri:
-      description: 'Day Guest (Friday)'
-      price: 9000
-      vat_percent: 19
-      at-least-one-mandatory: true
-      constraint: '!attendance,!stage'
-      constraint_msg: 'Must disable Convention Ticket and Stage Ticket for Day Guests.'
-      visible_for:
-        - regdesk
-    day-sat:
-      description: 'Day Guest (Saturday)'
-      price: 9000
-      vat_percent: 19
-      at-least-one-mandatory: true
-      constraint: '!attendance,!stage'
-      constraint_msg: 'Must disable Convention Ticket and Stage Ticket for Day Guests.'
-      visible_for:
-        - regdesk
-    dealer-half:
-      description: 'Dealer Table Fee (Half)'
-      price: 5000
-      vat_percent: 19
-      read_only: true
-      constraint: '!dealer-full,!dealer-fullplus,!dealer-double,!dealer-quad'
-      constraint_msg: 'Cannot mix dealer table packages.'
-    dealer-full:
-      description: 'Dealer Table Fee (Full)'
-      price: 10000
-      vat_percent: 19
-      read_only: true
-      constraint: '!dealer-half,!dealer-fullplus,!dealer-double,!dealer-quad'
-      constraint_msg: 'Cannot mix dealer table packages.'
-    dealer-fullplus:
-      description: 'Dealer Table Fee (Full Plus)'
-      price: 15000
-      vat_percent: 19
-      read_only: true
-      constraint: '!dealer-half,!dealer-full,!dealer-double,!dealer-quad'
-      constraint_msg: 'Cannot mix dealer table packages.'
-    dealer-double:
-      description: 'Dealer Table Fee (Double)'
+      constraint_msg: Please choose only one of Sponsor or Supersponsor.
+      description: Supersponsor Upgrade
       price: 20000
       vat_percent: 19
-      read_only: true
-      constraint: '!dealer-half,!dealer-full,!dealer-fullplus,!dealer-quad'
-      constraint_msg: 'Cannot mix dealer table packages.'
-    dealer-quad:
-      description: 'Dealer Table Fee (Quad)'
-      price: 40000
-      vat_percent: 19
-      read_only: true
-      constraint: '!dealer-half,!dealer-full,!dealer-fullplus,!dealer-double'
-      constraint_msg: 'Cannot mix dealer table packages.'
-    boat-trip:
-      description: 'Summerboat Boat Trip'
-      price: 3500
-      vat_percent: 19
-      read_only: true
-    boat-vip:
-      description: 'Summerboat VIP'
-      price: 1500
-      vat_percent: 19
-      read_only: true
-    boat-benefactor:
-      description: 'Summerboat Benefactor'
-      price: 10000
-      vat_percent: 19
-      read_only: true
-    artshow-table-half:
-      description: 'Artshow (Half Table)'
+      visible_for:
+        - regdesk
+        - sponsordesk
+    stage:
+      default: true
+      description: Entrance Fee (Stage Ticket)
       price: 500
       vat_percent: 19
-      read_only: true
-    artshow-table-one:
-      description: 'Artshow (1 Table)'
-      price: 1000
-      vat_percent: 19
-      read_only: true
-    artshow-table-oneandhalf:
-      description: 'Artshow (1.5 Tables)'
-      price: 1500
-      vat_percent: 19
-      read_only: true
-    artshow-table-two:
-      description: 'Artshow (2 Tables)'
+      visible_for:
+        - regdesk
+    tshirt:
+      constraint: '!sponsor,!sponsor2'
+      constraint_msg: Sponsors and supersponsors get their T-Shirt for free.
+      description: Paid T-Shirt (non-sponsor)
       price: 2000
       vat_percent: 19
-      read_only: true
-    artshow-table-twoandhalf:
-      description: 'Artshow (2.5 Tables)'
-      price: 2500
-      vat_percent: 19
-      read_only: true
-    artshow-table-three:
-      description: 'Artshow (3 Tables)'
-      price: 3000
-      vat_percent: 19
-      read_only: true
-    artshow-table-threeandhalf:
-      description: 'Artshow (3.5 Tables)'
-      price: 3500
-      vat_percent: 19
-      read_only: true
-    artshow-table-four:
-      description: 'Artshow (4 Tables)'
-      price: 4000
-      vat_percent: 19
-      read_only: true
-    artshow-panel-half:
-      description: 'Artshow (Half Panel)'
-      price: 1000
-      vat_percent: 19
-      read_only: true
-    artshow-panel-one:
-      description: 'Artshow (1 Panel)'
-      price: 2000
-      vat_percent: 19
-      read_only: true
-    artshow-panel-oneandhalf:
-      description: 'Artshow (1.5 Panels)'
-      price: 3000
-      vat_percent: 19
-      read_only: true
-    artshow-panel-two:
-      description: 'Artshow (2 Panels)'
-      price: 4000
-      vat_percent: 19
-      read_only: true
-    artshow-panel-twoandhalf:
-      description: 'Artshow (2.5 Panels)'
+      visible_for:
+        - sponsordesk
+    ultrasponsor:
+      allowed_counts:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 8
+        - 10
+        - 15
+        - 20
+        - 30
+        - 40
+        - 50
+        - 100
+      constraint: 'sponsor2'
+      constraint_msg: Only available for supersponsors.
+      description: Ultra Sponsor
+      max_count: 100
       price: 5000
       vat_percent: 19
-      read_only: true
-    artshow-panel-three:
-      description: 'Artshow (3 Panels)'
-      price: 6000
-      vat_percent: 19
-      read_only: true
-    artshow-panel-threeandhalf:
-      description: 'Artshow (3.5 Panels)'
-      price: 7000
-      vat_percent: 19
-      read_only: true
-    artshow-panel-four:
-      description: 'Artshow Panel (4 Panels)'
-      price: 8000
-      vat_percent: 19
-      read_only: true
+      visible_for:
+        - regdesk
+        - sponsordesk
   options:
-    art:
-      description: 'Artist'
     anim:
-      description: 'Animator'
+      description: Animator
+    art:
+      description: Artist
     music:
-      description: 'Musician'
+      description: Musician
     suit:
-      description: 'Fursuiter'
+      description: Fursuiter
 tshirtsizes:
   - 'XS'
   - 'wXS'

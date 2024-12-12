@@ -124,6 +124,7 @@ type (
 	}
 
 	ChoiceConfig struct {
+		AllowedCounts []int    `yaml:"allowed_counts"` // only supported for packages, ignored unless you also set max_count
 		Description   string   `yaml:"description"`
 		Price         int64    `yaml:"price"`
 		VatPercent    float64  `yaml:"vat_percent"`

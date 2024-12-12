@@ -848,7 +848,7 @@ func TestCreateNewAttendee_MultiPackage(t *testing.T) {
 
 	docs.When("when they attempt to create a new attendee, validly adding a package multiple times")
 	attendeeSent := tstBuildValidAttendee("na66-")
-	tstAddPackages(&attendeeSent, "mountain-trip,mountain-trip")
+	tstAddPackages(&attendeeSent, "mountain-trip,mountain-trip,mountain-trip")
 	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), token)
 
 	docs.Then("then the attendee is successfully created and can be read again")
@@ -869,13 +869,33 @@ func TestCreateNewAttendee_MultiPackageTooMany(t *testing.T) {
 
 	docs.When("when they attempt to create a new attendee, adding a package too many times")
 	attendeeSent := tstBuildValidAttendee("na67-")
-	tstAddPackages(&attendeeSent, "mountain-trip,mountain-trip,mountain-trip")
+	tstAddPackages(&attendeeSent, "mountain-trip,mountain-trip,mountain-trip,mountain-trip")
 	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), token)
 
 	docs.Then("then the attempt is rejected as invalid (400) with an appropriate error response")
 	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
-		"packages":      []string{"package mountain-trip occurs too many times, can occur at most 2 times"},
-		"packages_list": []string{"package mountain-trip occurs too many times, can occur at most 2 times"},
+		"packages":      []string{"package mountain-trip occurs too many times, can occur at most 3 times"},
+		"packages_list": []string{"package mountain-trip occurs too many times, can occur at most 3 times"},
+	})
+}
+
+func TestCreateNewAttendee_MultiPackageWrongNumberOfTimes(t *testing.T) {
+	docs.Given("given the configuration for login-only registration after normal reg is open")
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given a logged in user")
+	token := tstValidUserToken(t, 1)
+
+	docs.When("when they attempt to create a new attendee, adding a package the wrong number of times")
+	attendeeSent := tstBuildValidAttendee("na68-")
+	tstAddPackages(&attendeeSent, "mountain-trip,mountain-trip")
+	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), token)
+
+	docs.Then("then the attempt is rejected as invalid (400) with an appropriate error response")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
+		"packages":      []string{"package mountain-trip occurs 2 times, but this is not allowed due to allowed_counts configuration, which only allows [1 3]"},
+		"packages_list": []string{"package mountain-trip occurs 2 times, but this is not allowed due to allowed_counts configuration, which only allows [1 3]"},
 	})
 }
 
@@ -1542,14 +1562,14 @@ func tstUpdateExistingAttendee_AddPackageMultipleTimes(t *testing.T, testcase st
 
 	docs.When("when they send updated attendee info and add a package multiple times")
 	changedAttendee := att
-	tstAddPackages(&changedAttendee, "mountain-trip,mountain-trip")
+	tstAddPackages(&changedAttendee, "mountain-trip,mountain-trip,mountain-trip")
 	response := tstPerformPut(loc, tstRenderJson(changedAttendee), token)
 
 	docs.Then("then the attendee is successfully updated and can be read again")
 	require.Equal(t, http.StatusOK, response.status, "unexpected http response status for update")
 	attendeeReadAgain := tstReadAttendee(t, loc)
 	require.EqualValues(t, changedAttendee, attendeeReadAgain, "attendee data read did not match")
-	require.EqualValues(t, "attendance,mountain-trip,mountain-trip,room-none,sponsor2,stage", attendeeReadAgain.Packages, "attendee data read did not match expected package value")
+	require.EqualValues(t, "attendance,mountain-trip,mountain-trip,mountain-trip,room-none,sponsor2,stage", attendeeReadAgain.Packages, "attendee data read did not match expected package value")
 
 	docs.Then("and the expected mail messages have been sent")
 	tstRequireMailRequests(t, expectedMails)
@@ -1562,14 +1582,14 @@ func TestUpdateExistingAttendee_AddPackageMultipleTimes_UserAllowed(t *testing.T
 		targetStatus := origStatus
 		mails := []mailservice.MailSendDto{}
 		if origStatus == status.Approved {
-			mail := tstNewStatusMailWithAmounts(testcase, targetStatus, 315.00, 315.00)
+			mail := tstNewStatusMailWithAmounts(testcase, targetStatus, 345.00, 345.00)
 			mails = append(mails, mail)
 		} else if origStatus == status.PartiallyPaid {
-			mail := tstNewStatusMailWithAmounts(testcase, targetStatus, 160.00, 315.00)
+			mail := tstNewStatusMailWithAmounts(testcase, targetStatus, 190.00, 345.00)
 			mails = append(mails, mail)
 		} else if origStatus == status.Paid {
 			targetStatus = status.PartiallyPaid
-			mail := tstNewStatusMailWithAmounts(testcase, targetStatus, 60.00, 315.00)
+			mail := tstNewStatusMailWithAmounts(testcase, targetStatus, 90.00, 345.00)
 			mails = append(mails, mail)
 		}
 		t.Run(string(origStatus), func(t *testing.T) {
@@ -1589,13 +1609,34 @@ func TestUpdateExistingAttendee_AddPackageTooManyTimes(t *testing.T) {
 
 	docs.When("when they send updated attendee info and try to add a package too many times")
 	changedAttendee := att
-	tstAddPackages(&changedAttendee, "mountain-trip,mountain-trip,mountain-trip")
+	tstAddPackages(&changedAttendee, "mountain-trip,mountain-trip,mountain-trip,mountain-trip")
 	changedAttendee.Packages = att.Packages // should be ignored, so let's make it produce no error if used
 	response := tstPerformPut(loc, tstRenderJson(changedAttendee), token)
 
 	docs.Then("then the request fails with the expected error")
 	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
-		"packages_list": []string{"package mountain-trip occurs too many times, can occur at most 2 times"},
+		"packages_list": []string{"package mountain-trip occurs too many times, can occur at most 3 times"},
+	})
+}
+
+func TestUpdateExistingAttendee_AddPackageWrongNumberOfTimes(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee in status paid")
+	loc, att := tstRegisterAttendeeAndTransitionToStatus(t, "ua4e", status.Paid)
+	token := tstValidUserToken(t, 1)
+
+	docs.When("when they send updated attendee info and try to add a package the wrong number of times")
+	changedAttendee := att
+	tstAddPackages(&changedAttendee, "mountain-trip,mountain-trip")
+	changedAttendee.Packages = att.Packages // should be ignored, so let's make it produce no error if used
+	response := tstPerformPut(loc, tstRenderJson(changedAttendee), token)
+
+	docs.Then("then the request fails with the expected error")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
+		"packages_list": []string{"package mountain-trip occurs 2 times, but this is not allowed due to allowed_counts configuration, which only allows [1 3]"},
 	})
 }
 
@@ -2256,7 +2297,7 @@ func tstGetChoice_Anon(t *testing.T, testcase string, what string, endpoint stri
 	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "you must be logged in for this operation")
 }
 
-func tstGetChoice_Self(t *testing.T, testcase string, what string, endpoint string, expectAllow bool, expectValue bool) {
+func tstGetChoice_Self(t *testing.T, testcase string, what string, endpoint string, expectAllow bool, expectCount int) {
 	tstSetup(true, false, true)
 	defer tstShutdown()
 
@@ -2272,14 +2313,18 @@ func tstGetChoice_Self(t *testing.T, testcase string, what string, endpoint stri
 		require.Equal(t, http.StatusOK, response.status, "unexpected http response status")
 		actualResult := attendee.ChoiceState{}
 		tstParseJson(response.body, &actualResult)
-		require.Equal(t, expectValue, actualResult.Present)
+		expectedResult := attendee.ChoiceState{
+			Present: expectCount > 0,
+			Count:   expectCount,
+		}
+		require.EqualValues(t, expectedResult, actualResult)
 	} else {
 		docs.Then("then the request fails (403) and the error is as expected")
 		tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this operation - the attempt has been logged")
 	}
 }
 
-func tstGetChoice_Other(t *testing.T, testcase string, what string, endpoint string, permissions string, expectAllow bool, expectValue bool) {
+func tstGetChoice_Other(t *testing.T, testcase string, what string, endpoint string, permissions string, expectAllow bool, expectCount int) {
 	tstSetup(true, false, true)
 	defer tstShutdown()
 
@@ -2309,14 +2354,18 @@ func tstGetChoice_Other(t *testing.T, testcase string, what string, endpoint str
 		require.Equal(t, http.StatusOK, response.status, "unexpected http response status")
 		actualResult := attendee.ChoiceState{}
 		tstParseJson(response.body, &actualResult)
-		require.Equal(t, expectValue, actualResult.Present)
+		expectedResult := attendee.ChoiceState{
+			Present: expectCount > 0,
+			Count:   expectCount,
+		}
+		require.EqualValues(t, expectedResult, actualResult)
 	} else {
 		docs.Then("then the request fails (403) and the error is as expected")
 		tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this operation - the attempt has been logged")
 	}
 }
 
-func tstGetChoice_Admin(t *testing.T, testcase string, what string, endpoint string, expectValue bool) {
+func tstGetChoice_Admin(t *testing.T, testcase string, what string, endpoint string, expectCount int) {
 	tstSetup(true, false, true)
 	defer tstShutdown()
 
@@ -2333,10 +2382,14 @@ func tstGetChoice_Admin(t *testing.T, testcase string, what string, endpoint str
 	require.Equal(t, http.StatusOK, response.status, "unexpected http response status")
 	actualResult := attendee.ChoiceState{}
 	tstParseJson(response.body, &actualResult)
-	require.Equal(t, expectValue, actualResult.Present)
+	expectedResult := attendee.ChoiceState{
+		Present: expectCount > 0,
+		Count:   expectCount,
+	}
+	require.EqualValues(t, expectedResult, actualResult)
 }
 
-func tstGetChoice_ApiToken(t *testing.T, testcase string, what string, endpoint string, expectValue bool) {
+func tstGetChoice_ApiToken(t *testing.T, testcase string, what string, endpoint string, expectCount int) {
 	tstSetup(true, false, true)
 	defer tstShutdown()
 
@@ -2353,7 +2406,11 @@ func tstGetChoice_ApiToken(t *testing.T, testcase string, what string, endpoint 
 	require.Equal(t, http.StatusOK, response.status, "unexpected http response status")
 	actualResult := attendee.ChoiceState{}
 	tstParseJson(response.body, &actualResult)
-	require.Equal(t, expectValue, actualResult.Present)
+	expectedResult := attendee.ChoiceState{
+		Present: expectCount > 0,
+		Count:   expectCount,
+	}
+	require.EqualValues(t, expectedResult, actualResult)
 }
 
 func TestGetFlags_Anon(t *testing.T) {
@@ -2362,92 +2419,92 @@ func TestGetFlags_Anon(t *testing.T) {
 
 func TestGetFlagsUnset_Self(t *testing.T) {
 	tstGetChoice_Self(t, "flg2", "a visible regular flag from their own registration, which is not set",
-		"/flags/ev", true, false)
+		"/flags/ev", true, 0)
 }
 
 func TestGetFlagsSet_Self(t *testing.T) {
 	tstGetChoice_Self(t, "flg3", "a visible regular flag from their own registration, which is set",
-		"/flags/hc", true, true)
+		"/flags/hc", true, 1)
 }
 
 func TestGetAdminFlagsUnset_Self(t *testing.T) {
 	tstGetChoice_Self(t, "flg4", "a visible admin flag from their own registration, which is not set",
-		"/flags/guest", true, false)
+		"/flags/guest", true, 0)
 }
 
 func TestGetAdminFlagsInvisible_Self(t *testing.T) {
 	tstGetChoice_Self(t, "flg5", "an invisible admin flag from their own registration",
-		"/flags/skip_ban_check", false, false)
+		"/flags/skip_ban_check", false, 0)
 }
 
 func TestGetFlags_Other_NoPerm(t *testing.T) {
 	tstGetChoice_Other(t, "flg6", "a visible regular flag from another registration",
-		"/flags/ev", "", false, false)
+		"/flags/ev", "", false, 0)
 }
 
 func TestGetAdminFlags_Other_NoPerm(t *testing.T) {
 	tstGetChoice_Other(t, "flg7", "a visible admin flag from another registration",
-		"/flags/guest", "", false, false)
+		"/flags/guest", "", false, 0)
 }
 
 func TestGetAdminFlagsInvisible_Other_NoPerm(t *testing.T) {
 	tstGetChoice_Other(t, "flg8", "an invisible admin flag from another registration",
-		"/flags/skip_ban_check", "", false, false)
+		"/flags/skip_ban_check", "", false, 0)
 }
 
 func TestGetFlags_Other_PermNonMatch(t *testing.T) {
 	tstGetChoice_Other(t, "flg9", "a visible regular flag from another registration (non-matching permission)",
-		"/flags/ev", "sponsordesk", false, false)
+		"/flags/ev", "sponsordesk", false, 0)
 }
 
 func TestGetFlags_Other_PermMatch_Unset(t *testing.T) {
 	tstGetChoice_Other(t, "flg10", "a visible regular flag from another registration (matching permission)",
-		"/flags/ev", "regdesk", true, false)
+		"/flags/ev", "regdesk", true, 0)
 }
 
 func TestGetFlags_Other_PermMatch_Set(t *testing.T) {
 	tstGetChoice_Other(t, "flg11", "a visible regular flag from another registration (matching permission)",
-		"/flags/anon", "regdesk", true, true)
+		"/flags/anon", "regdesk", true, 1)
 }
 
 func TestGetAdminFlags_Other_Perm(t *testing.T) {
 	tstGetChoice_Other(t, "flg12", "a visible admin flag from another registration",
-		"/flags/guest", "sponsordesk", true, false)
+		"/flags/guest", "sponsordesk", true, 0)
 }
 
 func TestGetAdminFlagsInvisible_Other_Perm(t *testing.T) {
 	tstGetChoice_Other(t, "flg13", "an invisible admin flag from another registration",
-		"/flags/skip_ban_check", "sponsordesk", false, false)
+		"/flags/skip_ban_check", "sponsordesk", false, 0)
 }
 
 func TestGetFlags_Admin_Unset(t *testing.T) {
 	tstGetChoice_Admin(t, "flg14", "a regular flag which is unset",
-		"/flags/ev", false)
+		"/flags/ev", 0)
 }
 
 func TestGetFlags_Admin_Set(t *testing.T) {
 	tstGetChoice_Admin(t, "flg15", "a regular flag which is set",
-		"/flags/anon", true)
+		"/flags/anon", 1)
 }
 
 func TestGetAdminFlags_Admin(t *testing.T) {
 	tstGetChoice_Admin(t, "flg16", "a visible admin flag",
-		"/flags/guest", false)
+		"/flags/guest", 0)
 }
 
 func TestGetAdminFlagsInvisible_Admin(t *testing.T) {
 	tstGetChoice_Admin(t, "flg17", "an invisible admin flag",
-		"/flags/skip_ban_check", false)
+		"/flags/skip_ban_check", 0)
 }
 
 func TestGetFlags_ApiToken_Set(t *testing.T) {
 	tstGetChoice_ApiToken(t, "flg18", "a regular flag which is set",
-		"/flags/anon", true)
+		"/flags/anon", 1)
 }
 
 func TestGetAdminFlags_ApiToken(t *testing.T) {
 	tstGetChoice_ApiToken(t, "flg19", "a visible admin flag",
-		"/flags/guest", false)
+		"/flags/guest", 0)
 }
 
 func TestGetFlags_InvalidId(t *testing.T) {
@@ -2501,42 +2558,42 @@ func TestGetOptions_Anon(t *testing.T) {
 
 func TestGetOptionsUnset_Self(t *testing.T) {
 	tstGetChoice_Self(t, "opt2", "an option from their own registration, which is not set",
-		"/options/art", true, false)
+		"/options/art", true, 0)
 }
 
 func TestGetOptionsSet_Self(t *testing.T) {
 	tstGetChoice_Self(t, "opt3", "an option from their own registration, which is set",
-		"/options/music", true, true)
+		"/options/music", true, 1)
 }
 
 func TestGetOptions_Other_NoPerm(t *testing.T) {
 	tstGetChoice_Other(t, "opt4", "an option from another registration",
-		"/options/music", "", false, false)
+		"/options/music", "", false, 0)
 }
 
 func TestGetOptions_Other_PermNonMatch(t *testing.T) {
 	tstGetChoice_Other(t, "opt5", "an option from another registration (non-matching permission)",
-		"/options/music", "regdesk", false, false)
+		"/options/music", "regdesk", false, 0)
 }
 
 func TestGetOptions_Other_PermMatch_Set(t *testing.T) {
 	tstGetChoice_Other(t, "opt6", "an option from another registration (matching permission)",
-		"/options/music", "sponsordesk", true, true)
+		"/options/music", "sponsordesk", true, 1)
 }
 
 func TestGetOptions_Admin_Unset(t *testing.T) {
 	tstGetChoice_Admin(t, "opt7", "an option, which is not set",
-		"/options/anim", false)
+		"/options/anim", 0)
 }
 
 func TestGetOptions_Admin_Set(t *testing.T) {
 	tstGetChoice_Admin(t, "opt8", "an option, which is set",
-		"/options/music", true)
+		"/options/music", 1)
 }
 
 func TestGetOptions_ApiToken_Set(t *testing.T) {
 	tstGetChoice_ApiToken(t, "opt9", "an option, which is set",
-		"/options/suit", true)
+		"/options/suit", 1)
 }
 
 func TestGetOptions_InvalidId(t *testing.T) {
@@ -2590,42 +2647,70 @@ func TestGetPackages_Anon(t *testing.T) {
 
 func TestGetPackagesUnset_Self(t *testing.T) {
 	tstGetChoice_Self(t, "pkg2", "a package from their own registration, which is not set",
-		"/packages/sponsor", true, false)
+		"/packages/sponsor", true, 0)
 }
 
 func TestGetPackagesSet_Self(t *testing.T) {
 	tstGetChoice_Self(t, "pkg3", "a package from their own registration, which is set",
-		"/packages/sponsor2", true, true)
+		"/packages/sponsor2", true, 1)
 }
 
 func TestGetPackages_Other_NoPerm(t *testing.T) {
 	tstGetChoice_Other(t, "pkg4", "a package from another registration",
-		"/packages/sponsor", "", false, false)
+		"/packages/sponsor", "", false, 0)
 }
 
 func TestGetPackages_Other_PermNonMatch(t *testing.T) {
 	tstGetChoice_Other(t, "pkg5", "a package from another registration (non-matching permission)",
-		"/packages/sponsor2", "regdesk", false, false)
+		"/packages/sponsor2", "regdesk", false, 0)
 }
 
 func TestGetPackages_Other_PermMatch_Set(t *testing.T) {
 	tstGetChoice_Other(t, "pkg6", "a package from another registration (matching permission)",
-		"/packages/sponsor2", "sponsordesk", true, true)
+		"/packages/sponsor2", "sponsordesk", true, 1)
 }
 
 func TestGetPackages_Admin_Unset(t *testing.T) {
 	tstGetChoice_Admin(t, "pkg7", "a package, which is not set",
-		"/packages/sponsor", false)
+		"/packages/sponsor", 0)
 }
 
 func TestGetPackages_Admin_Set(t *testing.T) {
 	tstGetChoice_Admin(t, "pkg8", "a package, which is set",
-		"/packages/sponsor2", true)
+		"/packages/sponsor2", 1)
+}
+
+func TestGetPackages_Admin_Multi(t *testing.T) {
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given a registered attendee, who has been assigned a package multiple times")
+	location1, att := tstRegisterAttendee(t, "pkg9a-")
+	tstAddPackages(&att, "mountain-trip,mountain-trip,mountain-trip")
+	updateResponse := tstPerformPut(location1, tstRenderJson(att), tstValidAdminToken(t))
+	require.Equal(t, http.StatusOK, updateResponse.status)
+
+	docs.Given("given an admin")
+	token := tstValidAdminToken(t)
+
+	docs.When("when they request a package, which is set multiple times")
+	response := tstPerformGet(location1+"/packages/mountain-trip", token)
+
+	docs.Then("then the request is successful and the response is as expected")
+	require.Equal(t, http.StatusOK, response.status, "unexpected http response status")
+	actualResult := attendee.ChoiceState{}
+	tstParseJson(response.body, &actualResult)
+	expectedResult := attendee.ChoiceState{
+		Present: true,
+		Count:   3,
+	}
+	require.EqualValues(t, expectedResult, actualResult)
+
 }
 
 func TestGetPackages_ApiToken_Set(t *testing.T) {
-	tstGetChoice_ApiToken(t, "pkg9", "a package, which is set",
-		"/packages/sponsor2", true)
+	tstGetChoice_ApiToken(t, "pkg10", "a package, which is set",
+		"/packages/sponsor2", 1)
 }
 
 func TestGetPackages_InvalidId(t *testing.T) {

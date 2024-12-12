@@ -2239,7 +2239,17 @@ components:
       properties:
         present:
           type: boolean
-          description: Whether the attendee has this flag enabled or not.
+          description: Whether the attendee has this choice enabled or not.
+        count:
+          type: integer
+          description: |-
+            The number of times a choice is present. 
+            
+            Can only ever be 0 or 1 for flags and options, but some packages allow other values, depending on configuration.
+            
+            In responses, both present and count are always filled. In requests, it is an error to send inconsistent values,
+            with one exception for backwards compatibility reasons: if present is set to true and no count is specified, 
+            this is interpreted to mean a count of 1.
     AttendeeFieldSelection:
       type: array
       description: |-

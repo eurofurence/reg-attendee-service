@@ -7,6 +7,7 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"net/url"
 	"os"
+	"slices"
 	"strings"
 	"time"
 )
@@ -168,6 +169,13 @@ func validatePackagesConfiguration(errs url.Values, c map[string]ChoiceConfig) {
 		checkConstraints(errs, c, "choices.packages", k, v.Constraint, v.ConstraintMsg)
 		if v.AdminOnly {
 			errs.Add("choices.packages."+k+".admin", "packages cannot be admin_only (they cost money). Try read_only instead.")
+		}
+		if len(v.AllowedCounts) > 0 {
+			if v.MaxCount <= 1 {
+				errs.Add("choices.packages."+k+".allowed_counts", "can only list allowed counts if max_count is set to at least 2")
+			} else if slices.Max(v.AllowedCounts) > v.MaxCount {
+				errs.Add("choices.packages."+k+".allowed_counts", "maximum allowed_counts value cannot be larger than max_count for package")
+			}
 		}
 	}
 }

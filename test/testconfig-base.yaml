@@ -124,10 +124,13 @@ choices:
       visible_for:
         - regdesk
     mountain-trip:
+      allowed_counts:
+        - 1
+        - 3
       description: 'Mountain Trip'
       price: 3000
       vat_percent: 19
-      max_count: 2
+      max_count: 3
     day-thu:
       description: 'Day Guest (Thursday)'
       price: 6000
