@@ -869,13 +869,13 @@ func TestCreateNewAttendee_MultiPackageTooMany(t *testing.T) {
 
 	docs.When("when they attempt to create a new attendee, adding a package too many times")
 	attendeeSent := tstBuildValidAttendee("na67-")
-	tstAddPackages(&attendeeSent, "mountain-trip,mountain-trip,mountain-trip")
+	tstAddPackages(&attendeeSent, "mountain-trip,mountain-trip,mountain-trip,mountain-trip")
 	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), token)
 
 	docs.Then("then the attempt is rejected as invalid (400) with an appropriate error response")
 	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
-		"packages":      []string{"package mountain-trip occurs too many times, can occur at most 2 times"},
-		"packages_list": []string{"package mountain-trip occurs too many times, can occur at most 2 times"},
+		"packages":      []string{"package mountain-trip occurs too many times, can occur at most 3 times"},
+		"packages_list": []string{"package mountain-trip occurs too many times, can occur at most 3 times"},
 	})
 }
 
@@ -1589,13 +1589,13 @@ func TestUpdateExistingAttendee_AddPackageTooManyTimes(t *testing.T) {
 
 	docs.When("when they send updated attendee info and try to add a package too many times")
 	changedAttendee := att
-	tstAddPackages(&changedAttendee, "mountain-trip,mountain-trip,mountain-trip")
+	tstAddPackages(&changedAttendee, "mountain-trip,mountain-trip,mountain-trip,mountain-trip")
 	changedAttendee.Packages = att.Packages // should be ignored, so let's make it produce no error if used
 	response := tstPerformPut(loc, tstRenderJson(changedAttendee), token)
 
 	docs.Then("then the request fails with the expected error")
 	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
-		"packages_list": []string{"package mountain-trip occurs too many times, can occur at most 2 times"},
+		"packages_list": []string{"package mountain-trip occurs too many times, can occur at most 3 times"},
 	})
 }
 

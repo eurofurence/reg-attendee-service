@@ -394,12 +394,27 @@ choices:
       visible_for:
         - sponsordesk
     ultrasponsor:
+      allowed_counts:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 8
+        - 10
+        - 15
+        - 20
+        - 30
+        - 40
+        - 50
+        - 100
       constraint: 'sponsor2'
       constraint_msg: Only available for supersponsors.
       description: Ultra Sponsor
+      max_count: 100
       price: 5000
       vat_percent: 19
-      max_count: 100
       visible_for:
         - regdesk
         - sponsordesk
