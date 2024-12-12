@@ -134,6 +134,7 @@ func updateAttendeeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Add(headers.Location, r.URL.Path)
+	w.WriteHeader(http.StatusOK)
 }
 
 func getDueDateHandler(w http.ResponseWriter, r *http.Request) {
