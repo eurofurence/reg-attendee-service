@@ -241,16 +241,31 @@ func getFlagHandler(w http.ResponseWriter, r *http.Request) {
 	getChoiceHandler(w, r,
 		"flag",
 		config.Configuration().Choices.Flags,
-		func(ctx context.Context, w http.ResponseWriter, r *http.Request, attendee *entity.Attendee, code string, choice config.ChoiceConfig) (string, error) {
+		func(ctx context.Context, w http.ResponseWriter, r *http.Request, att *entity.Attendee, code string, choice config.ChoiceConfig) (attendee.ChoiceState, error) {
+			present := false
+
 			if choice.AdminOnly {
-				adminInfo, err := attendeeService.GetAdminInfo(ctx, attendee.ID)
+				adminInfo, err := attendeeService.GetAdminInfo(ctx, att.ID)
 				if err != nil {
 					choiceErrorHandler(ctx, w, r, "flag", code, err)
-					return "", err
+					return attendee.ChoiceState{}, err
 				}
-				return adminInfo.Flags, nil
+
+				present = commaSeparatedContains(adminInfo.Flags, code)
 			} else {
-				return attendee.Flags, nil
+				present = commaSeparatedContains(att.Flags, code)
+			}
+
+			if present {
+				return attendee.ChoiceState{
+					Present: true,
+					Count:   1,
+				}, nil
+			} else {
+				return attendee.ChoiceState{
+					Present: false,
+					Count:   0,
+				}, nil
 			}
 		},
 	)
@@ -260,8 +275,18 @@ func getOptionHandler(w http.ResponseWriter, r *http.Request) {
 	getChoiceHandler(w, r,
 		"option",
 		config.Configuration().Choices.Options,
-		func(_ context.Context, _ http.ResponseWriter, _ *http.Request, attendee *entity.Attendee, _ string, _ config.ChoiceConfig) (string, error) {
-			return attendee.Options, nil
+		func(_ context.Context, _ http.ResponseWriter, _ *http.Request, att *entity.Attendee, code string, _ config.ChoiceConfig) (attendee.ChoiceState, error) {
+			if commaSeparatedContains(att.Options, code) {
+				return attendee.ChoiceState{
+					Present: true,
+					Count:   1,
+				}, nil
+			} else {
+				return attendee.ChoiceState{
+					Present: false,
+					Count:   0,
+				}, nil
+			}
 		},
 	)
 }
@@ -270,15 +295,25 @@ func getPackageHandler(w http.ResponseWriter, r *http.Request) {
 	getChoiceHandler(w, r,
 		"package",
 		config.Configuration().Choices.Packages,
-		func(_ context.Context, _ http.ResponseWriter, _ *http.Request, attendee *entity.Attendee, _ string, _ config.ChoiceConfig) (string, error) {
-			return packagesFromEntity(attendee.Packages), nil
+		func(_ context.Context, _ http.ResponseWriter, _ *http.Request, att *entity.Attendee, code string, _ config.ChoiceConfig) (attendee.ChoiceState, error) {
+			asList := packagesListFromEntity(att.Packages)
+			count := 0
+			for _, entry := range asList {
+				if entry.Name == code {
+					count += entry.Count
+				}
+			}
+			return attendee.ChoiceState{
+				Present: count > 0,
+				Count:   count,
+			}, nil
 		},
 	)
 }
 
 func getChoiceHandler(w http.ResponseWriter, r *http.Request, choiceType string,
 	choiceConfigMap map[string]config.ChoiceConfig,
-	commaSeparatedValueGetter func(ctx context.Context, w http.ResponseWriter, r *http.Request, attendee *entity.Attendee, code string, choice config.ChoiceConfig) (string, error),
+	resultGetter func(ctx context.Context, w http.ResponseWriter, r *http.Request, attendee *entity.Attendee, code string, choice config.ChoiceConfig) (attendee.ChoiceState, error),
 ) {
 	ctx := r.Context()
 
@@ -303,13 +338,9 @@ func getChoiceHandler(w http.ResponseWriter, r *http.Request, choiceType string,
 		return
 	}
 
-	value, err := commaSeparatedValueGetter(ctx, w, r, requestedAttendee, code, choice)
+	dto, err := resultGetter(ctx, w, r, requestedAttendee, code, choice)
 	if err != nil {
 		return
-	}
-
-	dto := attendee.ChoiceState{
-		Present: commaSeparatedContains(value, code),
 	}
 
 	w.Header().Add(headers.ContentType, media.ContentTypeApplicationJson)

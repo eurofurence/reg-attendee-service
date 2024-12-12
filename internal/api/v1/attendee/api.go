@@ -134,6 +134,7 @@ type AttendeeSearchResult struct {
 
 type ChoiceState struct {
 	Present bool `json:"present"`
+	Count   int  `json:"count"`
 }
 
 type PackageState struct {
