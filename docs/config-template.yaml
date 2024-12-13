@@ -147,16 +147,6 @@ choices:
       description: Accepted the terms
       read_only: true
   packages:
-    addfursuit:
-      constraint: 'fursuit'
-      constraint_msg: Please select the free fursuit badge first, otherwise you'll pay too much.
-      description: Additional Fursuit Badge
-      price: 200
-      vat_percent: 19
-      max_count: 10
-      visible_for:
-        - regdesk
-        - sponsordesk
     artshow-panel-four:
       description: Artshow (4 Panels)
       price: 8000
@@ -331,6 +321,23 @@ choices:
       price: 40000
       read_only: true
       vat_percent: 19
+    fursuit:
+      description: First Fursuit Badge
+      price: 0
+      vat_percent: 19
+      visible_for:
+        - regdesk
+        - sponsordesk
+    fursuitadd:
+      constraint: 'fursuit'
+      constraint_msg: Please select the free fursuit badge first, otherwise you'll pay too much.
+      description: Additional Fursuit Badge
+      price: 200
+      vat_percent: 19
+      max_count: 10
+      visible_for:
+        - regdesk
+        - sponsordesk
     early:
       constraint: '!day-wed,!day-thu,!day-fri,!day-sat'
       constraint_msg: Early Bird Discount does not apply to Day Tickets
@@ -340,13 +347,6 @@ choices:
       vat_percent: 19
       visible_for:
         - regdesk
-    fursuit:
-      description: First Fursuit Badge
-      price: 0
-      vat_percent: 19
-      visible_for:
-        - regdesk
-        - sponsordesk
     late:
       constraint: '!day-wed,!day-thu,!day-fri,!day-sat'
       constraint_msg: Late Fee does not apply to Day Tickets
@@ -378,22 +378,7 @@ choices:
       visible_for:
         - regdesk
         - sponsordesk
-    stage:
-      default: true
-      description: Entrance Fee (Stage Ticket)
-      price: 500
-      vat_percent: 19
-      visible_for:
-        - regdesk
-    tshirt:
-      constraint: '!sponsor,!sponsor2'
-      constraint_msg: Sponsors and supersponsors get their T-Shirt for free.
-      description: Paid T-Shirt (non-sponsor)
-      price: 2000
-      vat_percent: 19
-      visible_for:
-        - sponsordesk
-    ultrasponsor:
+    benefactor:
       allowed_counts:
         - 1
         - 2
@@ -411,12 +396,27 @@ choices:
         - 100
       constraint: 'sponsor2'
       constraint_msg: Only available for supersponsors.
-      description: Ultra Sponsor
+      description: Benefactor
       max_count: 100
       price: 5000
       vat_percent: 19
       visible_for:
         - regdesk
+        - sponsordesk
+    stage:
+      default: true
+      description: Entrance Fee (Stage Ticket)
+      price: 500
+      vat_percent: 19
+      visible_for:
+        - regdesk
+    tshirt:
+      constraint: '!sponsor,!sponsor2'
+      constraint_msg: Sponsors and supersponsors get their T-Shirt for free.
+      description: Paid T-Shirt (non-sponsor)
+      price: 2000
+      vat_percent: 19
+      visible_for:
         - sponsordesk
   options:
     anim:
