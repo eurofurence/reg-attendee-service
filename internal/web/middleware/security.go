@@ -118,6 +118,7 @@ type CustomClaims struct {
 	EmailVerified bool     `json:"email_verified"`
 	Groups        []string `json:"groups,omitempty"`
 	Name          string   `json:"name"`
+	Avatar        string   `json:"avatar"`
 }
 
 type AllClaims struct {
@@ -153,6 +154,7 @@ func checkIdToken_MustReturnOnError(ctx context.Context, idTokenValue string) (s
 					ctxvalues.SetEmailVerified(ctx, parsedClaims.EmailVerified)
 					ctxvalues.SetName(ctx, parsedClaims.Name)
 					ctxvalues.SetSubject(ctx, parsedClaims.Subject)
+					ctxvalues.SetAvatar(ctx, parsedClaims.Avatar)
 					for _, group := range parsedClaims.Groups {
 						ctxvalues.SetAuthorizedAsGroup(ctx, group)
 					}

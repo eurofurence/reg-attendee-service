@@ -45,6 +45,7 @@ security:
     audience: 'only-allowed-audience-in-tokens'
     # optional, but will be checked if set
     issuer: 'only-allowed-issuer-in-tokens'
+    avatar_base_url: 'http://localhost:10000/identity-avatars/'
   cors:
     # set this to true to send disable cors headers - not for production - local/test instances only - will log lots of warnings
     disable: false

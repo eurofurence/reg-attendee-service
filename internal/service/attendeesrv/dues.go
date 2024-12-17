@@ -12,6 +12,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/paymentservice"
+	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
 	"strconv"
 	"strings"
 )
@@ -207,13 +208,15 @@ func (s *AttendeeServiceImplData) UpdateAttendeeCacheAndCalculateResultingStatus
 	identity := s.suffixForDeletedAttendees(attendee, newStatus, attendee.Identity)
 	zip := s.suffixForDeletedAttendees(attendee, newStatus, attendee.Zip)
 
+	avatar := s.avatarIfMatchingUser(ctx, identity)
+
 	dues, payments, open, dueDate := s.balances(updatedTransactionHistory)
 	// never move due date back in time (allows manual override)
 	if attendee.CacheDueDate != "" && attendee.CacheDueDate > dueDate {
 		dueDate = attendee.CacheDueDate
 	}
 
-	duesInformationChanged, err := s.updateCachedValuesAndIdentityInAttendee(ctx, attendee, dues, payments, open, dueDate, identity, zip)
+	duesInformationChanged, err := s.updateCachedValuesAndIdentityInAttendee(ctx, attendee, dues, payments, open, dueDate, identity, avatar, zip)
 	if err != nil {
 		return newStatus, false, err
 	}
@@ -239,7 +242,14 @@ func (s *AttendeeServiceImplData) suffixForDeletedAttendees(attendee *entity.Att
 	return value
 }
 
-func (s *AttendeeServiceImplData) updateCachedValuesAndIdentityInAttendee(ctx context.Context, attendee *entity.Attendee, dues int64, payments int64, open int64, dueDate string, identity string, zip string) (bool, error) {
+func (s *AttendeeServiceImplData) avatarIfMatchingUser(ctx context.Context, identity string) string {
+	if identity == ctxvalues.Subject(ctx) {
+		return ctxvalues.Avatar(ctx)
+	}
+	return ""
+}
+
+func (s *AttendeeServiceImplData) updateCachedValuesAndIdentityInAttendee(ctx context.Context, attendee *entity.Attendee, dues int64, payments int64, open int64, dueDate string, identity string, avatar string, zip string) (bool, error) {
 	duesRelevantUpdate := attendee.CacheTotalDues != dues ||
 		attendee.CachePaymentBalance != payments ||
 		attendee.CacheDueDate != dueDate
@@ -247,7 +257,8 @@ func (s *AttendeeServiceImplData) updateCachedValuesAndIdentityInAttendee(ctx co
 	needsUpdate := duesRelevantUpdate ||
 		attendee.CacheOpenBalance != open ||
 		attendee.Identity != identity ||
-		attendee.Zip != zip
+		attendee.Zip != zip ||
+		(avatar != "" && attendee.Avatar != avatar)
 
 	if needsUpdate {
 		attendee.CacheTotalDues = dues
@@ -256,6 +267,9 @@ func (s *AttendeeServiceImplData) updateCachedValuesAndIdentityInAttendee(ctx co
 		attendee.CacheDueDate = dueDate
 		attendee.Identity = identity
 		attendee.Zip = zip
+		if avatar != "" {
+			attendee.Avatar = avatar
+		}
 		err := database.GetRepository().UpdateAttendee(ctx, attendee)
 		return duesRelevantUpdate, err
 	}
