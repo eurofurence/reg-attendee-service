@@ -128,6 +128,8 @@ type AttendeeSearchResult struct {
 	DueDate              *string        `json:"due_date,omitempty"`
 	Registered           *string        `json:"registered,omitempty"`
 	AdminComments        *string        `json:"admin_comments,omitempty"`
+	IdentitySubject      *string        `json:"identity_subject"`
+	Avatar               *string        `json:"avatar"`
 }
 
 // --- flags/options/packages result ---

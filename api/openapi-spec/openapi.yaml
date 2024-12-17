@@ -2043,6 +2043,12 @@ components:
         admin_comments:
           type: string
           description: Optional comments only visible to admins. Not processed in any way.
+        identity_subject:
+          type: string
+          description: the OIDC subject the registration was made or last updated with.
+        avatar:
+          type: string
+          description: the avatar URL from when the registration was last updated by the user in the registration system. May be empty or sometimes outdated.
     AttendeeSearchCriteria:
       type: object
       required:
@@ -2313,6 +2319,8 @@ components:
           - due_date
           - registered
           - admin_comments
+          - identity_subject
+          - avatar
           # and the field sets
           - name
           - address

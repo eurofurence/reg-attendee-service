@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
@@ -31,7 +32,7 @@ func (s *AttendeeServiceImplData) mapToAttendeeSearchResult(att *entity.Attendee
 	if len(fillFields) == 0 {
 		fillFields = []string{"nickname", "name", "country", "spoken_languages", "email", "telegram", "birthday", "pronouns",
 			"tshirt_size", "flags", "options", "packages", "user_comments", "status",
-			"total_dues", "payment_balance", "current_dues", "due_date", "registered", "admin_comments"}
+			"total_dues", "payment_balance", "current_dues", "due_date", "registered", "admin_comments", "avatar"}
 	}
 
 	var currentDues = att.CacheTotalDues - att.CachePaymentBalance
@@ -41,6 +42,14 @@ func (s *AttendeeServiceImplData) mapToAttendeeSearchResult(att *entity.Attendee
 	options := removeWrappingCommas(att.Options)
 	packagesList := sortedPackageListFromCommaSeparatedWithCounts(removeWrappingCommas(att.Packages))
 	packages := packagesFromPackagesList(packagesList)
+	identity := ""
+	if att.Status != status.Deleted {
+		identity = att.Identity
+	}
+	avatar := att.Avatar
+	if avatar != "" {
+		avatar = config.AvatarBaseUrl() + avatar
+	}
 	return attendee.AttendeeSearchResult{
 		Id:                   att.ID,
 		BadgeId:              s.badgeId(att.ID),
@@ -77,6 +86,8 @@ func (s *AttendeeServiceImplData) mapToAttendeeSearchResult(att *entity.Attendee
 		DueDate:              contains(n(att.CacheDueDate), fillFields, "all", "balances", "due_date"),
 		Registered:           contains(n(registered), fillFields, "all", "registered"),
 		AdminComments:        contains(n(att.AdminComments), fillFields, "all", "admin_comments"),
+		IdentitySubject:      contains(n(identity), fillFields, "all", "identity_subject"),
+		Avatar:               contains(n(avatar), fillFields, "all", "avatar"),
 	}
 }
 

@@ -141,7 +141,7 @@ func limitToAllowedFields(desired []string) []string {
 	allowed := []string{"id", "nickname", "first_name", "last_name", "country",
 		"spoken_languages", "registration_language", "birthday", "pronouns", "tshirt_size",
 		"flags", "options", "packages", "status",
-		"total_dues", "payment_balance", "current_dues",
+		"total_dues", "payment_balance", "current_dues", "identity_subject", "avatar",
 	}
 
 	result := make([]string, 0)

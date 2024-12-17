@@ -1121,7 +1121,8 @@ func TestSearch_RegdeskOk(t *testing.T) {
       "status": "approved",
       "total_dues": 25500,
       "payment_balance": 0,
-      "current_dues": 25500
+      "current_dues": 25500,
+      "identity_subject": "1234567890"
     }
   ]
 }`
@@ -1194,7 +1195,8 @@ func TestSearch_SponsordeskOk(t *testing.T) {
       "status": "paid",
       "total_dues": 25500,
       "payment_balance": 25500,
-      "current_dues": 0
+      "current_dues": 0,
+      "identity_subject": "1234567890"
     }
   ]
 }`
@@ -1396,7 +1398,8 @@ func TestSearch_AdminOk(t *testing.T) {
       "status": "new",
       "total_dues": 0,
       "payment_balance": 0,
-      "current_dues": 0
+      "current_dues": 0,
+      "identity_subject": "1234567890"
     }
   ]
 }`
