@@ -2231,6 +2231,21 @@ components:
             sponsor-items: 1
             key-hand-out: 0
             overdue: 1
+        identity_subjects:
+          description: |-
+            exact match to search for a set of OIDC subjects as cached in registrations. No condition if left empty.
+            
+            IMPORTANT: Use of this field is limited to 8 identities, any additional identities in you list will be silently ignored! 
+            If you need to check a large number of identities, please request the identity_subject search result field,
+            and filter on your end!
+            
+            Note that caching of identities is configuration dependent, if disabled, no registrations will ever match if this is set.
+          type: array
+          maxItems: 8
+          items:
+            type: string
+          example:
+            - '1234567890'
     ChoiceStateCondition:
       type: integer
       format: int64

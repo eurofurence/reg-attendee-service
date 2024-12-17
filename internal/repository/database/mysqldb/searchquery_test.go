@@ -110,8 +110,9 @@ func TestTwoFullSearchQueries(t *testing.T) {
 					"overdue":       1,
 					"sponsor-items": 1,
 				},
-				BirthdayFrom: "1970-10-24",
-				BirthdayTo:   "1980-12-24",
+				BirthdayFrom:     "1970-10-24",
+				BirthdayTo:       "1980-12-24",
+				IdentitySubjects: []string{"Q1E4D2", "R1E5DD"},
 			},
 		},
 		MinId:      1,
@@ -158,6 +159,8 @@ func TestTwoFullSearchQueries(t *testing.T) {
 		"param_2_1":                         "small%bird",
 		"param_2_2":                         "Johnny",
 		"param_2_20":                        "1980-12-24",
+		"param_2_21_1":                      "Q1E4D2",
+		"param_2_21_2":                      "R1E5DD",
 		"param_2_3":                         "%Berlin%",
 		"param_2_4":                         "CH",
 		"param_2_5":                         "%gg@hh%",
@@ -238,6 +241,7 @@ WHERE (
     AND ( ( SELECT COUNT(*) FROM att_additional_infos WHERE attendee_id = a.id AND area = @param_2_18_2 ) > 0 )
     AND ( STRCMP(a.birthday,@param_2_19) >= 0 )
     AND ( STRCMP(a.birthday,@param_2_20) <= 0 )
+    AND ( a.identity IN ( @param_2_21_1 , @param_2_21_2 ) )
   )
 ) AND a.id >= @param_0_1 AND a.id <= @param_0_2 ORDER BY CONCAT(a.first_name, ' ', a.last_name) DESC`
 

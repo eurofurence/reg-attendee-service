@@ -8,6 +8,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/validation"
 	"github.com/ryanuber/go-glob"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -48,7 +49,8 @@ func (r *InMemoryRepository) matches(cond *attendee.AttendeeSearchSingleCriterio
 		matchesSubstringGlobOrEmpty(cond.AdminComments, adm.AdminComments) &&
 		matchesAddInfoPresence(cond.AddInfo, addInf) &&
 		matchesOverdue(cond.AddInfo, a.CacheDueDate, r.Now().Format(config.IsoDateFormat), st.Status) &&
-		matchesIsoDateRange(cond.BirthdayFrom, cond.BirthdayTo, a.Birthday)
+		matchesIsoDateRange(cond.BirthdayFrom, cond.BirthdayTo, a.Birthday) &&
+		matchesIdentitySubjects(cond.IdentitySubjects, a.Identity)
 }
 
 func matchesUintSliceOrEmpty(cond []uint, value uint) bool {
@@ -182,4 +184,11 @@ func matchesIsoDateRange(condFrom string, condTo string, value string) bool {
 		}
 	}
 	return true
+}
+
+func matchesIdentitySubjects(cond []string, value string) bool {
+	if len(cond) > 8 {
+		cond = cond[:8]
+	}
+	return len(cond) == 0 || slices.Contains(cond, value)
 }
