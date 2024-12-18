@@ -337,3 +337,7 @@ func VatPercent() float64 {
 func RegsysPublicUrl() string {
 	return Configuration().Service.RegsysPublicUrl
 }
+
+func AvatarBaseUrl() string {
+	return Configuration().Security.Oidc.AvatarBaseUrl
+}

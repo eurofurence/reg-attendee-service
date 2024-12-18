@@ -91,6 +91,7 @@ type (
 		EarlyRegGroup         string   `yaml:"early_reg_group"`          // optional, the group claim that turns on early registration
 		Audience              string   `yaml:"audience"`
 		Issuer                string   `yaml:"issuer"`
+		AvatarBaseUrl         string   `yaml:"avatar_base_url"` // optional, prefix for the avatar from the JWT id token
 	}
 
 	CorsConfig struct {

@@ -37,6 +37,7 @@ func (s *AttendeeServiceImplData) RegisterNewAttendee(ctx context.Context, atten
 	} else {
 		// record which user owns this attendee
 		attendee.Identity = ctxvalues.Subject(ctx)
+		attendee.Avatar = ctxvalues.Avatar(ctx) // if an admin registers a guest, they'll get the admin's avatar, but that's "correct", as the admin is now also the owner of the registration
 	}
 
 	if config.RequireLoginForReg() {

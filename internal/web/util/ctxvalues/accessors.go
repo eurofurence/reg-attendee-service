@@ -18,6 +18,7 @@ const ContextEmail = "email"
 const ContextEmailVerified = "emailverified"
 const ContextName = "name"
 const ContextSubject = "subject"
+const ContextAvatar = "avatar"
 
 func CreateContextWithValueMap(ctx context.Context) context.Context {
 	// this is so we can add values to our context, like ... I don't know ... the http status from the response!
@@ -106,6 +107,14 @@ func Subject(ctx context.Context) string {
 
 func SetSubject(ctx context.Context, Subject string) {
 	setValue(ctx, ContextSubject, Subject)
+}
+
+func Avatar(ctx context.Context) string {
+	return valueOrDefault(ctx, ContextAvatar, "")
+}
+
+func SetAvatar(ctx context.Context, avatar string) {
+	setValue(ctx, ContextAvatar, avatar)
 }
 
 func HasApiToken(ctx context.Context) bool {

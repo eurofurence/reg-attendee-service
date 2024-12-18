@@ -84,6 +84,7 @@ type AttendeeSearchSingleCriterion struct {
 	Permissions          map[string]int8 `json:"permissions"`
 	AdminComments        string          `json:"admin_comments"`
 	AddInfo              map[string]int8 `json:"add_info"` // can only search for presence of a value for each area, Note: special area 'overdue'
+	IdentitySubjects     []string        `json:"identity_subjects"`
 }
 
 // --- search result ---
@@ -128,6 +129,8 @@ type AttendeeSearchResult struct {
 	DueDate              *string        `json:"due_date,omitempty"`
 	Registered           *string        `json:"registered,omitempty"`
 	AdminComments        *string        `json:"admin_comments,omitempty"`
+	IdentitySubject      *string        `json:"identity_subject"`
+	Avatar               *string        `json:"avatar"`
 }
 
 // --- flags/options/packages result ---

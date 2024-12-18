@@ -261,6 +261,9 @@ func (r *MysqlRepository) addSingleCondition(cond *attendee.AttendeeSearchSingle
 	if cond.BirthdayTo != "" {
 		query.WriteString(stringLessThanOrEqual("a.birthday", cond.BirthdayTo, params, paramBaseName, &paramNo))
 	}
+	if len(cond.IdentitySubjects) > 0 {
+		query.WriteString(stringSliceMatch("a.identity", cond.IdentitySubjects, params, paramBaseName, &paramNo))
+	}
 
 	return query.String()
 }
@@ -313,6 +316,23 @@ func safeStatusSliceMatch(field string, values []status.Status) string {
 		}
 	}
 	return fmt.Sprintf("    AND ( %s IN (%s) )\n", field, strings.Join(mappedValues, ","))
+}
+
+func stringSliceMatch(field string, values []string, params map[string]interface{}, paramBaseName string, idx *int) string {
+	var result strings.Builder
+	result.WriteString(fmt.Sprintf("    AND ( %s IN ( ", field))
+	cond := make([]string, 0)
+	for i, v := range values {
+		if i < 8 {
+			pName := fmt.Sprintf("%s_%d_%d", paramBaseName, *idx, i+1)
+			params[pName] = v
+			cond = append(cond, "@"+pName)
+		}
+	}
+	*idx++
+	result.WriteString(strings.Join(cond, " , "))
+	result.WriteString(" ) )\n")
+	return result.String()
 }
 
 func substringMatch(field string, condition string, params map[string]interface{}, paramBaseName string, idx *int) string {
