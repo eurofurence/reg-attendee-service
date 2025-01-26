@@ -43,7 +43,7 @@ func (s *AttendeeServiceImplData) UpdateAdminInfo(ctx context.Context, attendee 
 
 	// setting admin flags such as guest may change dues, and change status
 	subject := ctxvalues.Subject(ctx)
-	err = s.UpdateDuesAndDoStatusChangeIfNeeded(ctx, attendee, currentStatus, currentStatus, fmt.Sprintf("admin info update by %s", subject), overrideDuesTransactionComment, suppressMinorUpdateEmail)
+	err = s.UpdateDuesAndDoStatusChangeIfNeeded(ctx, attendee, currentStatus, currentStatus, fmt.Sprintf("admin info update by %s", subject), overrideDuesTransactionComment, suppressMinorUpdateEmail, false)
 	if err != nil {
 		return err
 	}

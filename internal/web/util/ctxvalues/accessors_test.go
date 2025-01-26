@@ -18,3 +18,13 @@ func TestRetrieveRequestId(t *testing.T) {
 	SetRequestId(ctx, "hallo")
 	require.Equal(t, "hallo", RequestId(ctx), "unexpected value retrieving request id that was just set")
 }
+
+func TestAsyncContextFrom(t *testing.T) {
+	docs.Description("if present, the context values should carry over to an async context, but later changes should not")
+	ctx := CreateContextWithValueMap(context.TODO())
+	SetRequestId(ctx, "hallo")
+
+	asyncCtx := AsyncContextFrom(ctx)
+	SetRequestId(ctx, "changed")
+	require.Equal(t, "hallo", RequestId(asyncCtx), "unexpected value retrieving request id")
+}

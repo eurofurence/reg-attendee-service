@@ -29,7 +29,7 @@ func Create(server chi.Router, attendeeSrv attendeesrv.AttendeeService) {
 	attendeeService = attendeeSrv
 
 	server.Get("/api/rest/v1/attendees/{id}/status", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, getStatusHandler)))
-	server.Post("/api/rest/v1/attendees/{id}/status", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, postStatusHandler)))
+	server.Post("/api/rest/v1/attendees/{id}/status", filter.LoggedInOrApiToken(filter.WithTimeout(10*time.Second, postStatusHandler)))
 	server.Get("/api/rest/v1/attendees/{id}/status-history", filter.HasGroupOrApiToken(config.OidcAdminGroup(), filter.WithTimeout(3*time.Second, getStatusHistoryHandler)))
 	server.Post("/api/rest/v1/attendees/{id}/status/resend", filter.HasGroupOrApiToken(config.OidcAdminGroup(), filter.WithTimeout(10*time.Second, resendStatusMailHandler)))
 	server.Post("/api/rest/v1/attendees/{id}/payments-changed", filter.HasGroupOrApiToken(config.OidcAdminGroup(), filter.WithTimeout(10*time.Second, paymentsChangedHandler)))
@@ -97,7 +97,7 @@ func postStatusHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = attendeeService.UpdateDuesAndDoStatusChangeIfNeeded(ctx, att, latestStatusChange.Status, dto.Status, dto.Comment, "", false)
+	err = attendeeService.UpdateDuesAndDoStatusChangeIfNeeded(ctx, att, latestStatusChange.Status, dto.Status, dto.Comment, "", false, false)
 	if err != nil {
 		if errors.Is(err, paymentservice.DownstreamError) || errors.Is(err, mailservice.DownstreamError) {
 			statusChangeDownstreamError(ctx, w, r, err)
@@ -189,7 +189,7 @@ func paymentsChangedHandler(w http.ResponseWriter, r *http.Request) {
 	err = attendeeService.UpdateDuesAndDoStatusChangeIfNeeded(ctx, att,
 		latestStatusChange.Status,
 		latestStatusChange.Status,
-		"transactions changed", "", false)
+		"transactions changed", "", false, true)
 	if err != nil {
 		if errors.Is(err, paymentservice.DownstreamError) || errors.Is(err, mailservice.DownstreamError) {
 			statusChangeDownstreamError(ctx, w, r, err)

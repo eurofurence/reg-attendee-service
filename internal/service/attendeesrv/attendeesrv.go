@@ -101,7 +101,7 @@ func (s *AttendeeServiceImplData) UpdateAttendee(ctx context.Context, attendee *
 
 	subject := ctxvalues.Subject(ctx)
 	// changing packages may change the due amount
-	err = s.UpdateDuesAndDoStatusChangeIfNeeded(ctx, attendee, currentStatus, currentStatus, fmt.Sprintf("attendee update by %s", subject), "", suppressMinorUpdateEmails)
+	err = s.UpdateDuesAndDoStatusChangeIfNeeded(ctx, attendee, currentStatus, currentStatus, fmt.Sprintf("attendee update by %s", subject), "", suppressMinorUpdateEmails, false)
 	if err != nil {
 		return err
 	}
