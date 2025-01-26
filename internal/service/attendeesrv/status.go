@@ -47,7 +47,7 @@ func (s *AttendeeServiceImplData) GetFullStatusHistory(ctx context.Context, atte
 	return result, nil
 }
 
-func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status, statusComment string, overrideDuesComment string, suppressMinorUpdateEmail bool) error {
+func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status, statusComment string, overrideDuesComment string, suppressMinorUpdateEmail bool, asyncEmail bool) error {
 	// controller checks value validity
 	// controller checks permission via StatusChangeAllowed
 	// controller checks precondition via StatusChangePossible
@@ -89,13 +89,13 @@ func (s *AttendeeServiceImplData) UpdateDuesAndDoStatusChangeIfNeeded(ctx contex
 
 		if newStatus != status.Deleted && newStatus != status.CheckedIn {
 			suppress := suppressMinorUpdateEmail && isPaymentPhaseStatus(oldStatus) && isPaymentPhaseStatus(newStatus)
-			err = s.sendStatusChangeNotificationEmail(ctx, attendee, adminInfo, newStatus, statusComment, suppress)
+			err = s.sendStatusChangeNotificationEmail(ctx, attendee, adminInfo, newStatus, statusComment, suppress, asyncEmail)
 			if err != nil {
 				return err
 			}
 		}
 	} else if duesInformationChanged && (newStatus == status.Approved || newStatus == status.PartiallyPaid) {
-		err = s.sendStatusChangeNotificationEmail(ctx, attendee, adminInfo, newStatus, statusComment, suppressMinorUpdateEmail)
+		err = s.sendStatusChangeNotificationEmail(ctx, attendee, adminInfo, newStatus, statusComment, suppressMinorUpdateEmail, asyncEmail)
 		if err != nil {
 			return err
 		}
@@ -129,7 +129,7 @@ func (s *AttendeeServiceImplData) ResendStatusMail(ctx context.Context, attendee
 	}
 
 	if currentStatus != status.Deleted && currentStatus != status.CheckedIn && currentStatus != status.New {
-		err = s.sendStatusChangeNotificationEmail(ctx, attendee, adminInfo, currentStatus, currentStatusComment, false)
+		err = s.sendStatusChangeNotificationEmail(ctx, attendee, adminInfo, currentStatus, currentStatusComment, false, false)
 		if err != nil {
 			return err
 		}
@@ -138,7 +138,7 @@ func (s *AttendeeServiceImplData) ResendStatusMail(ctx context.Context, attendee
 	return nil
 }
 
-func (s *AttendeeServiceImplData) sendStatusChangeNotificationEmail(ctx context.Context, attendee *entity.Attendee, adminInfo *entity.AdminInfo, newStatus status.Status, statusComment string, suppress bool) error {
+func (s *AttendeeServiceImplData) sendStatusChangeNotificationEmail(ctx context.Context, attendee *entity.Attendee, adminInfo *entity.AdminInfo, newStatus status.Status, statusComment string, suppress bool, asyncSend bool) error {
 	checkSummedId := s.badgeId(attendee.ID)
 	cancelReason := ""
 	if newStatus == status.Cancelled {
@@ -191,9 +191,25 @@ func (s *AttendeeServiceImplData) sendStatusChangeNotificationEmail(ctx context.
 		return nil
 	}
 
-	err := mailservice.Get().SendEmail(ctx, mailDto)
-	if err != nil {
-		return err
+	if asyncSend {
+		asyncCtx := ctxvalues.AsyncContextFrom(ctx)
+		asyncCtx, cancel := context.WithTimeout(asyncCtx, 30*time.Second)
+		go func() {
+			defer cancel()
+			aulogging.Logger.Ctx(asyncCtx).Info().Printf("asynchronously sending mail %s", mailDto.CommonID)
+
+			err := mailservice.Get().SendEmail(asyncCtx, mailDto)
+			if err != nil {
+				aulogging.Logger.Ctx(asyncCtx).Warn().Printf("failed to send asynchronous mail %s to %s - cannot fail original request: %s", mailDto.CommonID, attendee.Email, err.Error())
+				return
+			}
+			aulogging.Logger.Ctx(asyncCtx).Info().Printf("success sending mail %s to %s", mailDto.CommonID, attendee.Email)
+		}()
+	} else {
+		err := mailservice.Get().SendEmail(ctx, mailDto)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

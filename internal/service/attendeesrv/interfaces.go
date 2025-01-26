@@ -39,7 +39,11 @@ type AttendeeService interface {
 	// If newStatus is one of approved/partially paid/paid, the actual status value written may be any of these three.
 	// This is because depending on package and flag changes (guests attend for free!), the dues may change, and
 	// so paid may turn into partially paid etc.
-	UpdateDuesAndDoStatusChangeIfNeeded(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status, statusComment string, overrideDuesComment string, suppressMinorUpdateEmail bool) error
+	//
+	// Since sending emails sometimes takes a long time, causing the payments webhook to time out, emails can
+	// be sent asynchronously, but this is not recommended during normal operations as this can cause emails to pile up
+	// in the mail service.
+	UpdateDuesAndDoStatusChangeIfNeeded(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status, statusComment string, overrideDuesComment string, suppressMinorUpdateEmail bool, asyncEmail bool) error
 	StatusChangeAllowed(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status) error
 	StatusChangePossible(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status) error
 	// ResendStatusMail resends the current status mail, but with dues recalculated

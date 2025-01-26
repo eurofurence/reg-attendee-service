@@ -28,6 +28,25 @@ func CreateContextWithValueMap(ctx context.Context) context.Context {
 	return ctx
 }
 
+// AsyncContextFrom takes a request context and returns a disassociated
+// asynchronous context, but with all the values intact. The values are copied to the new context.
+//
+// Use for async processing. Allows originalCtx to be cancelled or time out
+// without affecting the context returned.
+func AsyncContextFrom(origCtx context.Context) context.Context {
+	newContextMap := make(map[string]string)
+
+	origContextMapUntyped := origCtx.Value(ContextMap)
+	if origContextMapUntyped != nil {
+		origContextMap := origContextMapUntyped.(map[string]string)
+		for k, v := range origContextMap {
+			newContextMap[k] = v
+		}
+	}
+
+	return context.WithValue(context.Background(), ContextMap, newContextMap)
+}
+
 func valueOrDefault(ctx context.Context, key string, defaultValue string) string {
 	contextMapUntyped := ctx.Value(ContextMap)
 	if contextMapUntyped == nil {
