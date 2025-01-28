@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
+	"github.com/rs/zerolog"
 	"strings"
 )
 
@@ -30,10 +31,18 @@ func CreateContextWithValueMap(ctx context.Context) context.Context {
 
 // AsyncContextFrom takes a request context and returns a disassociated
 // asynchronous context, but with all the values intact. The values are copied to the new context.
+// The logger is also copied to the new context, if present.
 //
 // Use for async processing. Allows originalCtx to be cancelled or time out
 // without affecting the context returned.
 func AsyncContextFrom(origCtx context.Context) context.Context {
+	ctx := context.Background()
+
+	logger := zerolog.Ctx(origCtx)
+	if logger != nil {
+		ctx = logger.WithContext(ctx)
+	}
+
 	newContextMap := make(map[string]string)
 
 	origContextMapUntyped := origCtx.Value(ContextMap)
@@ -44,7 +53,9 @@ func AsyncContextFrom(origCtx context.Context) context.Context {
 		}
 	}
 
-	return context.WithValue(context.Background(), ContextMap, newContextMap)
+	ctx = context.WithValue(ctx, ContextMap, newContextMap)
+
+	return ctx
 }
 
 func valueOrDefault(ctx context.Context, key string, defaultValue string) string {
