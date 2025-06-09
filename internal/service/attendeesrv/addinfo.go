@@ -70,6 +70,16 @@ func (s *AttendeeServiceImplData) CanAccessOwnAdditionalInfoArea(ctx context.Con
 	return false, nil
 }
 
+func (s *AttendeeServiceImplData) CanAccessGlobalAdditionalInfoArea(ctx context.Context, wantWriteAccess bool, area string) (bool, error) {
+	conf := config.AdditionalInfoConfiguration(area)
+	// write access = never
+	if !wantWriteAccess && conf.SelfRead {
+		return true, nil
+	}
+
+	return false, nil
+}
+
 func (s *AttendeeServiceImplData) CanUseFindAttendee(ctx context.Context) (bool, error) {
 	if ctxvalues.HasApiToken(ctx) || ctxvalues.IsAuthorizedAsGroup(ctx, config.OidcAdminGroup()) {
 		return true, nil
