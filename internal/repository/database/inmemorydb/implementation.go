@@ -408,9 +408,6 @@ func (r *InMemoryRepository) GetAdditionalInfoFor(ctx context.Context, attendeeI
 }
 
 func (r *InMemoryRepository) WriteAdditionalInfo(ctx context.Context, ad *entity.AdditionalInfo) error {
-	if ad.AttendeeId == 0 {
-		return errors.New("invalid attendee id for additional info")
-	}
 	if ad.Area == "" {
 		return errors.New("invalid empty area for additional info")
 	}

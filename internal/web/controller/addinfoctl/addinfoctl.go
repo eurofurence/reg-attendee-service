@@ -147,7 +147,11 @@ func ctxIdAreaAllowedAndExists_MustReturn(w http.ResponseWriter, r *http.Request
 		return ctx, id, area, err
 	}
 	if !allowed {
-		allowed, err = attendeeService.CanAccessOwnAdditionalInfoArea(ctx, id, wantWriteAccess, area)
+		if id != 0 {
+			allowed, err = attendeeService.CanAccessOwnAdditionalInfoArea(ctx, id, wantWriteAccess, area)
+		} else {
+			allowed, err = attendeeService.CanAccessGlobalAdditionalInfoArea(ctx, wantWriteAccess, area)
+		}
 		if err != nil {
 			ctlutil.ErrorHandler(ctx, w, r, "addinfo.read.error", http.StatusInternalServerError, url.Values{})
 			return ctx, id, area, err
@@ -159,10 +163,12 @@ func ctxIdAreaAllowedAndExists_MustReturn(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	_, err = attendeeService.GetAttendee(ctx, id)
-	if err != nil {
-		ctlutil.AttendeeNotFoundErrorHandler(ctx, w, r, id)
-		return ctx, id, area, err
+	if id > 0 {
+		_, err = attendeeService.GetAttendee(ctx, id)
+		if err != nil {
+			ctlutil.AttendeeNotFoundErrorHandler(ctx, w, r, id)
+			return ctx, id, area, err
+		}
 	}
 
 	return ctx, id, area, nil

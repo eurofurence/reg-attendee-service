@@ -81,10 +81,14 @@ type AttendeeService interface {
 
 	// GetAdditionalInfo obtains additional info for a given attendeeId and area.
 	//
+	// The special value 0 is used for global additional info values.
+	//
 	// If this returns an empty string, then no value existed.
 	GetAdditionalInfo(ctx context.Context, attendeeId uint, area string) (string, error)
 
 	// WriteAdditionalInfo writes additional info for a given attendeeId and area.
+	//
+	// The special value 0 is used for global additional info values.
 	//
 	// If value is the empty string, the entry is deleted instead.
 	WriteAdditionalInfo(ctx context.Context, attendeeId uint, area string, value string) error
@@ -98,11 +102,21 @@ type AttendeeService interface {
 	CanAccessAdditionalInfoArea(ctx context.Context, area ...string) (bool, error)
 
 	// CanAccessOwnAdditionalInfoArea checks permission to access ones own additional info for a given area
+	// based on user identity and self access configuration only.
 	//
-	// This is only allowed for areas which have self_read or self_write configured.
+	// This is only allowed for areas which have self_read or self_write configured, and only if the
+	// attendeeId is the currently logged in attendee.
 	//
 	// Returns true if access is allowed, and an error if the check could not be performed.
 	CanAccessOwnAdditionalInfoArea(ctx context.Context, attendeeId uint, wantWriteAccess bool, area string) (bool, error)
+
+	// CanAccessGlobalAdditionalInfoArea checks permission to access global additional info for a given area
+	// based on self access configuration only.
+	//
+	// Read access is allowed for areas which have self_read configured. Write access is never allowed.
+	//
+	// Returns true if access is allowed, and an error if the check could not be performed.
+	CanAccessGlobalAdditionalInfoArea(ctx context.Context, wantWriteAccess bool, area string) (bool, error)
 
 	// CanUseFindAttendee checks permission to use the find attendees API
 	//

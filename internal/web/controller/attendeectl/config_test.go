@@ -163,6 +163,10 @@ func (s *MockAttendeeService) CanAccessOwnAdditionalInfoArea(ctx context.Context
 	return false, nil
 }
 
+func (s *MockAttendeeService) CanAccessGlobalAdditionalInfoArea(ctx context.Context, wantWriteAccess bool, area string) (bool, error) {
+	return false, nil
+}
+
 func (s *MockAttendeeService) CanUseFindAttendee(ctx context.Context) (bool, error) {
 	return false, nil
 }
