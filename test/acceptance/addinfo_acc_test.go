@@ -217,6 +217,126 @@ func TestGetAdditionalInfo_Unset(t *testing.T) {
 	tstRequireErrorResponse(t, response, http.StatusNotFound, "addinfo.notfound.error", url.Values{})
 }
 
+// --- read access for global (id 0) ---
+
+func TestGetAdditionalInfoGlobal_AnonDeny(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given a global additional info field is set")
+	created := tstPerformPost("/api/rest/v1/attendees/0/additional-info/myarea", `{"airg1":"something"}`, tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, created.status)
+
+	docs.Given("given an unauthenticated user")
+	token := tstNoToken()
+
+	docs.When("when they attempt to access the global additional info")
+	response := tstPerformGet("/api/rest/v1/attendees/0/additional-info/myarea", token)
+
+	docs.Then("then the request is denied as unauthenticated (401) and the correct error is returned")
+	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "you must be logged in for this operation")
+}
+
+func TestGetAdditionalInfoGlobal_UserDeny(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given a global additional info field is set")
+	created := tstPerformPost("/api/rest/v1/attendees/0/additional-info/myarea", `{"airg2":"something"}`, tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, created.status)
+
+	docs.Given("given an existing attendee")
+	_, att1 := tstRegisterAttendee(t, "airg2-")
+
+	docs.When("when they attempt to access the global additional info but do not have access")
+	token := tstValidUserToken(t, att1.Id)
+	response := tstPerformGet("/api/rest/v1/attendees/0/additional-info/myarea", token)
+
+	docs.Then("then the request is denied as unauthenticated (401) and the correct error is returned")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this additional info area - the attempt has been logged")
+}
+
+func TestGetAdditionalInfoGlobal_UserWithPermissionAllow(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given a global additional info field is set")
+	created := tstPerformPost("/api/rest/v1/attendees/0/additional-info/myarea", `{"airg3":"something"}`, tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, created.status)
+
+	docs.Given("given an existing attendee who has been granted access to the additional info area")
+	location1, att1 := tstRegisterAttendee(t, "air3-")
+	body := admin.AdminInfoDto{
+		Permissions: "myarea",
+	}
+	accessGranted := tstPerformPut(location1+"/admin", tstRenderJson(body), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, accessGranted.status)
+
+	docs.When("when they attempt to access the global additional info")
+	token := tstValidUserToken(t, att1.Id)
+	response := tstPerformGet("/api/rest/v1/attendees/0/additional-info/myarea", token)
+
+	docs.Then("then the request is successful and they can retrieve the global additional info")
+	require.Equal(t, http.StatusOK, response.status)
+	require.Equal(t, `{"airg3":"something"}`, response.body)
+}
+
+func TestGetAdditionalInfoGlobal_SelfReadAllowsGlobalRead(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given a global additional info field is set for an area with self_read permissions")
+	created := tstPerformPost("/api/rest/v1/attendees/0/additional-info/selfread", `{"airg4":"something"}`, tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, created.status)
+
+	docs.Given("given an existing attendee with no specific access to the additional info area")
+	_, att1 := tstRegisterAttendee(t, "airg4-")
+	require.Equal(t, http.StatusNoContent, created.status)
+
+	docs.When("when they attempt to access the global additional info value")
+	token := tstValidUserToken(t, att1.Id)
+	response := tstPerformGet("/api/rest/v1/attendees/0/additional-info/selfread", token)
+
+	docs.Then("then the request is successful and they can retrieve the global additional info")
+	require.Equal(t, http.StatusOK, response.status)
+	require.Equal(t, `{"airg4":"something"}`, response.body)
+}
+
+func TestGetAdditionalInfoGlobal_AdminAllow(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given a global additional info field is set")
+	created := tstPerformPost("/api/rest/v1/attendees/0/additional-info/myarea", `{"airg5":"something"}`, tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, created.status)
+
+	docs.When("when an admin attempts to access the global additional info")
+	token := tstValidAdminToken(t)
+	response := tstPerformGet("/api/rest/v1/attendees/0/additional-info/myarea", token)
+
+	docs.Then("then the request is successful and they can retrieve the additional info again")
+	require.Equal(t, http.StatusOK, response.status)
+	require.Equal(t, `{"airg5":"something"}`, response.body)
+}
+
+func TestGetAdditionalInfoGlobal_Unset(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.When("when an admin attempts to access global additional info using an area that is not assigned")
+	token := tstValidAdminToken(t)
+	response := tstPerformGet("/api/rest/v1/attendees/0/additional-info/myarea", token)
+
+	docs.Then("then the request fails and the correct error is returned")
+	tstRequireErrorResponse(t, response, http.StatusNotFound, "addinfo.notfound.error", url.Values{})
+}
+
 // --- write access
 
 func TestWriteAdditionalInfo_AnonDeny(t *testing.T) {
@@ -386,6 +506,113 @@ func TestWriteAdditionalInfo_NotConfiguredArea(t *testing.T) {
 
 	docs.Then("then the request fails and the correct error is returned")
 	tstRequireErrorResponse(t, response, http.StatusBadRequest, "addinfo.area.unlisted", url.Values{"area": []string{"areas must be enabled in configuration"}})
+}
+
+// --- write access for global (id 0)
+
+func TestWriteAdditionalInfoGlobal_AnonDeny(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an unauthenticated user")
+	token := tstNoToken()
+
+	docs.When("when they attempt to write global additional info")
+	response := tstPerformPost("/api/rest/v1/attendees/0/additional-info/myarea", `{"aiwg1":"something"}`, token)
+
+	docs.Then("then the request is denied as unauthenticated (401) and the correct error is returned")
+	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "you must be logged in for this operation")
+
+	docs.Then("and no additional info has been written")
+	readAgain := tstPerformGet("/api/rest/v1/attendees/0/additional-info/myarea", tstValidAdminToken(t))
+	require.Equal(t, http.StatusNotFound, readAgain.status)
+}
+
+func TestWriteAdditionalInfoGlobal_UserDeny(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee")
+	_, att1 := tstRegisterAttendee(t, "aiw2-")
+
+	docs.When("when they attempt to write global additional info but do not have access")
+	token := tstValidUserToken(t, att1.Id)
+	response := tstPerformPost("/api/rest/v1/attendees/0/additional-info/myarea", `{"aiwg2":"something"}`, token)
+
+	docs.Then("then the request is denied as unauthenticated (401) and the correct error is returned")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this additional info area - the attempt has been logged")
+
+	docs.Then("and no additional info has been written")
+	readAgain := tstPerformGet("/api/rest/v1/attendees/0/additional-info/myarea", tstValidAdminToken(t))
+	require.Equal(t, http.StatusNotFound, readAgain.status)
+}
+
+func TestWriteAdditionalInfoGlobal_UserWithPermissionAllowOverwrite(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given a global additional info field is set")
+	created := tstPerformPost("/api/rest/v1/attendees/0/additional-info/myarea", `{"airwg3":"original-value"}`, tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, created.status)
+
+	docs.Given("given an existing attendee who has been granted access to the additional info area")
+	location1, att1 := tstRegisterAttendee(t, "aiwg3-")
+	body := admin.AdminInfoDto{
+		Permissions: "myarea",
+	}
+	accessGranted := tstPerformPut(location1+"/admin", tstRenderJson(body), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, accessGranted.status)
+
+	docs.When("when they attempt to overwrite the additional info")
+	token := tstValidUserToken(t, att1.Id)
+	response := tstPerformPost("/api/rest/v1/attendees/0/additional-info/myarea", `{"aiwg3":"new-value"}`, token)
+
+	docs.Then("then the request is successful and they can retrieve the additional info again")
+	require.Equal(t, http.StatusNoContent, response.status)
+	readAgain := tstPerformGet("/api/rest/v1/attendees/0/additional-info/myarea", tstValidAdminToken(t))
+	require.Equal(t, `{"aiwg3":"new-value"}`, readAgain.body)
+}
+
+func TestWriteAdditionalInfoGlobal_UserSelfWriteFails(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given a global additional info field is set for an area with self_write permissions configured")
+	created := tstPerformPost("/api/rest/v1/attendees/0/additional-info/selfwrite", `{"aiwg4":"original-value"}`, tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, created.status)
+
+	docs.Given("given an existing attendee with no specific area permissions")
+	_, att1 := tstRegisterAttendee(t, "aiwg4-")
+
+	docs.When("when they attempt to overwrite the global additional info that has self write permissions configured")
+	token := tstValidUserToken(t, att1.Id)
+	response := tstPerformPost("/api/rest/v1/attendees/0/additional-info/selfwrite", `{"aiwg4":"new-value"}`, token)
+
+	docs.Then("then the request is denied with the expected error despite the self_write permissions")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this additional info area - the attempt has been logged")
+
+	docs.Then("and the additional info value is unchanged")
+	readAgain := tstPerformGet("/api/rest/v1/attendees/0/additional-info/selfwrite", tstValidAdminToken(t))
+	require.Equal(t, `{"aiwg4":"original-value"}`, readAgain.body)
+}
+
+func TestWriteAdditionalInfoGlobal_AdminAllow(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.When("when an admin attempts to write a global value to a configured additional info area")
+	token := tstValidAdminToken(t)
+	response := tstPerformPost("/api/rest/v1/attendees/0/additional-info/myarea", `{"aiwg5":"something"}`, token)
+
+	docs.Then("then the request is successful and they can retrieve the additional info again")
+	require.Equal(t, http.StatusNoContent, response.status)
+	readAgain := tstPerformGet("/api/rest/v1/attendees/0/additional-info/myarea", tstValidAdminToken(t))
+	require.Equal(t, `{"aiwg5":"something"}`, readAgain.body)
 }
 
 // --- deletion
@@ -581,6 +808,138 @@ func TestDeleteAdditionalInfo_Unset(t *testing.T) {
 	tstRequireErrorResponse(t, response, http.StatusNotFound, "addinfo.notfound.error", url.Values{})
 }
 
+// --- deletion for global (id 0)
+
+func TestDeleteAdditionalInfoGlobal_AnonDeny(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given a global additional info field is set")
+	created := tstPerformPost("/api/rest/v1/attendees/0/additional-info/myarea", `{"aidg1":"something"}`, tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, created.status)
+
+	docs.Given("given an unauthenticated user")
+	token := tstNoToken()
+
+	docs.When("when they attempt to delete the global additional info value")
+	response := tstPerformDelete("/api/rest/v1/attendees/0/additional-info/myarea", token)
+
+	docs.Then("then the request is denied as unauthenticated (401) and the correct error is returned")
+	tstRequireErrorResponse(t, response, http.StatusUnauthorized, "auth.unauthorized", "you must be logged in for this operation")
+
+	docs.Then("and the additional info is untouched")
+	readAgain := tstPerformGet("/api/rest/v1/attendees/0/additional-info/myarea", tstValidAdminToken(t))
+	require.Equal(t, `{"aidg1":"something"}`, readAgain.body)
+}
+
+func TestDeleteAdditionalInfoGlobal_UserDeny(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given a global additional info field is set")
+	created := tstPerformPost("/api/rest/v1/attendees/0/additional-info/myarea", `{"aidg2":"something"}`, tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, created.status)
+
+	docs.Given("given an existing attendee who does not have specific access to the additional info area")
+	_, att1 := tstRegisterAttendee(t, "aidg2-")
+
+	docs.When("when they attempt to delete the global additional info value")
+	token := tstValidUserToken(t, att1.Id)
+	response := tstPerformDelete("/api/rest/v1/attendees/0/additional-info/myarea", token)
+
+	docs.Then("then the request is denied as unauthenticated (401) and the correct error is returned")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this additional info area - the attempt has been logged")
+
+	docs.Then("and the additional info is untouched")
+	readAgain := tstPerformGet("/api/rest/v1/attendees/0/additional-info/myarea", tstValidAdminToken(t))
+	require.Equal(t, `{"aidg2":"something"}`, readAgain.body)
+}
+
+func TestDeleteAdditionalInfoGlobal_UserWithPermissionAllow(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given a global additional info field is set")
+	created := tstPerformPost("/api/rest/v1/attendees/0/additional-info/myarea", `{"aidg3":"something"}`, tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, created.status)
+
+	docs.Given("given an existing attendee who has been granted access to the additional info area")
+	location1, att1 := tstRegisterAttendee(t, "aidg3-")
+	body := admin.AdminInfoDto{
+		Permissions: "myarea",
+	}
+	accessGranted := tstPerformPut(location1+"/admin", tstRenderJson(body), tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, accessGranted.status)
+
+	docs.When("when they attempt to delete the additional info entry")
+	token := tstValidUserToken(t, att1.Id)
+	response := tstPerformDelete("/api/rest/v1/attendees/0/additional-info/myarea", token)
+
+	docs.Then("then the request is successful and the entry has been deleted")
+	require.Equal(t, http.StatusNoContent, response.status)
+	readAgain := tstPerformGet("/api/rest/v1/attendees/0/additional-info/myarea", tstValidAdminToken(t))
+	require.Equal(t, http.StatusNotFound, readAgain.status)
+}
+
+func TestDeleteAdditionalInfoGlobal_UserSelfWriteAllow(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given a global additional info field is set for an area with the self_write permission")
+	created := tstPerformPost("/api/rest/v1/attendees/0/additional-info/selfwrite", `{"aidg4":"something"}`, tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, created.status)
+
+	docs.Given("given an existing attendee with no specific permissions for the area")
+	_, att1 := tstRegisterAttendee(t, "aidg4-")
+
+	docs.When("when they attempt to delete the additional info entry")
+	token := tstValidUserToken(t, att1.Id)
+	response := tstPerformDelete("/api/rest/v1/attendees/0/additional-info/selfwrite", token)
+
+	docs.Then("then the request is denied with the expected error despite the self_write permissions")
+	tstRequireErrorResponse(t, response, http.StatusForbidden, "auth.forbidden", "you are not authorized for this additional info area - the attempt has been logged")
+
+	docs.Then("and the additional info value is unchanged")
+	readAgain := tstPerformGet("/api/rest/v1/attendees/0/additional-info/selfwrite", tstValidAdminToken(t))
+	require.Equal(t, `{"aidg4":"something"}`, readAgain.body)
+}
+
+func TestDeleteAdditionalInfoGlobal_AdminAllow(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.Given("given a global additional info field is set")
+	created := tstPerformPost("/api/rest/v1/attendees/0/additional-info/myarea", `{"aidg5":"something"}`, tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, created.status)
+
+	docs.When("when an admin attempts to delete the additional info")
+	token := tstValidAdminToken(t)
+	response := tstPerformDelete("/api/rest/v1/attendees/0/additional-info/myarea", token)
+
+	docs.Then("then the request is successful and the entry has been deleted")
+	require.Equal(t, http.StatusNoContent, response.status)
+	readAgain := tstPerformGet("/api/rest/v1/attendees/0/additional-info/myarea", tstValidAdminToken(t))
+	require.Equal(t, http.StatusNotFound, readAgain.status)
+}
+
+func TestDeleteAdditionalInfoGlobal_Unset(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(false, false, true)
+	defer tstShutdown()
+
+	docs.When("when an admin attempts to delete global additional info using an area that is not assigned a value")
+	token := tstValidAdminToken(t)
+	response := tstPerformDelete("/api/rest/v1/attendees/0/additional-info/myarea", token)
+
+	docs.Then("then the request fails and the correct error is returned")
+	tstRequireErrorResponse(t, response, http.StatusNotFound, "addinfo.notfound.error", url.Values{})
+}
+
 // getAllAdditionalInfo
 
 func TestGetAllAdditionalInfo_AnonDeny(t *testing.T) {
@@ -688,7 +1047,11 @@ func TestGetAllAdditionalInfo_AdminAllow(t *testing.T) {
 
 	docs.Given("given an existing attendee with an additional info field set")
 	location1, _ := tstRegisterAttendee(t, "aia4-")
-	created := tstPerformPost(location1+"/additional-info/myarea", `{"aia4":"something"}`, tstValidAdminToken(t))
+	created2 := tstPerformPost(location1+"/additional-info/myarea", `{"aia4":"something"}`, tstValidAdminToken(t))
+	require.Equal(t, http.StatusNoContent, created2.status)
+
+	docs.Given("given a global additional info value is set")
+	created := tstPerformPost("/api/rest/v1/attendees/0/additional-info/myarea", `{"aia4":"meow"}`, tstValidAdminToken(t))
 	require.Equal(t, http.StatusNoContent, created.status)
 
 	docs.When("when an admin attempts to access the additional info")
@@ -697,6 +1060,7 @@ func TestGetAllAdditionalInfo_AdminAllow(t *testing.T) {
 
 	docs.Then("then the request is successful and the response is as expected")
 	expectedValues := map[string]string{
+		"0": "{\"aia4\":\"meow\"}",
 		"1": "{\"aia4\":\"something\"}",
 	}
 	expected := addinfo.AdditionalInfoFullArea{
