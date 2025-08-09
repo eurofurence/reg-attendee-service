@@ -201,7 +201,10 @@ func canSkipAudienceCheckWithAccessToken(method string, urlPath string) bool {
 		allowPrefixSuffix(method, urlPath, http.MethodGet, "/api/rest/v1/attendees/", "/status") || // current status value only
 		allowPrefixContains(method, urlPath, http.MethodGet, "/api/rest/v1/attendees/", "/flags/") || // yes/no only
 		allowPrefixContains(method, urlPath, http.MethodGet, "/api/rest/v1/attendees/", "/options/") || // yes/no only
-		allowPrefixContains(method, urlPath, http.MethodGet, "/api/rest/v1/attendees/", "/packages/") // yes/no only
+		allowPrefixContains(method, urlPath, http.MethodGet, "/api/rest/v1/attendees/", "/packages/") || // yes/no only
+		allowPrefixSuffix(method, urlPath, http.MethodGet, "/api/rest/v1/attendees/", "/additional-info/fursuitbadge") ||
+		allowPrefixSuffix(method, urlPath, http.MethodPost, "/api/rest/v1/attendees/", "/additional-info/fursuitbadge") ||
+		allowPrefixSuffix(method, urlPath, http.MethodDelete, "/api/rest/v1/attendees/", "/additional-info/fursuitbadge") // fursuit badge data only
 }
 
 // --- top level ---
