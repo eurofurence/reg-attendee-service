@@ -5,16 +5,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/eurofurence/reg-attendee-service/internal/api/v1/admin"
-	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
-	"github.com/eurofurence/reg-attendee-service/internal/api/v1/errorapi"
-	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"io"
 	"log"
 	"net/http"
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/admin"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/errorapi"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 )
 
 type BadgeLookupResult struct {
@@ -161,7 +162,7 @@ func lookupStatus(badge uint, baseUrl string, token string, jwt string) (status.
 		result := errorapi.ErrorDto{}
 		err = json.Unmarshal(body, &result)
 		if err != nil {
-			return "", fmt.Errorf("error parsing body after non-200 error: " + err.Error())
+			return "", fmt.Errorf("error parsing body after non-200 error: %s", err.Error())
 		}
 
 		return "", fmt.Errorf("status lookup failed with unexpected http status %d message %s requestid %s", httpStatus, result.Message, result.RequestId)
@@ -170,7 +171,7 @@ func lookupStatus(badge uint, baseUrl string, token string, jwt string) (status.
 	result := status.StatusDto{}
 	err = json.Unmarshal(body, &result)
 	if err != nil {
-		return "", fmt.Errorf("error parsing body: " + err.Error())
+		return "", fmt.Errorf("error parsing body: %s", err.Error())
 	}
 	return result.Status, nil
 }
@@ -191,7 +192,7 @@ func lookupBadgeNumber(identity string, baseUrl string, token string, jwt string
 		result := errorapi.ErrorDto{}
 		err = json.Unmarshal(body, &result)
 		if err != nil {
-			return 0, fmt.Errorf("error parsing body after non-200 error: " + err.Error())
+			return 0, fmt.Errorf("error parsing body after non-200 error: %s", err.Error())
 		}
 
 		return 0, fmt.Errorf("badge lookup failed with unexpected http status %d message %s requestid %s", httpStatus, result.Message, result.RequestId)
@@ -200,7 +201,7 @@ func lookupBadgeNumber(identity string, baseUrl string, token string, jwt string
 	result := attendee.AttendeeIdList{}
 	err = json.Unmarshal(body, &result)
 	if err != nil {
-		return 0, fmt.Errorf("error parsing body: " + err.Error())
+		return 0, fmt.Errorf("error parsing body: %s", err.Error())
 	}
 
 	if len(result.Ids) == 0 {
@@ -233,7 +234,7 @@ func findAttendees(reqBody attendee.AttendeeSearchCriteria, baseUrl string, toke
 		errResult := errorapi.ErrorDto{}
 		err = json.Unmarshal(responseBody, &errResult)
 		if err != nil {
-			return result, fmt.Errorf("error parsing body after non-200 error: " + err.Error())
+			return result, fmt.Errorf("error parsing body after non-200 error: %s", err.Error())
 		}
 
 		return result, fmt.Errorf("badge lookup failed with unexpected http status %d message %s requestid %s", httpStatus, errResult.Message, errResult.RequestId)
@@ -241,7 +242,7 @@ func findAttendees(reqBody attendee.AttendeeSearchCriteria, baseUrl string, toke
 
 	err = json.Unmarshal(responseBody, &result)
 	if err != nil {
-		return result, fmt.Errorf("error parsing body after 200: " + err.Error())
+		return result, fmt.Errorf("error parsing body after 200: %s", err.Error())
 	}
 
 	return result, nil
@@ -265,7 +266,7 @@ func readAdminInfo(badge uint, baseUrl string, token string, jwt string) (admin.
 		errResult := errorapi.ErrorDto{}
 		err = json.Unmarshal(body, &errResult)
 		if err != nil {
-			return result, fmt.Errorf("error parsing body after non-200 error: " + err.Error())
+			return result, fmt.Errorf("error parsing body after non-200 error: %s", err.Error())
 		}
 
 		return result, fmt.Errorf("admin info lookup failed with unexpected http status %d message %s requestid %s", httpStatus, errResult.Message, errResult.RequestId)
@@ -273,7 +274,7 @@ func readAdminInfo(badge uint, baseUrl string, token string, jwt string) (admin.
 
 	err = json.Unmarshal(body, &result)
 	if err != nil {
-		return result, fmt.Errorf("error parsing body: " + err.Error())
+		return result, fmt.Errorf("error parsing body: %s", err.Error())
 	}
 	return result, nil
 }
@@ -295,7 +296,7 @@ func updateAdminInfo(badge uint, baseUrl string, info admin.AdminInfoDto, token 
 		errResult := errorapi.ErrorDto{}
 		err = json.Unmarshal(responseBody, &errResult)
 		if err != nil {
-			return fmt.Errorf("error parsing body after non-204 error: " + err.Error())
+			return fmt.Errorf("error parsing body after non-204 error: %s", err.Error())
 		}
 
 		return fmt.Errorf("admin info lookup failed with unexpected http status %d message %s requestid %s", httpStatus, errResult.Message, errResult.RequestId)
@@ -321,7 +322,7 @@ func regsysPut(url string, requestBody []byte, token string, jwt string) (int, [
 func regsysRequest(method string, url string, requestBody io.Reader, token string, jwt string) (int, []byte, error) {
 	request, err := http.NewRequest(method, url, requestBody)
 	if err != nil {
-		return 0, []byte{}, fmt.Errorf("error creating request: " + err.Error())
+		return 0, []byte{}, fmt.Errorf("error creating request: %s", err.Error())
 	}
 	request.AddCookie(&http.Cookie{
 		Name:     "JWT",
@@ -347,13 +348,13 @@ func regsysRequest(method string, url string, requestBody io.Reader, token strin
 
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
-		return 0, []byte{}, fmt.Errorf("error making request: " + err.Error())
+		return 0, []byte{}, fmt.Errorf("error making request: %s", err.Error())
 	}
 
 	defer response.Body.Close()
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
-		return response.StatusCode, []byte{}, fmt.Errorf("error reading body: " + err.Error())
+		return response.StatusCode, []byte{}, fmt.Errorf("error reading body: %s", err.Error())
 	}
 
 	return response.StatusCode, body, nil
