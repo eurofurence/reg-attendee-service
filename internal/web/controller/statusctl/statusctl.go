@@ -4,6 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"net/http"
+	"net/url"
+	"time"
+
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
@@ -18,9 +22,6 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/validation"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-http-utils/headers"
-	"net/http"
-	"net/url"
-	"time"
 )
 
 var attendeeService attendeesrv.AttendeeService

@@ -3,6 +3,10 @@ package acceptance
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/url"
+	"testing"
+
 	"github.com/eurofurence/reg-attendee-service/docs"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/admin"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
@@ -13,9 +17,6 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/mailservice"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/paymentservice"
 	"github.com/stretchr/testify/require"
-	"net/http"
-	"net/url"
-	"testing"
 )
 
 // -------------------------------------------

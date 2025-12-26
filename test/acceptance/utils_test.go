@@ -3,6 +3,14 @@ package acceptance
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"sort"
+	"strings"
+	"testing"
+	"time"
+
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/bans"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
@@ -11,13 +19,6 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/media"
 	"github.com/go-http-utils/headers"
 	"github.com/stretchr/testify/require"
-	"io/ioutil"
-	"log"
-	"net/http"
-	"sort"
-	"strings"
-	"testing"
-	"time"
 )
 
 // placing these here because they are package global

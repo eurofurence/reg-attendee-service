@@ -3,16 +3,17 @@ package acceptance
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/url"
+	"strings"
+	"testing"
+
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/admin"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/mailservice"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/paymentservice"
-	"net/http"
-	"net/url"
-	"strings"
-	"testing"
 
 	"github.com/eurofurence/reg-attendee-service/docs"
 	"github.com/stretchr/testify/require"
