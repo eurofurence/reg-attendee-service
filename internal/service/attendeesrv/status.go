@@ -179,7 +179,8 @@ func (s *AttendeeServiceImplData) sendStatusChangeNotificationEmail(ctx context.
 			"confirm_link": "TODO confirmation link",
 			"new_email":    "TODO email change new email",
 		},
-		To: []string{attendee.Email},
+		To:    []string{attendee.Email},
+		Async: asyncSend,
 	}
 
 	if s.considerGuest(ctx, adminInfo) {
@@ -191,26 +192,11 @@ func (s *AttendeeServiceImplData) sendStatusChangeNotificationEmail(ctx context.
 		return nil
 	}
 
-	if asyncSend {
-		asyncCtx := ctxvalues.AsyncContextFrom(ctx)
-		asyncCtx, cancel := context.WithTimeout(asyncCtx, 30*time.Second)
-		go func() {
-			defer cancel()
-			aulogging.Logger.Ctx(asyncCtx).Info().Printf("asynchronously sending mail %s", mailDto.CommonID)
-
-			err := mailservice.Get().SendEmail(asyncCtx, mailDto)
-			if err != nil {
-				aulogging.Logger.Ctx(asyncCtx).Warn().Printf("failed to send asynchronous mail %s to %s - cannot fail original request: %s", mailDto.CommonID, attendee.Email, err.Error())
-				return
-			}
-			aulogging.Logger.Ctx(asyncCtx).Info().Printf("success sending mail %s to %s", mailDto.CommonID, attendee.Email)
-		}()
-	} else {
-		err := mailservice.Get().SendEmail(ctx, mailDto)
-		if err != nil {
-			return err
-		}
+	err := mailservice.Get().SendEmail(ctx, mailDto)
+	if err != nil {
+		return err
 	}
+
 	return nil
 }
 

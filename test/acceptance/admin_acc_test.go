@@ -410,7 +410,7 @@ func TestAdminWrite_GuestAfterApprove(t *testing.T) {
 
 	docs.Then("and the expected email messages were sent via the mail service")
 	tstRequireMailRequests(t, []mailservice.MailSendDto{
-		tstNewStatusMail(testcase, status.Approved),
+		tstNewStatusMail(testcase, status.Approved, false),
 		tstGuestMail(testcase),
 	})
 }
@@ -453,7 +453,7 @@ func TestAdminWrite_GuestAfterApproveDoesNotSuppressEmail(t *testing.T) {
 
 	docs.Then("and the expected email messages were STILL sent via the mail service")
 	tstRequireMailRequests(t, []mailservice.MailSendDto{
-		tstNewStatusMail(testcase, status.Approved),
+		tstNewStatusMail(testcase, status.Approved, false),
 		tstGuestMail(testcase),
 	})
 }
@@ -502,7 +502,7 @@ func TestAdminWrite_CancelledGuest(t *testing.T) {
 
 	docs.Then("and the expected email messages were sent via the mail service")
 	tstRequireMailRequests(t, []mailservice.MailSendDto{
-		tstNewStatusMail(testcase, status.Approved),
+		tstNewStatusMail(testcase, status.Approved, false),
 		tstGuestMail(testcase),
 		tstNewCancelMail(testcase, "guest set to status cancelled", 0),
 	})
@@ -552,9 +552,9 @@ func TestAdminWrite_GuestMadeNormal(t *testing.T) {
 
 	docs.Then("and the expected email messages were sent via the mail service")
 	tstRequireMailRequests(t, []mailservice.MailSendDto{
-		tstNewStatusMail(testcase, status.Approved),
+		tstNewStatusMail(testcase, status.Approved, false),
 		tstGuestMail(testcase),
-		tstNewStatusMail(testcase, status.Approved),
+		tstNewStatusMail(testcase, status.Approved, false),
 	})
 }
 
@@ -602,7 +602,7 @@ func TestAdminWrite_GuestMadeNormalEmailSuppressWorks(t *testing.T) {
 
 	docs.Then("and the expected email messages were sent via the mail service (minus the notification for the change back to approved)")
 	tstRequireMailRequests(t, []mailservice.MailSendDto{
-		tstNewStatusMail(testcase, status.Approved),
+		tstNewStatusMail(testcase, status.Approved, false),
 		tstGuestMail(testcase),
 		// tstNewStatusMail(testcase, status.Approved), -- NOT sent due to suppressMinorUpdateEmail
 	})
@@ -645,7 +645,7 @@ func TestAdminWrite_ManualDuesPositive_BeforeApprove(t *testing.T) {
 
 	docs.Then("and the expected email messages were sent via the mail service")
 	tstRequireMailRequests(t, []mailservice.MailSendDto{
-		tstNewStatusMailWithAmounts(testcase, status.Approved, 335, 335),
+		tstNewStatusMailWithAmounts(testcase, status.Approved, 335, 335, false),
 	})
 }
 
@@ -683,8 +683,8 @@ func TestAdminWrite_ManualDuesPositive_AfterApprove(t *testing.T) {
 		tstValidAttendeeDues(8000, "you still need to pay for last year"),
 	})
 
-	mail1 := tstNewStatusMail(testcase, status.Approved)
-	mail2 := tstNewStatusMail(testcase, status.Approved)
+	mail1 := tstNewStatusMail(testcase, status.Approved, false)
+	mail2 := tstNewStatusMail(testcase, status.Approved, false)
 	mail2.Variables["total_dues"] = "EUR 335.00"
 	mail2.Variables["remaining_dues"] = "EUR 335.00"
 	docs.Then("and the expected email messages were sent via the mail service")
@@ -728,7 +728,7 @@ func TestAdminWrite_ManualDuesPositive_AfterApproveSuppressEmailWorks(t *testing
 		tstValidAttendeeDues(8000, "you still need to pay for last year"),
 	})
 
-	mail1 := tstNewStatusMail(testcase, status.Approved)
+	mail1 := tstNewStatusMail(testcase, status.Approved, false)
 	docs.Then("and the expected email messages were sent via the mail service, not including the manual dues update")
 	tstRequireMailRequests(t, []mailservice.MailSendDto{
 		mail1,
@@ -764,7 +764,7 @@ func TestAdminWrite_ManualDuesPositive_AfterPaid(t *testing.T) {
 
 	docs.Then("and the expected email messages were sent via the mail service")
 	tstRequireMailRequests(t, []mailservice.MailSendDto{
-		tstNewStatusMailWithAmounts(testcase, status.PartiallyPaid, 80, 335),
+		tstNewStatusMailWithAmounts(testcase, status.PartiallyPaid, 80, 335, false),
 	})
 }
 
@@ -836,7 +836,7 @@ func TestAdminWrite_ManualDuesNegativePartial_BeforeApprove(t *testing.T) {
 
 	docs.Then("and the expected email messages were sent via the mail service")
 	tstRequireMailRequests(t, []mailservice.MailSendDto{
-		tstNewStatusMailWithAmounts(testcase, status.Approved, 135, 135),
+		tstNewStatusMailWithAmounts(testcase, status.Approved, 135, 135, false),
 	})
 }
 
@@ -877,7 +877,7 @@ func TestAdminWrite_ManualDuesNegativeFull_BeforeApprove(t *testing.T) {
 
 	docs.Then("and the expected email messages were sent via the mail service")
 	tstRequireMailRequests(t, []mailservice.MailSendDto{
-		tstNewStatusMailWithAmounts(testcase, status.Paid, 0, 0),
+		tstNewStatusMailWithAmounts(testcase, status.Paid, 0, 0, false),
 	})
 }
 
@@ -916,8 +916,8 @@ func TestAdminWrite_ManualDuesNegativePartial_AfterApprove(t *testing.T) {
 	})
 
 	docs.Then("and the expected email messages were sent via the mail service")
-	mail1 := tstNewStatusMail(testcase, status.Approved)
-	mail2 := tstNewStatusMail(testcase, status.Approved)
+	mail1 := tstNewStatusMail(testcase, status.Approved, false)
+	mail2 := tstNewStatusMail(testcase, status.Approved, false)
 	mail2.Variables["total_dues"] = "EUR 175.00"
 	mail2.Variables["remaining_dues"] = "EUR 175.00"
 	tstRequireMailRequests(t, []mailservice.MailSendDto{
@@ -962,8 +962,8 @@ func TestAdminWrite_ManualDuesNegativeFull_AfterApprove(t *testing.T) {
 
 	docs.Then("and the expected email messages were sent via the mail service")
 	tstRequireMailRequests(t, []mailservice.MailSendDto{
-		tstNewStatusMail(testcase, status.Approved),
-		tstNewStatusMailWithAmounts(testcase, status.Paid, -5, -5),
+		tstNewStatusMail(testcase, status.Approved, false),
+		tstNewStatusMailWithAmounts(testcase, status.Paid, -5, -5, false),
 	})
 }
 
@@ -1003,7 +1003,7 @@ func TestAdminWrite_ManualDuesNegativeFull_AfterApproveSuppressEmailWorks(t *tes
 
 	docs.Then("and the expected email messages were sent via the mail service, minus the paid status email")
 	tstRequireMailRequests(t, []mailservice.MailSendDto{
-		tstNewStatusMail(testcase, status.Approved),
+		tstNewStatusMail(testcase, status.Approved, false),
 	})
 }
 

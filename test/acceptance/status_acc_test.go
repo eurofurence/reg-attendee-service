@@ -456,7 +456,7 @@ func TestStatusChange_Self_New_Cancelled(t *testing.T) {
 	tstStatusChange_Self_Allow(t, testcase,
 		status.New, status.Cancelled,
 		[]paymentservice.Transaction{},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Cancelled)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Cancelled, false)},
 	)
 }
 
@@ -465,7 +465,7 @@ func TestStatusChange_Self_Approved_Cancelled(t *testing.T) {
 	tstStatusChange_Self_Allow(t, testcase,
 		status.Approved, status.Cancelled,
 		[]paymentservice.Transaction{tstValidAttendeeDues(-25500, "void unpaid dues on cancel")},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Cancelled)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Cancelled, false)},
 	)
 }
 
@@ -474,7 +474,7 @@ func TestStatusChange_Self_Waiting_Cancelled(t *testing.T) {
 	tstStatusChange_Self_Allow(t, testcase,
 		status.Approved, status.Cancelled,
 		[]paymentservice.Transaction{tstValidAttendeeDues(-25500, "void unpaid dues on cancel")},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Cancelled)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Cancelled, false)},
 	)
 }
 
@@ -554,7 +554,7 @@ func TestStatusChange_Admin_New_Approved(t *testing.T) {
 		status.New, status.Approved,
 		nil,
 		[]paymentservice.Transaction{tstValidAttendeeDues(25500, "dues adjustment due to change in status or selected packages")},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Approved)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Approved, false)},
 	)
 }
 
@@ -564,7 +564,7 @@ func TestStatusChange_Admin_New_Waiting(t *testing.T) {
 		status.New, status.Waiting,
 		nil,
 		[]paymentservice.Transaction{},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Waiting)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Waiting, false)},
 	)
 }
 
@@ -574,7 +574,7 @@ func TestStatusChange_Admin_New_Cancelled(t *testing.T) {
 		status.New, status.Cancelled,
 		nil,
 		[]paymentservice.Transaction{},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Cancelled)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Cancelled, false)},
 	)
 }
 
@@ -608,7 +608,7 @@ func TestStatusChange_Admin_Approved_New(t *testing.T) {
 		status.Approved, status.New,
 		nil,
 		[]paymentservice.Transaction{tstValidAttendeeDues(-25500, "remove dues balance - status changed to new")},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.New)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.New, false)},
 	)
 }
 
@@ -618,7 +618,7 @@ func TestStatusChange_Admin_Approved_PartiallyPaid(t *testing.T) {
 		status.Approved, status.PartiallyPaid,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, 2040)},
 		[]paymentservice.Transaction{},
-		[]mailservice.MailSendDto{tstNewStatusMailWithAmounts(testcase, status.PartiallyPaid, 234.60, 255)},
+		[]mailservice.MailSendDto{tstNewStatusMailWithAmounts(testcase, status.PartiallyPaid, 234.60, 255, false)},
 	)
 }
 
@@ -628,7 +628,7 @@ func TestStatusChange_Admin_Approved_Paid_WithGraceAmount(t *testing.T) {
 		status.Approved, status.Paid,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, 25400)},
 		[]paymentservice.Transaction{},
-		[]mailservice.MailSendDto{tstNewStatusMailWithAmounts(testcase, status.Paid, 1, 255)},
+		[]mailservice.MailSendDto{tstNewStatusMailWithAmounts(testcase, status.Paid, 1, 255, false)},
 	)
 }
 
@@ -648,7 +648,7 @@ func TestStatusChange_Admin_Approved_Waiting(t *testing.T) {
 		status.Approved, status.Waiting,
 		nil,
 		[]paymentservice.Transaction{tstValidAttendeeDues(-25500, "remove dues balance - status changed to waiting")},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Waiting)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Waiting, false)},
 	)
 }
 
@@ -658,7 +658,7 @@ func TestStatusChange_Admin_Approved_Cancelled(t *testing.T) {
 		status.Approved, status.Cancelled,
 		nil,
 		[]paymentservice.Transaction{tstValidAttendeeDues(-25500, "void unpaid dues on cancel")},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Cancelled)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Cancelled, false)},
 	)
 }
 
@@ -695,7 +695,7 @@ func TestStatusChange_Admin_PartiallyPaid_Approved_OkAfterRefund(t *testing.T) {
 		status.PartiallyPaid, status.Approved,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -15500)},
 		[]paymentservice.Transaction{},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Approved)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Approved, false)},
 	)
 }
 
@@ -705,7 +705,7 @@ func TestStatusChange_Admin_PartiallyPaid_Paid(t *testing.T) {
 		status.PartiallyPaid, status.Paid,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, 10000)},
 		[]paymentservice.Transaction{},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Paid)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Paid, false)},
 	)
 }
 
@@ -733,7 +733,7 @@ func TestStatusChange_Admin_PartiallyPaid_Waiting_OkAfterRefund(t *testing.T) {
 		status.PartiallyPaid, status.Waiting,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -15500)},
 		[]paymentservice.Transaction{tstCreateMatcherTransaction(1, paymentservice.Due, -25500, "remove dues balance - status changed to waiting")},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Waiting)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Waiting, false)},
 	)
 }
 
@@ -769,7 +769,7 @@ func TestStatusChange_Admin_Paid_New_OkAfterRefund(t *testing.T) {
 		status.Paid, status.New,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -25500)},
 		[]paymentservice.Transaction{tstCreateMatcherTransaction(1, paymentservice.Due, -25500, "remove dues balance - status changed to new")},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.New)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.New, false)},
 	)
 }
 
@@ -789,7 +789,7 @@ func TestStatusChange_Admin_Paid_Approved_OkAfterRefund(t *testing.T) {
 		status.Paid, status.Approved,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -25500)},
 		[]paymentservice.Transaction{},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Approved)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Approved, false)},
 	)
 }
 
@@ -799,7 +799,7 @@ func TestStatusChange_Admin_Paid_PartiallyPaid(t *testing.T) {
 		status.Paid, status.PartiallyPaid,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -10000)},
 		[]paymentservice.Transaction{},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.PartiallyPaid)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.PartiallyPaid, false)},
 	)
 }
 
@@ -835,7 +835,7 @@ func TestStatusChange_Admin_Paid_Waiting_OkAfterRefund(t *testing.T) {
 		status.Paid, status.Waiting,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -25500)},
 		[]paymentservice.Transaction{tstCreateMatcherTransaction(1, paymentservice.Due, -25500, "remove dues balance - status changed to waiting")},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Waiting)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Waiting, false)},
 	)
 }
 
@@ -871,7 +871,7 @@ func TestStatusChange_Admin_CheckedIn_New_OkAfterRefund(t *testing.T) {
 		status.CheckedIn, status.New,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -25500)},
 		[]paymentservice.Transaction{tstCreateMatcherTransaction(1, paymentservice.Due, -25500, "remove dues balance - status changed to new")},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.New)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.New, false)},
 	)
 }
 
@@ -881,7 +881,7 @@ func TestStatusChange_Admin_CheckedIn_Approved_OkButLeadsToPaid(t *testing.T) {
 		status.CheckedIn, status.Approved, status.Paid,
 		[]paymentservice.Transaction{},
 		[]paymentservice.Transaction{},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Paid)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Paid, false)},
 	)
 }
 
@@ -891,7 +891,7 @@ func TestStatusChange_Admin_CheckedIn_Approved_OkAfterRefund(t *testing.T) {
 		status.CheckedIn, status.Approved,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -25500)},
 		[]paymentservice.Transaction{},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Approved)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Approved, false)},
 	)
 }
 
@@ -901,7 +901,7 @@ func TestStatusChange_Admin_CheckedIn_PartiallyPaid(t *testing.T) {
 		status.CheckedIn, status.PartiallyPaid,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -10000)},
 		[]paymentservice.Transaction{},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.PartiallyPaid)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.PartiallyPaid, false)},
 	)
 }
 
@@ -911,7 +911,7 @@ func TestStatusChange_Admin_CheckedIn_Paid(t *testing.T) {
 		status.CheckedIn, status.Paid,
 		[]paymentservice.Transaction{},
 		[]paymentservice.Transaction{},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Paid)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Paid, false)},
 	)
 }
 
@@ -929,7 +929,7 @@ func TestStatusChange_Admin_CheckedIn_Waiting_OkAfterRefund(t *testing.T) {
 		status.CheckedIn, status.Waiting,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -25500)},
 		[]paymentservice.Transaction{tstCreateMatcherTransaction(1, paymentservice.Due, -25500, "remove dues balance - status changed to waiting")},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Waiting)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Waiting, false)},
 	)
 }
 
@@ -957,7 +957,7 @@ func TestStatusChange_Admin_Waiting_New(t *testing.T) {
 		status.Waiting, status.New,
 		nil,
 		[]paymentservice.Transaction{},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.New)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.New, false)},
 	)
 }
 
@@ -967,7 +967,7 @@ func TestStatusChange_Admin_Waiting_Approved(t *testing.T) {
 		status.Waiting, status.Approved,
 		nil,
 		[]paymentservice.Transaction{tstValidAttendeeDues(25500, "dues adjustment due to change in status or selected packages")},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Approved)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Approved, false)},
 	)
 }
 
@@ -1001,7 +1001,7 @@ func TestStatusChange_Admin_Waiting_Cancelled(t *testing.T) {
 		status.Waiting, status.Cancelled,
 		nil,
 		[]paymentservice.Transaction{},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Cancelled)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Cancelled, false)},
 	)
 }
 
@@ -1028,7 +1028,7 @@ func TestStatusChange_Admin_Cancelled_New_OkAfterRefund(t *testing.T) {
 		status.Cancelled, status.New,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -25500)},
 		[]paymentservice.Transaction{tstCreateMatcherTransaction(1, paymentservice.Due, -25500, "remove dues balance - status changed to new")},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.New)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.New, false)},
 	)
 }
 
@@ -1038,7 +1038,7 @@ func TestStatusChange_Admin_Cancelled_Approved_OkButLeadsToPaid(t *testing.T) {
 		status.Cancelled, status.Approved, status.Paid,
 		[]paymentservice.Transaction{},
 		[]paymentservice.Transaction{},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Paid)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Paid, false)},
 	)
 }
 
@@ -1048,7 +1048,7 @@ func TestStatusChange_Admin_Cancelled_Approved_OkAfterRefund(t *testing.T) {
 		status.Cancelled, status.Approved,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -25500)},
 		[]paymentservice.Transaction{},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Approved)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Approved, false)},
 	)
 }
 
@@ -1093,7 +1093,7 @@ func TestStatusChange_Admin_Cancelled_Waiting_OkAfterRefund(t *testing.T) {
 		status.Cancelled, status.Waiting,
 		[]paymentservice.Transaction{tstCreateTransaction(1, paymentservice.Payment, -25500)},
 		[]paymentservice.Transaction{tstCreateMatcherTransaction(1, paymentservice.Due, -25500, "remove dues balance - status changed to waiting")},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Waiting)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Waiting, false)},
 	)
 }
 
@@ -1111,7 +1111,7 @@ func TestStatusChange_Admin_Deleted_New(t *testing.T) {
 		status.Deleted, status.New,
 		nil,
 		[]paymentservice.Transaction{},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.New)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.New, false)},
 	)
 }
 
@@ -1121,7 +1121,7 @@ func TestStatusChange_Admin_Deleted_Approved(t *testing.T) {
 		status.Deleted, status.Approved,
 		nil,
 		[]paymentservice.Transaction{tstValidAttendeeDues(25500, "dues adjustment due to change in status or selected packages")},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Approved)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Approved, false)},
 	)
 }
 
@@ -1158,7 +1158,7 @@ func TestStatusChange_Admin_Deleted_Waiting(t *testing.T) {
 		status.Deleted, status.Waiting,
 		nil,
 		[]paymentservice.Transaction{},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Waiting)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Waiting, false)},
 	)
 }
 
@@ -1168,7 +1168,7 @@ func TestStatusChange_Admin_Deleted_Cancelled(t *testing.T) {
 		status.Deleted, status.Cancelled,
 		nil,
 		[]paymentservice.Transaction{},
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Cancelled)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Cancelled, false)},
 	)
 }
 
@@ -1258,7 +1258,7 @@ func TestResendStatusMail_Admin_WithMail(t *testing.T) {
 			testname := fmt.Sprintf("TestResendStatusMail_Admin_WithMail_%s", targetStatus)
 			t.Run(testname, func(t *testing.T) {
 				testcase := fmt.Sprintf("stml%dadm", n)
-				statusMail := tstNewStatusMail(testcase, targetStatus)
+				statusMail := tstNewStatusMail(testcase, targetStatus, false)
 				if targetStatus == status.Cancelled {
 					statusMail.Variables["reason"] = "change to cancelled"
 					statusMail.Variables["total_dues"] = "EUR 255.00" // correct here because we cancelled after paid - means: no refund
