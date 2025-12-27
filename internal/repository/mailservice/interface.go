@@ -20,4 +20,5 @@ type MailSendDto struct {
 	Cc        []string          `json:"cc"`
 	Bcc       []string          `json:"bcc"`
 	Variables map[string]string `json:"variables"`
+	Async     bool              `json:"async"`
 }

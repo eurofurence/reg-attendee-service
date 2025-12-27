@@ -3,16 +3,17 @@ package acceptance
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/url"
+	"strings"
+	"testing"
+
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/admin"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/mailservice"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/paymentservice"
-	"net/http"
-	"net/url"
-	"strings"
-	"testing"
 
 	"github.com/eurofurence/reg-attendee-service/docs"
 	"github.com/stretchr/testify/require"
@@ -1442,14 +1443,14 @@ func TestUpdateExistingAttendee_AddOnePackage_AnyTime_UserAllowed(t *testing.T) 
 		targetStatus := origStatus
 		mails := []mailservice.MailSendDto{}
 		if origStatus == status.Approved {
-			mail := tstNewStatusMailWithAmounts(testcase, targetStatus, 275.00, 275.00)
+			mail := tstNewStatusMailWithAmounts(testcase, targetStatus, 275.00, 275.00, false)
 			mails = append(mails, mail)
 		} else if origStatus == status.PartiallyPaid {
-			mail := tstNewStatusMailWithAmounts(testcase, targetStatus, 120.00, 275.00)
+			mail := tstNewStatusMailWithAmounts(testcase, targetStatus, 120.00, 275.00, false)
 			mails = append(mails, mail)
 		} else if origStatus == status.Paid {
 			targetStatus = status.PartiallyPaid
-			mail := tstNewStatusMailWithAmounts(testcase, targetStatus, 20.00, 275.00)
+			mail := tstNewStatusMailWithAmounts(testcase, targetStatus, 20.00, 275.00, false)
 			mails = append(mails, mail)
 		}
 		t.Run(string(origStatus), func(t *testing.T) {
@@ -1498,17 +1499,17 @@ func TestUpdateExistingAttendee_AddTwoPackages_AnyTime_UserAllowed(t *testing.T)
 		targetStatus := origStatus
 		mails := []mailservice.MailSendDto{}
 		if origStatus == status.Approved {
-			mail1 := tstNewStatusMailWithAmounts(testcase, targetStatus, 275.00, 275.00)
-			mail2 := tstNewStatusMailWithAmounts(testcase, targetStatus, 305.00, 305.00)
+			mail1 := tstNewStatusMailWithAmounts(testcase, targetStatus, 275.00, 275.00, false)
+			mail2 := tstNewStatusMailWithAmounts(testcase, targetStatus, 305.00, 305.00, false)
 			mails = append(mails, mail1, mail2)
 		} else if origStatus == status.PartiallyPaid {
-			mail1 := tstNewStatusMailWithAmounts(testcase, targetStatus, 120.00, 275.00)
-			mail2 := tstNewStatusMailWithAmounts(testcase, targetStatus, 150.00, 305.00)
+			mail1 := tstNewStatusMailWithAmounts(testcase, targetStatus, 120.00, 275.00, false)
+			mail2 := tstNewStatusMailWithAmounts(testcase, targetStatus, 150.00, 305.00, false)
 			mails = append(mails, mail1, mail2)
 		} else if origStatus == status.Paid {
 			targetStatus = status.PartiallyPaid
-			mail1 := tstNewStatusMailWithAmounts(testcase, targetStatus, 20.00, 275.00)
-			mail2 := tstNewStatusMailWithAmounts(testcase, targetStatus, 50.00, 305.00)
+			mail1 := tstNewStatusMailWithAmounts(testcase, targetStatus, 20.00, 275.00, false)
+			mail2 := tstNewStatusMailWithAmounts(testcase, targetStatus, 50.00, 305.00, false)
 			mails = append(mails, mail1, mail2)
 		}
 		t.Run(string(origStatus), func(t *testing.T) {
@@ -1582,14 +1583,14 @@ func TestUpdateExistingAttendee_AddPackageMultipleTimes_UserAllowed(t *testing.T
 		targetStatus := origStatus
 		mails := []mailservice.MailSendDto{}
 		if origStatus == status.Approved {
-			mail := tstNewStatusMailWithAmounts(testcase, targetStatus, 345.00, 345.00)
+			mail := tstNewStatusMailWithAmounts(testcase, targetStatus, 345.00, 345.00, false)
 			mails = append(mails, mail)
 		} else if origStatus == status.PartiallyPaid {
-			mail := tstNewStatusMailWithAmounts(testcase, targetStatus, 190.00, 345.00)
+			mail := tstNewStatusMailWithAmounts(testcase, targetStatus, 190.00, 345.00, false)
 			mails = append(mails, mail)
 		} else if origStatus == status.Paid {
 			targetStatus = status.PartiallyPaid
-			mail := tstNewStatusMailWithAmounts(testcase, targetStatus, 90.00, 345.00)
+			mail := tstNewStatusMailWithAmounts(testcase, targetStatus, 90.00, 345.00, false)
 			mails = append(mails, mail)
 		}
 		t.Run(string(origStatus), func(t *testing.T) {

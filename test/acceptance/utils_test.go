@@ -3,6 +3,14 @@ package acceptance
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"sort"
+	"strings"
+	"testing"
+	"time"
+
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/bans"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
@@ -11,13 +19,6 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/media"
 	"github.com/go-http-utils/headers"
 	"github.com/stretchr/testify/require"
-	"io/ioutil"
-	"log"
-	"net/http"
-	"sort"
-	"strings"
-	"testing"
-	"time"
 )
 
 // placing these here because they are package global
@@ -334,7 +335,7 @@ func tstValidAttendeeDuesWithReason(amount int64, comment string, reason string)
 	}
 }
 
-func tstNewStatusMail(testcase string, newStatus status.Status) mailservice.MailSendDto {
+func tstNewStatusMail(testcase string, newStatus status.Status, async bool) mailservice.MailSendDto {
 	result := mailservice.MailSendDto{
 		CommonID: "change-status-" + string(newStatus),
 		Lang:     "en-US",
@@ -362,6 +363,7 @@ func tstNewStatusMail(testcase string, newStatus status.Status) mailservice.Mail
 			"confirm_link": "TODO confirmation link",
 			"new_email":    "TODO email change new email",
 		},
+		Async: async,
 	}
 	if newStatus == status.New {
 		result.Variables["total_dues"] = "EUR 0.00"
@@ -389,14 +391,14 @@ func tstNewStatusMail(testcase string, newStatus status.Status) mailservice.Mail
 }
 
 func tstGuestMail(testcase string) mailservice.MailSendDto {
-	result := tstNewStatusMail(testcase, "paid")
+	result := tstNewStatusMail(testcase, "paid", false)
 	result.CommonID = "guest"
 	result.Variables["total_dues"] = "EUR 0.00"
 	return result
 }
 
-func tstNewStatusMailWithAmounts(testcase string, newStatus status.Status, remaining float64, total float64) mailservice.MailSendDto {
-	result := tstNewStatusMail(testcase, newStatus)
+func tstNewStatusMailWithAmounts(testcase string, newStatus status.Status, remaining float64, total float64, async bool) mailservice.MailSendDto {
+	result := tstNewStatusMail(testcase, newStatus, async)
 	result.Variables["remaining_dues"] = fmt.Sprintf("EUR %0.2f", remaining)
 	result.Variables["total_dues"] = fmt.Sprintf("EUR %0.2f", total)
 	if remaining > 0 {
@@ -406,7 +408,7 @@ func tstNewStatusMailWithAmounts(testcase string, newStatus status.Status, remai
 }
 
 func tstNewCancelMail(testcase string, reason string, alreadyPaid float64) mailservice.MailSendDto {
-	result := tstNewStatusMailWithAmounts(testcase, status.Cancelled, 0, alreadyPaid)
+	result := tstNewStatusMailWithAmounts(testcase, status.Cancelled, 0, alreadyPaid, false)
 	result.Variables["reason"] = reason
 	return result
 }

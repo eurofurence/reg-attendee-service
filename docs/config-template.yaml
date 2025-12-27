@@ -251,6 +251,13 @@ choices:
       price: 2500
       read_only: true
       vat_percent: 19
+    contributor:
+      description: Contributor Upgrade
+      price: 5000
+      vat_percent: 19
+      visible_for:
+        - regdesk
+        - sponsordesk
     day-fri:
       at-least-one-mandatory: true
       constraint: '!attendance,!stage'
@@ -364,6 +371,8 @@ choices:
       read_only: true
       vat_percent: 7
     sponsor:
+      constraint: '!contributor'
+      constraint_msg: Please choose only one of Contributor, Sponsor or Supersponsor.
       description: Sponsor Upgrade
       price: 10000
       vat_percent: 19
@@ -371,8 +380,8 @@ choices:
         - regdesk
         - sponsordesk
     sponsor2:
-      constraint: '!sponsor'
-      constraint_msg: Please choose only one of Sponsor or Supersponsor.
+      constraint: '!contributor,!sponsor'
+      constraint_msg: Please choose only one of Contributor, Sponsor or Supersponsor.
       description: Supersponsor Upgrade
       price: 20000
       vat_percent: 19
@@ -412,8 +421,8 @@ choices:
       visible_for:
         - regdesk
     tshirt:
-      constraint: '!sponsor,!sponsor2'
-      constraint_msg: Sponsors and supersponsors get their T-Shirt for free.
+      constraint: '!contributor,!sponsor,!sponsor2'
+      constraint_msg: Contributors, sponsors and supersponsors get their T-Shirt for free.
       description: Paid T-Shirt (non-sponsor)
       price: 2000
       vat_percent: 19

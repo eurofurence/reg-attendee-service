@@ -3,13 +3,14 @@ package acceptance
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"testing"
+
 	"github.com/eurofurence/reg-attendee-service/docs"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/mailservice"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/paymentservice"
 	"github.com/stretchr/testify/require"
-	"net/http"
-	"testing"
 )
 
 // --- error cases
@@ -129,7 +130,7 @@ func TestPaymentsChangedWebhook_Approved_PartiallyPaid(t *testing.T) {
 			tstCreateTransaction(1, paymentservice.Payment, 2040),
 		},
 		status.PartiallyPaid,
-		[]mailservice.MailSendDto{tstNewStatusMailWithAmounts(testcase, status.PartiallyPaid, 234.60, 255)},
+		[]mailservice.MailSendDto{tstNewStatusMailWithAmounts(testcase, status.PartiallyPaid, 234.60, 255, true)},
 	)
 }
 
@@ -143,7 +144,7 @@ func TestPaymentsChangedWebhook_Approved_Paid_WithGraceAmount(t *testing.T) {
 			tstCreateTransaction(1, paymentservice.Payment, 25400),
 		},
 		status.Paid,
-		[]mailservice.MailSendDto{tstNewStatusMailWithAmounts(testcase, status.Paid, 1, 255)},
+		[]mailservice.MailSendDto{tstNewStatusMailWithAmounts(testcase, status.Paid, 1, 255, true)},
 	)
 }
 
@@ -157,7 +158,7 @@ func TestPaymentsChangedWebhook_Approved_Paid_Overpaid(t *testing.T) {
 			tstCreateTransaction(1, paymentservice.Payment, 27000),
 		},
 		status.Paid,
-		[]mailservice.MailSendDto{tstNewStatusMailWithAmounts(testcase, status.Paid, -15, 255)},
+		[]mailservice.MailSendDto{tstNewStatusMailWithAmounts(testcase, status.Paid, -15, 255, true)},
 	)
 }
 
@@ -183,13 +184,13 @@ func TestPaymentsChangedWebhook_PartiallyPaid_Approved(t *testing.T) {
 			tstCreateTransaction(1, paymentservice.Payment, -15500),
 		},
 		status.Approved,
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Approved)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Approved, true)},
 	)
 }
 
 func TestPaymentsChangedWebhook_PartiallyPaid_PartialRefund(t *testing.T) {
 	testcase := "pc2a2p-"
-	mail1 := tstNewStatusMail(testcase, status.PartiallyPaid)
+	mail1 := tstNewStatusMail(testcase, status.PartiallyPaid, true)
 	mail1.Variables["remaining_dues"] = "EUR 155.00"
 	tstStatusChange_Webhook_Success(t, testcase,
 		subcaseAdmOrApi,
@@ -213,7 +214,7 @@ func TestPaymentsChangedWebhook_PartiallyPaid_Paid(t *testing.T) {
 			tstCreateTransaction(1, paymentservice.Payment, 10000),
 		},
 		status.Paid,
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Paid)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Paid, true)},
 	)
 }
 
@@ -239,7 +240,7 @@ func TestPaymentsChangedWebhook_Paid_Approved(t *testing.T) {
 			tstCreateTransaction(1, paymentservice.Payment, -25500),
 		},
 		status.Approved,
-		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Approved)},
+		[]mailservice.MailSendDto{tstNewStatusMail(testcase, status.Approved, true)},
 	)
 }
 
@@ -253,7 +254,7 @@ func TestPaymentsChangedWebhook_Paid_PartiallyPaid(t *testing.T) {
 			tstCreateTransaction(1, paymentservice.Payment, -15500),
 		},
 		status.PartiallyPaid,
-		[]mailservice.MailSendDto{tstNewStatusMailWithAmounts(testcase, status.PartiallyPaid, 155, 255)},
+		[]mailservice.MailSendDto{tstNewStatusMailWithAmounts(testcase, status.PartiallyPaid, 155, 255, true)},
 	)
 }
 
