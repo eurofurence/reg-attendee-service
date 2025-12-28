@@ -3,6 +3,8 @@ package historizeddb
 import (
 	"context"
 	"errors"
+	"time"
+
 	"github.com/d4l3k/messagediff"
 	_ "github.com/d4l3k/messagediff"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
@@ -10,7 +12,6 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database/dbrepo"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
 	"gorm.io/gorm"
-	"time"
 )
 
 type HistorizingRepository struct {
@@ -259,6 +260,26 @@ func (r *HistorizingRepository) WriteAdditionalInfo(ctx context.Context, ad *ent
 	}
 
 	return r.wrappedRepository.WriteAdditionalInfo(ctx, ad)
+}
+
+// --- count ---
+
+// counts are not historized, this is essentially a lookup cache
+
+func (r *HistorizingRepository) CreateCount(initial *entity.Count) (*entity.Count, error) {
+	return r.wrappedRepository.CreateCount(initial)
+}
+
+func (r *HistorizingRepository) AddCount(ctx context.Context, delta *entity.Count) (*entity.Count, error) {
+	return r.wrappedRepository.AddCount(ctx, delta)
+}
+
+func (r *HistorizingRepository) ResetCount(ctx context.Context, overwrite *entity.Count) error {
+	return r.wrappedRepository.ResetCount(ctx, overwrite)
+}
+
+func (r *HistorizingRepository) GetCount(ctx context.Context, area string, name string) (*entity.Count, error) {
+	return r.wrappedRepository.GetCount(ctx, area, name)
 }
 
 // --- history ---

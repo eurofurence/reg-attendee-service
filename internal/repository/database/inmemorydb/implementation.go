@@ -4,14 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
+	"sync/atomic"
+	"time"
+
+	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database/dbrepo"
 	"gorm.io/gorm"
-	"sort"
-	"sync/atomic"
-	"time"
 )
 
 type InMemoryRepository struct {
@@ -21,6 +23,7 @@ type InMemoryRepository struct {
 	bans          map[uint]*entity.Ban
 	statusChanges map[uint][]entity.StatusChange
 	history       map[uint]*entity.History
+	counts        map[string]entity.Count
 	idSequence    uint32
 	Now           func() time.Time
 }
@@ -38,6 +41,7 @@ func (r *InMemoryRepository) Open() error {
 	r.bans = make(map[uint]*entity.Ban)
 	r.statusChanges = make(map[uint][]entity.StatusChange)
 	r.history = make(map[uint]*entity.History)
+	r.counts = make(map[string]entity.Count)
 	return nil
 }
 
@@ -48,6 +52,7 @@ func (r *InMemoryRepository) Close() {
 	r.bans = nil
 	r.statusChanges = nil
 	r.history = nil
+	r.counts = nil
 }
 
 func (r *InMemoryRepository) Migrate() error {
@@ -431,6 +436,69 @@ func (r *InMemoryRepository) WriteAdditionalInfo(ctx context.Context, ad *entity
 	copiedAi := *ad
 	byAttendeeId[ad.Area] = &copiedAi
 	return nil
+}
+
+// --- count ---
+
+func (r *InMemoryRepository) CreateCount(initial *entity.Count) (*entity.Count, error) {
+	if initial == nil || initial.Area == "" || initial.Name == "" {
+		aulogging.Logger.NoCtx().Error().Print("error setting up counts - received nil or unset area or name")
+		return &entity.Count{}, errors.New("error setting up counts - received nil or unset area or name")
+	}
+	pk := r.countPK(initial.Area, initial.Name)
+	current, ok := r.counts[pk]
+	if ok {
+		return &current, nil
+	} else {
+		r.counts[pk] = *initial
+		return initial, nil
+	}
+}
+
+func (r *InMemoryRepository) AddCount(ctx context.Context, delta *entity.Count) (*entity.Count, error) {
+	if delta == nil || delta.Area == "" || delta.Name == "" {
+		aulogging.Logger.Ctx(ctx).Error().Print("error changing counts - received nil or unset area or name")
+		return &entity.Count{}, errors.New("error changing counts - received nil or unset area or name")
+	}
+	pk := r.countPK(delta.Area, delta.Name)
+	current, ok := r.counts[pk]
+	if ok {
+		current.Pending = current.Pending + delta.Pending
+		current.Attending = current.Attending + delta.Attending
+		r.counts[pk] = current
+		return &current, nil
+	} else {
+		aulogging.Logger.Ctx(ctx).Error().Printf("error adding counts area %s name %s: affected 0 rows instead of 1", delta.Area, delta.Name)
+		return &current, fmt.Errorf("error adding counts area %s name %s: failed to affect 1 row", delta.Area, delta.Name)
+	}
+}
+
+func (r *InMemoryRepository) ResetCount(ctx context.Context, overwrite *entity.Count) error {
+	if overwrite == nil || overwrite.Area == "" || overwrite.Name == "" {
+		aulogging.Logger.Ctx(ctx).Error().Print("error resetting counts - received nil or unset area or name")
+		return errors.New("error resetting counts - received nil or unset area or name")
+	}
+	pk := r.countPK(overwrite.Area, overwrite.Name)
+	r.counts[pk] = *overwrite
+	return nil
+}
+
+func (r *InMemoryRepository) GetCount(ctx context.Context, area string, name string) (*entity.Count, error) {
+	var result entity.Count
+	if area == "" || name == "" {
+		aulogging.Logger.Ctx(ctx).Error().Print("error reading counts - received unset area or name")
+		return &result, errors.New("error reading counts - received unset area or name")
+	}
+	result, ok := r.counts[r.countPK(area, name)]
+	if !ok {
+		aulogging.Logger.Ctx(ctx).Error().Printf("error reading counts for area %s name %s - should have been set up during database migration", area, name)
+		return &result, gorm.ErrRecordNotFound
+	}
+	return &result, nil
+}
+
+func (r *InMemoryRepository) countPK(area string, name string) string {
+	return fmt.Sprintf("area=%s|name=%s", area, name)
 }
 
 // --- history ---
