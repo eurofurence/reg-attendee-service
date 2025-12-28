@@ -121,6 +121,7 @@ choices:
       description: 'Boat Trip'
       price: 2000
       vat_percent: 19
+      limit: 4
       visible_for:
         - regdesk
     mountain-trip:
@@ -131,6 +132,7 @@ choices:
       price: 3000
       vat_percent: 19
       max_count: 3
+      limit: 4
     day-thu:
       description: 'Day Guest (Thursday)'
       price: 6000

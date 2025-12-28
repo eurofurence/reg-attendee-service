@@ -365,6 +365,13 @@ choices:
       vat_percent: 19
       visible_for:
         - regdesk
+    party:
+      description: Admittance to the party
+      limit: 100
+      price: 1000
+      vat_percent: 19
+      visible_for:
+        - regdesk
     room-none:
       default: true
       description: No Room

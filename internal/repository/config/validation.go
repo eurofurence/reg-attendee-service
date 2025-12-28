@@ -3,13 +3,14 @@ package config
 import (
 	"crypto/rsa"
 	"fmt"
-	"github.com/eurofurence/reg-attendee-service/internal/web/util/validation"
-	"github.com/golang-jwt/jwt/v4"
 	"net/url"
 	"os"
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/eurofurence/reg-attendee-service/internal/web/util/validation"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 func setConfigurationDefaults(c *Application) {
@@ -176,6 +177,9 @@ func validatePackagesConfiguration(errs url.Values, c map[string]ChoiceConfig) {
 			} else if slices.Max(v.AllowedCounts) > v.MaxCount {
 				errs.Add("choices.packages."+k+".allowed_counts", "maximum allowed_counts value cannot be larger than max_count for package")
 			}
+		}
+		if v.Limit < 0 {
+			errs.Add("choices.packages."+k+".limit", "limit value cannot be negative")
 		}
 	}
 }
