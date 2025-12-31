@@ -3,14 +3,15 @@ package attendeectl
 import (
 	"context"
 	"errors"
+	"os"
+	"testing"
+
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/service/attendeesrv"
 	"github.com/stretchr/testify/mock"
-	"os"
-	"testing"
 )
 
 // placing these here because they are package global
@@ -102,6 +103,14 @@ func (s *MockAttendeeService) StatusChangeAllowed(ctx context.Context, attendee 
 }
 
 func (s *MockAttendeeService) StatusChangePossible(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status) error {
+	return nil
+}
+
+func (s *MockAttendeeService) IntroducesLimitOverrun(ctx context.Context, oldState *entity.Attendee, currentState *entity.Attendee, oldStatus status.Status, newStatus status.Status) ([]*entity.Count, error) {
+	return nil, nil
+}
+
+func (s *MockAttendeeService) RecordLimitChanges(ctx context.Context, deltas []*entity.Count) error {
 	return nil
 }
 

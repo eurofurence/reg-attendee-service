@@ -98,6 +98,12 @@ func postStatusHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	limitChanges, err := attendeeService.IntroducesLimitOverrun(ctx, att, att, latestStatusChange.Status, dto.Status)
+	if err != nil {
+		statusChangeUnavailableErrorHandler(ctx, w, r, err)
+		return
+	}
+
 	err = attendeeService.UpdateDuesAndDoStatusChangeIfNeeded(ctx, att, latestStatusChange.Status, dto.Status, dto.Comment, "", false, false)
 	if err != nil {
 		if errors.Is(err, paymentservice.DownstreamError) || errors.Is(err, mailservice.DownstreamError) {
@@ -105,9 +111,15 @@ func postStatusHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			statusWriteErrorHandler(ctx, w, r, err)
 		}
-	} else {
-		w.WriteHeader(http.StatusNoContent)
+		return
 	}
+
+	if err := attendeeService.RecordLimitChanges(ctx, limitChanges); err != nil {
+		statusWriteErrorHandler(ctx, w, r, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func getStatusHistoryHandler(w http.ResponseWriter, r *http.Request) {
@@ -244,6 +256,8 @@ func statusChangeUnavailableErrorHandler(ctx context.Context, w http.ResponseWri
 		message = "status.use.approved"
 	} else if errors.Is(err, attendeesrv.BanCandidateError) {
 		message = "status.ban.match"
+	} else if errors.Is(err, attendeesrv.IntroducesOverrun) {
+		message = "status.package.overrun"
 	}
 	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("unavailable status change attempted: %s - %s", message, err.Error())
 	ctlutil.ErrorHandler(ctx, w, r, message, http.StatusConflict, url.Values{"details": []string{err.Error()}})

@@ -3,6 +3,7 @@ package attendeesrv
 import (
 	"context"
 	"errors"
+
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
@@ -48,6 +49,16 @@ type AttendeeService interface {
 	StatusChangePossible(ctx context.Context, attendee *entity.Attendee, oldStatus status.Status, newStatus status.Status) error
 	// ResendStatusMail resends the current status mail, but with dues recalculated
 	ResendStatusMail(ctx context.Context, attendee *entity.Attendee, currentStatus status.Status, currentStatusComment string) error
+
+	// IntroducesLimitOverrun checks if a status or package change would introduce a package limit overrun
+	//
+	// Can also be used to check new registrations, by setting packages on oldAttendeeState to empty
+	IntroducesLimitOverrun(ctx context.Context, oldAttendeeState *entity.Attendee, currentAttendeeState *entity.Attendee, oldStatus status.Status, newStatus status.Status) ([]*entity.Count, error)
+
+	// RecordLimitChanges changes the package limit cache according to deltas, if any.
+	//
+	// It is no error to pass a slice of length 0.
+	RecordLimitChanges(ctx context.Context, deltas []*entity.Count) error
 
 	// IsOwnerFor returns the list of attendees (registrations) that are owned by the currently logged
 	// in user account.
@@ -147,4 +158,5 @@ var (
 	GoToApprovedFirst        = errors.New("please change status to approved, this will automatically advance to (partially) paid as appropriate")
 	UnknownStatusError       = errors.New("unknown status value - this is a programming error")
 	BanCandidateError        = errors.New("this attendee matches a ban rule and cannot be approved, please review and either cancel or set the skip_ban_check admin flag to allow approval")
+	IntroducesOverrun        = errors.New("this change introduces a package overrun")
 )
