@@ -3,6 +3,13 @@ package app
 import (
 	"context"
 	"errors"
+	"net"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/StephanHCB/go-autumn-logging-zerolog/loggermiddleware"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
@@ -14,15 +21,10 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/web/controller/countdownctl"
 	"github.com/eurofurence/reg-attendee-service/internal/web/controller/fallbackctl"
 	"github.com/eurofurence/reg-attendee-service/internal/web/controller/infoctl"
+	"github.com/eurofurence/reg-attendee-service/internal/web/controller/packagectl"
 	"github.com/eurofurence/reg-attendee-service/internal/web/controller/statusctl"
 	"github.com/eurofurence/reg-attendee-service/internal/web/middleware"
 	"github.com/go-chi/chi/v5"
-	"net"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 )
 
 func CreateRouter(ctx context.Context, attSrv attendeesrv.AttendeeService) chi.Router {
@@ -41,6 +43,7 @@ func CreateRouter(ctx context.Context, attSrv attendeesrv.AttendeeService) chi.R
 	adminctl.Create(server, attSrv)
 	statusctl.Create(server, attSrv)
 	banctl.Create(server, attSrv)
+	packagectl.Create(server, attSrv)
 	addinfoctl.Create(server, attSrv)
 	infoctl.Create(server)
 

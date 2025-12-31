@@ -10,6 +10,7 @@ import (
 
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/admin"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/counts"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/mailservice"
@@ -858,6 +859,9 @@ func TestCreateNewAttendee_MultiPackage(t *testing.T) {
 	attendeeReadAgain := tstReadAttendee(t, response.location)
 	attendeeSent.Id = attendeeReadAgain.Id // mask expected diff in id
 	require.EqualValues(t, attendeeSent, attendeeReadAgain, "attendee data read did not match updated data")
+
+	docs.Then("and the package count is correct")
+	tstRequirePackageCount(t, "mountain-trip", counts.PackageCount{Pending: 3, Limit: 4})
 }
 
 func TestCreateNewAttendee_MultiPackageTooMany(t *testing.T) {
@@ -878,6 +882,9 @@ func TestCreateNewAttendee_MultiPackageTooMany(t *testing.T) {
 		"packages":      []string{"package mountain-trip occurs too many times, can occur at most 3 times"},
 		"packages_list": []string{"package mountain-trip occurs too many times, can occur at most 3 times"},
 	})
+
+	docs.Then("and the package counts have not been changed")
+	tstRequirePackageCount(t, "mountain-trip", counts.PackageCount{Limit: 4})
 }
 
 func TestCreateNewAttendee_MultiPackageWrongNumberOfTimes(t *testing.T) {
@@ -915,6 +922,7 @@ func TestUpdateExistingAttendee_Self(t *testing.T) {
 	changedAttendee := attendee1
 	changedAttendee.FirstName = "Eva"
 	changedAttendee.LastName = "Musterfrau"
+	tstAddPackages(&changedAttendee, "mountain-trip")
 	updateResponse := tstPerformPut(location1, tstRenderJson(changedAttendee), token)
 
 	docs.Then("then the attendee is successfully updated and the changed data can be read again")
@@ -922,6 +930,9 @@ func TestUpdateExistingAttendee_Self(t *testing.T) {
 	require.Equal(t, location1, updateResponse.location, "location unexpectedly changed during update")
 	attendeeReadAgain := tstReadAttendee(t, location1)
 	require.EqualValues(t, changedAttendee, attendeeReadAgain, "attendee data read did not match updated data")
+
+	docs.Then("and the package count has been correctly updated")
+	tstRequirePackageCount(t, "mountain-trip", counts.PackageCount{Pending: 1, Limit: 4})
 }
 
 func TestUpdateExistingAttendee_Self_ChangeEmail(t *testing.T) {

@@ -10,6 +10,10 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
 )
 
+func (s *AttendeeServiceImplData) GetLimitBookings(ctx context.Context, key string) (*entity.Count, error) {
+	return database.GetRepository().GetCount(ctx, entity.CountAreaPackage, key)
+}
+
 func (s *AttendeeServiceImplData) RecordLimitChanges(ctx context.Context, deltas []*entity.Count) error {
 	db := database.GetRepository()
 	for _, delta := range deltas {

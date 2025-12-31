@@ -60,6 +60,9 @@ type AttendeeService interface {
 	// It is no error to pass a slice of length 0.
 	RecordLimitChanges(ctx context.Context, deltas []*entity.Count) error
 
+	// GetLimitBookings obtains the limit and number of pending and attending bookings for a given package key.
+	GetLimitBookings(ctx context.Context, key string) (*entity.Count, error)
+
 	// IsOwnerFor returns the list of attendees (registrations) that are owned by the currently logged
 	// in user account.
 	//
