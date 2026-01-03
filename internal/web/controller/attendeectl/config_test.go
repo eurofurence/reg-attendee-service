@@ -118,6 +118,10 @@ func (s *MockAttendeeService) GetLimitBookings(ctx context.Context, key string) 
 	return &entity.Count{}, nil
 }
 
+func (s *MockAttendeeService) RecalculateLimit(ctx context.Context, key string) error {
+	return nil
+}
+
 func (s *MockAttendeeService) IsOwnerFor(ctx context.Context) ([]*entity.Attendee, error) {
 	return make([]*entity.Attendee, 0), nil
 }

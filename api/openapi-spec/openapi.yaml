@@ -1727,6 +1727,66 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '500':
+          description: An unexpected error occurred. This includes database errors. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+    post:
+      tags:
+        - privileged
+      summary: Recalculate sold units of a package
+      description: |-
+        Recalculate the sold unit counts of a package with limited availability from all active registrations.
+
+        Note: tracking of stock units is implemented as a cache for performance reasons, there are rare situations where the cache can become outdated. This endpoint allows recalculation at times when system performance is not affected.
+        If you trigger this endpoint while lots of changes are being made, such as during the initial registration rush, you may actually make matters worse.
+      operationId: recalcPackageLimit
+      parameters:
+        - name: package
+          in: path
+          description: Code of the package, as set in the service configuration
+          required: true
+          schema:
+            type: string
+            example: artshow-table
+      responses:
+        '204':
+          description: Successful operation
+        '400':
+          description: Package is unlimited. We do not track sales stats for unlimited packages, so this request makes no sense.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: You do not have permission to trigger recalculation - admin only operation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Package not found or invalid package code.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: An unexpected error occurred. This includes database errors. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
       security:
         - BearerAuth: []
         - ApiKeyAuth: []
@@ -2240,7 +2300,7 @@ components:
             anon: 1
             ev: 0
         options:
-          description: desired state of options as declared in configuration. If specified at all, flag must be present the given number of times (0 or 1).
+          description: desired state of options as declared in configuration. If specified at all, option must be present the given number of times (0 or 1).
           type: object
           additionalProperties:
             $ref: '#/components/schemas/ChoiceStateCondition'
@@ -2248,7 +2308,7 @@ components:
             music: 1
             suit: 0
         packages:
-          description: desired state of packages as declared in configuration. If specified at all, flag must be present the given number of times (0 or 1).
+          description: desired state of packages as declared in configuration. If specified at all, package must be present the given number of times (0 or 1).
           type: object
           additionalProperties:
             $ref: '#/components/schemas/ChoiceStateCondition'

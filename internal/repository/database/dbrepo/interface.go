@@ -64,7 +64,7 @@ type Repository interface {
 	// Note: count updates are not historized.
 	AddCount(ctx context.Context, delta *entity.Count) (*entity.Count, error)
 
-	// ResetCount overwrites the current counts for an area and nome with the given values.
+	// ResetCount overwrites the current counts for an area and name with the given values.
 	ResetCount(ctx context.Context, overwrite *entity.Count) error
 
 	// GetCount obtains the current count for area and name.

@@ -63,6 +63,13 @@ type AttendeeService interface {
 	// GetLimitBookings obtains the limit and number of pending and attending bookings for a given package key.
 	GetLimitBookings(ctx context.Context, key string) (*entity.Count, error)
 
+	// RecalculateLimit refreshes the limit by searching through the existing registrations, overwriting the cached
+	// limit information.
+	//
+	// This is an expensive operation. It also does not work well with concurrent changes to the limited package bookings,
+	// as those may or may not be reflected in the updated cached counts.
+	RecalculateLimit(ctx context.Context, key string) error
+
 	// IsOwnerFor returns the list of attendees (registrations) that are owned by the currently logged
 	// in user account.
 	//

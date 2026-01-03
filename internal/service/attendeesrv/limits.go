@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	aulogging "github.com/StephanHCB/go-autumn-logging"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
@@ -65,6 +67,55 @@ func (s *AttendeeServiceImplData) IntroducesLimitOverrun(ctx context.Context, ol
 	}
 
 	return result, nil
+}
+
+func (s *AttendeeServiceImplData) RecalculateLimit(ctx context.Context, key string) error {
+	criteria := attendee.AttendeeSearchCriteria{
+		MatchAny: []attendee.AttendeeSearchSingleCriterion{
+			{
+				Packages: map[string]int8{
+					key: 1,
+				},
+				Status: []status.Status{status.New, status.Waiting, status.Approved, status.PartiallyPaid, status.Paid, status.CheckedIn},
+			},
+		},
+		FillFields: []string{"packages", "status"},
+	}
+	searchResultList, err := database.GetRepository().FindAttendees(ctx, &criteria)
+	if err != nil {
+		return err
+	}
+
+	newCounts := entity.Count{
+		Area: entity.CountAreaPackage,
+		Name: key,
+	}
+	for _, searchResult := range searchResultList {
+		if searchResult != nil {
+			packages := choiceStrToMapWithoutChecks(searchResult.Packages)
+			pkgCount, ok := packages[key]
+			if ok {
+				if searchResult.Status == status.New || searchResult.Status == status.Waiting {
+					newCounts.Pending = newCounts.Pending + pkgCount
+				} else if searchResult.Status == status.Approved || searchResult.Status == status.PartiallyPaid || searchResult.Status == status.Paid || searchResult.Status == status.CheckedIn {
+					newCounts.Attending = newCounts.Attending + pkgCount
+				}
+			}
+		}
+	}
+
+	// loading it also checks that count row is present
+	currentCounts, err := database.GetRepository().GetCount(ctx, entity.CountAreaPackage, key)
+	if err != nil {
+		return err
+	}
+	if currentCounts.Pending != newCounts.Pending || currentCounts.Attending != newCounts.Attending {
+		aulogging.Logger.Ctx(ctx).Warn().Printf("resetting counts for package '%s' - pending %d -> %d - attending %d -> %d", key, currentCounts.Pending, newCounts.Pending, currentCounts.Attending, newCounts.Attending)
+		return database.GetRepository().ResetCount(ctx, &newCounts)
+	} else {
+		aulogging.Logger.Ctx(ctx).Info().Printf("counts remain unchanged for package '%s' - pending %d - attending %d", key, newCounts.Pending, newCounts.Attending)
+		return nil
+	}
 }
 
 func pendingMultiplier(value status.Status) int {

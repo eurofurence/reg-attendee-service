@@ -24,6 +24,7 @@ func Create(server chi.Router, attendeeSrv attendeesrv.AttendeeService) {
 	attendeeService = attendeeSrv
 
 	server.Get("/api/rest/v1/packages/{package}/limit", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, getPackageLimit)))
+	server.Post("/api/rest/v1/packages/{package}/limit", filter.HasGroupOrApiToken(config.OidcAdminGroup(), filter.WithTimeout(30*time.Second, recalcPackageLimit)))
 }
 
 func getPackageLimit(w http.ResponseWriter, r *http.Request) {
@@ -52,6 +53,27 @@ func getPackageLimit(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Add(headers.ContentType, media.ContentTypeApplicationJson)
 	ctlutil.WriteJson(ctx, w, dto)
+}
+
+func recalcPackageLimit(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	code, choice, err := packageFromVars(ctx, w, r)
+	if err != nil {
+		return
+	}
+
+	if choice.Limit == 0 {
+		packageUnlimitedErrorHandler(ctx, w, r, code)
+		return
+	}
+
+	if err := attendeeService.RecalculateLimit(ctx, code); err != nil {
+		otherErrorHandler(ctx, w, r, code, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func packageFromVars(ctx context.Context, w http.ResponseWriter, r *http.Request) (string, config.ChoiceConfig, error) {
