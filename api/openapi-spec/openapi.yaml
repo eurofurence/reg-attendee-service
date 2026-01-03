@@ -27,6 +27,8 @@ tags:
     description: Status progression
   - name: privileged
     description: Privileged functionality
+  - name: packages
+    description: Package overviews (global)
   - name: webhook
     description: Webhook notifications
   - name: info
@@ -1682,6 +1684,112 @@ paths:
       security:
         - BearerAuth: []
         - ApiKeyAuth: []
+  /packages/{package}/limit:
+    get:
+      tags:
+        - packages
+      summary: Obtain the current stock limit and sold units of a package
+      description: |-
+        Returns the current stock limit and sold units of a package. Only works for packages that actually have a limit.
+
+        Note: tracking of stock units is implemented as a cache for performance reasons, there are rare situations where the cache can become outdated.
+      operationId: getPackageLimit
+      parameters:
+        - name: package
+          in: path
+          description: Code of the package, as set in the service configuration
+          required: true
+          schema:
+            type: string
+            example: artshow-table
+      responses:
+        '200':
+          description: successful operation. The response body will tell you the package limit and the units sold to pending / attending registrations.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackageCount'
+        '400':
+          description: Package is unlimited. We do not track sales stats for unlimited packages. Use the general search endpoint (and mind the performance impact).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Package not found or invalid package code.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: An unexpected error occurred. This includes database errors. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
+    post:
+      tags:
+        - privileged
+      summary: Recalculate sold units of a package
+      description: |-
+        Recalculate the sold unit counts of a package with limited availability from all active registrations.
+
+        Note: tracking of stock units is implemented as a cache for performance reasons, there are rare situations where the cache can become outdated. This endpoint allows recalculation at times when system performance is not affected.
+        If you trigger this endpoint while lots of changes are being made, such as during the initial registration rush, you may actually make matters worse.
+      operationId: recalcPackageLimit
+      parameters:
+        - name: package
+          in: path
+          description: Code of the package, as set in the service configuration
+          required: true
+          schema:
+            type: string
+            example: artshow-table
+      responses:
+        '204':
+          description: Successful operation
+        '400':
+          description: Package is unlimited. We do not track sales stats for unlimited packages, so this request makes no sense.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: You do not have permission to trigger recalculation - admin only operation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Package not found or invalid package code.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: An unexpected error occurred. This includes database errors. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - BearerAuth: []
+        - ApiKeyAuth: []
 components:
   schemas:
     AdditionalInfoFullArea:
@@ -2192,7 +2300,7 @@ components:
             anon: 1
             ev: 0
         options:
-          description: desired state of options as declared in configuration. If specified at all, flag must be present the given number of times (0 or 1).
+          description: desired state of options as declared in configuration. If specified at all, option must be present the given number of times (0 or 1).
           type: object
           additionalProperties:
             $ref: '#/components/schemas/ChoiceStateCondition'
@@ -2200,7 +2308,7 @@ components:
             music: 1
             suit: 0
         packages:
-          description: desired state of packages as declared in configuration. If specified at all, flag must be present the given number of times (0 or 1).
+          description: desired state of packages as declared in configuration. If specified at all, package must be present the given number of times (0 or 1).
           type: object
           additionalProperties:
             $ref: '#/components/schemas/ChoiceStateCondition'
@@ -2494,6 +2602,25 @@ components:
           format: int64
           description: The number of seconds until the countdown ends (may depend on authorization, e.g. staff may register earlier than normal users). Stays at 0 if the countdown is over.
           example: 12648
+    PackageCount:
+      type: object
+      required:
+        - pending
+        - attending
+        - limit
+      properties:
+        pending:
+          type: integer
+          description: the number of pending (status new or waiting) registrations that have this package. These registrations are counted because they are seen as having "reserved" the package.
+          example: 17
+        attending:
+          type: integer
+          description: the number of attending (status approved, partially paid, paid, checked in) registrations that have this package. These have been billed for the package, so it must be considered sold, at least for now.
+          example: 34
+        limit:
+          type: integer
+          description: the total number of stock units of this package that are available. A package can still be sold if this is greater than pending + attending.
+          example: 118
     DueDate:
       type: object
       required:
@@ -2623,6 +2750,7 @@ components:
             - attendee.payment.error (payment service failure while updating attendee)
             - attendee.id.notfound (no such badge number in the database)
             - attendee.id.invalid (syntactically invalid badge number, must be positive integer)
+            - attendee.package.overrun (new attendee data or package change would lead to package limit overrun of available stock - package is sold out and must be removed) 
             - admin.read.error (database error)
             - admin.write.error (database error)
             - admin.parse.error (json body parse error)
@@ -2636,6 +2764,9 @@ components:
             - ban.write.error (database error)
             - ban.id.invalid (syntactically invalid ban rule id, must be positive integer)
             - ban.id.notfound (no such ban rule id in the database)
+            - package.param.notfound (no such package or invalid package code)
+            - package.param.unlimited (this package does not have a limit, so we are not caching sales counts)
+            - package.read.error (database error)
             - search.parse.error (json body parse error)
             - search.read.error (database error)
             - status.read.error (database error)
@@ -2650,6 +2781,7 @@ components:
             - status.cannot.delete (deletion is not possible, e.g. there are payments, or an invoice was issued and tax law says we have to store this data for 10 years)
             - status.use.approved (you tried to go directly to partially paid, paid, or checked in from new, cancelled, deleted - please use approved, this will automatically set (partially) paid as appropriate)
             - status.ban.match (must set admin flag skip_ban_check to allow transition to approved to proceed anyway)
+            - status.package.overrun (approving or reactivating this registration would lead to a package limit overrun of available stock - the package is sold out and must be removed before the status change can proceed)
           example: attendee.data.invalid
         details:
           type: object

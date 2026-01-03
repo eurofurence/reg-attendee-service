@@ -5,6 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/url"
+	"sort"
+	"strconv"
+	"time"
+
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
@@ -17,11 +23,6 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/media"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-http-utils/headers"
-	"net/http"
-	"net/url"
-	"sort"
-	"strconv"
-	"time"
 )
 
 var attendeeService attendeesrv.AttendeeService
@@ -59,12 +60,26 @@ func newAttendeeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	newAttendee := attendeeService.NewAttendee(ctx)
+	orig := *newAttendee
 	mapDtoToAttendee(dto, newAttendee)
+
+	limitDeltas, err := attendeeService.IntroducesLimitOverrun(ctx, &orig, newAttendee, status.Deleted, status.New)
+	if err != nil {
+		attendeeOverrunErrorHandler(ctx, w, r, err)
+		return
+	}
+
 	id, err := attendeeService.RegisterNewAttendee(ctx, newAttendee)
 	if err != nil {
 		attendeeWriteErrorHandler(ctx, w, r, err)
 		return
 	}
+
+	if err := attendeeService.RecordLimitChanges(ctx, limitDeltas); err != nil {
+		attendeeWriteErrorHandler(ctx, w, r, err)
+		return
+	}
+
 	location := fmt.Sprintf("%s/%d", r.RequestURI, id)
 	aulogging.Logger.Ctx(ctx).Info().Printf("sending Location %s", location)
 	w.Header().Set(headers.Location, location)
@@ -127,12 +142,26 @@ func updateAttendeeHandler(w http.ResponseWriter, r *http.Request) {
 		attendeeValidationErrorHandler(ctx, w, r, validationErrs)
 		return
 	}
+	orig := *attd // copy before mapping changes
 	mapDtoToAttendee(dto, attd)
+
+	limitChanges, err := attendeeService.IntroducesLimitOverrun(ctx, &orig, attd, latestStatus, latestStatus)
+	if err != nil {
+		attendeeOverrunErrorHandler(ctx, w, r, err)
+		return
+	}
+
 	err = attendeeService.UpdateAttendee(ctx, attd, suppressMinorUpdateEmail)
 	if err != nil {
 		attendeeWriteErrorHandler(ctx, w, r, err)
 		return
 	}
+
+	if err = attendeeService.RecordLimitChanges(ctx, limitChanges); err != nil {
+		attendeeWriteErrorHandler(ctx, w, r, err)
+		return
+	}
+
 	w.Header().Add(headers.Location, r.URL.Path)
 	w.WriteHeader(http.StatusOK)
 }
@@ -439,6 +468,11 @@ func obtainAttendeeLatestStatusMustReturnOnError(ctx context.Context, w http.Res
 func attendeeValidationErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, errs url.Values) {
 	aulogging.Logger.Ctx(ctx).Warn().Printf("received attendee data with validation errors: %v", errs)
 	ctlutil.ErrorHandler(ctx, w, r, "attendee.data.invalid", http.StatusBadRequest, errs)
+}
+
+func attendeeOverrunErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
+	aulogging.Logger.Ctx(ctx).Warn().Printf("received attendee data that would result in package overrun - rejected: %s", err.Error())
+	ctlutil.ErrorHandler(ctx, w, r, "attendee.package.overrun", http.StatusBadRequest, url.Values{"packages": {err.Error()}})
 }
 
 func attendeeParseErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {

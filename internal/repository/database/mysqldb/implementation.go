@@ -3,6 +3,9 @@ package mysqldb
 import (
 	"context"
 	"errors"
+	"fmt"
+	"time"
+
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
@@ -13,7 +16,6 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
-	"time"
 )
 
 type MysqlRepository struct {
@@ -69,6 +71,7 @@ func (r *MysqlRepository) Migrate() error {
 		&entity.Ban{},
 		&entity.History{},
 		&entity.StatusChange{},
+		&entity.Count{},
 	)
 	if err != nil {
 		aulogging.Logger.NoCtx().Error().WithErr(err).Printf("failed to migrate mysql db: %s", err.Error())
@@ -438,6 +441,97 @@ func (r *MysqlRepository) WriteAdditionalInfo(ctx context.Context, ad *entity.Ad
 		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("mysql error during additional info insert or update: %s", err.Error())
 	}
 	return err
+}
+
+// --- count ---
+
+func (r *MysqlRepository) CreateCount(initial *entity.Count) (*entity.Count, error) {
+	if initial == nil || initial.Area == "" || initial.Name == "" {
+		aulogging.Logger.NoCtx().Error().Print("error setting up counts - received nil or unset area or name")
+		return &entity.Count{}, errors.New("error setting up counts - received nil or unset area or name")
+	}
+	err := r.db.Model(&entity.Count{}).Where(&entity.Count{Area: initial.Area, Name: initial.Name}).FirstOrCreate(initial).Error
+	if err != nil {
+		aulogging.Logger.NoCtx().Error().WithErr(err).Printf("error setting up counts for area %s name %s: %s", initial.Area, initial.Name, err.Error())
+		return initial, err
+	}
+	return initial, nil
+}
+
+func (r *MysqlRepository) AddCount(ctx context.Context, delta *entity.Count) (*entity.Count, error) {
+	if delta == nil || delta.Area == "" || delta.Name == "" {
+		aulogging.Logger.Ctx(ctx).Error().Print("error changing counts - received nil or unset area or name")
+		return &entity.Count{}, errors.New("error changing counts - received nil or unset area or name")
+	}
+	query := `UPDATE att_counts 
+              SET pending = pending + @deltaPending, attending = attending + @deltaAttending 
+              WHERE area = @area AND name = @name`
+	params := map[string]interface{}{
+		"area":           delta.Area,
+		"name":           delta.Name,
+		"deltaPending":   delta.Pending,
+		"deltaAttending": delta.Attending,
+	}
+	result := r.db.Raw(query, params)
+	current, err := r.GetCount(ctx, delta.Area, delta.Name)
+	if result.Error != nil {
+		aulogging.Logger.Ctx(ctx).Error().Printf("error adding counts area %s name %s: %s", delta.Area, delta.Name, result.Error.Error())
+		return current, result.Error
+	}
+	if result.RowsAffected != 1 {
+		aulogging.Logger.Ctx(ctx).Error().Printf("error adding counts area %s name %s: affected %d rows instead of 1", delta.Area, delta.Name, result.RowsAffected)
+		return current, fmt.Errorf("error adding counts area %s name %s: failed to affect 1 row", delta.Area, delta.Name)
+	}
+	return current, err
+}
+
+func (r *MysqlRepository) ResetCount(ctx context.Context, overwrite *entity.Count) error {
+	if overwrite == nil || overwrite.Area == "" || overwrite.Name == "" {
+		aulogging.Logger.Ctx(ctx).Error().Print("error resetting counts - received nil or unset area or name")
+		return errors.New("error resetting counts - received nil or unset area or name")
+	}
+	query := `UPDATE att_counts 
+              SET pending = @pending, attending = @attending 
+              WHERE area = @area AND name = @name`
+	params := map[string]interface{}{
+		"area":      overwrite.Area,
+		"name":      overwrite.Name,
+		"pending":   overwrite.Pending,
+		"attending": overwrite.Attending,
+	}
+	result := r.db.Raw(query, params)
+	if result.Error != nil {
+		aulogging.Logger.Ctx(ctx).Error().Printf("error resetting counts area %s name %s: %s", overwrite.Area, overwrite.Name, result.Error.Error())
+		return result.Error
+	}
+	if result.RowsAffected != 1 {
+		aulogging.Logger.Ctx(ctx).Error().Printf("error adding counts area %s name %s: affected %d rows instead of 1", overwrite.Area, overwrite.Name, result.RowsAffected)
+		return fmt.Errorf("error resetting counts area %s name %s: failed to affect 1 row", overwrite.Area, overwrite.Name)
+	}
+	return nil
+}
+
+func (r *MysqlRepository) GetCount(ctx context.Context, area string, name string) (*entity.Count, error) {
+	c, err := r.getCountAllowMissing(ctx, area, name)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			aulogging.Logger.Ctx(ctx).Error().WithErr(err).Printf("error reading counts for area %s name %s - should have been set up during database migration: %s", area, name, err.Error())
+			return c, err
+		}
+		aulogging.Logger.Ctx(ctx).Error().WithErr(err).Printf("error reading counts for area %s name %s - other: %s", area, name, err.Error())
+		return c, err
+	}
+	return c, nil
+}
+
+func (r *MysqlRepository) getCountAllowMissing(ctx context.Context, area string, name string) (*entity.Count, error) {
+	var c entity.Count
+	if area == "" || name == "" {
+		aulogging.Logger.Ctx(ctx).Error().Print("error reading counts - received unset area or name")
+		return &c, errors.New("error reading counts - received unset area or name")
+	}
+	err := r.db.Model(&entity.Count{}).Where(&entity.Count{Area: area, Name: name}).First(&c).Error
+	return &c, err
 }
 
 // --- history ---
