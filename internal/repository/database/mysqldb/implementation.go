@@ -472,7 +472,7 @@ func (r *MysqlRepository) AddCount(ctx context.Context, delta *entity.Count) (*e
 		"deltaPending":   delta.Pending,
 		"deltaAttending": delta.Attending,
 	}
-	result := r.db.Raw(query, params)
+	result := r.db.Exec(query, params)
 	current, err := r.GetCount(ctx, delta.Area, delta.Name)
 	if result.Error != nil {
 		aulogging.Logger.Ctx(ctx).Error().Printf("error adding counts area %s name %s: %s", delta.Area, delta.Name, result.Error.Error())
@@ -499,7 +499,7 @@ func (r *MysqlRepository) ResetCount(ctx context.Context, overwrite *entity.Coun
 		"pending":   overwrite.Pending,
 		"attending": overwrite.Attending,
 	}
-	result := r.db.Raw(query, params)
+	result := r.db.Exec(query, params)
 	if result.Error != nil {
 		aulogging.Logger.Ctx(ctx).Error().Printf("error resetting counts area %s name %s: %s", overwrite.Area, overwrite.Name, result.Error.Error())
 		return result.Error
