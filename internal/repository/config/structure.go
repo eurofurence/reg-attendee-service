@@ -138,7 +138,9 @@ type (
 		MaxCount      int      `yaml:"max_count"`              // only supported for packages, 0 means 1 so can be left out of config
 		Constraint    string   `yaml:"constraint"`
 		ConstraintMsg string   `yaml:"constraint_msg"`
-		Limit         int      `yaml:"limit"` // only supported for packages, the maximum number of available stock. 0 means unlimited.
+		Limit         int      `yaml:"limit"`    // only supported for packages, the maximum number of available stock. 0 means unlimited.
+		Category      string   `yaml:"category"` // ignored - display option only
+		Sorting       int      `yaml:"sorting"`  // ignored - display option only
 	}
 
 	// AddInfoConfig configures access permissions to an additional info field
