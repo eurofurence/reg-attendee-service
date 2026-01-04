@@ -153,81 +153,113 @@ choices:
       price: 8000
       read_only: true
       vat_percent: 19
+      category: artshow
+      sorting: 140
     artshow-panel-half:
       description: Artshow (Half Panel)
       price: 1000
       read_only: true
       vat_percent: 19
+      category: artshow
+      sorting: 105
     artshow-panel-one:
       description: Artshow (1 Panel)
       price: 2000
       read_only: true
       vat_percent: 19
+      category: artshow
+      sorting: 110
     artshow-panel-oneandhalf:
       description: Artshow (1.5 Panels)
       price: 3000
       read_only: true
       vat_percent: 19
+      category: artshow
+      sorting: 115
     artshow-panel-three:
       description: Artshow (3 Panels)
       price: 6000
       read_only: true
       vat_percent: 19
+      category: artshow
+      sorting: 130
     artshow-panel-threeandhalf:
       description: Artshow (3.5 Panels)
       price: 7000
       read_only: true
       vat_percent: 19
+      category: artshow
+      sorting: 135
     artshow-panel-two:
       description: Artshow (2 Panels)
       price: 4000
       read_only: true
       vat_percent: 19
+      category: artshow
+      sorting: 120
     artshow-panel-twoandhalf:
       description: Artshow (2.5 Panels)
       price: 5000
       read_only: true
       vat_percent: 19
+      category: artshow
+      sorting: 125
     artshow-table-four:
       description: Artshow (4 Tables)
       price: 4000
       read_only: true
       vat_percent: 19
+      category: artshow
+      sorting: 240
     artshow-table-half:
       description: Artshow (Half Table)
       price: 500
       read_only: true
       vat_percent: 19
+      category: artshow
+      sorting: 205
     artshow-table-one:
       description: Artshow (1 Table)
       price: 1000
       read_only: true
       vat_percent: 19
+      category: artshow
+      sorting: 210
     artshow-table-oneandhalf:
       description: Artshow (1.5 Tables)
       price: 1500
       read_only: true
       vat_percent: 19
+      category: artshow
+      sorting: 215
     artshow-table-three:
       description: Artshow (3 Tables)
       price: 3000
       read_only: true
       vat_percent: 19
+      category: artshow
+      sorting: 230
     artshow-table-threeandhalf:
       description: Artshow (3.5 Tables)
       price: 3500
       read_only: true
       vat_percent: 19
+      category: artshow
+      sorting: 235
     artshow-table-two:
       description: Artshow (2 Tables)
       price: 2000
       read_only: true
       vat_percent: 19
+      category: artshow
+      sorting: 220
     artshow-table-twoandhalf:
       description: Artshow (2.5 Tables)
       price: 2500
       read_only: true
       vat_percent: 19
+      category: artshow
+      sorting: 225
     attendance:
       at-least-one-mandatory: true
       default: true
@@ -236,21 +268,35 @@ choices:
       vat_percent: 19
       visible_for:
         - regdesk
+      sorting: 10
     boat-benefactor:
       description: Summerboat Benefactor
       price: 10000
       read_only: true
       vat_percent: 19
+      category: boat
+      sorting: 200
+    boat-cruise:
+      description: Summerboat Boat Cruise
+      price: 3000
+      read_only: true
+      vat_percent: 19
+      category: boat
+      sorting: 10
     boat-trip:
       description: Summerboat Boat Trip
       price: 4000
       read_only: true
       vat_percent: 19
+      category: boat
+      sorting: 20
     boat-vip:
       description: Summerboat VIP
       price: 2500
       read_only: true
       vat_percent: 19
+      category: boat
+      sorting: 100
     contributor:
       description: Contributor Upgrade
       price: 5000
@@ -258,6 +304,8 @@ choices:
       visible_for:
         - regdesk
         - sponsordesk
+      category: addons
+      sorting: 100
     day-fri:
       at-least-one-mandatory: true
       constraint: '!attendance,!stage'
@@ -267,6 +315,7 @@ choices:
       vat_percent: 19
       visible_for:
         - regdesk
+      sorting: 120
     day-sat:
       at-least-one-mandatory: true
       constraint: '!attendance,!stage'
@@ -276,6 +325,7 @@ choices:
       vat_percent: 19
       visible_for:
         - regdesk
+      sorting: 130
     day-thu:
       at-least-one-mandatory: true
       constraint: '!attendance,!stage'
@@ -285,6 +335,7 @@ choices:
       vat_percent: 19
       visible_for:
         - regdesk
+      sorting: 110
     day-wed:
       at-least-one-mandatory: true
       constraint: '!attendance,!stage'
@@ -294,6 +345,7 @@ choices:
       vat_percent: 19
       visible_for:
         - regdesk
+      sorting: 100
     dealer-double:
       constraint: '!dealer-half,!dealer-full,!dealer-fullplus,!dealer-quad'
       constraint_msg: Cannot mix dealer table packages.
@@ -301,6 +353,8 @@ choices:
       price: 20000
       read_only: true
       vat_percent: 19
+      category: dealer
+      sorting: 200
     dealer-full:
       constraint: '!dealer-half,!dealer-fullplus,!dealer-double,!dealer-quad'
       constraint_msg: Cannot mix dealer table packages.
@@ -308,6 +362,8 @@ choices:
       price: 10000
       read_only: true
       vat_percent: 19
+      category: dealer
+      sorting: 100
     dealer-fullplus:
       constraint: '!dealer-half,!dealer-full,!dealer-double,!dealer-quad'
       constraint_msg: Cannot mix dealer table packages.
@@ -315,6 +371,8 @@ choices:
       price: 15000
       read_only: true
       vat_percent: 19
+      category: dealer
+      sorting: 150
     dealer-half:
       constraint: '!dealer-full,!dealer-fullplus,!dealer-double,!dealer-quad'
       constraint_msg: Cannot mix dealer table packages.
@@ -322,6 +380,8 @@ choices:
       price: 5000
       read_only: true
       vat_percent: 19
+      category: dealer
+      sorting: 50
     dealer-quad:
       constraint: '!dealer-half,!dealer-full,!dealer-fullplus,!dealer-double'
       constraint_msg: Cannot mix dealer table packages.
@@ -329,6 +389,8 @@ choices:
       price: 40000
       read_only: true
       vat_percent: 19
+      category: dealer
+      sorting: 400
     fursuit:
       description: First Fursuit Badge
       price: 0
@@ -336,6 +398,8 @@ choices:
       visible_for:
         - regdesk
         - sponsordesk
+      category: fursuit
+      sorting: 10
     fursuitadd:
       constraint: 'fursuit'
       constraint_msg: Please select the free fursuit badge first, otherwise you'll pay too much.
@@ -346,6 +410,8 @@ choices:
       visible_for:
         - regdesk
         - sponsordesk
+      category: fursuit
+      sorting: 20
     early:
       constraint: '!day-wed,!day-thu,!day-fri,!day-sat'
       constraint_msg: Early Bird Discount does not apply to Day Tickets
@@ -355,6 +421,7 @@ choices:
       vat_percent: 19
       visible_for:
         - regdesk
+      sorting: 200
     late:
       constraint: '!day-wed,!day-thu,!day-fri,!day-sat'
       constraint_msg: Late Fee does not apply to Day Tickets
@@ -365,18 +432,23 @@ choices:
       vat_percent: 19
       visible_for:
         - regdesk
+      sorting: 210
     party:
-      description: Admittance to the party
+      description: Party
       limit: 100
       price: 1000
       vat_percent: 19
       visible_for:
         - regdesk
+      category: addons
+      sorting: 500
     room-none:
       default: true
       description: No Room
       read_only: true
       vat_percent: 7
+      category: other
+      sorting: 10
     sponsor:
       constraint: '!contributor'
       constraint_msg: Please choose only one of Contributor, Sponsor or Supersponsor.
@@ -386,6 +458,8 @@ choices:
       visible_for:
         - regdesk
         - sponsordesk
+      category: addons
+      sorting: 200
     sponsor2:
       constraint: '!contributor,!sponsor'
       constraint_msg: Please choose only one of Contributor, Sponsor or Supersponsor.
@@ -395,6 +469,8 @@ choices:
       visible_for:
         - regdesk
         - sponsordesk
+      category: addons
+      sorting: 300
     benefactor:
       allowed_counts:
         - 1
@@ -414,12 +490,14 @@ choices:
       constraint: 'sponsor2'
       constraint_msg: Only available for supersponsors.
       description: Benefactor
-      max_count: 100
       price: 5000
       vat_percent: 19
+      max_count: 100
       visible_for:
         - regdesk
         - sponsordesk
+      category: addons
+      sorting: 400
     stage:
       default: true
       description: Entrance Fee (Stage Ticket)
@@ -427,6 +505,7 @@ choices:
       vat_percent: 19
       visible_for:
         - regdesk
+      sorting: 20
     tshirt:
       constraint: '!contributor,!sponsor,!sponsor2'
       constraint_msg: Contributors, sponsors and supersponsors get their T-Shirt for free.
@@ -435,6 +514,8 @@ choices:
       vat_percent: 19
       visible_for:
         - sponsordesk
+      category: addons
+      sorting: 50
   options:
     anim:
       description: Animator

@@ -88,6 +88,8 @@ choices:
       vat_percent: 7
       default: true
       read_only: true
+      category: other
+      sorting: 10
     attendance:
       description: 'Entrance Fee (Convention Ticket)'
       price: 9000
@@ -97,18 +99,22 @@ choices:
       at-least-one-mandatory: true
       constraint: 'stage'
       constraint_msg: 'Must also choose stage pass with full attendance.'
+      sorting: 10
     stage:
       description: 'Entrance Fee (Stage Ticket)'
       price: 500
       vat_percent: 19
       default: true
       read_only: true
+      sorting: 20
     sponsor:
       description: 'Sponsor Upgrade'
       price: 6500
       vat_percent: 19
       visible_for:
         - sponsordesk
+      category: addons
+      sorting: 200
     sponsor2:
       description: 'Supersponsor Upgrade'
       price: 16000
