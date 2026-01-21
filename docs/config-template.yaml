@@ -150,112 +150,112 @@ choices:
   packages:
     artshow-panel-four:
       description: Artshow (4 Panels)
-      price: 8000
+      price: 16000
       read_only: true
       vat_percent: 19
       category: artshow
       sorting: 140
     artshow-panel-half:
       description: Artshow (Half Panel)
-      price: 1000
+      price: 2000
       read_only: true
       vat_percent: 19
       category: artshow
       sorting: 105
     artshow-panel-one:
       description: Artshow (1 Panel)
-      price: 2000
+      price: 4000
       read_only: true
       vat_percent: 19
       category: artshow
       sorting: 110
     artshow-panel-oneandhalf:
       description: Artshow (1.5 Panels)
-      price: 3000
+      price: 6000
       read_only: true
       vat_percent: 19
       category: artshow
       sorting: 115
     artshow-panel-three:
       description: Artshow (3 Panels)
-      price: 6000
+      price: 12000
       read_only: true
       vat_percent: 19
       category: artshow
       sorting: 130
     artshow-panel-threeandhalf:
       description: Artshow (3.5 Panels)
-      price: 7000
+      price: 14000
       read_only: true
       vat_percent: 19
       category: artshow
       sorting: 135
     artshow-panel-two:
       description: Artshow (2 Panels)
-      price: 4000
+      price: 8000
       read_only: true
       vat_percent: 19
       category: artshow
       sorting: 120
     artshow-panel-twoandhalf:
       description: Artshow (2.5 Panels)
-      price: 5000
+      price: 10000
       read_only: true
       vat_percent: 19
       category: artshow
       sorting: 125
     artshow-table-four:
       description: Artshow (4 Tables)
-      price: 4000
+      price: 16000
       read_only: true
       vat_percent: 19
       category: artshow
       sorting: 240
     artshow-table-half:
       description: Artshow (Half Table)
-      price: 500
+      price: 2000
       read_only: true
       vat_percent: 19
       category: artshow
       sorting: 205
     artshow-table-one:
       description: Artshow (1 Table)
-      price: 1000
+      price: 4000
       read_only: true
       vat_percent: 19
       category: artshow
       sorting: 210
     artshow-table-oneandhalf:
       description: Artshow (1.5 Tables)
-      price: 1500
+      price: 6000
       read_only: true
       vat_percent: 19
       category: artshow
       sorting: 215
     artshow-table-three:
       description: Artshow (3 Tables)
-      price: 3000
+      price: 12000
       read_only: true
       vat_percent: 19
       category: artshow
       sorting: 230
     artshow-table-threeandhalf:
       description: Artshow (3.5 Tables)
-      price: 3500
+      price: 14000
       read_only: true
       vat_percent: 19
       category: artshow
       sorting: 235
     artshow-table-two:
       description: Artshow (2 Tables)
-      price: 2000
+      price: 8000
       read_only: true
       vat_percent: 19
       category: artshow
       sorting: 220
     artshow-table-twoandhalf:
       description: Artshow (2.5 Tables)
-      price: 2500
+      price: 10000
       read_only: true
       vat_percent: 19
       category: artshow
@@ -264,18 +264,11 @@ choices:
       at-least-one-mandatory: true
       default: true
       description: Entrance Fee (Convention Ticket)
-      price: 16000
+      price: 18000
       vat_percent: 19
       visible_for:
         - regdesk
       sorting: 10
-    boat-benefactor:
-      description: Summerboat Benefactor
-      price: 10000
-      read_only: true
-      vat_percent: 19
-      category: boat
-      sorting: 200
     boat-cruise:
       description: Summerboat Boat Cruise
       price: 3000
@@ -299,7 +292,7 @@ choices:
       sorting: 100
     contributor:
       description: Contributor Upgrade
-      price: 5000
+      price: 5500
       vat_percent: 19
       visible_for:
         - regdesk
@@ -311,7 +304,7 @@ choices:
       constraint: '!attendance,!stage'
       constraint_msg: Must disable Convention Ticket and Stage Ticket for Day Guests.
       description: Day Guest (Friday)
-      price: 9000
+      price: 10000
       vat_percent: 19
       visible_for:
         - regdesk
@@ -321,7 +314,7 @@ choices:
       constraint: '!attendance,!stage'
       constraint_msg: Must disable Convention Ticket and Stage Ticket for Day Guests.
       description: Day Guest (Saturday)
-      price: 9000
+      price: 10000
       vat_percent: 19
       visible_for:
         - regdesk
@@ -331,7 +324,7 @@ choices:
       constraint: '!attendance,!stage'
       constraint_msg: Must disable Convention Ticket and Stage Ticket for Day Guests.
       description: Day Guest (Thursday)
-      price: 9000
+      price: 10000
       vat_percent: 19
       visible_for:
         - regdesk
@@ -341,7 +334,7 @@ choices:
       constraint: '!attendance,!stage'
       constraint_msg: Must disable Convention Ticket and Stage Ticket for Day Guests.
       description: Day Guest (Wednesday)
-      price: 9000
+      price: 10000
       vat_percent: 19
       visible_for:
         - regdesk
@@ -350,7 +343,7 @@ choices:
       constraint: '!dealer-half,!dealer-full,!dealer-fullplus,!dealer-quad'
       constraint_msg: Cannot mix dealer table packages.
       description: Dealer Table Fee (Double)
-      price: 20000
+      price: 22000
       read_only: true
       vat_percent: 19
       category: dealer
@@ -359,7 +352,7 @@ choices:
       constraint: '!dealer-half,!dealer-fullplus,!dealer-double,!dealer-quad'
       constraint_msg: Cannot mix dealer table packages.
       description: Dealer Table Fee (Full)
-      price: 10000
+      price: 11000
       read_only: true
       vat_percent: 19
       category: dealer
@@ -368,7 +361,7 @@ choices:
       constraint: '!dealer-half,!dealer-full,!dealer-double,!dealer-quad'
       constraint_msg: Cannot mix dealer table packages.
       description: Dealer Table Fee (Full Plus)
-      price: 15000
+      price: 16500
       read_only: true
       vat_percent: 19
       category: dealer
@@ -377,7 +370,7 @@ choices:
       constraint: '!dealer-full,!dealer-fullplus,!dealer-double,!dealer-quad'
       constraint_msg: Cannot mix dealer table packages.
       description: Dealer Table Fee (Half)
-      price: 5000
+      price: 5500
       read_only: true
       vat_percent: 19
       category: dealer
@@ -386,7 +379,7 @@ choices:
       constraint: '!dealer-half,!dealer-full,!dealer-fullplus,!dealer-double'
       constraint_msg: Cannot mix dealer table packages.
       description: Dealer Table Fee (Quad)
-      price: 40000
+      price: 44000
       read_only: true
       vat_percent: 19
       category: dealer
@@ -404,7 +397,7 @@ choices:
       constraint: 'fursuit'
       constraint_msg: Please select the free fursuit badge first, otherwise you'll pay too much.
       description: Additional Fursuit Badge
-      price: 200
+      price: 500
       vat_percent: 19
       max_count: 10
       visible_for:
@@ -418,6 +411,7 @@ choices:
       description: Early Bird Discount
       price: -1500
       read_only: true
+      default: true
       vat_percent: 19
       visible_for:
         - regdesk
@@ -425,7 +419,6 @@ choices:
     late:
       constraint: '!day-wed,!day-thu,!day-fri,!day-sat'
       constraint_msg: Late Fee does not apply to Day Tickets
-      default: true
       description: Late Fee
       price: 1500
       read_only: true
@@ -434,8 +427,8 @@ choices:
         - regdesk
       sorting: 210
     party:
-      description: Party
-      limit: 100
+      description: Dead Dog Party
+      limit: 1100
       price: 1000
       vat_percent: 19
       visible_for:
@@ -453,7 +446,7 @@ choices:
       constraint: '!contributor'
       constraint_msg: Please choose only one of Contributor, Sponsor or Supersponsor.
       description: Sponsor Upgrade
-      price: 10000
+      price: 12000
       vat_percent: 19
       visible_for:
         - regdesk
@@ -464,7 +457,7 @@ choices:
       constraint: '!contributor,!sponsor'
       constraint_msg: Please choose only one of Contributor, Sponsor or Supersponsor.
       description: Supersponsor Upgrade
-      price: 20000
+      price: 22000
       vat_percent: 19
       visible_for:
         - regdesk
@@ -510,7 +503,7 @@ choices:
       constraint: '!contributor,!sponsor,!sponsor2'
       constraint_msg: Contributors, sponsors and supersponsors get their T-Shirt for free.
       description: Paid T-Shirt (non-sponsor)
-      price: 2000
+      price: 2500
       vat_percent: 19
       visible_for:
         - sponsordesk
