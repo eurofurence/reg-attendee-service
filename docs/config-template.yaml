@@ -500,8 +500,8 @@ choices:
         - regdesk
       sorting: 20
     tshirt:
-      constraint: '!contributor,!sponsor,!sponsor2'
-      constraint_msg: Contributors, sponsors and supersponsors get their T-Shirt for free.
+      constraint: '!sponsor,!sponsor2'
+      constraint_msg: Sponsors and supersponsors get their T-Shirt for free.
       description: Paid T-Shirt (non-sponsor)
       price: 2500
       vat_percent: 19
