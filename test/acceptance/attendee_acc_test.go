@@ -12,6 +12,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/counts"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
+	"github.com/eurofurence/reg-attendee-service/internal/entity"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/mailservice"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/paymentservice"
@@ -907,6 +908,35 @@ func TestCreateNewAttendee_MultiPackageWrongNumberOfTimes(t *testing.T) {
 	})
 }
 
+func TestCreateNewAttendee_PackageLimitOverrun(t *testing.T) {
+	docs.Given("given the configuration for login-only registration after normal reg is open")
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given a counted package has already sold out")
+	err := database.GetRepository().ResetCount(context.TODO(), &entity.Count{
+		Area:      entity.CountAreaPackage,
+		Name:      "mountain-trip",
+		Pending:   0,
+		Attending: 4,
+	})
+	require.NoError(t, err)
+	tstRequirePackageCount(t, "mountain-trip", counts.PackageCount{Attending: 4, Limit: 4})
+
+	docs.Given("given a logged in user")
+	token := tstValidUserToken(t, 1)
+
+	docs.When("when they attempt to create a new attendee, adding the counted package that is sold out")
+	attendeeSent := tstBuildValidAttendee("na69-")
+	tstAddPackages(&attendeeSent, "mountain-trip")
+	response := tstPerformPost("/api/rest/v1/attendees", tstRenderJson(attendeeSent), token)
+
+	docs.Then("then the attempt is rejected as invalid (400) with an appropriate error response")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.package.overrun", url.Values{
+		"packages_list": []string{"cannot allocate package 'mountain-trip', stock limit reached - please remove this package to continue: this change introduces a package overrun"},
+	})
+}
+
 // --- update attendee ---
 
 func TestUpdateExistingAttendee_Self(t *testing.T) {
@@ -1650,6 +1680,64 @@ func TestUpdateExistingAttendee_AddPackageWrongNumberOfTimes(t *testing.T) {
 	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
 		"packages_list": []string{"package mountain-trip occurs 2 times, but this is not allowed due to allowed_counts configuration, which only allows [1 3]"},
 	})
+}
+
+func TestUpdateExistingAttendee_AddAndRemoveCountedPackage(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee who has booked a counted package")
+	token := tstValidUserToken(t, 101)
+	location1, attendee1 := tstRegisterAttendeeWithToken(t, "ua14-", token)
+	attendee1updated := attendee1
+	tstAddPackages(&attendee1updated, "mountain-trip")
+	updateResponse := tstPerformPut(location1, tstRenderJson(attendee1updated), token)
+	require.Equal(t, http.StatusOK, updateResponse.status, "unexpected http response status for update")
+	tstRequirePackageCount(t, "mountain-trip", counts.PackageCount{Pending: 1, Limit: 4})
+
+	docs.When("when they remove the counted package again, which they can do while not paid")
+	removePackageResponse := tstPerformPut(location1, tstRenderJson(attendee1), token)
+	require.Equal(t, http.StatusOK, removePackageResponse.status, "unexpected http response status for second update")
+
+	docs.Then("then the package count has been correctly reset")
+	tstRequirePackageCount(t, "mountain-trip", counts.PackageCount{Pending: 0, Limit: 4})
+}
+
+func TestUpdateExistingAttendee_OverrunCountedPackage(t *testing.T) {
+	docs.Given("given the configuration for standard registration")
+	tstSetup(true, false, true)
+	defer tstShutdown()
+
+	docs.Given("given an existing attendee who has booked a counted package")
+	token := tstValidUserToken(t, 101)
+	location1, attendee1 := tstRegisterAttendeeWithToken(t, "ua15a-", token)
+	attendee1updated := attendee1
+	tstAddPackages(&attendee1updated, "mountain-trip")
+	updateResponse := tstPerformPut(location1, tstRenderJson(attendee1updated), token)
+	require.Equal(t, http.StatusOK, updateResponse.status, "unexpected http response status for update")
+	tstRequirePackageCount(t, "mountain-trip", counts.PackageCount{Pending: 1, Limit: 4})
+
+	docs.Given("given another attendee who has exhausted stock for the counted package")
+	token2 := tstValidUserToken(t, 1)
+	location2, attendee2 := tstRegisterAttendeeWithToken(t, "ua15b-", token2)
+	attendee2updated := attendee2
+	tstAddPackages(&attendee2updated, "mountain-trip,mountain-trip,mountain-trip")
+	update2Response := tstPerformPut(location2, tstRenderJson(attendee2updated), token2)
+	require.Equal(t, http.StatusOK, update2Response.status, "unexpected http response status for update")
+	tstRequirePackageCount(t, "mountain-trip", counts.PackageCount{Pending: 4, Limit: 4})
+
+	docs.When("when the first attendee tries to add more of the package, causing an overrun")
+	tstAddPackages(&attendee1updated, "mountain-trip,mountain-trip")
+	response := tstPerformPut(location1, tstRenderJson(attendee1updated), token)
+
+	docs.Then("then the request fails with the expected error")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.package.overrun", url.Values{
+		"packages_list": []string{"cannot allocate package 'mountain-trip', stock limit reached - please remove this package to continue: this change introduces a package overrun"},
+	})
+
+	docs.Then("and the package count stays at the limit")
+	tstRequirePackageCount(t, "mountain-trip", counts.PackageCount{Pending: 4, Limit: 4})
 }
 
 // --- get attendee ---

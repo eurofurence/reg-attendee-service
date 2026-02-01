@@ -50,10 +50,11 @@ type AttendeeService interface {
 	// ResendStatusMail resends the current status mail, but with dues recalculated
 	ResendStatusMail(ctx context.Context, attendee *entity.Attendee, currentStatus status.Status, currentStatusComment string) error
 
-	// IntroducesLimitOverrun checks if a status or package change would introduce a package limit overrun
+	// ComputeDeltasAndCheckLimitOverrun computes deltas for all limited packages, and checks if a status or package change
+	// would introduce a package limit overrun along the way.
 	//
 	// Can also be used to check new registrations, by setting packages on oldAttendeeState to empty
-	IntroducesLimitOverrun(ctx context.Context, oldAttendeeState *entity.Attendee, currentAttendeeState *entity.Attendee, oldStatus status.Status, newStatus status.Status) ([]*entity.Count, error)
+	ComputeDeltasAndCheckLimitOverrun(ctx context.Context, oldAttendeeState *entity.Attendee, currentAttendeeState *entity.Attendee, oldStatus status.Status, newStatus status.Status) ([]*entity.Count, error)
 
 	// RecordLimitChanges changes the package limit cache according to deltas, if any.
 	//

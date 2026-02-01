@@ -26,7 +26,7 @@ func (s *AttendeeServiceImplData) RecordLimitChanges(ctx context.Context, deltas
 	return nil
 }
 
-func (s *AttendeeServiceImplData) IntroducesLimitOverrun(ctx context.Context, oldState *entity.Attendee, currentState *entity.Attendee, oldStatus status.Status, newStatus status.Status) ([]*entity.Count, error) {
+func (s *AttendeeServiceImplData) ComputeDeltasAndCheckLimitOverrun(ctx context.Context, oldState *entity.Attendee, currentState *entity.Attendee, oldStatus status.Status, newStatus status.Status) ([]*entity.Count, error) {
 	result := make([]*entity.Count, 0)
 
 	packagesConfig := config.PackagesConfig()
@@ -34,8 +34,8 @@ func (s *AttendeeServiceImplData) IntroducesLimitOverrun(ctx context.Context, ol
 	currentPackagesSelectedCountMap := choiceStrToMap(currentState.Packages, packagesConfig)
 	for key, conf := range packagesConfig {
 		if conf.Limit > 0 {
-			if currentPackagesSelectedCountMap[key] > 0 {
-				// only adding / keeping a package can introduce overruns, so limit processing to this case
+			// if the package isn't selected either before or after the update, then it cannot cause deltas or overruns
+			if currentPackagesSelectedCountMap[key] > 0 || oldPackagesSelectedCountMap[key] > 0 {
 				oldPendingCount := oldPackagesSelectedCountMap[key] * pendingMultiplier(oldStatus)
 				newPendingCount := currentPackagesSelectedCountMap[key] * pendingMultiplier(newStatus)
 
@@ -46,6 +46,7 @@ func (s *AttendeeServiceImplData) IntroducesLimitOverrun(ctx context.Context, ol
 				if err != nil {
 					return result, err
 				}
+
 				delta := entity.Count{
 					Area:      entity.CountAreaPackage,
 					Name:      key,
@@ -57,7 +58,7 @@ func (s *AttendeeServiceImplData) IntroducesLimitOverrun(ctx context.Context, ol
 					newAttendingAllocation := currentAllocation.Attending + delta.Attending
 
 					if newPendingAllocation+newAttendingAllocation > conf.Limit {
-						return result, fmt.Errorf("cannot allocate package '%s', allocation limit reached - please remove this package to continue: %w", key, IntroducesOverrun)
+						return result, fmt.Errorf("cannot allocate package '%s', stock limit reached - please remove this package to continue: %w", key, IntroducesOverrun)
 					}
 
 					result = append(result, &delta)

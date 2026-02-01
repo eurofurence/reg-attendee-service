@@ -63,7 +63,7 @@ func newAttendeeHandler(w http.ResponseWriter, r *http.Request) {
 	orig := *newAttendee
 	mapDtoToAttendee(dto, newAttendee)
 
-	limitDeltas, err := attendeeService.IntroducesLimitOverrun(ctx, &orig, newAttendee, status.Deleted, status.New)
+	limitDeltas, err := attendeeService.ComputeDeltasAndCheckLimitOverrun(ctx, &orig, newAttendee, status.Deleted, status.New)
 	if err != nil {
 		attendeeOverrunErrorHandler(ctx, w, r, err)
 		return
@@ -145,7 +145,7 @@ func updateAttendeeHandler(w http.ResponseWriter, r *http.Request) {
 	orig := *attd // copy before mapping changes
 	mapDtoToAttendee(dto, attd)
 
-	limitChanges, err := attendeeService.IntroducesLimitOverrun(ctx, &orig, attd, latestStatus, latestStatus)
+	limitChanges, err := attendeeService.ComputeDeltasAndCheckLimitOverrun(ctx, &orig, attd, latestStatus, latestStatus)
 	if err != nil {
 		attendeeOverrunErrorHandler(ctx, w, r, err)
 		return
@@ -472,7 +472,7 @@ func attendeeValidationErrorHandler(ctx context.Context, w http.ResponseWriter, 
 
 func attendeeOverrunErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
 	aulogging.Logger.Ctx(ctx).Warn().Printf("received attendee data that would result in package overrun - rejected: %s", err.Error())
-	ctlutil.ErrorHandler(ctx, w, r, "attendee.package.overrun", http.StatusBadRequest, url.Values{"packages": {err.Error()}})
+	ctlutil.ErrorHandler(ctx, w, r, "attendee.package.overrun", http.StatusBadRequest, url.Values{"packages_list": {err.Error()}})
 }
 
 func attendeeParseErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
