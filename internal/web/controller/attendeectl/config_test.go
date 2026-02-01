@@ -106,7 +106,7 @@ func (s *MockAttendeeService) StatusChangePossible(ctx context.Context, attendee
 	return nil
 }
 
-func (s *MockAttendeeService) IntroducesLimitOverrun(ctx context.Context, oldState *entity.Attendee, currentState *entity.Attendee, oldStatus status.Status, newStatus status.Status) ([]*entity.Count, error) {
+func (s *MockAttendeeService) ComputeDeltasAndCheckLimitOverrun(ctx context.Context, oldState *entity.Attendee, currentState *entity.Attendee, oldStatus status.Status, newStatus status.Status) ([]*entity.Count, error) {
 	return nil, nil
 }
 

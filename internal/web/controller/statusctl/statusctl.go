@@ -98,7 +98,7 @@ func postStatusHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	limitChanges, err := attendeeService.IntroducesLimitOverrun(ctx, att, att, latestStatusChange.Status, dto.Status)
+	limitChanges, err := attendeeService.ComputeDeltasAndCheckLimitOverrun(ctx, att, att, latestStatusChange.Status, dto.Status)
 	if err != nil {
 		statusChangeUnavailableErrorHandler(ctx, w, r, err)
 		return
