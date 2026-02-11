@@ -5,10 +5,12 @@ package config
 import (
 	"crypto/rsa"
 	"fmt"
-	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
+	"os"
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 )
 
 func UseEcsLogging() bool {
@@ -340,4 +342,20 @@ func RegsysPublicUrl() string {
 
 func AvatarBaseUrl() string {
 	return Configuration().Security.Oidc.AvatarBaseUrl
+}
+
+func ServiceName() string {
+	return Configuration().Service.Name
+}
+
+func TelemetryEnabled() bool {
+	return Configuration().Telemetry.Enable
+}
+
+func TelemetryEndpoint() string {
+	endpoint := Configuration().Telemetry.Endpoint
+	if endpoint == "" {
+		endpoint = os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
+	}
+	return endpoint
 }

@@ -65,7 +65,7 @@ func newServer(ctx context.Context, router chi.Router) *http.Server {
 	}
 }
 
-func runServerWithGracefulShutdown(attSrv attendeesrv.AttendeeService) error {
+func runServerWithGracefulShutdown(attSrv attendeesrv.AttendeeService, telemetryShutdown func(context.Context) error) error {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	sig := make(chan os.Signal, 1)
@@ -85,6 +85,10 @@ func runServerWithGracefulShutdown(attSrv attendeesrv.AttendeeService) error {
 		if err := srv.Shutdown(tCtx); err != nil {
 			aulogging.Logger.NoCtx().Error().WithErr(err).Printf("Couldn't shutdown server gracefully: %s", err.Error())
 			os.Exit(3)
+		}
+
+		if err := telemetryShutdown(tCtx); err != nil {
+			aulogging.Logger.NoCtx().Error().WithErr(err).Printf("Couldn't shutdown telemetry gracefully: %s", err.Error())
 		}
 	}()
 

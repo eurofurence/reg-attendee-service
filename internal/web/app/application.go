@@ -10,6 +10,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/repository/mailservice"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/paymentservice"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/selfclient"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/telemetry"
 	"github.com/eurofurence/reg-attendee-service/internal/service/attendeesrv"
 	"sync"
 	"time"
@@ -36,6 +37,12 @@ func (i *Impl) Run() int {
 	}
 	setLoglevel(config.LoggingSeverity())
 
+	ctx := context.Background()
+	telemetryShutdown, err := telemetry.Setup(ctx)
+	if err != nil {
+		return 1
+	}
+
 	if err := database.Open(); err != nil {
 		return 1
 	}
@@ -55,7 +62,7 @@ func (i *Impl) Run() int {
 	}
 
 	attendeeService := attendeesrv.New()
-	if err := runServerWithGracefulShutdown(attendeeService); err != nil {
+	if err := runServerWithGracefulShutdown(attendeeService, telemetryShutdown); err != nil {
 		return 2
 	}
 

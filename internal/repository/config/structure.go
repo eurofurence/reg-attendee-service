@@ -27,6 +27,7 @@ type (
 		Database              DatabaseConfig           `yaml:"database"`
 		Security              SecurityConfig           `yaml:"security"`
 		Logging               LoggingConfig            `yaml:"logging"`
+		Telemetry             TelemetryConfig          `yaml:"telemetry"`
 		Choices               FlagsPkgOptConfig        `yaml:"choices"`
 		AdditionalInfo        map[string]AddInfoConfig `yaml:"additional_info_areas"` // field name -> config
 		TShirtSizes           []string                 `yaml:"tshirtsizes"`
@@ -170,5 +171,11 @@ type (
 		EarliestDueDate string `yaml:"earliest_due_date"`
 		LatestDueDate   string `yaml:"latest_due_date"` // inclusive
 		DueDays         int    `yaml:"due_days"`
+	}
+
+	// TelemetryConfig configures OpenTelemetry
+	TelemetryConfig struct {
+		Enable   bool   `yaml:"enable"`   // toggle telemetry on/off
+		Endpoint string `yaml:"endpoint"` // OTLP gRPC endpoint (e.g., "localhost:4317")
 	}
 )
