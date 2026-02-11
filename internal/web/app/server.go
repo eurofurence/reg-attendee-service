@@ -33,6 +33,7 @@ func CreateRouter(ctx context.Context, attSrv attendeesrv.AttendeeService) chi.R
 
 	server.Use(middleware.AddRequestIdToContextAndResponse)
 	server.Use(loggermiddleware.AddZerologLoggerToContext)
+	server.Use(middleware.Tracing)
 	server.Use(middleware.RequestLogger)
 	server.Use(middleware.PanicRecoverer)
 	server.Use(middleware.CorsHandling)
