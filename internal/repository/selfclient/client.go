@@ -5,15 +5,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	aurestclientapi "github.com/StephanHCB/go-autumn-restclient/api"
-	auresthttpclient "github.com/StephanHCB/go-autumn-restclient/implementation/httpclient"
-	aurestlogging "github.com/StephanHCB/go-autumn-restclient/implementation/requestlogging"
-	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
-	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
-	"github.com/go-http-utils/headers"
 	"net/http"
 	"strings"
 	"time"
+
+	aurestclientapi "github.com/StephanHCB/go-autumn-restclient/api"
+	aurestlogging "github.com/StephanHCB/go-autumn-restclient/implementation/requestlogging"
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/telemetry"
+	"github.com/go-http-utils/headers"
 )
 
 var (
@@ -53,10 +54,7 @@ func requestManipulator(ctx context.Context, r *http.Request) {
 }
 
 func Setup() error {
-	httpClient, err := auresthttpclient.New(0, nil, requestManipulator)
-	if err != nil {
-		return err
-	}
+	httpClient := telemetry.NewHttpClient(requestManipulator)
 
 	requestLoggingClient := aurestlogging.New(httpClient)
 

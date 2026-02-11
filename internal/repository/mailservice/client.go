@@ -3,16 +3,17 @@ package mailservice
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"time"
+
 	aurestbreaker "github.com/StephanHCB/go-autumn-restclient-circuitbreaker/implementation/breaker"
 	aurestclientapi "github.com/StephanHCB/go-autumn-restclient/api"
-	auresthttpclient "github.com/StephanHCB/go-autumn-restclient/implementation/httpclient"
 	aurestlogging "github.com/StephanHCB/go-autumn-restclient/implementation/requestlogging"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/telemetry"
 	"github.com/eurofurence/reg-attendee-service/internal/web/middleware"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
 	"github.com/eurofurence/reg-attendee-service/internal/web/util/media"
-	"net/http"
-	"time"
 )
 
 type Impl struct {
@@ -26,10 +27,7 @@ func requestManipulator(ctx context.Context, r *http.Request) {
 }
 
 func newClient() (MailService, error) {
-	httpClient, err := auresthttpclient.New(0, nil, requestManipulator)
-	if err != nil {
-		return nil, err
-	}
+	httpClient := telemetry.NewHttpClient(requestManipulator)
 
 	requestLoggingClient := aurestlogging.New(httpClient)
 
