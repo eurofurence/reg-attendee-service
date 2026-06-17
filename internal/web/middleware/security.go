@@ -190,6 +190,7 @@ func canSkipAccessTokenCheckWithCookieAuth(method string, urlPath string) bool {
 	// (performance critical + cannot be used for data extraction only!)
 	return allow(method, urlPath, http.MethodGet, "/api/rest/v1/countdown") ||
 		allow(method, urlPath, http.MethodGet, "/api/rest/v1/attendees") || // list my badge numbers
+		allow(method, urlPath, http.MethodGet, "/api/rest/v1/attendees/my-permissions") || // only returns own permissions
 		allow(method, urlPath, http.MethodPost, "/api/rest/v1/attendees") // only receiving data
 }
 

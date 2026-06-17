@@ -3,9 +3,61 @@ package attendeesrv
 import (
 	"context"
 	"errors"
+	"sort"
+	"strings"
+
+	"github.com/eurofurence/reg-attendee-service/internal/api/v1/attendee"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
+	"github.com/eurofurence/reg-attendee-service/internal/web/util/ctxvalues"
 )
+
+func (s *AttendeeServiceImplData) GetCurrentUserPermissions(ctx context.Context) (*attendee.UserPermissionsDto, error) {
+	// collect OIDC groups from context
+	groups := make([]string, 0)
+	ctxMap := ctx.Value(ctxvalues.ContextMap)
+	if ctxMap != nil {
+		for k, v := range ctxMap.(map[string]string) {
+			if strings.HasPrefix(k, ctxvalues.ContextAuthorizedAs+"-") && v != "" {
+				groups = append(groups, v)
+			}
+		}
+	}
+	sort.Strings(groups)
+
+	// collect permissions from all registrations owned by the current user
+	subject := ctxvalues.Subject(ctx)
+	permissionsSet := make(map[string]bool)
+	if subject != "" {
+		ownedAttendees, err := database.GetRepository().FindByIdentity(ctx, subject)
+		if err != nil {
+			return nil, err
+		}
+		allowedPerms := config.AllowedPermissions()
+		for _, oa := range ownedAttendees {
+			adminInfo, err := database.GetRepository().GetAdminInfoByAttendeeId(ctx, oa.ID)
+			if err != nil {
+				return nil, err
+			}
+			for perm, granted := range commaSeparatedStrToMap(adminInfo.Permissions, allowedPerms) {
+				if granted {
+					permissionsSet[perm] = true
+				}
+			}
+		}
+	}
+
+	permissions := make([]string, 0, len(permissionsSet))
+	for perm := range permissionsSet {
+		permissions = append(permissions, perm)
+	}
+	sort.Strings(permissions)
+
+	return &attendee.UserPermissionsDto{
+		Groups:      groups,
+		Permissions: permissions,
+	}, nil
+}
 
 func (s *AttendeeServiceImplData) subjectHasAreaPermissionEntry(ctx context.Context, subject string, areas ...string) (bool, error) {
 	if subject == "" {

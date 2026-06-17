@@ -36,6 +36,7 @@ func Create(server chi.Router, attendeeSrv attendeesrv.AttendeeService) {
 		server.Post("/api/rest/v1/attendees", filter.WithTimeout(3*time.Second, newAttendeeHandler))
 	}
 	server.Get("/api/rest/v1/attendees", filter.LoggedIn(filter.WithTimeout(3*time.Second, myRegsHandler)))
+	server.Get("/api/rest/v1/attendees/my-permissions", filter.LoggedIn(filter.WithTimeout(3*time.Second, myPermissionsHandler)))
 	server.Get("/api/rest/v1/attendees/max-id", filter.WithTimeout(3*time.Second, getAttendeeMaxIdHandler))
 	server.Get("/api/rest/v1/attendees/{id}", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, getAttendeeHandler)))
 	server.Put("/api/rest/v1/attendees/{id}", filter.LoggedInOrApiToken(filter.WithTimeout(3*time.Second, updateAttendeeHandler)))
@@ -261,6 +262,19 @@ func myRegsHandler(w http.ResponseWriter, r *http.Request) {
 		dto.Ids[i] = atts[i].ID
 	}
 	sort.Slice(dto.Ids, func(i, j int) bool { return dto.Ids[i] < dto.Ids[j] })
+
+	w.Header().Add(headers.ContentType, media.ContentTypeApplicationJson)
+	ctlutil.WriteJson(ctx, w, dto)
+}
+
+func myPermissionsHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	dto, err := attendeeService.GetCurrentUserPermissions(ctx)
+	if err != nil {
+		myPermissionsErrorHandler(ctx, w, r, err)
+		return
+	}
 
 	w.Header().Add(headers.ContentType, media.ContentTypeApplicationJson)
 	ctlutil.WriteJson(ctx, w, dto)
@@ -517,6 +531,11 @@ func dueDateValidationErrorHandler(ctx context.Context, w http.ResponseWriter, r
 func myRegsErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
 	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("could not read registrations for logged in subject: %s", err.Error())
 	ctlutil.ErrorHandler(ctx, w, r, "attendee.owned.error", http.StatusInternalServerError, url.Values{})
+}
+
+func myPermissionsErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request, err error) {
+	aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Printf("could not read permissions for logged in subject: %s", err.Error())
+	ctlutil.ErrorHandler(ctx, w, r, "attendee.permissions.error", http.StatusInternalServerError, url.Values{})
 }
 
 func myRegsNotFoundErrorHandler(ctx context.Context, w http.ResponseWriter, r *http.Request) {

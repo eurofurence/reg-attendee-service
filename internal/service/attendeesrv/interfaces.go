@@ -71,6 +71,10 @@ type AttendeeService interface {
 	// as those may or may not be reflected in the updated cached counts.
 	RecalculateLimit(ctx context.Context, key string) error
 
+	// GetCurrentUserPermissions returns the OIDC groups and attendee-record permissions
+	// for the currently logged in user.
+	GetCurrentUserPermissions(ctx context.Context) (*attendee.UserPermissionsDto, error)
+
 	// IsOwnerFor returns the list of attendees (registrations) that are owned by the currently logged
 	// in user account.
 	//

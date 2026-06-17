@@ -133,6 +133,13 @@ type AttendeeSearchResult struct {
 	Avatar               *string        `json:"avatar"`
 }
 
+// --- current user permissions ---
+
+type UserPermissionsDto struct {
+	Groups      []string `json:"groups"`       // OIDC groups the user belongs to (e.g. admin, staff)
+	Permissions []string `json:"permissions"`  // attendee-record permissions granted across all registrations owned by this user
+}
+
 // --- flags/options/packages result ---
 
 type ChoiceState struct {

@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Attendee Service
   description: |-
-    This backend microservice manages attendee registrations. This includes    
+    This backend microservice manages attendee registrations. This includes
     - creating and editing registrations
     - adding and removing packages incl. calculating total due amount (but not current dues)
     - searching and listing registrations (admin only)
@@ -41,7 +41,7 @@ paths:
       summary: obtain all current additional info for an area
       description: |
         Returns the current additional info for an area (e.g. regdesk, sponsordesk, overdue, ...) for all attendees.
-        
+
         User will need to have permissions on any of their registrations as set in configuration to access it
         (self-read permission is not sufficient).
 
@@ -539,6 +539,44 @@ paths:
       security:
         - BearerAuth: []
         - ApiKeyAuth: []
+  /attendees/my-permissions:
+    get:
+      tags:
+        - registration
+      summary: Get permissions of the currently logged in user
+      description: |-
+        Returns the OIDC groups and attendee-record permissions of the currently logged in user.
+
+        - **groups**: the OIDC groups the user belongs to (e.g. admin, staff), as extracted from the JWT claims.
+        - **permissions**: permissions granted in the admin info of any registration owned by this user,
+          filtered to the set of allowed permissions as defined in the service configuration.
+
+        Both lists are sorted alphabetically and deduplicated across all registrations owned by the user.
+
+        Since the user's identity is taken from the JWT representing the currently logged in user,
+        this endpoint cannot be called with an API token. It must be called on behalf of a logged in user.
+      operationId: getMyPermissions
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPermissions'
+        '401':
+          description: Authorization required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: An unexpected error occurred. This includes database errors. A best effort attempt is made to return details in the body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - AnyAudienceBearerAuth: []
   /attendees/{id}/admin:
     get:
       tags:
@@ -1959,6 +1997,28 @@ components:
           type: string
           description: Optional comments the attendee wishes to make regarding their registration. Not processed in any way.
           example: I love eurofurence
+    UserPermissions:
+      type: object
+      required:
+        - groups
+        - permissions
+      properties:
+        groups:
+          type: array
+          description: OIDC groups the user belongs to, as extracted from the JWT claims (e.g. admin, staff). Sorted alphabetically.
+          items:
+            type: string
+          example:
+            - admin
+            - staff
+        permissions:
+          type: array
+          description: Attendee-record permissions granted across all registrations owned by this user, filtered to the set of allowed permissions from configuration. Sorted alphabetically.
+          items:
+            type: string
+          example:
+            - regdesk
+            - sponsordesk
     AttendeeIdList:
       type: object
       required:
