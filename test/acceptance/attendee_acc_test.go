@@ -13,6 +13,7 @@ import (
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/counts"
 	"github.com/eurofurence/reg-attendee-service/internal/api/v1/status"
 	"github.com/eurofurence/reg-attendee-service/internal/entity"
+	"github.com/eurofurence/reg-attendee-service/internal/repository/config"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/database"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/mailservice"
 	"github.com/eurofurence/reg-attendee-service/internal/repository/paymentservice"
@@ -2856,6 +2857,96 @@ func TestGetPackages_AttendeeDoesNotExist(t *testing.T) {
 
 	docs.Then("then the request fails (404) and the error is as expected")
 	tstRequireErrorResponse(t, response, http.StatusNotFound, "attendee.id.notfound", url.Values{})
+}
+
+// --- package changes lockdown ---
+
+func tstSetupWithPackageLockdown() {
+	tstSetup(true, false, true)
+	conf := config.Configuration()
+	conf.PackageChanges.DisabledForStatuses = []string{"partially paid", "paid", "checked in"}
+}
+
+func tstUpdateExistingAttendee_PackageLockdown_Forbidden(t *testing.T, testcase string, targetStatus status.Status, token string) {
+	docs.Given("given the configuration with package changes disabled for paid/checked-in registrations")
+	tstSetupWithPackageLockdown()
+	defer tstShutdown()
+
+	docs.Given(fmt.Sprintf("given an existing attendee in status %s", targetStatus))
+	loc, att := tstRegisterAttendeeAndTransitionToStatus(t, testcase, targetStatus)
+
+	docs.When("when a non-admin tries to change their packages")
+	changedAttendee := att
+	tstAddPackages(&changedAttendee, "boat-trip")
+	response := tstPerformPut(loc, tstRenderJson(changedAttendee), token)
+
+	docs.Then("then the update is rejected with the corresponding error message")
+	tstRequireErrorResponse(t, response, http.StatusBadRequest, "attendee.data.invalid", url.Values{
+		"packages": []string{fmt.Sprintf("changes to packages are not allowed in registration status %s - only an admin can do that at this time", targetStatus)},
+	})
+}
+
+func tstUpdateExistingAttendee_PackageLockdown_AdminAllowed(t *testing.T, testcase string, targetStatus status.Status) {
+	docs.Given("given the configuration with package changes disabled for paid/checked-in registrations")
+	tstSetupWithPackageLockdown()
+	defer tstShutdown()
+
+	docs.Given(fmt.Sprintf("given an existing attendee in status %s", targetStatus))
+	loc, att := tstRegisterAttendeeAndTransitionToStatus(t, testcase, targetStatus)
+
+	docs.When("when an admin changes packages")
+	changedAttendee := att
+	tstOverridePackages(&changedAttendee, "attendance,room-none,stage")
+	response := tstPerformPut(loc, tstRenderJson(changedAttendee), tstValidAdminToken(t))
+
+	docs.Then("then the update is accepted")
+	require.Equal(t, http.StatusOK, response.status, "unexpected http response status for admin update")
+}
+
+func tstUpdateExistingAttendee_PackageLockdown_UnlockedStatus_Allowed(t *testing.T, testcase string, targetStatus status.Status, token string) {
+	docs.Given("given the configuration with package changes disabled for paid/checked-in registrations")
+	tstSetupWithPackageLockdown()
+	defer tstShutdown()
+
+	docs.Given(fmt.Sprintf("given an existing attendee in status %s", targetStatus))
+	loc, att := tstRegisterAttendeeAndTransitionToStatus(t, testcase, targetStatus)
+
+	docs.When("when they change their packages")
+	changedAttendee := att
+	tstOverridePackages(&changedAttendee, "attendance,room-none,sponsor,stage")
+	response := tstPerformPut(loc, tstRenderJson(changedAttendee), token)
+
+	docs.Then("then the update is accepted")
+	require.Equal(t, http.StatusOK, response.status, "unexpected http response status for update in unlocked status")
+}
+
+func TestUpdateExistingAttendee_PackageLockdown_LockedStatuses_UserForbidden(t *testing.T) {
+	for i, targetStatus := range []status.Status{status.PartiallyPaid, status.Paid, status.CheckedIn} {
+		testcase := fmt.Sprintf("ualock1-%d", i+1)
+		token := tstValidStaffToken(t, 1)
+		t.Run(string(targetStatus), func(t *testing.T) {
+			tstUpdateExistingAttendee_PackageLockdown_Forbidden(t, testcase, targetStatus, token)
+		})
+	}
+}
+
+func TestUpdateExistingAttendee_PackageLockdown_LockedStatuses_AdminAllowed(t *testing.T) {
+	for i, targetStatus := range []status.Status{status.PartiallyPaid, status.Paid, status.CheckedIn} {
+		testcase := fmt.Sprintf("ualock2-%d", i+1)
+		t.Run(string(targetStatus), func(t *testing.T) {
+			tstUpdateExistingAttendee_PackageLockdown_AdminAllowed(t, testcase, targetStatus)
+		})
+	}
+}
+
+func TestUpdateExistingAttendee_PackageLockdown_UnlockedStatuses_UserAllowed(t *testing.T) {
+	for i, targetStatus := range []status.Status{status.New, status.Approved} {
+		testcase := fmt.Sprintf("ualock3-%d", i+1)
+		token := tstValidStaffToken(t, 1)
+		t.Run(string(targetStatus), func(t *testing.T) {
+			tstUpdateExistingAttendee_PackageLockdown_UnlockedStatus_Allowed(t, testcase, targetStatus, token)
+		})
+	}
 }
 
 // helper functions

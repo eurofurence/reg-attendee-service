@@ -283,6 +283,15 @@ func validateServiceConfiguration(errs url.Values, c ServiceConfig) {
 const addInfoAreaPattern = "^[a-z]+$"
 const attendeePermissionPattern = "^[a-z]+$"
 
+func validatePackageChangesConfiguration(errs url.Values, c PackageChangesConfig) {
+	allowedStatuses := []string{"new", "approved", "partially paid", "paid", "checked in", "cancelled", "waiting", "deleted"}
+	for _, s := range c.DisabledForStatuses {
+		if !slices.Contains(allowedStatuses, s) {
+			errs.Add("package_changes.disabled_for_statuses", fmt.Sprintf("invalid status value '%s', must be one of: %s", s, strings.Join(allowedStatuses, ", ")))
+		}
+	}
+}
+
 func validateAdditionalInfoConfiguration(errs url.Values, areas map[string]AddInfoConfig) {
 	for area, config := range areas {
 		if validation.ViolatesPattern(addInfoAreaPattern, area) {

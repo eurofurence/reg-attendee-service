@@ -33,6 +33,7 @@ type (
 		Birthday              BirthdayConfig           `yaml:"birthday"`
 		GoLive                GoLiveConfig             `yaml:"go_live"`
 		Dues                  DuesConfig               `yaml:"dues"`
+		PackageChanges        PackageChangesConfig     `yaml:"package_changes"`
 		Countries             []string                 `yaml:"countries"`
 		SpokenLanguages       []string                 `yaml:"spoken_languages"`
 		RegistrationLanguages []string                 `yaml:"registration_languages"`
@@ -170,5 +171,13 @@ type (
 		EarliestDueDate string `yaml:"earliest_due_date"`
 		LatestDueDate   string `yaml:"latest_due_date"` // inclusive
 		DueDays         int    `yaml:"due_days"`
+	}
+
+	// PackageChangesConfig controls when attendees are allowed to change their packages.
+	PackageChangesConfig struct {
+		// DisabledForStatuses lists the registration statuses for which non-admin attendees
+		// are not allowed to add, remove, or change any packages. Admins and api tokens are
+		// always exempt. Typical value for convention lockdown: ["partially paid","paid","checked in"].
+		DisabledForStatuses []string `yaml:"disabled_for_statuses"`
 	}
 )

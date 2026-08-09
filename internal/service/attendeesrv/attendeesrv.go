@@ -155,6 +155,11 @@ func (s *AttendeeServiceImplData) CanChangeChoiceToCurrentStatus(ctx context.Con
 }
 
 func (s *AttendeeServiceImplData) canChangeChoiceLowlevel(ctx context.Context, what string, originalChoices map[string]int, newChoices map[string]int, configuration map[string]config.ChoiceConfig, currentStatus status.Status) error {
+	if currentStatus != "irrelevant" {
+		if err := checkNoForbiddenChangesForLockedDownStatus(ctx, what, originalChoices, newChoices, currentStatus); err != nil {
+			return err
+		}
+	}
 	oneIsMandatory := false
 	satisfiesOneIsMandatory := false
 	mandatoryList := make([]string, 0)
@@ -228,6 +233,32 @@ func userAlreadyHasAnotherRegistration(ctx context.Context, identity string, exp
 		return false, err
 	}
 	return count != expectedCount, nil
+}
+
+func checkNoForbiddenChangesForLockedDownStatus(ctx context.Context, what string, originalChoices map[string]int, newChoices map[string]int, currentStatus status.Status) error {
+	if ctxvalues.HasApiToken(ctx) || ctxvalues.IsAuthorizedAsGroup(ctx, config.OidcAdminGroup()) {
+		return nil
+	}
+
+	disabledForStatuses := config.PackageChangesDisabledForStatuses()
+	for _, s := range disabledForStatuses {
+		if status.Status(s) == currentStatus {
+			checked := make(map[string]bool)
+			for k := range originalChoices {
+				checked[k] = true
+				if originalChoices[k] != newChoices[k] {
+					return fmt.Errorf("changes to %ss are not allowed in registration status %s - only an admin can do that at this time", what, currentStatus)
+				}
+			}
+			for k := range newChoices {
+				if !checked[k] && newChoices[k] != 0 {
+					return fmt.Errorf("changes to %ss are not allowed in registration status %s - only an admin can do that at this time", what, currentStatus)
+				}
+			}
+			return nil
+		}
+	}
+	return nil
 }
 
 func checkNoForbiddenChanges(ctx context.Context, what string, key string, choiceConfig config.ChoiceConfig, originalChoices map[string]int, newChoices map[string]int) error {
