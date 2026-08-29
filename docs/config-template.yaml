@@ -132,6 +132,9 @@ choices:
         - sponsordesk
     hc:
       description: Wheelchair
+    nobulkmail:
+      admin_only: true
+      description: Do not send bulk mail to this attendee
     skip_ban_check:
       admin_only: true
       description: Bypass ban check for this attendee
