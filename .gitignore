@@ -1,6 +1,6 @@
 .idea/**
 *.exe
-config.yaml
+config*.yaml
 test/contract/*/log/**
 test/contract/*/logs/**
 attendee-service

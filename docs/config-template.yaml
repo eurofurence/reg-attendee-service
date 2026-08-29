@@ -1,5 +1,5 @@
 service:
-  name: 'Registration Attendee Service'
+  name: 'Attendee Service'
   regsys_public_url: 'http://localhost:10000/register'
   # if you leave this blank, a local mock will be used
   payment_service: 'http://localhost:9092' # no trailing slash
@@ -65,41 +65,40 @@ logging:
   severity: INFO
   style: plain # or ecs (elastic common schema), the default
 go_live:
-  start_iso_datetime: '2022-01-29T20:00:00+01:00'
+  start_iso_datetime: '2026-02-08T19:30:00+01:00'
   # optional, only useful if you also set early_reg_role, should be earlier than start_iso_datetime
   early_reg_start_iso_datetime: ''
 dues:
-  earliest_due_date: '2024-01-01'
-  latest_due_date: '2024-09-21'
-  due_days: 14 # calendar days
+  earliest_due_date: '2026-02-15'
+  latest_due_date: '2026-08-19'
+  due_days: 14
 birthday:
   earliest: '1901-01-01'
-  latest: '2006-09-18'
+  latest: '2008-08-19'
 additional_info_areas:
   # the key is the "area" parameter in the API url (/attendees/{id}/additional-info/{area}).
   # Key must be [a-z]+. The key "overdue" is reserved for internal use and thus not allowed here.
+  dealerreg:
+    permissions:
+      - regdesk
+      - sponsordesk
+    self_read: true
+  fursuitbadge:
+    permissions:
+      - fursuitbadge
+    self_read: true
+    self_write: true
   regdesk:
     permissions:
       - regdesk
+  shipping:
+    permissions:
+      - sponsordesk
+    self_read: true
+    self_write: true
   sponsordesk:
     permissions:
       - sponsordesk
-  shipping:
-    self_read: true # allow a user to read this additional info area on their own registration
-    self_write: true # allow a user to write/delete this additional info area on their own registration
-    # a user needs to have any of the values listed under permissions: in the "permissions" field on their registration
-    # to have read and write access to this area for ALL registrations, not just their own
-    permissions:
-      - sponsordesk
-  dealerreg:
-    self_read: true
-    permissions:
-      - regdesk
-      - sponsordesk
-  fursuitbadge:
-    self_read: true
-    permissions:
-      - fursuitbadge
   staffradio:
     permissions:
       - staffradio
@@ -133,6 +132,9 @@ choices:
         - sponsordesk
     hc:
       description: Wheelchair
+    nobulkmail:
+      admin_only: true
+      description: Do not send bulk mail to this attendee
     skip_ban_check:
       admin_only: true
       description: Bypass ban check for this attendee
@@ -149,375 +151,377 @@ choices:
       read_only: true
   packages:
     artshow-panel-four:
+      category: artshow
       description: Artshow (4 Panels)
       price: 16000
       read_only: true
-      vat_percent: 19
-      category: artshow
       sorting: 140
+      vat_percent: 19
     artshow-panel-half:
+      category: artshow
       description: Artshow (Half Panel)
       price: 2000
       read_only: true
-      vat_percent: 19
-      category: artshow
       sorting: 105
+      vat_percent: 19
     artshow-panel-one:
+      category: artshow
       description: Artshow (1 Panel)
       price: 4000
       read_only: true
-      vat_percent: 19
-      category: artshow
       sorting: 110
+      vat_percent: 19
     artshow-panel-oneandhalf:
+      category: artshow
       description: Artshow (1.5 Panels)
       price: 6000
       read_only: true
-      vat_percent: 19
-      category: artshow
       sorting: 115
+      vat_percent: 19
     artshow-panel-three:
+      category: artshow
       description: Artshow (3 Panels)
       price: 12000
       read_only: true
-      vat_percent: 19
-      category: artshow
       sorting: 130
+      vat_percent: 19
     artshow-panel-threeandhalf:
+      category: artshow
       description: Artshow (3.5 Panels)
       price: 14000
       read_only: true
-      vat_percent: 19
-      category: artshow
       sorting: 135
+      vat_percent: 19
     artshow-panel-two:
+      category: artshow
       description: Artshow (2 Panels)
       price: 8000
       read_only: true
-      vat_percent: 19
-      category: artshow
       sorting: 120
+      vat_percent: 19
     artshow-panel-twoandhalf:
+      category: artshow
       description: Artshow (2.5 Panels)
       price: 10000
       read_only: true
-      vat_percent: 19
-      category: artshow
       sorting: 125
+      vat_percent: 19
     artshow-table-four:
+      category: artshow
       description: Artshow (4 Tables)
       price: 16000
       read_only: true
-      vat_percent: 19
-      category: artshow
       sorting: 240
+      vat_percent: 19
     artshow-table-half:
+      category: artshow
       description: Artshow (Half Table)
       price: 2000
       read_only: true
-      vat_percent: 19
-      category: artshow
       sorting: 205
+      vat_percent: 19
     artshow-table-one:
+      category: artshow
       description: Artshow (1 Table)
       price: 4000
       read_only: true
-      vat_percent: 19
-      category: artshow
       sorting: 210
+      vat_percent: 19
     artshow-table-oneandhalf:
+      category: artshow
       description: Artshow (1.5 Tables)
       price: 6000
       read_only: true
-      vat_percent: 19
-      category: artshow
       sorting: 215
+      vat_percent: 19
     artshow-table-three:
+      category: artshow
       description: Artshow (3 Tables)
       price: 12000
       read_only: true
-      vat_percent: 19
-      category: artshow
       sorting: 230
+      vat_percent: 19
     artshow-table-threeandhalf:
+      category: artshow
       description: Artshow (3.5 Tables)
       price: 14000
       read_only: true
-      vat_percent: 19
-      category: artshow
       sorting: 235
+      vat_percent: 19
     artshow-table-two:
+      category: artshow
       description: Artshow (2 Tables)
       price: 8000
       read_only: true
-      vat_percent: 19
-      category: artshow
       sorting: 220
+      vat_percent: 19
     artshow-table-twoandhalf:
+      category: artshow
       description: Artshow (2.5 Tables)
       price: 10000
       read_only: true
-      vat_percent: 19
-      category: artshow
       sorting: 225
+      vat_percent: 19
     attendance:
       at-least-one-mandatory: true
       default: true
       description: Entrance Fee (Convention Ticket)
       price: 18000
+      sorting: 10
       vat_percent: 19
       visible_for:
         - regdesk
-      sorting: 10
+    benefactor:
+      allowed_counts:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 8
+      - 10
+      - 15
+      - 20
+      - 30
+      - 40
+      - 50
+      - 100
+      category: addons
+      constraint: sponsor2
+      constraint_msg: Only available for supersponsors.
+      description: Benefactor
+      max_count: 100
+      price: 5000
+      sorting: 400
+      vat_percent: 19
+      visible_for:
+      - regdesk
+      - sponsordesk
     boat-cruise:
-      description: Summerboat Boat Cruise
+      category: boat
+      description: Summerboat Cruise (Sunday)
       price: 3000
       read_only: true
-      vat_percent: 19
-      category: boat
       sorting: 10
+      vat_percent: 19
     boat-trip:
-      description: Summerboat Boat Trip
+      category: boat
+      description: Summerboat Trip (Tuesday)
       price: 4000
       read_only: true
-      vat_percent: 19
-      category: boat
       sorting: 20
+      vat_percent: 19
     boat-vip:
+      category: boat
       description: Summerboat VIP
       price: 2500
       read_only: true
-      vat_percent: 19
-      category: boat
       sorting: 100
+      vat_percent: 19
     contributor:
+      category: addons
       description: Contributor Upgrade
       price: 5500
+      sorting: 100
       vat_percent: 19
       visible_for:
         - regdesk
         - sponsordesk
-      category: addons
-      sorting: 100
     day-fri:
       at-least-one-mandatory: true
       constraint: '!attendance,!stage'
       constraint_msg: Must disable Convention Ticket and Stage Ticket for Day Guests.
       description: Day Guest (Friday)
       price: 10000
+      sorting: 120
       vat_percent: 19
       visible_for:
         - regdesk
-      sorting: 120
     day-sat:
       at-least-one-mandatory: true
       constraint: '!attendance,!stage'
       constraint_msg: Must disable Convention Ticket and Stage Ticket for Day Guests.
       description: Day Guest (Saturday)
       price: 10000
+      sorting: 130
       vat_percent: 19
       visible_for:
         - regdesk
-      sorting: 130
     day-thu:
       at-least-one-mandatory: true
       constraint: '!attendance,!stage'
       constraint_msg: Must disable Convention Ticket and Stage Ticket for Day Guests.
       description: Day Guest (Thursday)
       price: 10000
+      sorting: 110
       vat_percent: 19
       visible_for:
         - regdesk
-      sorting: 110
     day-wed:
       at-least-one-mandatory: true
       constraint: '!attendance,!stage'
       constraint_msg: Must disable Convention Ticket and Stage Ticket for Day Guests.
       description: Day Guest (Wednesday)
       price: 10000
+      sorting: 100
       vat_percent: 19
       visible_for:
         - regdesk
-      sorting: 100
     dealer-double:
+      category: dealer
       constraint: '!dealer-half,!dealer-full,!dealer-fullplus,!dealer-triple,!dealer-quad'
       constraint_msg: Cannot mix dealer table packages.
       description: Dealer Table Fee (Double)
       price: 22000
       read_only: true
-      vat_percent: 19
-      category: dealer
       sorting: 200
+      vat_percent: 19
     dealer-full:
+      category: dealer
       constraint: '!dealer-half,!dealer-fullplus,!dealer-double,!dealer-triple,!dealer-quad'
       constraint_msg: Cannot mix dealer table packages.
       description: Dealer Table Fee (Full)
       price: 11000
       read_only: true
-      vat_percent: 19
-      category: dealer
       sorting: 100
+      vat_percent: 19
     dealer-fullplus:
+      category: dealer
       constraint: '!dealer-half,!dealer-full,!dealer-double,!dealer-triple,!dealer-quad'
       constraint_msg: Cannot mix dealer table packages.
       description: Dealer Table Fee (Full Plus)
       price: 16500
       read_only: true
-      vat_percent: 19
-      category: dealer
       sorting: 150
+      vat_percent: 19
     dealer-half:
+      category: dealer
       constraint: '!dealer-full,!dealer-fullplus,!dealer-double,!dealer-triple,!dealer-quad'
       constraint_msg: Cannot mix dealer table packages.
       description: Dealer Table Fee (Half)
       price: 5500
       read_only: true
-      vat_percent: 19
-      category: dealer
       sorting: 50
-    dealer-triple:
-      constraint: '!dealer-half,!dealer-full,!dealer-fullplus,!dealer-double,!dealer-quad'
-      constraint_msg: Cannot mix dealer table packages.
-      description: Dealer Table Fee (Quad)
-      price: 33000
-      read_only: true
       vat_percent: 19
-      category: dealer
-      sorting: 400
     dealer-quad:
+      category: dealer
       constraint: '!dealer-half,!dealer-full,!dealer-fullplus,!dealer-double,!dealer-triple'
       constraint_msg: Cannot mix dealer table packages.
       description: Dealer Table Fee (Quad)
       price: 44000
       read_only: true
-      vat_percent: 19
-      category: dealer
       sorting: 400
-    fursuit:
-      description: First Fursuit Badge
-      price: 0
       vat_percent: 19
-      visible_for:
-        - regdesk
-        - sponsordesk
-      category: fursuit
-      sorting: 10
-    fursuitadd:
-      constraint: 'fursuit'
-      constraint_msg: Please select the free fursuit badge first, otherwise you'll pay too much.
-      description: Additional Fursuit Badge
-      price: 500
+    dealer-triple:
+      category: dealer
+      constraint: '!dealer-half,!dealer-full,!dealer-fullplus,!dealer-double,!dealer-quad'
+      constraint_msg: Cannot mix dealer table packages.
+      description: Dealer Table Fee (Triple)
+      price: 33000
+      read_only: true
+      sorting: 300
       vat_percent: 19
-      max_count: 10
-      visible_for:
-        - regdesk
-        - sponsordesk
-      category: fursuit
-      sorting: 20
     early:
       constraint: '!day-wed,!day-thu,!day-fri,!day-sat'
       constraint_msg: Early Bird Discount does not apply to Day Tickets
       description: Early Bird Discount
       price: -1500
       read_only: true
-      default: true
+      sorting: 200
       vat_percent: 19
       visible_for:
         - regdesk
-      sorting: 200
+    fursuit:
+      category: fursuit
+      description: First Fursuit Badge
+      price: 0
+      sorting: 10
+      vat_percent: 19
+      visible_for:
+        - regdesk
+        - sponsordesk
+    fursuitadd:
+      category: fursuit
+      constraint: fursuit
+      constraint_msg: Please select the free fursuit badge first, otherwise you'll pay
+        too much.
+      description: Additional Fursuit Badge
+      max_count: 10
+      price: 500
+      sorting: 20
+      vat_percent: 19
+      visible_for:
+        - regdesk
+        - sponsordesk
     late:
       constraint: '!day-wed,!day-thu,!day-fri,!day-sat'
       constraint_msg: Late Fee does not apply to Day Tickets
+      default: true
       description: Late Fee
       price: 1500
       read_only: true
-      vat_percent: 19
-      visible_for:
-        - regdesk
       sorting: 210
-    party:
-      description: Dead Dog Party
-      limit: 1100
-      price: 1000
       vat_percent: 19
       visible_for:
         - regdesk
+    party:
       category: addons
+      description: Dead Dog Party
+      limit: 1000
+      price: 1000
       sorting: 500
+      vat_percent: 19
+      visible_for:
+        - regdesk
+        - sponsordesk
     room-none:
+      category: other
       default: true
       description: No Room
       read_only: true
-      vat_percent: 7
-      category: other
       sorting: 10
+      vat_percent: 7
     sponsor:
+      category: addons
       constraint: '!contributor'
       constraint_msg: Please choose only one of Contributor, Sponsor or Supersponsor.
       description: Sponsor Upgrade
       price: 12000
+      sorting: 200
       vat_percent: 19
       visible_for:
         - regdesk
         - sponsordesk
-      category: addons
-      sorting: 200
     sponsor2:
+      category: addons
       constraint: '!contributor,!sponsor'
       constraint_msg: Please choose only one of Contributor, Sponsor or Supersponsor.
       description: Supersponsor Upgrade
       price: 22000
-      vat_percent: 19
-      visible_for:
-        - regdesk
-        - sponsordesk
-      category: addons
       sorting: 300
-    benefactor:
-      allowed_counts:
-        - 1
-        - 2
-        - 3
-        - 4
-        - 5
-        - 6
-        - 8
-        - 10
-        - 15
-        - 20
-        - 30
-        - 40
-        - 50
-        - 100
-      constraint: 'sponsor2'
-      constraint_msg: Only available for supersponsors.
-      description: Benefactor
-      price: 5000
       vat_percent: 19
-      max_count: 100
       visible_for:
         - regdesk
         - sponsordesk
-      category: addons
-      sorting: 400
     stage:
       default: true
       description: Entrance Fee (Stage Ticket)
       price: 500
+      sorting: 20
       vat_percent: 19
       visible_for:
         - regdesk
-      sorting: 20
     tshirt:
+      category: addons
       constraint: '!sponsor,!sponsor2'
       constraint_msg: Sponsors and supersponsors get their T-Shirt for free.
       description: Paid T-Shirt (non-sponsor)
       price: 2500
+      sorting: 50
       vat_percent: 19
       visible_for:
         - sponsordesk
-      category: addons
-      sorting: 50
   options:
     anim:
       description: Animator
@@ -528,371 +532,371 @@ choices:
     suit:
       description: Fursuiter
 tshirtsizes:
-  - 'XS'
-  - 'wXS'
-  - 'S'
-  - 'wS'
-  - 'M'
-  - 'wM'
-  - 'L'
-  - 'wL'
-  - 'XL'
-  - 'wXL'
-  - 'XXL'
-  - 'wXXL'
-  - '3XL'
-  - 'w3XL'
-  - '4XL'
-  - 'w4XL'
+  - XS
+  - wXS
+  - S
+  - wS
+  - M
+  - wM
+  - L
+  - wL
+  - XL
+  - wXL
+  - XXL
+  - wXXL
+  - 3XL
+  - w3XL
+  - 4XL
+  - w4XL
 spoken_languages:
-  - ach
-  - ady
-  - af
-  - ak
-  - ar
-  - az
-  - be
-  - bg
-  - bn
-  - br
-  - ca
-  - cak
-  - cs
-  - cy
-  - da
-  - de
-  - dsb
-  - el
-  - en
-  - eo
-  - es
-  - et
-  - eu
-  - fa
-  - ff
-  - fi
-  - fil
-  - fo
-  - fr
-  - ga
-  - gd
-  - gl
-  - gv
-  - he
-  - hi
-  - hr
-  - hsb
-  - ht
-  - hu
-  - hy
-  - id
-  - is
-  - it
-  - ja
-  - km
-  - kl
-  - kab
-  - kn
-  - ko
-  - kw
-  - la
-  - lb
-  - lt
-  - lv
-  - mai
-  - mk
-  - ml
-  - mr
-  - ms
-  - mt
-  - my
-  - nb
-  - ne
-  - nl
+  - 'ach'
+  - 'ady'
+  - 'af'
+  - 'ak'
+  - 'ar'
+  - 'az'
+  - 'be'
+  - 'bg'
+  - 'bn'
+  - 'br'
+  - 'ca'
+  - 'cak'
+  - 'cs'
+  - 'cy'
+  - 'da'
+  - 'de'
+  - 'dsb'
+  - 'el'
+  - 'en'
+  - 'eo'
+  - 'es'
+  - 'et'
+  - 'eu'
+  - 'fa'
+  - 'ff'
+  - 'fi'
+  - 'fil'
+  - 'fo'
+  - 'fr'
+  - 'ga'
+  - 'gd'
+  - 'gl'
+  - 'gv'
+  - 'he'
+  - 'hi'
+  - 'hr'
+  - 'hsb'
+  - 'ht'
+  - 'hu'
+  - 'hy'
+  - 'id'
+  - 'is'
+  - 'it'
+  - 'ja'
+  - 'km'
+  - 'kl'
+  - 'kab'
+  - 'kn'
+  - 'ko'
+  - 'kw'
+  - 'la'
+  - 'lb'
+  - 'lt'
+  - 'lv'
+  - 'mai'
+  - 'mk'
+  - 'ml'
+  - 'mr'
+  - 'ms'
+  - 'mt'
+  - 'my'
   - 'no'
-  - oc
-  - pa
-  - pl
-  - pt
-  - ro
-  - ru
-  - sh
-  - sk
-  - sl
-  - sq
-  - sr
-  - su
-  - sv
-  - sw
-  - ta
-  - te
-  - tg
-  - th
-  - tl
-  - tlh
-  - tr
-  - uk
-  - ur
-  - uz
-  - vi
-  - yi
-  - zh
-registration_languages: # first value is default
+  - 'nb'
+  - 'ne'
+  - 'nl'
+  - 'oc'
+  - 'pa'
+  - 'pl'
+  - 'pt'
+  - 'ro'
+  - 'ru'
+  - 'sh'
+  - 'sk'
+  - 'sl'
+  - 'sq'
+  - 'sr'
+  - 'su'
+  - 'sv'
+  - 'sw'
+  - 'ta'
+  - 'te'
+  - 'tg'
+  - 'th'
+  - 'tl'
+  - 'tlh'
+  - 'tr'
+  - 'uk'
+  - 'ur'
+  - 'uz'
+  - 'vi'
+  - 'yi'
+  - 'zh'
+registration_languages:
   - 'en-US'
   - 'de-DE'
 countries:
-  - AC
-  - AD
-  - AE
-  - AF
-  - AG
-  - AI
-  - AL
-  - AM
-  - AO
-  - AQ
-  - AR
-  - AS
-  - AT
-  - AU
-  - AW
-  - AX
-  - AZ
-  - BA
-  - BB
-  - BD
-  - BE
-  - BF
-  - BG
-  - BH
-  - BI
-  - BJ
-  - BL
-  - BM
-  - BN
-  - BO
-  - BQ
-  - BR
-  - BS
-  - BT
-  - BV
-  - BW
-  - BY
-  - BZ
-  - CA
-  - CC
-  - CD
-  - CF
-  - CG
-  - CH
-  - CI
-  - CK
-  - CL
-  - CM
-  - CN
-  - CO
-  - CP
-  - CR
-  - CU
-  - CV
-  - CW
-  - CX
-  - CY
-  - CZ
-  - DE
-  - DG
-  - DJ
-  - DK
-  - DM
-  - DO
-  - DZ
-  - EA
-  - EC
-  - EE
-  - EG
-  - EH
-  - ER
-  - ES
-  - ET
-  - FI
-  - FJ
-  - FK
-  - FM
-  - FO
-  - FR
-  - GA
-  - GB
-  - GD
-  - GE
-  - GF
-  - GG
-  - GH
-  - GI
-  - GL
-  - GM
-  - GN
-  - GP
-  - GQ
-  - GR
-  - GS
-  - GT
-  - GU
-  - GW
-  - GY
-  - HK
-  - HM
-  - HN
-  - HR
-  - HT
-  - HU
-  - IC
-  - ID
-  - IE
-  - IL
-  - IM
-  - IN
-  - IO
-  - IQ
-  - IR
-  - IS
-  - IT
-  - JE
-  - JM
-  - JO
-  - JP
-  - KE
-  - KG
-  - KH
-  - KI
-  - KM
-  - KN
-  - KP
-  - KR
-  - KW
-  - KY
-  - KZ
-  - LA
-  - LB
-  - LC
-  - LI
-  - LK
-  - LR
-  - LS
-  - LT
-  - LU
-  - LV
-  - LY
-  - MA
-  - MC
-  - MD
-  - ME
-  - MF
-  - MG
-  - MH
-  - MK
-  - ML
-  - MM
-  - MN
-  - MO
-  - MP
-  - MQ
-  - MR
-  - MS
-  - MT
-  - MU
-  - MV
-  - MW
-  - MX
-  - MY
-  - MZ
-  - NA
-  - NC
-  - NE
-  - NF
-  - NG
-  - NI
-  - NL
+  - 'AC'
+  - 'AD'
+  - 'AE'
+  - 'AF'
+  - 'AG'
+  - 'AI'
+  - 'AL'
+  - 'AM'
+  - 'AO'
+  - 'AQ'
+  - 'AR'
+  - 'AS'
+  - 'AT'
+  - 'AU'
+  - 'AW'
+  - 'AX'
+  - 'AZ'
+  - 'BA'
+  - 'BB'
+  - 'BD'
+  - 'BE'
+  - 'BF'
+  - 'BG'
+  - 'BH'
+  - 'BI'
+  - 'BJ'
+  - 'BL'
+  - 'BM'
+  - 'BN'
+  - 'BO'
+  - 'BQ'
+  - 'BR'
+  - 'BS'
+  - 'BT'
+  - 'BV'
+  - 'BW'
+  - 'BY'
+  - 'BZ'
+  - 'CA'
+  - 'CC'
+  - 'CD'
+  - 'CF'
+  - 'CG'
+  - 'CH'
+  - 'CI'
+  - 'CK'
+  - 'CL'
+  - 'CM'
+  - 'CN'
+  - 'CO'
+  - 'CP'
+  - 'CR'
+  - 'CU'
+  - 'CV'
+  - 'CW'
+  - 'CX'
+  - 'CY'
+  - 'CZ'
+  - 'DE'
+  - 'DG'
+  - 'DJ'
+  - 'DK'
+  - 'DM'
+  - 'DO'
+  - 'DZ'
+  - 'EA'
+  - 'EC'
+  - 'EE'
+  - 'EG'
+  - 'EH'
+  - 'ER'
+  - 'ES'
+  - 'ET'
+  - 'FI'
+  - 'FJ'
+  - 'FK'
+  - 'FM'
+  - 'FO'
+  - 'FR'
+  - 'GA'
+  - 'GB'
+  - 'GD'
+  - 'GE'
+  - 'GF'
+  - 'GG'
+  - 'GH'
+  - 'GI'
+  - 'GL'
+  - 'GM'
+  - 'GN'
+  - 'GP'
+  - 'GQ'
+  - 'GR'
+  - 'GS'
+  - 'GT'
+  - 'GU'
+  - 'GW'
+  - 'GY'
+  - 'HK'
+  - 'HM'
+  - 'HN'
+  - 'HR'
+  - 'HT'
+  - 'HU'
+  - 'IC'
+  - 'ID'
+  - 'IE'
+  - 'IL'
+  - 'IM'
+  - 'IN'
+  - 'IO'
+  - 'IQ'
+  - 'IR'
+  - 'IS'
+  - 'IT'
+  - 'JE'
+  - 'JM'
+  - 'JO'
+  - 'JP'
+  - 'KE'
+  - 'KG'
+  - 'KH'
+  - 'KI'
+  - 'KM'
+  - 'KN'
+  - 'KP'
+  - 'KR'
+  - 'KW'
+  - 'KY'
+  - 'KZ'
+  - 'LA'
+  - 'LB'
+  - 'LC'
+  - 'LI'
+  - 'LK'
+  - 'LR'
+  - 'LS'
+  - 'LT'
+  - 'LU'
+  - 'LV'
+  - 'LY'
+  - 'MA'
+  - 'MC'
+  - 'MD'
+  - 'ME'
+  - 'MF'
+  - 'MG'
+  - 'MH'
+  - 'MK'
+  - 'ML'
+  - 'MM'
+  - 'MN'
+  - 'MO'
+  - 'MP'
+  - 'MQ'
+  - 'MR'
+  - 'MS'
+  - 'MT'
+  - 'MU'
+  - 'MV'
+  - 'MW'
+  - 'MX'
+  - 'MY'
+  - 'MZ'
+  - 'NA'
+  - 'NC'
+  - 'NE'
+  - 'NF'
+  - 'NG'
+  - 'NI'
+  - 'NL'
   - 'NO'
-  - NP
-  - NR
-  - NU
-  - NZ
-  - OM
-  - PA
-  - PE
-  - PF
-  - PG
-  - PH
-  - PK
-  - PL
-  - PM
-  - PN
-  - PR
-  - PS
-  - PT
-  - PW
-  - PY
-  - QA
-  - RE
-  - RO
-  - RS
-  - RU
-  - RW
-  - SA
-  - SB
-  - SC
-  - SD
-  - SE
-  - SG
-  - SH
-  - SI
-  - SJ
-  - SK
-  - SL
-  - SM
-  - SN
-  - SO
-  - SR
-  - SS
-  - ST
-  - SV
-  - SX
-  - SY
-  - SZ
-  - TA
-  - TC
-  - TD
-  - TF
-  - TG
-  - TH
-  - TJ
-  - TK
-  - TL
-  - TM
-  - TN
-  - TO
-  - TR
-  - TT
-  - TV
-  - TW
-  - TZ
-  - UA
-  - UG
-  - UM
-  - US
-  - UY
-  - UZ
-  - VA
-  - VC
-  - VE
-  - VG
-  - VI
-  - VN
-  - VU
-  - WF
-  - WS
-  - YE
-  - YT
-  - ZA
-  - ZM
-  - ZW
+  - 'NP'
+  - 'NR'
+  - 'NU'
+  - 'NZ'
+  - 'OM'
+  - 'PA'
+  - 'PE'
+  - 'PF'
+  - 'PG'
+  - 'PH'
+  - 'PK'
+  - 'PL'
+  - 'PM'
+  - 'PN'
+  - 'PR'
+  - 'PS'
+  - 'PT'
+  - 'PW'
+  - 'PY'
+  - 'QA'
+  - 'RE'
+  - 'RO'
+  - 'RS'
+  - 'RU'
+  - 'RW'
+  - 'SA'
+  - 'SB'
+  - 'SC'
+  - 'SD'
+  - 'SE'
+  - 'SG'
+  - 'SH'
+  - 'SI'
+  - 'SJ'
+  - 'SK'
+  - 'SL'
+  - 'SM'
+  - 'SN'
+  - 'SO'
+  - 'SR'
+  - 'SS'
+  - 'ST'
+  - 'SV'
+  - 'SX'
+  - 'SY'
+  - 'SZ'
+  - 'TA'
+  - 'TC'
+  - 'TD'
+  - 'TF'
+  - 'TG'
+  - 'TH'
+  - 'TJ'
+  - 'TK'
+  - 'TL'
+  - 'TM'
+  - 'TN'
+  - 'TO'
+  - 'TR'
+  - 'TT'
+  - 'TV'
+  - 'TW'
+  - 'TZ'
+  - 'UA'
+  - 'UG'
+  - 'UM'
+  - 'US'
+  - 'UY'
+  - 'UZ'
+  - 'VA'
+  - 'VC'
+  - 'VE'
+  - 'VG'
+  - 'VI'
+  - 'VN'
+  - 'VU'
+  - 'WF'
+  - 'WS'
+  - 'YE'
+  - 'YT'
+  - 'ZA'
+  - 'ZM'
+  - 'ZW'
