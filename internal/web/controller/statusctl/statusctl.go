@@ -41,8 +41,17 @@ func Create(server chi.Router, attendeeSrv attendeesrv.AttendeeService) {
 func getStatusHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	att, err := attendeeByIdMustReturnOnError(ctx, w, r)
+	id, err := ctlutil.AttendeeIdFromVars(ctx, w, r)
 	if err != nil {
+		return
+	}
+	att, err := attendeeService.GetAttendee(ctx, id)
+	if err != nil {
+		if filter.IsGroupOrApiTokenCond(r, config.OidcAdminGroup()) {
+			ctlutil.AttendeeNotFoundErrorHandler(ctx, w, r, id)
+		} else {
+			ctlutil.UnauthorizedError(ctx, w, r, "you are not authorized to access this data - the attempt has been logged", "non-admin attendee not found or not authorized")
+		}
 		return
 	}
 
