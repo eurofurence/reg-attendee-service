@@ -334,6 +334,10 @@ func VatPercent() float64 {
 	return Configuration().VatPercent
 }
 
+func PackageChangesDisabledForStatuses() []string {
+	return Configuration().PackageChanges.DisabledForStatuses
+}
+
 func RegsysPublicUrl() string {
 	return Configuration().Service.RegsysPublicUrl
 }
